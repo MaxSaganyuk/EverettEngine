@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{2766b43e-4143-43cb-803d-5c3c35190415}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models">
+      <UniqueIdentifier>{fd8cf7d2-a12f-4c11-8cd1-25bcafddaed7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LGL.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Verts.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="MainGL.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialSim.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="LightSim.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="LGL.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="MainGL.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Source.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_image.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="glad\src\glad.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="simple.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="simple.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="colorChange.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="threeColor.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="threeColor.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="texColor.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="texColor.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="colors.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="colors.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lamp.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lamp.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="colorsTex.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="colorsTex.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lightDir.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lightDir.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lightPoint.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lightPoint.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lightArea.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lightArea.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lightComb.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="lightComb.vert">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>
