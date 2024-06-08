@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CameraSim.h" />
     <ClInclude Include="LGL.h" />
     <ClInclude Include="Verts.h" />
     <ClInclude Include="LightSim.h" />

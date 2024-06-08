@@ -6,6 +6,7 @@
 #include "Verts.h"
 #include "MaterialSim.h"
 #include "LightSim.h"
+#include "CameraSim.h"
 
 constexpr int windowHeight = 800;
 constexpr int windowWidth = 600;
@@ -55,15 +56,6 @@ int main()
 	lgl.CreateWindow(windowHeight, windowWidth, "ProjectEverett");
 	lgl.InitGLAD();
 	lgl.InitCallbacks();
-
-	/*
-	std::vector<glm::vec3> cubePos{
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.0f, 2.5f, 3.0f)
-	};
-
-	*/
 
 	std::vector<glm::vec3> cubesPos = GenerateRandomCubes(20);
 	std::vector<glm::vec3> lightsPos = GenerateRandomCubes(5);
@@ -131,36 +123,16 @@ int main()
 		rotateG(0, 0);
 	};
 
-	// view matrix
-	glm::mat4 view = glm::mat4(1.0f);
-
-	glm::mat4 projection;
-
-	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-
-	glm::vec3 cubePos(0.0f, 0.0f, 0.0f);
-
-	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
+	CameraSim camera(windowHeight, windowWidth);
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
 
-	auto moveCubeABit = [&lgl, &cubePos]()
+	auto lightBeh = [&lgl, &cubesPos, &lightsPos, &mat, &atte, &camera]()
 	{
-		static double lastTime = glfwGetTime();
-		if (glfwGetTime() - lastTime > 1)
-		{
-			++cubePos.x;
-			lastTime = glfwGetTime();
-		}
-	};
-
-	auto lightBeh = [&lgl, &cubesPos, &view, &projection, &lightPos, &lightsPos, &cameraPos, &cameraFront, &mat, &atte]()
-	{
-		lgl.SetShaderUniformValue("proj", projection);
-		lgl.SetShaderUniformValue("view", view);
+		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
+		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 
 		lgl.SetShaderUniformValue("material.diffuse", 0);
 		lgl.SetShaderUniformValue("material.specular", 1);
@@ -185,8 +157,8 @@ int main()
 		}
 
 
-		lgl.SetShaderUniformValue("spotLight.position", cameraPos);
-		lgl.SetShaderUniformValue("spotLight.direction", cameraFront);
+		lgl.SetShaderUniformValue("spotLight.position", camera.GetPositionVectorAddr());
+		lgl.SetShaderUniformValue("spotLight.direction", camera.GetFrontVectorAddr());
 		lgl.SetShaderUniformValue("spotLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
 		lgl.SetShaderUniformValue("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
 		lgl.SetShaderUniformValue("spotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
@@ -196,7 +168,7 @@ int main()
 		lgl.SetShaderUniformValue("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
 		lgl.SetShaderUniformValue("spotLight.outerCutOff", glm::cos(glm::radians(17.5f)));
 
-		lgl.SetShaderUniformValue("viewPos", cameraPos);
+		lgl.SetShaderUniformValue("viewPos", camera.GetPositionVectorAddr());
 
 		for (auto& cubePos : cubesPos)
 		{
@@ -209,12 +181,12 @@ int main()
 		}
 	};
 
-	auto lampBeh = [&lgl, &view, &projection, &lightPos, &lightsPos, &lightColor]()
+	auto lampBeh = [&lgl, &camera, &lightsPos, &lightColor]()
 	{
 		lgl.SetShaderUniformValue("lightColor", lightColor);
 
-		lgl.SetShaderUniformValue("view", view);
-		lgl.SetShaderUniformValue("proj", projection);
+		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
+		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		for (int i = 0; i < lightsPos.size(); ++i)
 		{
 			lightsPos[i].x = sin(glfwGetTime() + i * 230);
@@ -276,152 +248,29 @@ int main()
 
 	lgl.SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
-	bool changeRed = true;
-	bool changeGreen = true;
-	bool changeBlue = true;
+	lgl.SetCursorPositionCallback(
+		[&camera](double xpos, double ypos) { camera.Rotate(xpos, ypos); }
+	);
+	lgl.SetScrollCallback(
+		[&camera](double xpos, double ypos) { camera.Zoom(xpos, ypos); }
+	);
 
-	auto smoothColorChange = [&lgl, &changeRed, &changeGreen, &changeBlue]()
-	{
-		glm::vec4 coords{
-			changeRed   ? sin(glfwGetTime())      / 2.0f + 0.5f : 0.0f,
-			changeGreen ? sin(glfwGetTime() + 10) / 2.0f + 0.5f : 0.0f,
-			changeBlue  ? sin(glfwGetTime() + 20) / 2.0f + 0.5f : 0.0f,
-			1.0f
-		};
-
-		lgl.SetShaderUniformValue("ourColor", coords);
-	};
-
-	glm::vec3 v { 1.0f, 0.0f, 0.0f };
-	float fov = 45.0f;
-
-	auto setPos = [&lgl, &cameraPos, &cameraFront, &fov, &projection, &view](int direction)
-	{
-		// model matrix
-		//glm::mat4 model = glm::mat4(1.0f);
-		//model = glm::rotate(model, glm::radians(50.f), glm::vec3(0.0f, 0.0f, 1.0f));
-		const float cameraSpeed = 0.005f;
-
-		glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-		switch (direction)
-		{
-		case 0:
-			cameraPos += cameraSpeed * cameraFront;
-			break;
-		case 1:
-			cameraPos -= cameraSpeed * cameraFront;
-			break;
-		case 2:
-			cameraPos -= cameraSpeed * glm::cross(cameraFront, cameraUp);
-			break;
-		case 3:
-			cameraPos += cameraSpeed * glm::cross(cameraFront, cameraUp);
-			break;
-		default:
-			break;
-		}
-
-		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-		projection = glm::perspective(glm::radians(fov), static_cast<float>(windowHeight / windowWidth), 0.1f, 100.f);
-		lgl.SetShaderUniformValue("view", view);
-		lgl.SetShaderUniformValue("proj", projection);
-
-		//glfw.SetShaderUniformValue("model", model);
-
-	};
-
-	auto moveNowhere = [&setPos]()
-	{
-		setPos(-1);
-	};
-
-	auto moveForward = [&setPos]()
-	{
-		setPos(0);
-	};
-
-	auto moveBackward = [&setPos]()
-	{
-		setPos(1);
-	};
-
-	auto moveLeft = [&setPos]()
-	{
-		setPos(2);
-	};
-
-	auto moveRight = [&setPos]()
-	{
-		setPos(3);
-	};
-
-	auto mouseMove = [&lgl, &cameraFront](double xpos, double ypos)
-	{
-		static float lastX = windowHeight;
-		static float lastY = windowWidth;
-		static float yaw = -90.0f;
-		static float pitch = 0.0f;
-
-		float xoffset = xpos - lastX;
-		float yoffset = lastY - ypos;
-
-		lastX = xpos;
-		lastY = ypos;
-
-		constexpr float sens = 0.05f;
-		xoffset *= sens;
-		yoffset *= sens;
-
-		yaw += xoffset;
-		pitch += yoffset;
-
-		if (pitch >= 90.0f)
-		{
-			pitch = 90.0f;
-		}
-		else if (pitch <= -90.0f)
-		{
-			pitch = -90.0f;
-		}
-
-		glm::vec3 direction;
-		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		direction.y = sin(glm::radians(pitch));
-		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		cameraFront = glm::normalize(direction);
-	};
-
-	auto scrollPOV = [&lgl, &fov](double xoffset, double yoffset)
-	{
-		if (fov + yoffset > 1.0f && fov - yoffset < 45.0f)
-		{
-			fov -= yoffset;
-		}
-		else if (fov <= 1.0f)
-		{
-			fov = 1.0f;
-		}
-		else if (fov >= 45.0f)
-		{
-			fov = 45.0f;
-		}
-	};
-
-	lgl.SetCursorPositionCallback(mouseMove);
-	lgl.SetScrollCallback(scrollPOV);
-
-	lgl.SetInteractable(GLFW_KEY_E, moveCubeABit);
-
-	lgl.SetInteractable(GLFW_KEY_W, moveForward);
-	lgl.SetInteractable(GLFW_KEY_S, moveBackward);
-	lgl.SetInteractable(GLFW_KEY_A, moveLeft);
-	lgl.SetInteractable(GLFW_KEY_D, moveRight);
+	lgl.SetInteractable(GLFW_KEY_W, [&camera]() { camera.SetPosition(CameraSim::Direction::Forward); });
+	lgl.SetInteractable(GLFW_KEY_S, [&camera]() { camera.SetPosition(CameraSim::Direction::Backward); });
+	lgl.SetInteractable(GLFW_KEY_A, [&camera]() { camera.SetPosition(CameraSim::Direction::Left); });
+	lgl.SetInteractable(GLFW_KEY_D, [&camera]() { camera.SetPosition(CameraSim::Direction::Right); });
 
 	lgl.GetMaxAmountOfVertexAttr();
 	lgl.CaptureMouse();
 
-	lgl.RunRenderingCycle(moveNowhere);
+	lgl.RunRenderingCycle(
+		[&lgl, &camera]() 
+		{ 
+			camera.SetPosition(CameraSim::Direction::Nowhere);
+			lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
+			lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
+		}
+	);
 
 	//glfw.RunRenderingCycle();
 }
