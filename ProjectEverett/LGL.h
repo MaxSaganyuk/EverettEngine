@@ -19,6 +19,12 @@
 
 /*
 	Lambda (Open) GL
+
+	Todo:
+	Add ability to create several windows using multithreading
+	Add frame limiter
+	Improve SetShaderUniformValue for arrays and maybe structures
+	Fix truncation warnings
 */
 class LGL
 {
@@ -63,8 +69,6 @@ private:
 		int height;
 		int nrChannels;
 	};
-
-	std::vector<int> steps{ 3, 2, 3 };
 
 public:
 	// Enums and structs for external use
@@ -233,30 +237,3 @@ private:
 
 	};
 };
-
-template<class Type>
-bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName)
-{
-	ShaderProgram shaderProgramToUse = shaderProgramCollection[shaderProgramName == "" ? lastProgram : shaderProgramName];
-
-	int uniformValueLocation = glGetUniformLocation(shaderProgramToUse, valueName.c_str());
-
-	if (uniformValueLocation == -1)
-	{
-		if (std::find(uniformErrorAntispam.begin(), uniformErrorAntispam.end(), valueName) == std::end(uniformErrorAntispam))
-		{
-			std::cout << "[ERROR] Shader value " + valueName << " could not be located\n";
-			uniformErrorAntispam.push_back(valueName);
-		}
-		return false;
-	}
-
-	uniformValueLocators.at(typeid(Type))(uniformValueLocation, &value);
-
-	if (render)
-	{
-		Render();
-	}
-
-	return true;
-}

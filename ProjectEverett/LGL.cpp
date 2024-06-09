@@ -215,6 +215,8 @@ void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
 
 void LGL::CreateMesh(const MeshInfo& meshInfo)
 {
+	std::vector<int> steps{ 3, 2, 3 };
+
 	VAOCollection.push_back({0, false});
 	VAO* newVAO = &VAOCollection.back().vboId;
 	glGenVertexArrays(1, newVAO);
@@ -719,3 +721,42 @@ void LGL::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 		scrollCallbackFunc(xoffset, yoffset);
 	}
 }
+
+template<class Type>
+bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName)
+{
+	ShaderProgram shaderProgramToUse = shaderProgramCollection[shaderProgramName == "" ? lastProgram : shaderProgramName];
+
+	int uniformValueLocation = glGetUniformLocation(shaderProgramToUse, valueName.c_str());
+
+	if (uniformValueLocation == -1)
+	{
+		if (std::find(uniformErrorAntispam.begin(), uniformErrorAntispam.end(), valueName) == std::end(uniformErrorAntispam))
+		{
+			std::cout << "[ERROR] Shader value " + valueName << " could not be located\n";
+			uniformErrorAntispam.push_back(valueName);
+		}
+		return false;
+	}
+
+	uniformValueLocators.at(typeid(Type))(uniformValueLocation, &value);
+
+	if (render)
+	{
+		Render();
+	}
+
+	return true;
+}
+
+#define ShaderUniformValueExplicit(Type) \
+template bool LGL::SetShaderUniformValue<Type>(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName); \
+template bool LGL::SetShaderUniformValue<Type&>(const std::string& valueName, Type& value, bool render, const std::string& shaderProgramName);
+
+ShaderUniformValueExplicit(int)
+ShaderUniformValueExplicit(float)
+ShaderUniformValueExplicit(glm::vec3)
+ShaderUniformValueExplicit(glm::vec4)
+ShaderUniformValueExplicit(glm::mat4)
+
+#undef ShaderUniformValueExplicit
