@@ -5,16 +5,19 @@
 #include "stb_image.h"
 #include "LGL.h"
 
+std::mutex LGL::GLFWContextManager::glfwMutex;
+
 std::function<void(double, double)> LGL::cursorPositionFunc = nullptr;
 std::function<void(double, double)> LGL::scrollCallbackFunc = nullptr;
 
-LGL::LGL(int major, int minor)
+std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
 {
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	{"vert", GL_VERTEX_SHADER},
+	{"frag", GL_FRAGMENT_SHADER}
+};
 
+LGL::LGL()
+{
 	background = { 0, 0, 0, 1 };
 	currentVAOToRender = {};
 
@@ -29,8 +32,6 @@ LGL::~LGL()
 	{
 		glDeleteShader(shader.second.shaderId);
 	}
-
-	glfwTerminate();
 
 	std::cout << "LambdaGL instance destroyed\n";
 }
@@ -51,15 +52,26 @@ bool LGL::CreateWindow(const int height, const int width, const std::string& tit
 		return false;
 	}
 
-	glfwMakeContextCurrent(window);
+	//glfwMakeContextCurrent(window);
 
-	std::cout << "Created a GLFW window\n";
+	std::cout << "Created a GLFW window by address " << window << '\n';
 
 	return true;
 }
 
+void LGL::InitOpenGL(int major, int minor)
+{
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	std::cout << "OpenGL initialized\n";
+}
+
 bool LGL::InitGLAD()
 {
+	GLFWContextMux
 	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
 	{
 		std::cout << "Failed to init GLAD\n";
@@ -76,7 +88,15 @@ bool LGL::InitGLAD()
 
 void LGL::InitCallbacks()
 {
+	GLFWContextMux
 	glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
+}
+
+void LGL::TerminateOpenGL()
+{
+	glfwTerminate();
+
+	std::cout << "Terminate OpenGL\n";
 }
 
 void LGL::CaptureMouse()
@@ -104,6 +124,8 @@ void LGL::SetScrollCallback(std::function<void(double, double)> callbackFunc)
 
 int LGL::GetMaxAmountOfVertexAttr()
 {
+	GLFWContextMux
+
 	int attr;
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &attr);
 	
@@ -126,7 +148,6 @@ void LGL::ProcessInput()
 bool LGL::HandleGLError(const unsigned int& glId, int statusToCheck)
 {
 	constexpr int logSize = 512;
-
 	int success;
 	char log[logSize];
 
@@ -166,6 +187,8 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 {
 	while (!glfwWindowShouldClose(window))
 	{
+		GLFWContextMux
+
 		ProcessInput();
 
 		glClearColor(background.r, background.g, background.b, background.a);
@@ -215,6 +238,8 @@ void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
 
 void LGL::CreateMesh(const MeshInfo& meshInfo)
 {
+	GLFWContextMux
+
 	std::vector<int> steps{ 3, 2, 3 };
 
 	VAOCollection.push_back({0, false});
@@ -464,6 +489,8 @@ bool LGL::CompileShader(const std::string& name)
 {
 	using AcceptableShaderCode = const char* const;
 
+	GLFWContextMux
+
 	std::string currentName = name;
 
 	if (currentName == "")
@@ -491,6 +518,8 @@ bool LGL::CompileShader(const std::string& name)
 
 bool LGL::LoadShader(const std::string& code, const std::string& type, const std::string& name)
 {
+	GLFWContextMux
+
 	shaderInfoCollection.emplace(
 		name,
 		ShaderInfo{
@@ -589,6 +618,8 @@ bool LGL::LoadTextureFromFile(const std::string& file, const std::string& textur
 
 bool LGL::ConfigureTexture(const std::string& textureName, const TextureParams& textureParams)
 {
+	GLFWContextMux
+
 	if (textureCollection.find(textureName) == textureCollection.end())
 	{
 		std::cout << "Can't find the texture\n";
@@ -666,6 +697,8 @@ bool LGL::ConfigureTexture(const TextureParams& textureParams)
 
 bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderNames)
 {	
+	GLFWContextMux
+
 	shaderProgramCollection.emplace(name, glCreateProgram());
 	ShaderProgram* newShaderProgram = &shaderProgramCollection[name];
 

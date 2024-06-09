@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <functional>
 #include <thread>
+#include <mutex>
 #include <typeindex>
 #include <glad/glad.h>
 #include <glfw3.h>
@@ -22,7 +23,6 @@
 	Lambda (Open) GL
 
 	Todo:
-	Add ability to create several windows using multithreading
 	Add frame limiter
 	Maybe improve SetShaderUniformValue for arrays
 	Fix truncation warnings
@@ -122,7 +122,7 @@ public:
 		std::function<void()> behaviour = nullptr;
 	};
 
-	LGL(int major, int minor);
+	LGL();
 	~LGL();
 
 	bool CreateWindow(const int height, const int width, const std::string& title);
@@ -155,8 +155,11 @@ public:
 	bool ConfigureTexture(const std::string& textureName, const TextureParams& textureParams = {});
 	bool ConfigureTexture(const TextureParams& textureParams = {});
 
+	static void InitOpenGL(int major, int minor);
 	bool InitGLAD();
 	void InitCallbacks();
+	static void TerminateOpenGL();
+
 	int GetMaxAmountOfVertexAttr();
 
 	void CaptureMouse();
@@ -198,7 +201,8 @@ private:
 	bool HandleGLError(const unsigned int& glId, int statusToCheck);
 	void Render();
 
- 	GLFWwindow* window;
+	GLFWwindow* window;
+
 	glm::vec4 background;
 
 	VAOInfo currentVAOToRender;
@@ -207,11 +211,7 @@ private:
 	std::vector<EBO> EBOCollection;
 
 	// Shader
-	std::map<std::string, ShaderType> shaderTypeChoice
-	{
-		{"vert", GL_VERTEX_SHADER},
-		{"frag", GL_FRAGMENT_SHADER}
-	};
+	static std::map<std::string, ShaderType> shaderTypeChoice;
 
 	std::string lastShader;
 	std::map<std::string, ShaderInfo> shaderInfoCollection;
@@ -230,6 +230,25 @@ private:
 	std::map<int, std::function<void()>> interactCollection;
 
 	static const std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators;
+
+	class GLFWContextManager
+	{
+		static std::mutex glfwMutex;
+	public:
+#define GLFWContextMux GLFWContextManager mux(window);
+
+		GLFWContextManager(GLFWwindow* window)
+		{
+			glfwMutex.lock();
+			glfwMakeContextCurrent(window);
+		}
+
+		~GLFWContextManager()
+		{
+			glfwMakeContextCurrent(nullptr);
+			glfwMutex.unlock();
+		}
+	};
 };
 
 /*

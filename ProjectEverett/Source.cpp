@@ -51,7 +51,9 @@ int main()
 {
 	srand(time(nullptr));
 
-	LGL lgl(3, 3);
+	LGL::InitOpenGL(3, 3);
+
+	LGL lgl;
 
 	lgl.CreateWindow(windowHeight, windowWidth, "ProjectEverett");
 	lgl.InitGLAD();
@@ -279,6 +281,17 @@ int main()
 	lgl.GetMaxAmountOfVertexAttr();
 	lgl.CaptureMouse();
 
+
+	/*
+	LGL other;
+	other.CreateWindow(windowHeight, windowWidth, "Other");
+	other.InitCallbacks();
+	other.SetStaticBackgroundColor({ 1.0f, 0.0f, 0.0f, 0.0f });
+
+	std::thread otherThread([&other]() { other.RunRenderingCycle(); });
+
+	*/
+
 	lgl.RunRenderingCycle(
 		[&lgl, &camera]() 
 		{ 
@@ -288,5 +301,7 @@ int main()
 		}
 	);
 
-	//glfw.RunRenderingCycle();
+	LGL::TerminateOpenGL();
+
+	//otherThread.join();
 }
