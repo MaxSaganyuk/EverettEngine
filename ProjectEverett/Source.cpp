@@ -60,7 +60,7 @@ int main()
 	lgl.InitCallbacks();
 
 	std::vector<glm::vec3> cubesPos = GenerateRandomCubes(20);
-	std::vector<glm::vec3> lightsPos = GenerateRandomCubes(5);
+	std::vector<glm::vec3> lightsPos = GenerateRandomCubes(1);
 
 	lgl.LoadShaderFromFile("lightComb.vert");
 	lgl.CompileShader();
@@ -128,6 +128,8 @@ int main()
 	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
 	CameraSim camera(windowHeight, windowWidth);
+	camera.SetMode(CameraSim::Mode::Walk);
+
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
 

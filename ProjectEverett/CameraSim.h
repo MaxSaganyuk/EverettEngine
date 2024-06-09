@@ -8,6 +8,14 @@
 
 class CameraSim
 {
+public:
+	enum class Mode
+	{
+		Fly,
+		Walk
+	};
+
+private:
 	int windowHeight;
 	int windowWidth;
 	glm::mat4 view;
@@ -24,6 +32,8 @@ class CameraSim
 	float yaw;
 	float pitch;
 	float sensitivity; 
+
+	Mode mode;
 public:
 
 	enum class Direction
@@ -41,7 +51,7 @@ public:
 		const glm::vec3& front = glm::vec3(0.0f, 0.0f, -1.0f),
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 3.0f),
 		const float fov = 45.0f,
-		const float speed = 0.005f
+		const float speed = 0.002f
 	)
 		: windowHeight(windowHeight), windowWidth(windowWidth), front(front), pos(pos), fov(fov), speed(speed)
 	{
@@ -53,6 +63,8 @@ public:
 		yaw = -90.f;
 		pitch = 0.0f;
 		sensitivity = 0.05f;
+
+		mode = Mode::Fly;
 	}
 
 	glm::mat4& GetViewMatrixAddr()
@@ -78,14 +90,15 @@ public:
 	void SetPosition(Direction dir)
 	{
 		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+		glm::vec3 limitY(1.0f, static_cast<float>(mode == Mode::Fly), 1.0f);
 
 		switch (dir)
 		{
 		case Direction::Forward:
-			pos += speed * front;
+			pos += speed * front * limitY;
 			break;
 		case Direction::Backward:
-			pos -= speed * front;
+			pos -= speed * front * limitY;
 			break;
 		case Direction::Left:
 			pos -= speed * glm::cross(front, up);
@@ -148,5 +161,10 @@ public:
 		{
 			fov = 45.0f;
 		}
+	}
+	
+	void SetMode(Mode mode)
+	{
+		this->mode = mode;
 	}
 };
