@@ -722,8 +722,32 @@ void LGL::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	}
 }
 
-template<class Type>
-bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName)
+const std::unordered_map<std::type_index, std::function<void(int, void*)>> LGL::uniformValueLocators
+{
+	{ typeid(int), [](int uniformValueLocation, void* value) { glUniform1i(uniformValueLocation, *reinterpret_cast<int*>(value)); } },
+	{ typeid(float), [](int uniformValueLocation, void* value) { glUniform1f(uniformValueLocation, *reinterpret_cast<float*>(value)); } },
+
+	{ typeid(glm::vec3), [](int uniformValueLocation, void* value)
+	{
+		glm::vec3* coords = reinterpret_cast<glm::vec3*>(value);
+		glUniform3f(uniformValueLocation, coords->x, coords->y, coords->z);
+	} },
+
+	{ typeid(glm::vec4), [](int uniformValueLocation, void* value)
+	{
+		glm::vec4* coords = reinterpret_cast<glm::vec4*>(value);
+		glUniform4f(uniformValueLocation, coords->x, coords->y, coords->z, coords->w);
+	} },
+
+	{ typeid(glm::mat4), [](int uniformValueLocation, void* value)
+	{
+		glUniformMatrix4fv(uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<glm::mat4*>(value)));
+	} }
+
+};
+
+
+int LGL::CheckUnifromValueLocation(const std::string& valueName, const std::string& shaderProgramName)
 {
 	ShaderProgram shaderProgramToUse = shaderProgramCollection[shaderProgramName == "" ? lastProgram : shaderProgramName];
 
@@ -736,6 +760,17 @@ bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool
 			std::cout << "[ERROR] Shader value " + valueName << " could not be located\n";
 			uniformErrorAntispam.push_back(valueName);
 		}
+	}
+
+	return uniformValueLocation;
+}
+
+template<class Type>
+bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName)
+{
+	int uniformValueLocation = CheckUnifromValueLocation(valueName, shaderProgramName);
+	if (uniformValueLocation == -1)
+	{
 		return false;
 	}
 

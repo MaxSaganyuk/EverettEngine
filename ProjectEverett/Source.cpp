@@ -129,14 +129,32 @@ int main()
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
 
-	auto lightBeh = [&lgl, &cubesPos, &lightsPos, &mat, &atte, &camera]()
+	std::vector<std::pair<std::string, std::deque<std::string>>> lightShaderValueNames
+	{
+		{"material", { "diffuse", "specular", "shininess" }},
+		{"pointLight",
+			{
+				"position", "ambient", "diffuse",
+				"specular", "constant", "linear",
+				"quadratic"
+			}
+		},
+		{"spotLight",
+			{
+				"position", "direction", "ambient",
+				"diffuse", "specular", "constant",
+				"linear", "quadratic", "cutOff",
+				"outerCutOff"
+			}
+		}
+	};
+
+	auto lightBeh = [&lgl, &cubesPos, &lightsPos, &mat, &atte, &camera, &lightShaderValueNames]()
 	{
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 
-		lgl.SetShaderUniformValue("material.diffuse", 0);
-		lgl.SetShaderUniformValue("material.specular", 1);
-		lgl.SetShaderUniformValue("material.shininess", mat.shininess);
+		lgl.SetShaderUniformStruct(lightShaderValueNames[0].first, lightShaderValueNames[0].second, 0, 1, mat.shininess);
 
 		//lgl.SetShaderUniformValue("dirLight.direction", lightPos);
 		//lgl.SetShaderUniformValue("dirLight.ambient", glm::vec3(0.05f, 0.05f, 0.05f));
@@ -146,27 +164,25 @@ int main()
 		lgl.SetShaderUniformValue("lightAmount", static_cast<int>(lightsPos.size()));
 		for (int i = 0; i < lightsPos.size(); ++i)
 		{
-			std::string accessIndex = "pointLight[" + std::to_string(i) + "]";
-			lgl.SetShaderUniformValue(accessIndex + ".position", lightsPos[i]);
-			lgl.SetShaderUniformValue(accessIndex + ".ambient", glm::vec3(0.05f, 0.05f, 0.05f));
-			lgl.SetShaderUniformValue(accessIndex + ".diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
-			lgl.SetShaderUniformValue(accessIndex + ".specular", glm::vec3(1.0f, 1.0f, 1.0f));
-			lgl.SetShaderUniformValue(accessIndex + ".constant", 1.0f);
-			lgl.SetShaderUniformValue(accessIndex + ".linear", atte.linear);
-			lgl.SetShaderUniformValue(accessIndex + ".quadratic", atte.quadratic);
+			std::string accessIndex = lightShaderValueNames[1].first + "[" + std::to_string(i) + "]";
+
+			lgl.SetShaderUniformStruct(
+				accessIndex,
+				lightShaderValueNames[1].second,
+				lightsPos[i], glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.4f, 0.4f, 0.4f),
+				glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, atte.linear,
+				atte.quadratic
+			);
 		}
 
-
-		lgl.SetShaderUniformValue("spotLight.position", camera.GetPositionVectorAddr());
-		lgl.SetShaderUniformValue("spotLight.direction", camera.GetFrontVectorAddr());
-		lgl.SetShaderUniformValue("spotLight.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-		lgl.SetShaderUniformValue("spotLight.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
-		lgl.SetShaderUniformValue("spotLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
-		lgl.SetShaderUniformValue("spotLight.constant", 1.0f);
-		lgl.SetShaderUniformValue("spotLight.linear", atte.linear);
-		lgl.SetShaderUniformValue("spotLight.quadratic", atte.quadratic);
-		lgl.SetShaderUniformValue("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-		lgl.SetShaderUniformValue("spotLight.outerCutOff", glm::cos(glm::radians(17.5f)));
+		lgl.SetShaderUniformStruct(
+			lightShaderValueNames[2].first,
+			lightShaderValueNames[2].second,
+			camera.GetPositionVectorAddr(), camera.GetFrontVectorAddr(), glm::vec3(0.2f, 0.2f, 0.2f),
+			glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
+			atte.linear, atte.quadratic, glm::cos(glm::radians(12.5f)),
+			glm::cos(glm::radians(17.5f))
+		);
 
 		lgl.SetShaderUniformValue("viewPos", camera.GetPositionVectorAddr());
 

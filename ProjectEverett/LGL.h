@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <deque>
 #include <map>
 #include <unordered_map>
 #include <functional>
@@ -23,7 +24,7 @@
 	Todo:
 	Add ability to create several windows using multithreading
 	Add frame limiter
-	Improve SetShaderUniformValue for arrays and maybe structures
+	Maybe improve SetShaderUniformValue for arrays
 	Fix truncation warnings
 */
 class LGL
@@ -160,15 +161,30 @@ public:
 
 	void CaptureMouse();
 
-	template<class Type>
-	bool SetShaderUniformValue(const std::string& valueName, Type&& value, bool render = false, const std::string& shaderProgramName = "");
-
 	void SetInteractable(int key, std::function<void()> func);
 
 	void SetCursorPositionCallback(std::function<void(double, double)> callbackFunc);
 	void SetScrollCallback(std::function<void(double, double)> callbackFunc);
 
+	template<class Type>
+	bool SetShaderUniformValue(const std::string& valueName, Type&& value, bool render = false, const std::string& shaderProgramName = "");
+
+	template<typename Type>
+	bool SetShaderUniformStruct(const std::string& structName, std::deque<std::string>& valueNames, Type value);
+
+	template<typename Type, typename... Types>
+	bool SetShaderUniformStruct(const std::string& structName, std::deque<std::string> valueNames, Type value, Types... values);
+
 private:
+
+	int CheckUnifromValueLocation(const std::string& valueName, const std::string& shaderProgramName);
+
+	template<typename Type>
+	bool SetShaderUniformStructImpl(const std::string& structName, std::deque<std::string>&& valueNames, Type value);
+
+	template<typename Type, typename... Types>
+	bool SetShaderUniformStructImpl(const std::string& structName, std::deque<std::string>&& valueNames, Type value, Types... values);
+
 	// Callbacks
 	CALLBACK FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 	
@@ -213,27 +229,46 @@ private:
 	// 
 	std::map<int, std::function<void()>> interactCollection;
 
-	std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators
-	{
-		{ typeid(int),   [](int uniformValueLocation, void* value) { glUniform1i(uniformValueLocation, *reinterpret_cast<int*>(value)); }},
-		{ typeid(float), [](int uniformValueLocation, void* value) { glUniform1f(uniformValueLocation, *reinterpret_cast<float*>(value)); }},
-
-		{ typeid(glm::vec3), [](int uniformValueLocation, void* value) 
-		{ 
-			glm::vec3* coords = reinterpret_cast<glm::vec3*>(value);
-			glUniform3f(uniformValueLocation, coords->x, coords->y, coords->z);
-		}},
-
-		{ typeid(glm::vec4), [](int uniformValueLocation, void* value)
-		{
-			glm::vec4* coords = reinterpret_cast<glm::vec4*>(value);
-			glUniform4f(uniformValueLocation, coords->x, coords->y, coords->z, coords->w);
-		}},
-
-		{ typeid(glm::mat4), [](int uniformValueLocation, void* value)
-		{  
-			glUniformMatrix4fv(uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<glm::mat4*>(value)));
-		}}
-
-	};
+	static const std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators;
 };
+
+/*
+* probably should rewrite these to use std::vector with indexation
+* and maybe if possible to use something like std::pair<std::string, Type>. But that might me too much
+*/
+
+template<typename Type>
+bool LGL::SetShaderUniformStruct(const std::string& structName, std::deque<std::string>& valueNames, Type value)
+{
+	return SetShaderUniformValueImpl(structName, valueNames, value);
+}
+
+template<typename Type>
+bool LGL::SetShaderUniformStructImpl(const std::string & structName, std::deque<std::string> && valueNames, Type value)
+{
+	return SetShaderUniformValue(structName + '.' + valueNames.front(), value);
+}
+
+template<typename Type, typename... Types>
+bool LGL::SetShaderUniformStruct(const std::string& structName, std::deque<std::string> valueNames, Type value, Types... values)
+{
+	// In C++20 and after could probably be made as a compile time check
+	if (valueNames.size() - 1 != sizeof...(Types))
+	{
+		assert(false && "Mismatch between amount of valueNames and values");
+		return false;
+	}
+
+	return SetShaderUniformStructImpl(structName, std::move(valueNames), value, values...);
+}
+
+template<typename Type, typename... Types>
+bool LGL::SetShaderUniformStructImpl(const std::string& structName, std::deque<std::string>&& valueNames, Type value, Types... values)
+{
+	bool res = SetShaderUniformValue(structName + '.' + valueNames.front(), value);
+	valueNames.pop_front();
+
+	// Can't decide if I should stop processing the whole structure if one of the elements failed.
+	// return SetShaderUniformStruct(structName, std::move(valueNames), values...) && res;
+	return res && SetShaderUniformStructImpl(structName, std::move(valueNames), values...);
+}
