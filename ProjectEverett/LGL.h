@@ -234,7 +234,7 @@ private:
 	{
 		static std::mutex glfwMutex;
 	public:
-#define GLFWContextMux GLFWContextManager mux(window);
+#define GLFWContextLock GLFWContextManager mux(window);
 
 		GLFWContextManager(GLFWwindow* window)
 		{

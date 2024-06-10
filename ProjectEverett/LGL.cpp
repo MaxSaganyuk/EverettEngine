@@ -71,7 +71,8 @@ void LGL::InitOpenGL(int major, int minor)
 
 bool LGL::InitGLAD()
 {
-	GLFWContextMux
+	GLFWContextLock
+
 	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
 	{
 		std::cout << "Failed to init GLAD\n";
@@ -88,7 +89,8 @@ bool LGL::InitGLAD()
 
 void LGL::InitCallbacks()
 {
-	GLFWContextMux
+	GLFWContextLock
+
 	glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
 }
 
@@ -124,7 +126,7 @@ void LGL::SetScrollCallback(std::function<void(double, double)> callbackFunc)
 
 int LGL::GetMaxAmountOfVertexAttr()
 {
-	GLFWContextMux
+	GLFWContextLock
 
 	int attr;
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &attr);
@@ -187,7 +189,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 {
 	while (!glfwWindowShouldClose(window))
 	{
-		GLFWContextMux
+		GLFWContextLock
 
 		ProcessInput();
 
@@ -238,7 +240,7 @@ void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
 
 void LGL::CreateMesh(const MeshInfo& meshInfo)
 {
-	GLFWContextMux
+	GLFWContextLock
 
 	std::vector<int> steps{ 3, 2, 3 };
 
@@ -489,7 +491,7 @@ bool LGL::CompileShader(const std::string& name)
 {
 	using AcceptableShaderCode = const char* const;
 
-	GLFWContextMux
+	GLFWContextLock
 
 	std::string currentName = name;
 
@@ -518,7 +520,7 @@ bool LGL::CompileShader(const std::string& name)
 
 bool LGL::LoadShader(const std::string& code, const std::string& type, const std::string& name)
 {
-	GLFWContextMux
+	GLFWContextLock
 
 	shaderInfoCollection.emplace(
 		name,
@@ -618,7 +620,7 @@ bool LGL::LoadTextureFromFile(const std::string& file, const std::string& textur
 
 bool LGL::ConfigureTexture(const std::string& textureName, const TextureParams& textureParams)
 {
-	GLFWContextMux
+	GLFWContextLock
 
 	if (textureCollection.find(textureName) == textureCollection.end())
 	{
@@ -697,7 +699,7 @@ bool LGL::ConfigureTexture(const TextureParams& textureParams)
 
 bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderNames)
 {	
-	GLFWContextMux
+	GLFWContextLock
 
 	shaderProgramCollection.emplace(name, glCreateProgram());
 	ShaderProgram* newShaderProgram = &shaderProgramCollection[name];
