@@ -172,20 +172,20 @@ public:
 	bool SetShaderUniformValue(const std::string& valueName, Type&& value, bool render = false, const std::string& shaderProgramName = "");
 
 	template<typename Type>
-	bool SetShaderUniformStruct(const std::string& structName, std::deque<std::string>& valueNames, Type value);
+	bool SetShaderUniformStruct(const std::string& structName, const std::vector<std::string>& valueNames, Type value);
 
 	template<typename Type, typename... Types>
-	bool SetShaderUniformStruct(const std::string& structName, std::deque<std::string> valueNames, Type value, Types... values);
+	bool SetShaderUniformStruct(const std::string& structName, const std::vector<std::string>& valueNames, Type value, Types... values);
 
 private:
 
 	int CheckUnifromValueLocation(const std::string& valueName, const std::string& shaderProgramName);
 
 	template<typename Type>
-	bool SetShaderUniformStructImpl(const std::string& structName, std::deque<std::string>&& valueNames, Type value);
+	bool SetShaderUniformStructImpl(const std::string& structName, const std::vector<std::string>& valueNames, size_t i, Type value);
 
 	template<typename Type, typename... Types>
-	bool SetShaderUniformStructImpl(const std::string& structName, std::deque<std::string>&& valueNames, Type value, Types... values);
+	bool SetShaderUniformStructImpl(const std::string& structName, const std::vector<std::string>& valueNames, size_t i, Type value, Types... values);
 
 	// Callbacks
 	CALLBACK FramebufferSizeCallback(GLFWwindow* window, int width, int height);
@@ -251,24 +251,23 @@ private:
 };
 
 /*
-* probably should rewrite these to use std::vector with indexation
-* and maybe if possible to use something like std::pair<std::string, Type>. But that might me too much
+*  it's possible to use something like std::pair<std::string, Type>, but it makes it to similar to using regular SetShaderUnifromValue repeatedly
 */
 
 template<typename Type>
-bool LGL::SetShaderUniformStruct(const std::string& structName, std::deque<std::string>& valueNames, Type value)
+bool LGL::SetShaderUniformStruct(const std::string& structName, const std::vector<std::string>& valueNames, Type value)
 {
-	return SetShaderUniformValueImpl(structName, valueNames, value);
+	return SetShaderUniformValueImpl(structName, valueNames, 0, value);
 }
 
 template<typename Type>
-bool LGL::SetShaderUniformStructImpl(const std::string & structName, std::deque<std::string> && valueNames, Type value)
+bool LGL::SetShaderUniformStructImpl(const std::string& structName, const std::vector<std::string>& valueNames, size_t i, Type value)
 {
-	return SetShaderUniformValue(structName + '.' + valueNames.front(), value);
+	return SetShaderUniformValue(structName + '.' + valueNames[i], value);
 }
 
 template<typename Type, typename... Types>
-bool LGL::SetShaderUniformStruct(const std::string& structName, std::deque<std::string> valueNames, Type value, Types... values)
+bool LGL::SetShaderUniformStruct(const std::string& structName, const std::vector<std::string>& valueNames, Type value, Types... values)
 {
 	// In C++20 and after could probably be made as a compile time check
 	if (valueNames.size() - 1 != sizeof...(Types))
@@ -277,16 +276,15 @@ bool LGL::SetShaderUniformStruct(const std::string& structName, std::deque<std::
 		return false;
 	}
 
-	return SetShaderUniformStructImpl(structName, std::move(valueNames), value, values...);
+	return SetShaderUniformStructImpl(structName, valueNames, 0, value, values...);
 }
 
 template<typename Type, typename... Types>
-bool LGL::SetShaderUniformStructImpl(const std::string& structName, std::deque<std::string>&& valueNames, Type value, Types... values)
+bool LGL::SetShaderUniformStructImpl(const std::string& structName, const std::vector<std::string>& valueNames, size_t i, Type value, Types... values)
 {
-	bool res = SetShaderUniformValue(structName + '.' + valueNames.front(), value);
-	valueNames.pop_front();
+	bool res = SetShaderUniformValue(structName + '.' + valueNames[i], value);
 
 	// Can't decide if I should stop processing the whole structure if one of the elements failed.
 	// return SetShaderUniformStruct(structName, std::move(valueNames), values...) && res;
-	return res && SetShaderUniformStructImpl(structName, std::move(valueNames), values...);
+	return res && SetShaderUniformStructImpl(structName, valueNames, ++i, values...);
 }

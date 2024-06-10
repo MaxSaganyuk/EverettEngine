@@ -133,7 +133,7 @@ int main()
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
 
-	std::vector<std::pair<std::string, std::deque<std::string>>> lightShaderValueNames
+	std::vector<std::pair<std::string, std::vector<std::string>>> lightShaderValueNames
 	{
 		{"material", { "diffuse", "specular", "shininess" }},
 		{"pointLight",
