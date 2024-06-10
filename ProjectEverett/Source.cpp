@@ -49,7 +49,7 @@ std::vector<LGL::Vertex> ConvertAVerySpecificFloatPointerToVertexVector(float* p
 
 int main()
 {
-	srand(time(nullptr));
+	srand(static_cast<unsigned int>(time(nullptr)));
 
 	LGL::InitOpenGL(3, 3);
 
@@ -209,8 +209,8 @@ int main()
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		for (int i = 0; i < lightsPos.size(); ++i)
 		{
-			lightsPos[i].x = sin(glfwGetTime() + i * 230);
-			lightsPos[i].y = cos(glfwGetTime() - i * 230);
+			lightsPos[i].x = static_cast<float>(sin(glfwGetTime() + i * 230));
+			lightsPos[i].y = static_cast<float>(cos(glfwGetTime() - i * 230));
 
 			glm::mat4 model = glm::mat4(1.0f);
 			model = glm::translate(model, lightsPos[i]);
@@ -269,10 +269,10 @@ int main()
 	lgl.SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
 	lgl.SetCursorPositionCallback(
-		[&camera](double xpos, double ypos) { camera.Rotate(xpos, ypos); }
+		[&camera](double xpos, double ypos) { camera.Rotate(static_cast<float>(xpos), static_cast<float>(ypos)); }
 	);
 	lgl.SetScrollCallback(
-		[&camera](double xpos, double ypos) { camera.Zoom(xpos, ypos); }
+		[&camera](double xpos, double ypos) { camera.Zoom(static_cast<float>(xpos), static_cast<float>(ypos)); }
 	);
 
 	lgl.SetInteractable(GLFW_KEY_W, [&camera]() { camera.SetPosition(CameraSim::Direction::Forward); });

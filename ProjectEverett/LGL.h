@@ -25,7 +25,6 @@
 	Todo:
 	Add frame limiter
 	Maybe improve SetShaderUniformValue for arrays
-	Fix truncation warnings
 */
 class LGL
 {

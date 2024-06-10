@@ -58,8 +58,8 @@ public:
 		view = glm::mat4(1.0f);
 		projection = glm::perspective(glm::radians(fov), static_cast<float>(windowHeight / windowWidth), 0.1f, 100.f);
 
-		lastX = windowHeight;
-		lastY = windowWidth;
+		lastX = static_cast<float>(windowHeight);
+		lastY = static_cast<float>(windowWidth);
 		yaw = -90.f;
 		pitch = 0.0f;
 		sensitivity = 0.05f;
