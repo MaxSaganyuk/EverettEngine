@@ -51,7 +51,7 @@ public:
 		const glm::vec3& front = glm::vec3(0.0f, 0.0f, -1.0f),
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 3.0f),
 		const float fov = 45.0f,
-		const float speed = 0.002f
+		const float speed = 0.006f
 	)
 		: windowHeight(windowHeight), windowWidth(windowWidth), front(front), pos(pos), fov(fov), speed(speed)
 	{

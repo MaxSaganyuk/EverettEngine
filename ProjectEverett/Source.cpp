@@ -8,6 +8,8 @@
 #include "LightSim.h"
 #include "CameraSim.h"
 
+#include "MazeGen.h"
+
 constexpr int windowHeight = 800;
 constexpr int windowWidth = 600;
 
@@ -27,6 +29,24 @@ std::vector<glm::vec3> GenerateRandomCubes(int amount)
 	}
 
 	return vec;
+}
+
+std::vector<glm::vec3> PlaceCubesInAMaze(MazeGen::MazeInfo& maze)
+{
+	std::vector<glm::vec3> cubesPos;
+
+	for (size_t i = 0; i < maze.matrix.size(); ++i)
+	{
+		for (size_t j = 0; j < maze.matrix[i].size(); ++j)
+		{
+			if (!maze.matrix[i][j])
+			{
+				cubesPos.push_back({ i, 0, j });
+			}
+		}
+	}
+
+	return cubesPos;
 }
 
 std::vector<LGL::Vertex> ConvertAVerySpecificFloatPointerToVertexVector(float* ptr, size_t size)
@@ -59,9 +79,6 @@ int main()
 	lgl.InitGLAD();
 	lgl.InitCallbacks();
 
-	std::vector<glm::vec3> cubesPos = GenerateRandomCubes(20);
-	std::vector<glm::vec3> lightsPos = GenerateRandomCubes(1);
-
 	lgl.LoadShaderFromFile("lightComb.vert");
 	lgl.CompileShader();
 
@@ -83,6 +100,19 @@ int main()
 
 	lgl.LoadTextureFromFile("boxEdge.png");
 	lgl.ConfigureTexture();
+
+	CameraSim camera(windowHeight, windowWidth);
+	camera.SetMode(CameraSim::Mode::Fly);
+
+	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
+	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
+
+	MazeGen::MazeInfo maze = MazeGen::GenerateMaze(25, 25);
+	MazeGen::PrintExitPath(maze);
+
+	std::vector<glm::vec3> cubesPos = PlaceCubesInAMaze(maze);
+	std::vector<glm::vec3> lightsPos = GenerateRandomCubes(1);
+
 
 	auto rotateG = [&lgl, &cubesPos](float ia, float ib)
 	{
@@ -106,7 +136,7 @@ int main()
 			}
 			trans = glm::rotate(trans, glm::radians(a / 25), glm::vec3(-1.0, 0.0f, 0.0f));
 
-			lgl.SetShaderUniformValue("model", trans, true);
+			lgl.SetShaderUniformValue("model", trans);
 		}
 	};
 
@@ -126,12 +156,6 @@ int main()
 	};
 
 	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-
-	CameraSim camera(windowHeight, windowWidth);
-	camera.SetMode(CameraSim::Mode::Walk);
-
-	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
-	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
 
 	std::vector<std::pair<std::string, std::vector<std::string>>> lightShaderValueNames
 	{
