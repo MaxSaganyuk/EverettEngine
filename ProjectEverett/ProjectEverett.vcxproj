@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CameraSim.h" />
+    <ClInclude Include="CollisionDet.h" />
     <ClInclude Include="LGL.h" />
     <ClInclude Include="MazeGen.h" />
     <ClInclude Include="Verts.h" />

@@ -23,7 +23,7 @@
 	Lambda (Open) GL
 
 	Todo:
-	Add frame limiter
+	Add frame limiter (fix frame dependent camera movement speed)
 	Maybe improve SetShaderUniformValue for arrays
 */
 class LGL

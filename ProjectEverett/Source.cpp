@@ -4,9 +4,12 @@
 
 #include "LGL.h"
 #include "Verts.h"
+
 #include "MaterialSim.h"
 #include "LightSim.h"
 #include "CameraSim.h"
+
+#include "CollisionDet.h"
 
 #include "MazeGen.h"
 
@@ -102,7 +105,7 @@ int main()
 	lgl.ConfigureTexture();
 
 	CameraSim camera(windowHeight, windowWidth);
-	camera.SetMode(CameraSim::Mode::Fly);
+	camera.SetMode(CameraSim::Mode::Walk);
 
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
@@ -214,14 +217,33 @@ int main()
 
 		lgl.SetShaderUniformValue("viewPos", camera.GetPositionVectorAddr());
 
-		for (auto& cubePos : cubesPos)
+		CollisionDet::ObjectInfo cameraObject{ camera.GetPositionVectorAddr(), glm::vec3(0.35f) };
+
+		bool collided = false;
+
+		for (const auto& cubePos : cubesPos)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
+			glm::vec3 scale = glm::vec3(1.0f);
 			model = glm::translate(model, cubePos);
-			model = glm::scale(model, glm::vec3(1.0f));
+			model = glm::scale(model, scale);
 			//model = glm::rotate(model, (float)sin(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));
 			lgl.SetShaderUniformValue("model", model);
 			lgl.SetShaderUniformValue("inv", glm::inverse(model), true);
+
+			if (CollisionDet::CheckForCollision(cameraObject, { cubePos, scale }))
+			{
+				collided = true;
+				if (!camera.GetAmountOfDisabledDirs())
+				{
+					camera.DisableDirection(camera.GetLastDirection());
+				}
+			}
+		}
+
+		if (!collided && camera.GetAmountOfDisabledDirs())
+		{
+			camera.EnableAllDirections();
 		}
 	};
 
@@ -293,7 +315,7 @@ int main()
 	lgl.SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
 	lgl.SetCursorPositionCallback(
-		[&camera](double xpos, double ypos) { camera.Rotate(static_cast<float>(xpos), static_cast<float>(ypos)); }
+		[&camera](double xpos, double ypos) { camera.Rotate(static_cast<float>(xpos), static_cast<float>(ypos));}
 	);
 	lgl.SetScrollCallback(
 		[&camera](double xpos, double ypos) { camera.Zoom(static_cast<float>(xpos), static_cast<float>(ypos)); }

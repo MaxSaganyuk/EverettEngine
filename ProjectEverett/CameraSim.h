@@ -1,6 +1,7 @@
 #pragma once
 
-#include "cassert"
+#include <cassert>
+#include <map>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -15,7 +16,21 @@ public:
 		Walk
 	};
 
+	enum class Direction
+	{
+		Forward,
+		Backward,
+		Left,
+		Right,
+		Up,
+		Down,
+		Nowhere
+	};
+
+
 private:
+	constexpr static size_t realDirectionAmount = 6;
+
 	int windowHeight;
 	int windowWidth;
 	glm::mat4 view;
@@ -34,22 +49,17 @@ private:
 	float sensitivity; 
 
 	Mode mode;
+	Direction lastDir;
+
+	std::map<Direction, bool> disabledDirs;
 public:
 
-	enum class Direction
-	{
-		Forward,
-		Backward,
-		Left,
-		Right,
-		Nowhere
-	};
 
 	CameraSim(
 		const int windowHeight,
 		const int windowWidth,
 		const glm::vec3& front = glm::vec3(0.0f, 0.0f, -1.0f),
-		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 3.0f),
+		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
 		const float fov = 45.0f,
 		const float speed = 0.006f
 	)
@@ -65,6 +75,21 @@ public:
 		sensitivity = 0.05f;
 
 		mode = Mode::Fly;
+
+		for (size_t i = 0; i < realDirectionAmount; ++i)
+		{
+			disabledDirs[static_cast<Direction>(i)] = false;
+		}
+	}
+
+	void InvertMovement()
+	{
+		speed = (-1) * speed;
+	}
+
+	bool IsMovementInverted()
+	{
+		return speed < 0.0f;
 	}
 
 	glm::mat4& GetViewMatrixAddr()
@@ -87,8 +112,53 @@ public:
 		return pos;
 	}
 
+	void DisableDirection(Direction dir)
+	{
+		disabledDirs[dir] = true;
+	}
+
+	void EnableDirection(Direction dir)
+	{
+		disabledDirs[dir] = false;
+	}
+
+	void EnableAllDirections()
+	{
+		for (size_t i = 0; i < realDirectionAmount; ++i)
+		{
+			disabledDirs[static_cast<Direction>(i)] = false;
+		}
+	}
+
+	size_t GetAmountOfDisabledDirs()
+	{
+		size_t amount = 0;
+
+		for (size_t i = 0; i < realDirectionAmount; ++i)
+		{
+			amount += disabledDirs[static_cast<Direction>(i)];
+		}
+
+		return amount;
+	}
+
+	Direction GetLastDirection()
+	{
+		return lastDir;
+	}
+
 	void SetPosition(Direction dir)
 	{
+		if (disabledDirs[dir])
+		{
+			return;
+		}
+
+		if (dir != Direction::Nowhere)
+		{
+			lastDir = dir;
+		}
+
 		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 		glm::vec3 limitY(1.0f, static_cast<float>(mode == Mode::Fly), 1.0f);
 
@@ -108,6 +178,8 @@ public:
 			break;
 		case Direction::Nowhere:
 			break;
+		case Direction::Up:
+		case Direction::Down:
 		default:
 			assert(false && "Undefined direction");
 			return;
