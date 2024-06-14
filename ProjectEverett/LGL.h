@@ -42,6 +42,9 @@ private:
 	using Texture = unsigned int;
 	using TextureData = unsigned char*;
 
+	using OnPressFunction = std::function<void()>;
+	using OnReleaseFunction = std::function<void()>;
+
 // Structs for internal use
 	struct VAOInfo
 	{
@@ -163,7 +166,7 @@ public:
 
 	void CaptureMouse();
 
-	void SetInteractable(int key, std::function<void()> func);
+	void SetInteractable(int key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc = nullptr);
 
 	void SetCursorPositionCallback(std::function<void(double, double)> callbackFunc);
 	void SetScrollCallback(std::function<void(double, double)> callbackFunc);
@@ -225,8 +228,7 @@ private:
 
 	std::vector<std::string> uniformErrorAntispam;
 
-	// 
-	std::map<int, std::function<void()>> interactCollection;
+	std::map<size_t, std::pair<OnPressFunction, OnReleaseFunction>> interactCollection;
 
 	static const std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators;
 

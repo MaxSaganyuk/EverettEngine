@@ -110,7 +110,7 @@ int main()
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
 
-	MazeGen::MazeInfo maze = MazeGen::GenerateMaze(25, 25);
+	MazeGen::MazeInfo maze = MazeGen::GenerateMaze(20, 20);
 	MazeGen::PrintExitPath(maze);
 
 	std::vector<glm::vec3> cubesPos = PlaceCubesInAMaze(maze);
@@ -233,17 +233,8 @@ int main()
 
 			if (CollisionDet::CheckForCollision(cameraObject, { cubePos, scale }))
 			{
-				collided = true;
-				if (!camera.GetAmountOfDisabledDirs())
-				{
-					camera.DisableDirection(camera.GetLastDirection());
-				}
+				camera.SetLastPosition();
 			}
-		}
-
-		if (!collided && camera.GetAmountOfDisabledDirs())
-		{
-			camera.EnableAllDirections();
 		}
 	};
 
