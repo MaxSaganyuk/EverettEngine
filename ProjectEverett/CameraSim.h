@@ -38,6 +38,7 @@ private:
 	glm::vec3 front;
 	glm::vec3 pos;
 	glm::vec3 lastPos;
+	bool lastBlocker;
 	float fov;
 	float speed;
 
@@ -74,6 +75,8 @@ public:
 		yaw = -90.f;
 		pitch = 0.0f;
 		sensitivity = 0.05f;
+
+		lastBlocker = false;
 
 		mode = Mode::Fly;
 
@@ -160,10 +163,15 @@ public:
 			return;
 		}
 
-		if (dir != Direction::Nowhere)
+		if (!lastBlocker && dir != Direction::Nowhere)
 		{
+			lastBlocker = true;
 			lastDir = dir;
 			lastPos = pos;
+		}
+		else
+		{
+			lastBlocker = false;
 		}
 
 		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
