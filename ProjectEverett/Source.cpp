@@ -7,9 +7,8 @@
 
 #include "MaterialSim.h"
 #include "LightSim.h"
+#include "SolidSim.h"
 #include "CameraSim.h"
-
-#include "CollisionDet.h"
 
 #include "MazeGen.h"
 
@@ -70,6 +69,18 @@ std::vector<LGL::Vertex> ConvertAVerySpecificFloatPointerToVertexVector(float* p
 	return vert;
 }
 
+std::vector<SolidSim> ConvertPosesToSolids(const std::vector<glm::vec3>& posVect)
+{
+	std::vector<SolidSim> solidVect;
+
+	for (const auto& pos : posVect)
+	{
+		solidVect.push_back(SolidSim(pos));
+	}
+
+	return solidVect;
+}
+
 int main()
 {
 	srand(static_cast<unsigned int>(time(nullptr)));
@@ -115,6 +126,9 @@ int main()
 
 	std::vector<glm::vec3> cubesPos = PlaceCubesInAMaze(maze);
 	std::vector<glm::vec3> lightsPos = GenerateRandomCubes(1);
+
+	std::vector<SolidSim> cubes = ConvertPosesToSolids(cubesPos);
+	std::vector<SolidSim> lights = ConvertPosesToSolids(lightsPos);
 
 
 	auto rotateG = [&lgl, &cubesPos](float ia, float ib)
@@ -180,7 +194,7 @@ int main()
 		}
 	};
 
-	auto lightBeh = [&lgl, &cubesPos, &lightsPos, &mat, &atte, &camera, &lightShaderValueNames]()
+	auto lightBeh = [&lgl, &cubes, &lightsPos, &mat, &atte, &camera, &lightShaderValueNames]()
 	{
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
@@ -217,40 +231,33 @@ int main()
 
 		lgl.SetShaderUniformValue("viewPos", camera.GetPositionVectorAddr());
 
-		CollisionDet::ObjectInfo cameraObject{ camera.GetPositionVectorAddr(), glm::vec3(0.35f) };
-
-		bool collided = false;
-
-		for (const auto& cubePos : cubesPos)
+		for (auto& cube : cubes)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
 			glm::vec3 scale = glm::vec3(1.0f);
-			model = glm::translate(model, cubePos);
+			model = glm::translate(model, cube.GetPositionVectorAddr());
 			model = glm::scale(model, scale);
 			//model = glm::rotate(model, (float)sin(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));
 			lgl.SetShaderUniformValue("model", model);
 			lgl.SetShaderUniformValue("inv", glm::inverse(model), true);
 
-			if (CollisionDet::CheckForCollision(cameraObject, { cubePos, scale }))
+			if (SolidSim::CheckForCollision(camera, cube))
 			{
 				camera.SetLastPosition();
 			}
 		}
 	};
 
-	auto lampBeh = [&lgl, &camera, &lightsPos, &lightColor]()
+	auto lampBeh = [&lgl, &camera, &lights, &lightColor]()
 	{
 		lgl.SetShaderUniformValue("lightColor", lightColor);
 
 		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
-		for (int i = 0; i < lightsPos.size(); ++i)
+		for (auto& light : lights)
 		{
-			lightsPos[i].x = static_cast<float>(sin(glfwGetTime() + i * 230));
-			lightsPos[i].y = static_cast<float>(cos(glfwGetTime() - i * 230));
-
 			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, lightsPos[i]);
+			model = glm::translate(model, light.GetPositionVectorAddr());
 			model = glm::scale(model, glm::vec3(0.2f));
 			//model = glm::rotate(model, (float)sin(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));
 			lgl.SetShaderUniformValue("model", model, true);
@@ -316,6 +323,10 @@ int main()
 	lgl.SetInteractable(GLFW_KEY_S, [&camera]() { camera.SetPosition(CameraSim::Direction::Backward); });
 	lgl.SetInteractable(GLFW_KEY_A, [&camera]() { camera.SetPosition(CameraSim::Direction::Left); });
 	lgl.SetInteractable(GLFW_KEY_D, [&camera]() { camera.SetPosition(CameraSim::Direction::Right); });
+
+	lgl.SetInteractable(GLFW_KEY_L, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Up); });
+	lgl.SetInteractable(GLFW_KEY_O, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Down); });
+
 
 	lgl.GetMaxAmountOfVertexAttr();
 	lgl.CaptureMouse();

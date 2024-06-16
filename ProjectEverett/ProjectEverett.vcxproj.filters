@@ -42,7 +42,7 @@
     <ClInclude Include="MazeGen.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionDet.h">
+    <ClInclude Include="SolidSim.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
@@ -60,6 +60,12 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="MazeGen.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="SolidSim.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraSim.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
