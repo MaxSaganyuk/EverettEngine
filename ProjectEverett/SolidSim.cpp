@@ -133,8 +133,6 @@ void SolidSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		lastBlocker = false;
 	}
 
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-
 	switch (dir)
 	{
 	case Direction::Forward:
@@ -144,16 +142,16 @@ void SolidSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		pos -= speed * front * limitAxis;
 		break;
 	case Direction::Left:
-		pos -= speed * glm::cross(front, up);
+		pos -= speed * glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f));
 		break;
 	case Direction::Right:
-		pos += speed * glm::cross(front, up);
+		pos += speed * glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f));
 		break;
 	case Direction::Up:
-		pos += speed * glm::cross(front, glm::vec3(1.0f, 0.0f, 0.0f));
+		pos -= speed * glm::cross(front, glm::vec3(1.0f, 0.0f, 0.0f));
 		break;
 	case Direction::Down:
-		pos -= speed * glm::cross(front, glm::vec3(1.0f, 0.0f, 0.0f));
+		pos += speed * glm::cross(front, glm::vec3(1.0f, 0.0f, 0.0f));
 		break;
 	case Direction::Nowhere:
 		break;

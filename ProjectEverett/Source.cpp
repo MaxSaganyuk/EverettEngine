@@ -116,7 +116,7 @@ int main()
 	lgl.ConfigureTexture();
 
 	CameraSim camera(windowHeight, windowWidth);
-	camera.SetMode(CameraSim::Mode::Walk);
+	camera.SetMode(CameraSim::Mode::Fly);
 
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
@@ -124,11 +124,12 @@ int main()
 	MazeGen::MazeInfo maze = MazeGen::GenerateMaze(20, 20);
 	MazeGen::PrintExitPath(maze);
 
-	std::vector<glm::vec3> cubesPos = PlaceCubesInAMaze(maze);
-	std::vector<glm::vec3> lightsPos = GenerateRandomCubes(1);
+	std::vector<glm::vec3> cubesPos = { {0.0f, 0.0f, 1.0f} }; // PlaceCubesInAMaze(maze);
+	std::vector<glm::vec3> lightsPos = { {0.0f, 0.0f, 0.0f} };
 
 	std::vector<SolidSim> cubes = ConvertPosesToSolids(cubesPos);
-	std::vector<SolidSim> lights = ConvertPosesToSolids(lightsPos);
+	std::vector<SolidSim> lights = { SolidSim({ 0.0f, 0.0f, 0.0f }, { 0.35f, 0.35f, 0.35f })};
+	SolidSim mug = SolidSim({0.0f, 0.0f, 3.0f});
 
 
 	auto rotateG = [&lgl, &cubesPos](float ia, float ib)
@@ -194,7 +195,7 @@ int main()
 		}
 	};
 
-	auto lightBeh = [&lgl, &cubes, &lightsPos, &mat, &atte, &camera, &lightShaderValueNames]()
+	auto lightBeh = [&lgl, &cubes, &lights, &mat, &atte, &camera, &lightShaderValueNames]()
 	{
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
@@ -206,15 +207,15 @@ int main()
 		//lgl.SetShaderUniformValue("dirLight.diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
 		//lgl.SetShaderUniformValue("dirLight.specular", glm::vec3(0.5f, 0.5f, 0.5f));
 
-		lgl.SetShaderUniformValue("lightAmount", static_cast<int>(lightsPos.size()));
-		for (int i = 0; i < lightsPos.size(); ++i)
+		lgl.SetShaderUniformValue("lightAmount", static_cast<int>(lights.size()));
+		for (int i = 0; i < lights.size(); ++i)
 		{
 			std::string accessIndex = lightShaderValueNames[1].first + "[" + std::to_string(i) + "]";
 
 			lgl.SetShaderUniformStruct(
 				accessIndex,
 				lightShaderValueNames[1].second,
-				lightsPos[i], glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.4f, 0.4f, 0.4f),
+				lights[i].GetPositionVectorAddr(), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.4f, 0.4f, 0.4f),
 				glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, atte.linear,
 				atte.quadratic
 			);
@@ -245,6 +246,10 @@ int main()
 			{
 				camera.SetLastPosition();
 			}
+			if (SolidSim::CheckForCollision(lights[0], cube))
+			{
+				lights[0].SetLastPosition();
+			}
 		}
 	};
 
@@ -260,8 +265,23 @@ int main()
 			model = glm::translate(model, light.GetPositionVectorAddr());
 			model = glm::scale(model, glm::vec3(0.2f));
 			//model = glm::rotate(model, (float)sin(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));
+			light.SetPosition(SolidSim::Direction::Nowhere);
 			lgl.SetShaderUniformValue("model", model, true);
 		}
+	};
+
+	auto mugBeh = [&lgl, &camera, &mug]()
+	{
+		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
+		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
+		
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::vec3 scale = glm::vec3(0.25f);
+		model = glm::translate(model, mug.GetPositionVectorAddr());
+		model = glm::scale(model, scale);
+		//model = glm::rotate(model, (float)sin(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));
+		lgl.SetShaderUniformValue("model", model);
+		lgl.SetShaderUniformValue("inv", glm::inverse(model), true);
 	};
 	/*
 	//glfw.CreatePolygon(vert, sizeof(vert), false);
@@ -286,8 +306,6 @@ int main()
 	std::vector<LGL::Vertex> a = ConvertAVerySpecificFloatPointerToVertexVector(vertNT, sizeof(vertNT));
 
 
-	lgl.GetMeshFromFile("sphere.obj", cubeV, cubeInd);
-
 	lgl.CreateMesh(
 		{
 			a,
@@ -299,6 +317,8 @@ int main()
 		}
 	);
 
+	//lgl.GetMeshFromFile("sphere.obj", cubeV, cubeInd);
+	/*
 	lgl.CreateMesh(
 		{
 			cubeV,
@@ -307,6 +327,23 @@ int main()
 			"lamp",
 		    {},
 			lampBeh
+		}
+	);
+	*/
+
+	std::vector<LGL::Vertex> mugV;
+	std::vector<unsigned int> mugInd;
+
+
+	lgl.GetMeshFromFile("cup.obj", mugV, mugInd);
+	lgl.CreateMesh(
+		{
+			mugV,
+			mugInd,
+			false,
+			"colorsTex",
+			{},
+			mugBeh
 		}
 	);
 
@@ -324,9 +361,16 @@ int main()
 	lgl.SetInteractable(GLFW_KEY_A, [&camera]() { camera.SetPosition(CameraSim::Direction::Left); });
 	lgl.SetInteractable(GLFW_KEY_D, [&camera]() { camera.SetPosition(CameraSim::Direction::Right); });
 
-	lgl.SetInteractable(GLFW_KEY_L, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Up); });
-	lgl.SetInteractable(GLFW_KEY_O, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Down); });
-
+	bool controlLight = true;
+	if (controlLight)
+	{
+		lgl.SetInteractable(GLFW_KEY_O, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Up); });
+		lgl.SetInteractable(GLFW_KEY_L, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Down); });
+		lgl.SetInteractable(GLFW_KEY_U, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Forward); });
+		lgl.SetInteractable(GLFW_KEY_J, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Backward); });
+		lgl.SetInteractable(GLFW_KEY_H, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Left); });
+		lgl.SetInteractable(GLFW_KEY_K, [&lights]() { lights[0].SetPosition(SolidSim::Direction::Right); });
+	}
 
 	lgl.GetMaxAmountOfVertexAttr();
 	lgl.CaptureMouse();

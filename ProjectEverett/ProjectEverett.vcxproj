@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="CameraSim.h" />
     <ClInclude Include="LGL.h" />
+    <ClInclude Include="mapEx.h" />
     <ClInclude Include="MazeGen.h" />
     <ClInclude Include="SolidSim.h" />
     <ClInclude Include="Verts.h" />

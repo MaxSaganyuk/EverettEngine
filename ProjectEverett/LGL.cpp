@@ -4,6 +4,7 @@
 
 #include "stb_image.h"
 #include "LGL.h"
+#include "mapEx.h"
 
 std::mutex LGL::GLFWContextManager::glfwMutex;
 
@@ -336,8 +337,6 @@ void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes
 	int fileSection = 0;
 
 	std::string line;
-	std::string geoType;
-	std::string value;
 	std::string indexValue;
 
 	std::vector<Vertex> allVertexes;
@@ -345,7 +344,6 @@ void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes
 	int indeceCount = 0;
 	std::vector<Vertex> resVertexes;
 	std::vector<int> indexes;
-
 
 	std::vector<int> meshIndexer { 0, 0, 0 };
 	std::vector<unsigned int> resIndeces;
@@ -373,120 +371,121 @@ void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes
 		return indexes;
 	};
 
+	auto CheckForFileSectionChange = [&line, &fileSection]()
+	{
+		stdEx::map<char, int> charToFilesection;
+		charToFilesection['v'] = 1;
+		charToFilesection['f'] = 2;
+		charToFilesection.SetDefaultValue(0);
+
+		fileSection = charToFilesection.at(line[0]);
+	};
+
+	auto CheckVertexVectors = [&line, &fileSection, &meshIndexer, &typeNames, &allVertexes]()
+	{
+		if (line[0] == 'v')
+		{
+			std::string geoType = "";
+			std::string value = "";
+			glm::vec3 convertedValues;
+			int indexOfValueToCollect = 0;
+
+			for (int i = 0; i < line.size() + 1 && indexOfValueToCollect < 4; ++i)
+			{
+				if (!value.empty() && (line[i] == ' ' || line[i] == '\0'))
+				{
+					if (indexOfValueToCollect == 0)
+					{
+						geoType = value;
+					}
+					else
+					{
+						convertedValues[indexOfValueToCollect - 1] = std::stof(value);
+					}
+
+					++indexOfValueToCollect;
+					value = "";
+				}
+				else
+				{
+					value += line[i];
+				}
+			}
+
+			if (meshIndexer[typeNames[geoType]] >= allVertexes.size())
+			{
+				allVertexes.push_back(Vertex{});
+			}
+
+			Vertex& vertexToSet = allVertexes[meshIndexer[typeNames[geoType]]];
+
+			switch (typeNames[geoType])
+			{
+			case 0:
+				vertexToSet.Position = convertedValues;
+				break;
+			case 1:
+				vertexToSet.TexCoords = convertedValues;
+				break;
+			case 2:
+				vertexToSet.Normal = convertedValues;
+				break;
+			}
+
+			++meshIndexer[typeNames[geoType]];
+		}
+	};
+
+	auto CheckIndecesAndFormResult = 
+		[&line, &objIndeces, &resIndeces, &indeceCount, &indexes, &parseOneObjIndece, &resVertexes, &allVertexes]()
+	{
+		int currentCoordType = 0;
+		std::string value = "";
+
+		if (line[0] == 'f')
+		{
+			for (int i = 2; i < line.size() + 1; ++i)
+			{
+				if (!value.empty() && (line[i] == ' ' || line[i] == '\0'))
+				{
+					if (objIndeces.find(value) == objIndeces.end())
+					{
+						resIndeces.push_back(indeceCount);
+						objIndeces[value] = indeceCount++;
+
+						indexes = parseOneObjIndece(value);
+						resVertexes.push_back(
+							Vertex{
+								allVertexes[indexes[0]].Position,
+								allVertexes[indexes[1]].TexCoords,
+								allVertexes[indexes[2]].Normal
+							}
+						);
+					}
+					else 
+					{
+						resIndeces.push_back(objIndeces[value]);
+					}
+
+					value = "";
+				}
+				else
+				{
+					value += line[i];
+				}
+			}
+		}
+	};
+
+	stdEx::map<int, std::function<void()>> processFileFuncs;
+	processFileFuncs[1] = CheckVertexVectors;
+	processFileFuncs[2] = CheckIndecesAndFormResult;
+	processFileFuncs.SetDefaultValue([](){});
+
 	while (std::getline(reader, line))
 	{
-		switch (fileSection)
-		{
-		case 0:
-		{
-			if (line[0] == 'v')
-			{
-				++fileSection;
-			}
-			else 
-			{
-				break;
-			}
-		}
-		case 1:
-		{
-			if (line[0] == 'f')
-			{
-				++fileSection;
-			}
-			else if(line[0] == 'v')
-			{
-				geoType = "";
-				value = "";
-				glm::vec3 convertedValues;
-				int indexOfValueToCollect = 0;
-
-				for (int i = 0; i < line.size() + 1 && indexOfValueToCollect < 4; ++i)
-				{
-					if (line[i] == ' ' || line[i] == '\0')
-					{
-						if (indexOfValueToCollect == 0)
-						{
-							geoType = value;
-						}
-						else
-						{
-							convertedValues[indexOfValueToCollect - 1] = std::stof(value);
-						}
-
-						++indexOfValueToCollect;
-						value = "";
-					}
-					else
-					{
-						value += line[i];
-					}
-				}
-
-				if (meshIndexer[typeNames[geoType]] >= allVertexes.size())
-				{
-					allVertexes.push_back(Vertex{});
-				}
-
-				Vertex& vertexToSet = allVertexes[meshIndexer[typeNames[geoType]]];
-
-				switch (typeNames[geoType])
-				{
-				case 0:
-					vertexToSet.Position = convertedValues;
-					break;
-				case 1:
-					vertexToSet.TexCoords = convertedValues;
-					break;
-				case 2:
-					vertexToSet.Normal = convertedValues;
-					break;
-				}
-
-				++meshIndexer[typeNames[geoType]];
-				break;
-			}
-		}
-		case 2:
-		{
-			int currentCoordType = 0;
-
-			if (line[0] == 'f')
-			{
-				for (int i = 2; i < line.size() + 1; ++i)
-				{
-					if (line[i] == ' ' || line[i] == '\0')
-					{
-						if (objIndeces.find(value) == objIndeces.end())
-						{
-							resIndeces.push_back(indeceCount);
-							objIndeces[value] = indeceCount++;
-
-							indexes = parseOneObjIndece(value);
-							resVertexes.push_back(
-								Vertex{
-									allVertexes[indexes[0]].Position,
-									allVertexes[indexes[1]].TexCoords,
-									allVertexes[indexes[2]].Normal
-								}
-							);
-						}
-						else 
-						{
-							resIndeces.push_back(objIndeces[value]);
-						}
-
-						value = "";
-					}
-					else
-					{
-						value += line[i];
-					}
-				}
-			}
-			break;
-		}
-		}
+		CheckForFileSectionChange();
+		processFileFuncs.at(fileSection)();
 	}
 
 	vertexes = resVertexes;
