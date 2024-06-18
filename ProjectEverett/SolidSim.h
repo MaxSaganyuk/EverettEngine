@@ -69,6 +69,7 @@ public:
 	bool IsMovementInverted();
 	glm::vec3& GetFrontVectorAddr();
 	glm::vec3& GetPositionVectorAddr();
+	glm::vec3& GetScaleVectorAddr();
 
 	void DisableDirection(Direction dir);
 	void EnableDirection(Direction dir);

@@ -81,6 +81,24 @@ std::vector<SolidSim> ConvertPosesToSolids(const std::vector<glm::vec3>& posVect
 	return solidVect;
 }
 
+glm::vec3 SelectRandomPlaceInAMaze(const MazeGen::MazeInfo& maze)
+{
+	bool avalible = false;
+	size_t sizeN = maze.matrix.size();
+	size_t sizeM = maze.matrix[0].size();
+	size_t pickedN = 0;
+	size_t pickedM = 0;
+	
+	while (!avalible)
+	{ 
+		pickedN = rand() % sizeN;
+		pickedM = rand() % sizeM;
+		avalible = maze.matrix[pickedN][pickedN];
+	}
+
+	return { static_cast<float>(pickedN), 0, static_cast<float>(pickedM) };
+}
+
 int main()
 {
 	srand(static_cast<unsigned int>(time(nullptr)));
@@ -115,8 +133,11 @@ int main()
 	lgl.LoadTextureFromFile("boxEdge.png");
 	lgl.ConfigureTexture();
 
-	CameraSim camera(windowHeight, windowWidth);
-	camera.SetMode(CameraSim::Mode::Fly);
+	lgl.LoadTextureFromFile("extraStuff/coilTex.png");
+	lgl.ConfigureTexture();
+
+	lgl.LoadTextureFromFile("extraStuff/coilTex2.png");
+	lgl.ConfigureTexture();
 
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
@@ -124,12 +145,16 @@ int main()
 	MazeGen::MazeInfo maze = MazeGen::GenerateMaze(20, 20);
 	MazeGen::PrintExitPath(maze);
 
-	std::vector<glm::vec3> cubesPos = { {0.0f, 0.0f, 1.0f} }; // PlaceCubesInAMaze(maze);
+	CameraSim camera(windowHeight, windowWidth, SelectRandomPlaceInAMaze(maze));
+	camera.SetMode(CameraSim::Mode::Fly);
+
+	std::vector<glm::vec3> cubesPos = PlaceCubesInAMaze(maze);
 	std::vector<glm::vec3> lightsPos = { {0.0f, 0.0f, 0.0f} };
 
 	std::vector<SolidSim> cubes = ConvertPosesToSolids(cubesPos);
 	std::vector<SolidSim> lights = { SolidSim({ 0.0f, 0.0f, 0.0f }, { 0.35f, 0.35f, 0.35f })};
-	SolidSim mug = SolidSim({0.0f, 0.0f, 3.0f});
+	SolidSim mug = SolidSim(SelectRandomPlaceInAMaze(maze), {0.35f, 0.45f, 0.35f});
+	mug.GetPositionVectorAddr().y -= 0.45f;
 
 
 	auto rotateG = [&lgl, &cubesPos](float ia, float ib)
@@ -235,7 +260,7 @@ int main()
 		for (auto& cube : cubes)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
-			glm::vec3 scale = glm::vec3(1.0f);
+			glm::vec3 scale = cube.GetScaleVectorAddr();
 			model = glm::translate(model, cube.GetPositionVectorAddr());
 			model = glm::scale(model, scale);
 			//model = glm::rotate(model, (float)sin(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -276,12 +301,12 @@ int main()
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		
 		glm::mat4 model = glm::mat4(1.0f);
-		glm::vec3 scale = glm::vec3(0.25f);
+		glm::vec3 scale = mug.GetScaleVectorAddr();
 		model = glm::translate(model, mug.GetPositionVectorAddr());
 		model = glm::scale(model, scale);
 		//model = glm::rotate(model, (float)sin(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));
 		lgl.SetShaderUniformValue("model", model);
-		lgl.SetShaderUniformValue("inv", glm::inverse(model), true);
+		//lgl.SetShaderUniformValue("inv", glm::inverse(model), true);
 	};
 	/*
 	//glfw.CreatePolygon(vert, sizeof(vert), false);
@@ -316,9 +341,9 @@ int main()
 			lightBeh
 		}
 	);
-
-	//lgl.GetMeshFromFile("sphere.obj", cubeV, cubeInd);
 	/*
+	lgl.GetMeshFromFile("sphere.obj", cubeV, cubeInd);
+
 	lgl.CreateMesh(
 		{
 			cubeV,
@@ -335,14 +360,14 @@ int main()
 	std::vector<unsigned int> mugInd;
 
 
-	lgl.GetMeshFromFile("cup.obj", mugV, mugInd);
+	lgl.GetMeshFromFile("extraStuff/coilHead.obj", mugV, mugInd);
 	lgl.CreateMesh(
 		{
 			mugV,
 			mugInd,
 			false,
 			"colorsTex",
-			{},
+			{"extraStuff/coilTex2.png"},
 			mugBeh
 		}
 	);

@@ -75,6 +75,11 @@ glm::vec3& SolidSim::GetPositionVectorAddr()
 	return pos;
 }
 
+glm::vec3& SolidSim::GetScaleVectorAddr()
+{
+	return scale;
+}
+
 void SolidSim::DisableDirection(Direction dir)
 {
 	disabledDirs[dir] = true;

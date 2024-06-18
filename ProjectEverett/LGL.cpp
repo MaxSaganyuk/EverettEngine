@@ -216,14 +216,22 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			glUseProgram(shaderProgramCollection[lastProgram]);
 			glBindVertexArray(currentVAO.vboId);
 
-			for (int i = 0; i < currentVAO.textures.size(); ++i)
+			if (currentVAO.textures.size())
 			{
-				if (textureCollection.find(currentVAO.textures[i]) != textureCollection.end())
+				for (int i = 0; i < currentVAO.textures.size(); ++i)
 				{
-					TextureInfo& textureInfo = textureCollection.at(currentVAO.textures[i]);
-					glActiveTexture(GL_TEXTURE0 + i);
-					glBindTexture(GL_TEXTURE_2D, textureInfo.textureId);
+					if (textureCollection.find(currentVAO.textures[i]) != textureCollection.end())
+					{
+						TextureInfo& textureInfo = textureCollection.at(currentVAO.textures[i]);
+						glActiveTexture(GL_TEXTURE0 + i);
+						glBindTexture(GL_TEXTURE_2D, textureInfo.textureId);
+					}
 				}
+			}
+			else
+			{
+				glActiveTexture(GL_TEXTURE0 + 0);
+				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 
 			if (currentVAO.behaviour)
@@ -343,21 +351,22 @@ void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes
 	std::unordered_map<std::string, int> objIndeces;
 	int indeceCount = 0;
 	std::vector<Vertex> resVertexes;
-	std::vector<int> indexes;
+	std::map<int, int> indexes;
 
 	std::vector<int> meshIndexer { 0, 0, 0 };
 	std::vector<unsigned int> resIndeces;
 
 	auto parseOneObjIndece = [](const std::string& value)
 	{
-		std::vector<int> indexes;
+		std::map<int, int> indexes;
 		std::string collected;
-
+		int count = 0;
+			
 		for (auto& i : value)
 		{
 			if (i == '/')
 			{
-				indexes.push_back(std::stoi(collected) - 1);
+				indexes[count++] = collected == "" ? 0 : std::stoi(collected) - 1;
 				collected = "";
 			}
 			else
@@ -366,7 +375,7 @@ void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes
 			}
 		}
 
-		indexes.push_back(std::stoi(collected) - 1);
+		indexes[count++] = collected == "" ? 0 : std::stoi(collected) - 1;
 
 		return indexes;
 	};
