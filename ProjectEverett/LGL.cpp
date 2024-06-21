@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -746,6 +747,44 @@ bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::st
 
 	//glUseProgram(*newShaderProgram);
 	return true;
+}
+
+bool LGL::LoadAndCompileShaders(const std::string& dir, const std::vector<std::string>& names)
+{
+	const std::vector<std::string> shaderFileTypes{ "vert", "frag" };
+
+	bool res = true;
+
+	for (const auto& name : names)
+	{
+		for (const auto& shaderFileType : shaderFileTypes)
+		{
+			res &= LoadShaderFromFile(dir + name + '.' + shaderFileType);
+			res &= CompileShader();
+		}
+
+		res &= CreateShaderProgram(name);
+	}
+
+	return res;
+}
+
+bool LGL::LoadAndConfigureTextures(const std::string& dir, const std::vector<std::string>& files, const std::vector<TextureParams>& texParamVect)
+{
+	bool res = true;
+
+	if ((files.size() == texParamVect.size()) || texParamVect.empty())
+	{
+		for (size_t i = 0; i < files.size(); ++i)
+		{
+			res &= LoadTextureFromFile(dir + files[i], files[i]);
+			res &= ConfigureTexture(!texParamVect.empty() ? texParamVect[i] : TextureParams());
+		}
+
+		return res;
+	}
+	
+	return false;
 }
 
 void LGL::SetInteractable(int key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)

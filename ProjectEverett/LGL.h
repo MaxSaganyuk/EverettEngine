@@ -1,9 +1,7 @@
 #pragma once
 
-#include <iostream>
 #include <string>
 #include <vector>
-#include <deque>
 #include <map>
 #include <unordered_map>
 #include <functional>
@@ -153,11 +151,16 @@ public:
 	// If no list of shaders is provided, will create a program with all compiled shaders
 	bool CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderVector = {});
 
+	// If shader file names can be identical to shader program name, general load and compile can be used
+	bool LoadAndCompileShaders(const std::string& dir, const std::vector<std::string>& names);
+
 	bool LoadTextureFromFile(const std::string& file, const std::string& textureName = "");
 	bool ConfigureTexture(const std::string& textureName, const TextureParams& textureParams = {});
 	bool ConfigureTexture(const TextureParams& textureParams = {});
+	bool LoadAndConfigureTextures(const std::string& dir, const std::vector<std::string>& files, const std::vector<TextureParams>& texParamVect = {});
 
 	static void InitOpenGL(int major, int minor);
+
 	bool InitGLAD();
 	void InitCallbacks();
 	static void TerminateOpenGL();

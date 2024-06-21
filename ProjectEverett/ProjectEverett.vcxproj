@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CameraSim.h" />
+    <ClInclude Include="FileLoader.h" />
     <ClInclude Include="LGL.h" />
     <ClInclude Include="mapEx.h" />
     <ClInclude Include="MazeGen.h" />
@@ -159,6 +160,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CameraSim.cpp" />
+    <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="glad\src\glad.c" />
     <ClCompile Include="LGL.cpp" />
     <ClCompile Include="MazeGen.cpp" />
