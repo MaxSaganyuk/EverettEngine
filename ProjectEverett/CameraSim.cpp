@@ -9,7 +9,10 @@ CameraSim::CameraSim(
 	const float fov,
 	const float speed
 )
-	: SolidSim(pos, scale, front, speed), windowHeight(windowHeight), windowWidth(windowWidth), fov(fov)
+	: SolidSim(pos, scale, front, speed, SolidType::Dynamic), 
+	  windowHeight(windowHeight), 
+	  windowWidth(windowWidth), 
+	  fov(fov)
 {
 	view = glm::mat4(1.0f);
 	projection = glm::perspective(glm::radians(fov), static_cast<float>(windowHeight / windowWidth), 0.1f, 100.f);

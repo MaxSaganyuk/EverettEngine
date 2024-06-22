@@ -32,14 +32,24 @@ void SolidSim::CheckRotationLimits()
 #undef CheckRotationFor
 }
 
+void SolidSim::ResetModelMatrix()
+{
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, pos);
+	model = glm::scale(model, scale);
+}
+
 SolidSim::SolidSim(
 	const glm::vec3& pos,
 	const glm::vec3& scale,
 	const glm::vec3& front,
-	const float speed
+	const float speed,
+	const SolidType type
 )
-	: front(front), pos(pos), scale(scale), speed(speed)
+	: front(front), pos(pos), scale(scale), speed(speed), type(type)
 {
+	ResetModelMatrix();
+
 	rotate = { -90.0f, 0.0f, 0.0f };
 
 	rotationLimits = {
@@ -63,6 +73,11 @@ void SolidSim::InvertMovement()
 bool SolidSim::IsMovementInverted()
 {
 	return speed < 0.0f;
+}
+
+glm::mat4& SolidSim::GetModelMatrixAddr()
+{
+	return model;
 }
 
 glm::vec3& SolidSim::GetFrontVectorAddr()
@@ -164,6 +179,12 @@ void SolidSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		assert(false && "Undefined direction");
 		return;
 	}
+
+	if (type == SolidType::Static && lastBlocker)
+	{
+		ResetModelMatrix();
+	}
+	else {}
 }
 
 void SolidSim::LimitRotations(const Rotation& min, const Rotation& max)

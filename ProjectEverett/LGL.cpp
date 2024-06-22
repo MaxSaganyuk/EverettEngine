@@ -751,15 +751,13 @@ bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::st
 
 bool LGL::LoadAndCompileShaders(const std::string& dir, const std::vector<std::string>& names)
 {
-	const std::vector<std::string> shaderFileTypes{ "vert", "frag" };
-
 	bool res = true;
 
 	for (const auto& name : names)
 	{
-		for (const auto& shaderFileType : shaderFileTypes)
+		for (const auto& shaderFileType : shaderTypeChoice)
 		{
-			res &= LoadShaderFromFile(dir + name + '.' + shaderFileType);
+			res &= LoadShaderFromFile(dir + name + '.' + shaderFileType.first);
 			res &= CompileShader();
 		}
 

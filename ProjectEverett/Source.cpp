@@ -197,21 +197,13 @@ int main()
 
 		for (auto& cube : cubes)
 		{
-			glm::mat4 model = glm::mat4(1.0f);
-			glm::vec3 scale = cube.GetScaleVectorAddr();
-			model = glm::translate(model, cube.GetPositionVectorAddr());
-			model = glm::scale(model, scale);
-			//model = glm::rotate(model, (float)sin(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));
+			glm::mat4& model = cube.GetModelMatrixAddr();
 			lgl.SetShaderUniformValue("model", model);
 			lgl.SetShaderUniformValue("inv", glm::inverse(model), true);
 
 			if (SolidSim::CheckForCollision(camera, cube))
 			{
 				camera.SetLastPosition();
-			}
-			if (SolidSim::CheckForCollision(lights[0], cube))
-			{
-				lights[0].SetLastPosition();
 			}
 		}
 	};
@@ -224,12 +216,8 @@ int main()
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		for (auto& light : lights)
 		{
-			glm::mat4 model = glm::mat4(1.0f);
-			light.Rotate({1, 0, 0});
-			model = glm::translate(model, light.GetPositionVectorAddr());
-			model = glm::scale(model, glm::vec3(0.2f));
 			light.SetPosition(SolidSim::Direction::Nowhere);
-			lgl.SetShaderUniformValue("model", model, true);
+			lgl.SetShaderUniformValue("model", light.GetModelMatrixAddr());;
 		}
 	};
 
