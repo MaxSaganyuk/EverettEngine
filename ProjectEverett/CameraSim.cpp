@@ -9,7 +9,7 @@ CameraSim::CameraSim(
 	const float fov,
 	const float speed
 )
-	: SolidSim(pos, scale, front, speed, SolidType::Dynamic), 
+	: SolidSim(pos, scale, front, speed), 
 	  windowHeight(windowHeight), 
 	  windowWidth(windowWidth), 
 	  fov(fov)
@@ -28,6 +28,8 @@ CameraSim::CameraSim(
 		{ -fullRotation, -90.0f, -fullRotation },
 		{  fullRotation,  90.0f,  fullRotation}
 	);
+
+	SolidSim::SetType(SolidType::Dynamic);
 }
 
 glm::mat4& CameraSim::GetViewMatrixAddr()

@@ -22,17 +22,20 @@ public:
 		Nowhere
 	};
 
-	struct Rotation
+	struct Rotation : public glm::vec3
 	{
-		float yaw;
-		float pitch;
-		float roll;
+		Rotation(const glm::vec3& axis = {}) : glm::vec3(axis) {}
+		Rotation(float pitch, float yaw, float roll) : Rotation(glm::vec3{pitch, yaw, roll}) {}
+
+		float GetPitch() { return x; };
+		float GetYaw()   { return y; };
+		float GetRoll()  { return z; };
 
 		Rotation& operator+=(const Rotation& toRotate)
 		{
-			yaw   += toRotate.yaw;
-			pitch += toRotate.pitch;
-			roll  += toRotate.roll;
+			x += toRotate.x;
+			y += toRotate.y;
+			z += toRotate.z;
 
 			return *this;
 		}
@@ -67,14 +70,13 @@ private:
 	std::pair<Rotation, Rotation> rotationLimits;
 
 	void CheckRotationLimits();
-	void ResetModelMatrix();
+	void ResetModelMatrix(const Rotation& toRotate = {});
 public:
 	SolidSim(
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
 		const glm::vec3& scale = glm::vec3(1.0f, 1.0f, 1.0f),
-		const glm::vec3& front = glm::vec3(0.0f, 0.0f, -1.0f),
-		const float speed = 0.006f,
-		const SolidType type = SolidType::Static
+		const glm::vec3& front = glm::vec3(0.0f, 0.0f, 1.0f),
+		const float speed = 0.006f
 	);
 
 	void InvertMovement();
@@ -90,6 +92,8 @@ public:
 	void EnableAllDirections();
 	size_t GetAmountOfDisabledDirs();
 	Direction GetLastDirection();
+
+	void SetType(SolidType type);
 
 	void SetLastPosition();
 	void SetPosition(Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f });

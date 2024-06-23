@@ -2,9 +2,7 @@
 
 void SolidSim::CheckRotationLimits()
 {
-#define CheckRotationFor(dir) checkRotation(rotate.dir, rotationLimits.first.dir, rotationLimits.second.dir)
-	
-	auto checkRotation = [](float& toCheck, float min, float max)
+	auto CheckRotation = [](float& toCheck, float min, float max)
 	{
 		if (toCheck > fullRotation)
 		{
@@ -25,37 +23,44 @@ void SolidSim::CheckRotationLimits()
 		}
 	};
 
-	CheckRotationFor(yaw);
-	CheckRotationFor(pitch);
-	CheckRotationFor(roll);
-
-#undef CheckRotationFor
+	for (int i = 0; i <3; ++i)
+	{
+		CheckRotation(rotate[i], rotationLimits.first[i], rotationLimits.second[i]);
+	}
 }
 
-void SolidSim::ResetModelMatrix()
+void SolidSim::ResetModelMatrix(const Rotation& toRotate)
 {
+	rotate += toRotate;
+
 	model = glm::mat4(1.0f);
 	model = glm::translate(model, pos);
 	model = glm::scale(model, scale);
+	// gimbal lock will happen, will rewrite to use quaternions later
+	for (int i = 0; i <3; ++i)
+	{
+		model = glm::rotate(model, rotate[i], { i == 0, i == 1, i == 2 });
+	}
 }
 
 SolidSim::SolidSim(
 	const glm::vec3& pos,
 	const glm::vec3& scale,
 	const glm::vec3& front,
-	const float speed,
-	const SolidType type
+	const float speed
 )
-	: front(front), pos(pos), scale(scale), speed(speed), type(type)
+	: front(front), pos(pos), scale(scale), speed(speed)
 {
 	ResetModelMatrix();
 
-	rotate = { -90.0f, 0.0f, 0.0f };
+	rotate = { 0.0f, 0.0f, 0.0f };
 
 	rotationLimits = {
-		{-fullRotation, -fullRotation, -fullRotation},
+		{0.0f, 0.0f, 0.0f},
 		{fullRotation, fullRotation, fullRotation}
 	};
+
+	lastPos = pos;
 
 	lastBlocker = false;
 
@@ -63,6 +68,13 @@ SolidSim::SolidSim(
 	{
 		disabledDirs[static_cast<Direction>(i)] = false;
 	}
+
+	type = SolidType::Static;
+}
+
+void SolidSim::SetType(SolidType type)
+{
+	this->type = type;
 }
 
 void SolidSim::InvertMovement()
@@ -162,19 +174,19 @@ void SolidSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		pos -= speed * front * limitAxis;
 		break;
 	case Direction::Left:
-		pos -= speed * glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f));
+		pos -= speed * glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f)));
 		break;
 	case Direction::Right:
-		pos += speed * glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f));
+		pos += speed * glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f)));
 		break;
 	case Direction::Up:
-		pos -= speed * glm::cross(front, glm::vec3(1.0f, 0.0f, 0.0f));
+		pos += glm::abs(speed * glm::normalize(front * glm::vec3(0.0f, 1.0f, 0.0f)));
 		break;
 	case Direction::Down:
-		pos += speed * glm::cross(front, glm::vec3(1.0f, 0.0f, 0.0f));
+		pos -= glm::abs(speed * glm::normalize(front * glm::vec3(0.0f, 1.0f, 0.0f)));
 		break;
 	case Direction::Nowhere:
-		break;
+		return;
 	default:
 		assert(false && "Undefined direction");
 		return;
@@ -184,7 +196,12 @@ void SolidSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 	{
 		ResetModelMatrix();
 	}
-	else {}
+	else 
+	{
+		model[3].x = pos.x;
+		model[3].y = pos.y;
+		model[3].z = pos.z;
+	}
 }
 
 void SolidSim::LimitRotations(const Rotation& min, const Rotation& max)
@@ -194,14 +211,28 @@ void SolidSim::LimitRotations(const Rotation& min, const Rotation& max)
 
 void SolidSim::Rotate(const Rotation& toRotate)
 {
-	rotate += toRotate;
+	if (type == SolidType::Static && lastBlocker)
+	{
+		ResetModelMatrix(toRotate);
+	}
+	else 
+	{
+		for (int i = 0; i <3; ++i)
+		{
+			if (toRotate[i])
+			{
+				model = glm::rotate(model, toRotate[i], { i == 0, i == 1, i == 2 });
+				rotate[i] += toRotate[i];
+			}
+		}
+	}
 
 	CheckRotationLimits();
 
 	glm::vec3 direction;
-	direction.x = cos(glm::radians(rotate.yaw)) * cos(glm::radians(rotate.pitch));
-	direction.y = sin(glm::radians(rotate.pitch));
-	direction.z = sin(glm::radians(rotate.yaw)) * cos(glm::radians(rotate.pitch));
+	direction.x = cos(glm::radians(rotate.GetPitch())) * cos(glm::radians(rotate.GetYaw()));
+	direction.y = sin(glm::radians(rotate.GetYaw()));
+	direction.z = sin(glm::radians(rotate.GetPitch())) * cos(glm::radians(rotate.GetYaw()));
 	front = glm::normalize(direction);
 }
 

@@ -95,7 +95,7 @@ namespace GeneralHelpers
 		{
 			pickedN = rand() % sizeN;
 			pickedM = rand() % sizeM;
-			avalible = maze.matrix[pickedN][pickedN];
+			avalible = maze.matrix[pickedN][pickedM];
 		}
 
 		return { static_cast<float>(pickedN), 0, static_cast<float>(pickedM) };
@@ -139,7 +139,8 @@ int main()
 	std::vector<glm::vec3> lightsPos = { {0.0f, 0.0f, 0.0f} };
 
 	std::vector<SolidSim> cubes = GeneralHelpers::ConvertPosesToSolids(cubesPos);
-	std::vector<SolidSim> lights = { SolidSim({ 10.0f, 5.0f, 10.0f }, { 0.35f, 0.35f, 0.35f })};
+	std::vector<SolidSim> lights = { SolidSim(camera.GetPositionVectorAddr(), {0.05f, 0.05f, 0.05f})};
+	lights.begin()->SetType(SolidSim::SolidType::Dynamic);
 
 	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
@@ -217,6 +218,8 @@ int main()
 		for (auto& light : lights)
 		{
 			light.SetPosition(SolidSim::Direction::Nowhere);
+			light.Rotate({ 0.0f, 0.005f, 0.0f });
+			light.SetPosition(SolidSim::Direction::Forward);
 			lgl.SetShaderUniformValue("model", light.GetModelMatrixAddr());;
 		}
 	};
@@ -265,6 +268,7 @@ int main()
 	lgl.SetInteractable(GLFW_KEY_S, [&camera]() { camera.SetPosition(CameraSim::Direction::Backward); });
 	lgl.SetInteractable(GLFW_KEY_A, [&camera]() { camera.SetPosition(CameraSim::Direction::Left); });
 	lgl.SetInteractable(GLFW_KEY_D, [&camera]() { camera.SetPosition(CameraSim::Direction::Right); });
+	lgl.SetInteractable(GLFW_KEY_R, [&camera]() { camera.SetPosition(CameraSim::Direction::Up); });
 
 	lgl.GetMaxAmountOfVertexAttr();
 	lgl.CaptureMouse();
