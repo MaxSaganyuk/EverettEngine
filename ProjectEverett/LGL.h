@@ -8,12 +8,10 @@
 #include <thread>
 #include <mutex>
 #include <typeindex>
-#include <glad/glad.h>
-#include <glfw3.h>
+#include <glad/include/glad/glad.h>
+#include <GLFW/glfw3.h>
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
+#include "LGLStructs.h"
 
 #define CALLBACK static void
 
@@ -72,55 +70,6 @@ private:
 	};
 
 public:
-	// Enums and structs for external use
-
-	enum class TextureOverlayType
-	{
-		REPEAT      = GL_REPEAT,
-		MIRRORED    = GL_MIRRORED_REPEAT,
-		EDGECLAMP   = GL_CLAMP_TO_EDGE,
-		BORDERCLAMP = GL_CLAMP_TO_BORDER
-	};
-
-	struct BilinearFiltrationConfig
-	{
-		bool minFilter = false;
-		bool maxFilter = true;
-	};
-
-	struct TextureParams
-	{
-		glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
-		TextureOverlayType overlay = TextureOverlayType::MIRRORED;
-		BilinearFiltrationConfig BFConfig = {};
-		bool createMipmaps = false;
-		BilinearFiltrationConfig mipmapBFConfig = {};
-	};
-
-	struct Vertex
-	{
-		glm::vec3 Position;
-		glm::vec2 TexCoords;
-		glm::vec3 Normal;
-	};
-
-	struct MeshInfo
-	{
-		std::vector<Vertex> vert;
-		std::vector<unsigned int> indices;
-		bool isDynamic = false;
-		std::string shaderProgram = "";
-		std::vector<std::string> textures;
-		std::function<void()> behaviour = nullptr;
-	};
-
-	struct MeshInfoFromFile
-	{
-		std::string file;
-		bool isDynamic = false;
-		std::string shader = "";
-		std::function<void()> behaviour = nullptr;
-	};
 
 	LGL();
 	~LGL();
@@ -140,9 +89,13 @@ public:
 	// If you need several shapes with similar behaviour, it's possible 
 	// to render additional ones with SetShaderUniformValue function inside
 	// the lambda script without creating additional VAOs
-	void CreateMesh(const MeshInfo& meshInfo);
-	void GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes, std::vector<unsigned int>& indeces);
-
+#ifdef LGL_DISABLEASSIMP
+	void GetMeshFromFile(const std::string& file, std::vector<LGLStructs::Vertex>& vertexes, std::vector<unsigned int>& indeces);
+#else	
+	void CreateMesh(const LGLStructs::MeshInfo& meshInfo);
+	void CreateModel(const LGLStructs::ModelInfo& model);
+	void GetModelFromFile(const std::string& file, LGLStructs::ModelInfo& model);
+#endif
 	// If no name is given will compile last loaded shader
 	bool CompileShader(const std::string& name = "");
 	bool LoadShader(const std::string& code, const std::string& type, const std::string& name);
@@ -155,9 +108,9 @@ public:
 	bool LoadAndCompileShaders(const std::string& dir, const std::vector<std::string>& names);
 
 	bool LoadTextureFromFile(const std::string& file, const std::string& textureName = "");
-	bool ConfigureTexture(const std::string& textureName, const TextureParams& textureParams = {});
-	bool ConfigureTexture(const TextureParams& textureParams = {});
-	bool LoadAndConfigureTextures(const std::string& dir, const std::vector<std::string>& files, const std::vector<TextureParams>& texParamVect = {});
+	bool ConfigureTexture(const std::string& textureName, const LGLStructs::TextureParams& textureParams = {});
+	bool ConfigureTexture(const LGLStructs::TextureParams& textureParams = {});
+	bool LoadAndConfigureTextures(const std::string& dir, const std::vector<std::string>& files, const std::vector<LGLStructs::TextureParams>& texParamVect = {});
 
 	static void InitOpenGL(int major, int minor);
 

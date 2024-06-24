@@ -53,16 +53,16 @@ namespace GeneralHelpers
 		return cubesPos;
 	}
 
-	std::vector<LGL::Vertex> ConvertAVerySpecificFloatPointerToVertexVector(float* ptr, size_t size)
+	std::vector<LGLStructs::Vertex> ConvertAVerySpecificFloatPointerToVertexVector(float* ptr, size_t size)
 	{
-		std::vector<LGL::Vertex> vert;
+		std::vector<LGLStructs::Vertex> vert;
 
 		for (int i = 0; i < size / sizeof(float) / 8; ++i)
 		{
 			vert.push_back(
-				LGL::Vertex{
+				LGLStructs::Vertex{
 					{ ptr[i * 8 + 0], ptr[i * 8 + 1], ptr[i * 8 + 2] },
-					{ ptr[i * 8 + 6], ptr[i * 8 + 7]                 },
+					{ ptr[i * 8 + 6], ptr[i * 8 + 7], 0              },
 					{ ptr[i * 8 + 3], ptr[i * 8 + 4], ptr[i * 8 + 5] }
 				}
 			);
@@ -223,23 +223,10 @@ int main()
 			lgl.SetShaderUniformValue("model", light.GetModelMatrixAddr());;
 		}
 	};
-
-	std::vector<LGL::Vertex> cubeV;
+	std::vector<LGLStructs::Vertex> cubeV;
 	std::vector<unsigned int> cubeInd;
 
-	lgl.GetMeshFromFile("models\\cup.obj", cubeV, cubeInd);
-	lgl.CreateMesh(
-		{
-			cubeV,
-			cubeInd,
-			false,
-			"lamp",
-			{},
-			lampBeh
-		}
-	);
-
-	std::vector<LGL::Vertex> a = GeneralHelpers::ConvertAVerySpecificFloatPointerToVertexVector(vertNT, sizeof(vertNT));
+	std::vector<LGLStructs::Vertex> a = GeneralHelpers::ConvertAVerySpecificFloatPointerToVertexVector(vertNT, sizeof(vertNT));
 
 
 	lgl.CreateMesh(
@@ -252,7 +239,10 @@ int main()
 			lightBeh
 		}
 	);
+	LGLStructs::ModelInfo coil;
 
+	lgl.GetModelFromFile("extraStuff\\coilhead.obj", coil);
+	lgl.CreateModel(coil);
 
 
 	lgl.SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });

@@ -7,6 +7,10 @@
 #include "LGL.h"
 #include "mapEx.h"
 
+#include "AssimpHelper.h"
+
+using namespace LGLStructs;
+
 std::mutex LGL::GLFWContextManager::glfwMutex;
 
 std::function<void(double, double)> LGL::cursorPositionFunc = nullptr;
@@ -327,6 +331,16 @@ void LGL::CreateMesh(const MeshInfo& meshInfo)
 	std::cout << "Mesh with " << VAOCollection.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
 }
 
+void LGL::CreateModel(const LGLStructs::ModelInfo& model)
+{
+	for (const auto& mesh : model)
+	{
+		CreateMesh(mesh);
+	}
+}
+
+#ifdef LGL_DISABLEASSIMP
+
 void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes, std::vector<unsigned int>& indeces)
 {
 	std::ifstream reader(file);
@@ -501,6 +515,16 @@ void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes
 	vertexes = resVertexes;
 	indeces = resIndeces;
 }
+#else
+
+
+void LGL::GetModelFromFile(const std::string& file, ModelInfo& model)
+{
+	AssimpHelper helper(file);
+	helper.GetModel(model);
+}
+
+#endif
 
 bool LGL::CompileShader(const std::string& name)
 {

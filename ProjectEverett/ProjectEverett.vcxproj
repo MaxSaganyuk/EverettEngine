@@ -72,19 +72,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LibraryPath>$(SolutionDir)ProjectEverett\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)ProjectEverett\glad\include;$(SolutionDir)ProjectEverett\GLFW\;$(SolutionDir)ProjectEverett\glm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)ProjectEverett\include;$(SolutionDir)ProjectEverett\include\glad\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LibraryPath>$(SolutionDir)ProjectEverett\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)ProjectEverett\glad\include;$(SolutionDir)ProjectEverett\GLFW\;$(SolutionDir)ProjectEverett\glm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)ProjectEverett\include;$(SolutionDir)ProjectEverett\include\glad\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LibraryPath>$(SolutionDir)ProjectEverett\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)ProjectEverett\glad\include;$(SolutionDir)ProjectEverett\GLFW\;$(SolutionDir)ProjectEverett\glm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)ProjectEverett\include;$(SolutionDir)ProjectEverett\include\glad\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LibraryPath>$(SolutionDir)ProjectEverett\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)ProjectEverett\glad\include;$(SolutionDir)ProjectEverett\GLFW\;$(SolutionDir)ProjectEverett\glm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)ProjectEverett\include;$(SolutionDir)ProjectEverett\include\glad\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -92,11 +92,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>.\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -107,13 +108,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>.\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -122,11 +124,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>.\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -137,19 +140,22 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>.\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AssimpHelper.h" />
     <ClInclude Include="CameraSim.h" />
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="LGL.h" />
+    <ClInclude Include="LGLStructs.h" />
     <ClInclude Include="mapEx.h" />
     <ClInclude Include="MazeGen.h" />
     <ClInclude Include="SolidSim.h" />
@@ -159,9 +165,10 @@
     <ClInclude Include="MaterialSim.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AssimpHelper.cpp" />
     <ClCompile Include="CameraSim.cpp" />
     <ClCompile Include="FileLoader.cpp" />
-    <ClCompile Include="glad\src\glad.c" />
+    <ClCompile Include="include\glad\src\glad.c" />
     <ClCompile Include="LGL.cpp" />
     <ClCompile Include="MazeGen.cpp" />
     <ClCompile Include="SolidSim.cpp" />
