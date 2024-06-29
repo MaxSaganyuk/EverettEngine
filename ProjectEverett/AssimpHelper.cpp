@@ -16,7 +16,7 @@ AssimpHelper::AssimpHelper(const std::string& file)
 	ProcessNode(modelHandle->mRootNode);
 }
 
-LGLStructs::MeshInfo AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
+LGLStructs::Mesh AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 {
 	auto GetVertexParam = [&meshHandle](LGLStructs::Vertex::VertexData whichData)
 	{
@@ -48,7 +48,7 @@ LGLStructs::MeshInfo AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 		return tempVector;
 	};
 
-	auto ProcessVerteces = [&meshHandle, &GetVertexParam](LGLStructs::MeshInfo& mesh)
+	auto ProcessVerteces = [&meshHandle, &GetVertexParam](LGLStructs::Mesh& mesh)
 	{
 		for (size_t i = 0; i < meshHandle->mNumVertices; ++i)
 		{
@@ -73,7 +73,7 @@ LGLStructs::MeshInfo AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 		}
 	};
 
-	auto ProcessFaces = [&meshHandle](LGLStructs::MeshInfo& mesh)
+	auto ProcessFaces = [&meshHandle](LGLStructs::Mesh& mesh)
 	{
 		for (size_t i = 0; i < meshHandle->mNumFaces; ++i)
 		{
@@ -86,7 +86,7 @@ LGLStructs::MeshInfo AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 		}
 	};
 
-	LGLStructs::MeshInfo mesh;
+	LGLStructs::Mesh mesh;
 
 	ProcessVerteces(mesh);
 	ProcessFaces(mesh);
@@ -99,7 +99,7 @@ void AssimpHelper::ProcessNode(const aiNode* nodeHandle)
 	for (size_t i = 0; i < nodeHandle->mNumMeshes; ++i)
 	{
 		aiMesh* meshHandle = modelHandle->mMeshes[nodeHandle->mMeshes[i]];
-		model.push_back(ProcessMesh(meshHandle));
+		model.AddMesh(ProcessMesh(meshHandle));
 	}
 
 	for (size_t i = 0; i < nodeHandle->mNumChildren; ++i)

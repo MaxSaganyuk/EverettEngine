@@ -15,7 +15,7 @@ class AssimpHelper
 	LGLStructs::ModelInfo model;
 
 	void ProcessNode(const aiNode* nodeHandle);
-	LGLStructs::MeshInfo ProcessMesh(const aiMesh* meshHandle);
+	LGLStructs::Mesh ProcessMesh(const aiMesh* meshHandle);
 public:
 	AssimpHelper(const std::string& file);
 	void GetModel(LGLStructs::ModelInfo& model);

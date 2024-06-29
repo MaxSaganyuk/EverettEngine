@@ -1,3 +1,4 @@
+#include <iostream>
 #include <time.h>
 #include <cmath>
 #include <cstdlib>
@@ -62,8 +63,8 @@ namespace GeneralHelpers
 			vert.push_back(
 				LGLStructs::Vertex{
 					{ ptr[i * 8 + 0], ptr[i * 8 + 1], ptr[i * 8 + 2] },
-					{ ptr[i * 8 + 6], ptr[i * 8 + 7], 0              },
-					{ ptr[i * 8 + 3], ptr[i * 8 + 4], ptr[i * 8 + 5] }
+					{ ptr[i * 8 + 3], ptr[i * 8 + 4], ptr[i * 8 + 5] },
+					{ ptr[i * 8 + 6], ptr[i * 8 + 7], 0.0f           }
 				}
 			);
 		}
@@ -132,7 +133,7 @@ int main()
 	MazeGen::MazeInfo maze = MazeGen::GenerateMaze(20, 20);
 	MazeGen::PrintExitPath(maze);
 
-	CameraSim camera(windowHeight, windowWidth, GeneralHelpers::SelectRandomPlaceInAMaze(maze));
+	CameraSim camera(windowHeight, windowWidth, {0.0f, 0.0f, 3.0f});
 	camera.SetMode(CameraSim::Mode::Fly);
 
 	std::vector<glm::vec3> cubesPos = GeneralHelpers::PlaceCubesInAMaze(maze);
@@ -141,6 +142,8 @@ int main()
 	std::vector<SolidSim> cubes = GeneralHelpers::ConvertPosesToSolids(cubesPos);
 	std::vector<SolidSim> lights = { SolidSim(camera.GetPositionVectorAddr(), {0.05f, 0.05f, 0.05f})};
 	lights.begin()->SetType(SolidSim::SolidType::Dynamic);
+
+	SolidSim coilSim({ 0.0f, 0.0f, 0.0f }, {0.2f, 0.2f, 0.2f});
 
 	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
@@ -164,7 +167,7 @@ int main()
 		}
 	};
 
-	auto lightBeh = [&lgl, &cubes, &lights, &mat, &atte, &camera, &lightShaderValueNames]()
+	auto lightBeh = [&lgl, &cubes, &lights, &mat, &atte, &camera, &lightShaderValueNames, &coilSim]()
 	{
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
@@ -195,7 +198,11 @@ int main()
 		);
 
 		lgl.SetShaderUniformValue("viewPos", camera.GetPositionVectorAddr());
+		
+	};
 
+	auto cubeBeh = [&lgl, &camera, &cubes]()
+	{
 		for (auto& cube : cubes)
 		{
 			glm::mat4& model = cube.GetModelMatrixAddr();
@@ -207,6 +214,13 @@ int main()
 				camera.SetLastPosition();
 			}
 		}
+	};
+
+	auto coilBeh = [&lgl, &lightBeh, &coilSim]()
+	{
+		lightBeh();
+		lgl.SetShaderUniformValue("model", coilSim.GetModelMatrixAddr());
+		lgl.SetShaderUniformValue("inv", glm::inverse(coilSim.GetModelMatrixAddr()), true);
 	};
 
 	auto lampBeh = [&lgl, &camera, &lights, &lightColor]()
@@ -223,27 +237,30 @@ int main()
 			lgl.SetShaderUniformValue("model", light.GetModelMatrixAddr());;
 		}
 	};
-	std::vector<LGLStructs::Vertex> cubeV;
+
+	/*
+	std::vector<LGLStructs::Vertex> cubeV = GeneralHelpers::ConvertAVerySpecificFloatPointerToVertexVector(vertNT, sizeof(vertNT));
 	std::vector<unsigned int> cubeInd;
 
-	std::vector<LGLStructs::Vertex> a = GeneralHelpers::ConvertAVerySpecificFloatPointerToVertexVector(vertNT, sizeof(vertNT));
+	LGLStructs::ModelInfo cubeModel;
 
+	cubeModel.behaviour = lightBeh;
+	cubeModel.shaderProgram = "lightComb";
+	cubeModel.AddMesh({ cubeV, cubeInd });
+	cubeModel.meshes[0].textures = c
+	lgl.CreateModel(cubeModel);
 
-	lgl.CreateMesh(
-		{
-			a,
-			{},
-			false,
-			"lightComb",
-			{"box.png", "boxEdge.png"},
-			lightBeh
-		}
-	);
+	*/
 	LGLStructs::ModelInfo coil;
 
 	lgl.GetModelFromFile("extraStuff\\coilhead.obj", coil);
+	coil.shaderProgram = "lightComb";
+	coil.behaviour = coilBeh;
+	for (auto& mesh : coil.meshes)
+	{
+		mesh.textures = { "extraStuff\\coilTex2.png" };
+	}
 	lgl.CreateModel(coil);
-
 
 	lgl.SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
@@ -264,11 +281,10 @@ int main()
 	lgl.CaptureMouse();
 
 	lgl.RunRenderingCycle(
-		[&lgl, &camera]() 
-		{ 
+		[&lgl, &camera]() {		
 			camera.SetPosition(CameraSim::Direction::Nowhere);
-			lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 			lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
+			lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 		}
 	);
 

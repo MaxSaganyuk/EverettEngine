@@ -47,9 +47,8 @@ private:
 		VAO vboId = 0;
 		size_t pointAmount;
 		bool useIndices;
-		std::string shader;
-		std::vector<std::string> textures;
-		std::function<void()> behaviour = nullptr;
+		std::string modelParent;
+		LGLStructs::MeshInfo* meshInfo = nullptr;
 	};
 
 	struct ShaderInfo
@@ -92,8 +91,8 @@ public:
 #ifdef LGL_DISABLEASSIMP
 	void GetMeshFromFile(const std::string& file, std::vector<LGLStructs::Vertex>& vertexes, std::vector<unsigned int>& indeces);
 #else	
-	void CreateMesh(const LGLStructs::MeshInfo& meshInfo);
-	void CreateModel(const LGLStructs::ModelInfo& model);
+	void CreateMesh(LGLStructs::MeshInfo& meshInfo);
+	void CreateModel(LGLStructs::ModelInfo& model);
 	void GetModelFromFile(const std::string& file, LGLStructs::ModelInfo& model);
 #endif
 	// If no name is given will compile last loaded shader

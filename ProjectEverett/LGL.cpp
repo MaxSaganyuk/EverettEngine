@@ -5,7 +5,7 @@
 
 #include "stb_image.h"
 #include "LGL.h"
-#include "mapEx.h"
+#include "stdEx/mapEx.h"
 
 #include "AssimpHelper.h"
 
@@ -217,17 +217,21 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 		{
 			currentVAOToRender = currentVAO;
 
-			lastProgram = currentVAO.shader;
-			glUseProgram(shaderProgramCollection[lastProgram]);
+			if (lastProgram != currentVAO.meshInfo->shaderProgram.Get())
+			{
+				lastProgram = currentVAO.meshInfo->shaderProgram.Get();
+				glUseProgram(shaderProgramCollection[lastProgram]);
+			}
+
 			glBindVertexArray(currentVAO.vboId);
 
-			if (currentVAO.textures.size())
+			if (currentVAO.meshInfo->textures.size())
 			{
-				for (int i = 0; i < currentVAO.textures.size(); ++i)
+				for (int i = 0; i < currentVAO.meshInfo->textures.size(); ++i)
 				{
-					if (textureCollection.find(currentVAO.textures[i]) != textureCollection.end())
+					if (textureCollection.find(currentVAO.meshInfo->textures[i]) != textureCollection.end())
 					{
-						TextureInfo& textureInfo = textureCollection.at(currentVAO.textures[i]);
+						TextureInfo& textureInfo = textureCollection.at(currentVAO.meshInfo->textures[i]);
 						glActiveTexture(GL_TEXTURE0 + i);
 						glBindTexture(GL_TEXTURE_2D, textureInfo.textureId);
 					}
@@ -239,9 +243,9 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 
-			if (currentVAO.behaviour)
+			if (currentVAO.meshInfo->behaviour.Get())
 			{
-				currentVAO.behaviour();
+				currentVAO.meshInfo->behaviour.Get()();
 			}
 
 			Render();
@@ -258,11 +262,11 @@ void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
 	background = rgba;
 }
 
-void LGL::CreateMesh(const MeshInfo& meshInfo)
+void LGL::CreateMesh(MeshInfo& meshInfo)
 {
 	GLFWContextLock
 
-	std::vector<int> steps{ 3, 2, 3 };
+	std::vector<int> steps{ 3, 3, 3, 3, 3 };
 
 	VAOCollection.push_back({0, false});
 	VAO* newVAO = &VAOCollection.back().vboId;
@@ -276,9 +280,9 @@ void LGL::CreateMesh(const MeshInfo& meshInfo)
 	glBindBuffer(GL_ARRAY_BUFFER, *newVBO);
 	glBufferData(
 		GL_ARRAY_BUFFER, 
-		meshInfo.vert.size() * sizeof(Vertex),
-		&meshInfo.vert[0],
-		meshInfo.isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
+		meshInfo.mesh.vert.size() * sizeof(Vertex),
+		&meshInfo.mesh.vert[0],
+		meshInfo.isDynamic.Get() ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
 	);
 	size_t stride = 0;
 	for (int i = 0; i < steps.size(); ++i)
@@ -286,7 +290,7 @@ void LGL::CreateMesh(const MeshInfo& meshInfo)
 		stride += steps[i];
 	}
 
-	if (!meshInfo.indices.empty())
+	if (!meshInfo.mesh.indices.empty())
 	{
 		EBOCollection.push_back(EBO());
 		EBO* newEBO = &EBOCollection.back();
@@ -295,17 +299,19 @@ void LGL::CreateMesh(const MeshInfo& meshInfo)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *newEBO);
 		glBufferData(
 			GL_ELEMENT_ARRAY_BUFFER, 
-			meshInfo.indices.size() * sizeof(unsigned int),
-			&meshInfo.indices[0],
-			meshInfo.isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
+			meshInfo.mesh.indices.size() * sizeof(unsigned int),
+			&meshInfo.mesh.indices[0],
+			meshInfo.isDynamic.Get() ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
 		);
 		VAOCollection.back().useIndices = true;
-		VAOCollection.back().pointAmount = meshInfo.indices.size();
+		VAOCollection.back().pointAmount = meshInfo.mesh.indices.size();
 	}
 	else
 	{
-		VAOCollection.back().pointAmount = meshInfo.vert.size();
+		VAOCollection.back().pointAmount = meshInfo.mesh.vert.size();
 	}
+
+	VAOCollection.back().meshInfo = &meshInfo;
 
 	stride *= sizeof(float);
 
@@ -316,14 +322,6 @@ void LGL::CreateMesh(const MeshInfo& meshInfo)
 		glEnableVertexAttribArray(i);
 		glVertexAttribPointer(i, steps[i], GL_FLOAT, false, stride, (void*)(step * sizeof(float)));
 	}
-
-	VAOCollection.back().shader = meshInfo.shaderProgram;
-	VAOCollection.back().textures = meshInfo.textures;
-
-	if (meshInfo.behaviour)
-	{
-		VAOCollection.back().behaviour = meshInfo.behaviour;
-	}
 	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//glBindVertexArray(0);
 
@@ -331,9 +329,9 @@ void LGL::CreateMesh(const MeshInfo& meshInfo)
 	std::cout << "Mesh with " << VAOCollection.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
 }
 
-void LGL::CreateModel(const LGLStructs::ModelInfo& model)
+void LGL::CreateModel(LGLStructs::ModelInfo& model)
 {
-	for (const auto& mesh : model)
+	for (auto& mesh : model.meshes)
 	{
 		CreateMesh(mesh);
 	}

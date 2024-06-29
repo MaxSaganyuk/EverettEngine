@@ -45,9 +45,6 @@
     <ClInclude Include="SolidSim.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="mapEx.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="FileLoader.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>

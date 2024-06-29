@@ -6,6 +6,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+#include "stdEx/utilityEx.h"
+
 #include <functional>
 
 namespace LGLStructs
@@ -75,19 +77,59 @@ namespace LGLStructs
 		}
 	};
 
-	struct MeshInfo
+	struct Mesh
 	{
 		std::vector<Vertex> vert;
 		std::vector<unsigned int> indices;
+	};
+
+	struct MeshInfo
+	{
+		Mesh mesh;
+		std::vector<std::string> textures;
+		// I guess textures are too specific to mesh
+		stdEx::ValWithBackup<bool> isDynamic;
+		stdEx::ValWithBackup<std::string> shaderProgram;
+		stdEx::ValWithBackup<std::function<void()>> behaviour;
+
+		MeshInfo(const Mesh& mesh, bool& isDynamic, std::string& shaderProgram, std::function<void()>& behaviour)
+			: mesh(mesh), isDynamic(isDynamic), shaderProgram(shaderProgram), behaviour(behaviour) {}
+	
 	};
 	
 	struct ModelInfo
 	{
 		std::vector<MeshInfo> meshes;
 		bool isDynamic = false;
-		std::string shaderProgram = "";
-		std::vector<std::string> textures;
+		std::string shaderProgram = "0";
 		std::function<void()> behaviour = nullptr;
+
+		void AddMesh(const Mesh& mesh)
+		{
+			meshes.emplace_back(MeshInfo(mesh, isDynamic, shaderProgram, behaviour));
+		}
+
+		void ResetDefaults()
+		{
+			for (auto& mesh : meshes)
+			{
+				mesh.isDynamic.ResetBackup(isDynamic);
+				mesh.shaderProgram.ResetBackup(shaderProgram);
+				mesh.behaviour.ResetBackup(behaviour);
+			}
+		}
+
+		ModelInfo& operator=(ModelInfo& modelInfo)
+		{
+			meshes = modelInfo.meshes;
+			isDynamic = modelInfo.isDynamic;
+			shaderProgram = modelInfo.shaderProgram;
+			behaviour = modelInfo.behaviour;
+
+			ResetDefaults();
+
+			return *this;
+		}
 	};
 
 }
