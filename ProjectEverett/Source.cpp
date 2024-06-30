@@ -123,9 +123,12 @@ int main()
 	lgl.LoadAndCompileShaders("shaders\\", shaderNames);
 
 	std::vector<std::string> textureNames;
+	std::vector<std::string> extraTextureNames;
 
 	FileLoader::GetFilesInDir(textureNames, "textures");
+	FileLoader::GetFilesInDir(extraTextureNames, "extraStuff\\textures");
 	lgl.LoadAndConfigureTextures("textures\\", textureNames);
+	lgl.LoadAndConfigureTextures("extraStuff\\textures\\", extraTextureNames);
 
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
@@ -140,7 +143,7 @@ int main()
 	std::vector<glm::vec3> lightsPos = { {0.0f, 0.0f, 0.0f} };
 
 	std::vector<SolidSim> cubes = GeneralHelpers::ConvertPosesToSolids(cubesPos);
-	std::vector<SolidSim> lights = { SolidSim(camera.GetPositionVectorAddr(), {0.05f, 0.05f, 0.05f})};
+	std::vector<SolidSim> lights = { SolidSim(camera.GetPositionVectorAddr(), {0.005f, 0.005f, 0.005f})};
 	lights.begin()->SetType(SolidSim::SolidType::Dynamic);
 
 	SolidSim coilSim({ 0.0f, 0.0f, 0.0f }, {0.2f, 0.2f, 0.2f});
@@ -253,13 +256,9 @@ int main()
 	*/
 	LGLStructs::ModelInfo coil;
 
-	lgl.GetModelFromFile("extraStuff\\coilhead.obj", coil);
+	lgl.GetModelFromFile("extraStuff\\coilHead.obj", coil);
 	coil.shaderProgram = "lightComb";
 	coil.behaviour = coilBeh;
-	for (auto& mesh : coil.meshes)
-	{
-		mesh.textures = { "extraStuff\\coilTex2.png" };
-	}
 	lgl.CreateModel(coil);
 
 	lgl.SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });

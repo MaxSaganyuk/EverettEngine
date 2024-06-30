@@ -85,67 +85,67 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="simple.vert">
+    <None Include="shaders\colorChange.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="simple.frag">
+    <None Include="shaders\colors.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="colorChange.frag">
+    <None Include="shaders\colors.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="threeColor.vert">
+    <None Include="shaders\colorsTex.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="threeColor.frag">
+    <None Include="shaders\colorsTex.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="texColor.frag">
+    <None Include="shaders\lamp.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="texColor.vert">
+    <None Include="shaders\lamp.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="colors.frag">
+    <None Include="shaders\lightArea.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="colors.vert">
+    <None Include="shaders\lightArea.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lamp.frag">
+    <None Include="shaders\lightComb.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lamp.vert">
+    <None Include="shaders\lightComb.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="colorsTex.frag">
+    <None Include="shaders\lightDir.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="colorsTex.vert">
+    <None Include="shaders\lightDir.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lightDir.frag">
+    <None Include="shaders\lightPoint.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lightDir.vert">
+    <None Include="shaders\lightPoint.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lightPoint.frag">
+    <None Include="shaders\simple.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lightPoint.vert">
+    <None Include="shaders\simple.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lightArea.frag">
+    <None Include="shaders\texColor.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lightArea.vert">
+    <None Include="shaders\texColor.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lightComb.frag">
+    <None Include="shaders\threeColor.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="lightComb.vert">
+    <None Include="shaders\threeColor.vert">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

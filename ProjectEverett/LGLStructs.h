@@ -44,10 +44,9 @@ namespace LGLStructs
 			Normal,
 			TexCoords,
 			Tangent,
-			Bitangent
+			Bitangent,
+			_SIZE
 		};
-
-		constexpr static size_t DataAmount = 5;
 		
 		glm::vec3 Position;
 		glm::vec3 Normal;
@@ -75,19 +74,51 @@ namespace LGLStructs
 				assert(false && "Invaling index in VertexData");
 			}
 		}
+
+		constexpr static size_t GetMemberAmount()
+		{
+			constexpr size_t memberAmount = static_cast<size_t>(VertexData::_SIZE);
+			constexpr size_t memberAmountDoubleCheck = sizeof(Vertex) / sizeof(glm::vec3);
+			static_assert(memberAmount == memberAmount, "Member amount and enum mismatch");
+
+			return memberAmount;
+		}
 	};
+
+	struct Texture
+	{
+		enum class TextureType
+		{
+			Diffuse,
+			Specular,
+			Normal,
+			Height,
+			_SIZE
+		};
+
+		TextureType type;
+		std::string name;
+
+		constexpr static size_t GetTextureTypeAmount()
+		{
+			constexpr size_t typeAmount = static_cast<size_t>(TextureType::_SIZE);
+
+			return typeAmount;
+		}
+
+	};
+
 
 	struct Mesh
 	{
 		std::vector<Vertex> vert;
 		std::vector<unsigned int> indices;
+		std::vector<Texture> textures;
 	};
 
 	struct MeshInfo
 	{
 		Mesh mesh;
-		std::vector<std::string> textures;
-		// I guess textures are too specific to mesh
 		stdEx::ValWithBackup<bool> isDynamic;
 		stdEx::ValWithBackup<std::string> shaderProgram;
 		stdEx::ValWithBackup<std::function<void()>> behaviour;

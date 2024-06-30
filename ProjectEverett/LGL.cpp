@@ -225,13 +225,13 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 			glBindVertexArray(currentVAO.vboId);
 
-			if (currentVAO.meshInfo->textures.size())
+			if (currentVAO.meshInfo->mesh.textures.size())
 			{
-				for (int i = 0; i < currentVAO.meshInfo->textures.size(); ++i)
+				for (int i = 0; i < currentVAO.meshInfo->mesh.textures.size(); ++i)
 				{
-					if (textureCollection.find(currentVAO.meshInfo->textures[i]) != textureCollection.end())
+					if (textureCollection.find(currentVAO.meshInfo->mesh.textures[i].name) != textureCollection.end())
 					{
-						TextureInfo& textureInfo = textureCollection.at(currentVAO.meshInfo->textures[i]);
+						TextureInfo& textureInfo = textureCollection.at(currentVAO.meshInfo->mesh.textures[i].name);
 						glActiveTexture(GL_TEXTURE0 + i);
 						glBindTexture(GL_TEXTURE_2D, textureInfo.textureId);
 					}

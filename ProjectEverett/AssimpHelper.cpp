@@ -1,4 +1,5 @@
 #include <iostream>
+#include <map>
 
 #include "AssimpHelper.h"
 
@@ -53,7 +54,7 @@ LGLStructs::Mesh AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 		for (size_t i = 0; i < meshHandle->mNumVertices; ++i)
 		{
 			LGLStructs::Vertex vert;
-			for (size_t vertData = 0; vertData < LGLStructs::Vertex::DataAmount; ++vertData)
+			for (size_t vertData = 0; vertData < LGLStructs::Vertex::GetMemberAmount(); ++vertData)
 			{
 				glm::vec3 glmVect{ 0.0f, 0.0f, 0.0f };
 				aiVector3D* assimpVect = GetVertexParam(static_cast<LGLStructs::Vertex::VertexData>(vertData));
@@ -86,10 +87,50 @@ LGLStructs::Mesh AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 		}
 	};
 
+	auto ProcessTextures = [this, &meshHandle](LGLStructs::Mesh& mesh)
+	{
+		using TextureType = LGLStructs::Texture::TextureType;
+
+		auto LoadTextureByMaterial = [](LGLStructs::Mesh& mesh, aiMaterial* material, TextureType texType)
+		{
+			static std::map<TextureType, aiTextureType> textureTypeConvert 
+			{
+				{TextureType::Diffuse,  aiTextureType_DIFFUSE},
+				{TextureType::Specular, aiTextureType_SPECULAR},
+				{TextureType::Normal,   aiTextureType_NORMALS},
+				{TextureType::Height,   aiTextureType_HEIGHT}
+			};
+
+			aiTextureType convertedType = textureTypeConvert.at(texType);
+
+			for (size_t i = 0; i < material->GetTextureCount(convertedType); ++i)
+			{
+				aiString str;
+				material->GetTexture(convertedType, i, &str);
+				std::string strWithoutPrefix = str.C_Str();
+
+				while (strWithoutPrefix.find('\\') != std::string::npos)
+				{
+					strWithoutPrefix = strWithoutPrefix.substr(strWithoutPrefix.find('\\') + 1);
+				}
+				
+				mesh.textures.push_back({ texType, strWithoutPrefix });
+			}
+		};
+
+		aiMaterial* material = modelHandle->mMaterials[meshHandle->mMaterialIndex];
+
+		for (size_t i = 0; i < LGLStructs::Texture::GetTextureTypeAmount(); ++i)
+		{
+			LoadTextureByMaterial(mesh, material, static_cast<TextureType>(i));
+		}
+	};
+
 	LGLStructs::Mesh mesh;
 
 	ProcessVerteces(mesh);
 	ProcessFaces(mesh);
+	ProcessTextures(mesh);
 
 	return mesh;
 }

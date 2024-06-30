@@ -8,7 +8,6 @@
 
 #include "LGLStructs.h"
 
-// Add texture params
 class AssimpHelper
 {
 	const aiScene* modelHandle;
