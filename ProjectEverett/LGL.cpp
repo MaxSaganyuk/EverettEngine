@@ -217,9 +217,10 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 		{
 			currentVAOToRender = currentVAO;
 
-			if (lastProgram != currentVAO.meshInfo->shaderProgram.Get())
+			std::string shaderProgramToCheck = currentVAO.meshInfo->shaderProgram;
+			if (lastProgram != shaderProgramToCheck)
 			{
-				lastProgram = currentVAO.meshInfo->shaderProgram.Get();
+				lastProgram = shaderProgramToCheck;
 				glUseProgram(shaderProgramCollection[lastProgram]);
 			}
 
@@ -243,9 +244,10 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 
-			if (currentVAO.meshInfo->behaviour.Get())
+			std::function<void()> behaviourToCheck = currentVAO.meshInfo->behaviour;
+			if (behaviourToCheck)
 			{
-				currentVAO.meshInfo->behaviour.Get()();
+				behaviourToCheck();
 			}
 
 			Render();
@@ -282,7 +284,7 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 		GL_ARRAY_BUFFER, 
 		meshInfo.mesh.vert.size() * sizeof(Vertex),
 		&meshInfo.mesh.vert[0],
-		meshInfo.isDynamic.Get() ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
+		meshInfo.isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
 	);
 	size_t stride = 0;
 	for (int i = 0; i < steps.size(); ++i)
@@ -301,7 +303,7 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 			GL_ELEMENT_ARRAY_BUFFER, 
 			meshInfo.mesh.indices.size() * sizeof(unsigned int),
 			&meshInfo.mesh.indices[0],
-			meshInfo.isDynamic.Get() ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
+			meshInfo.isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
 		);
 		VAOCollection.back().useIndices = true;
 		VAOCollection.back().pointAmount = meshInfo.mesh.indices.size();

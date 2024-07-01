@@ -124,7 +124,7 @@ namespace LGLStructs
 		stdEx::ValWithBackup<std::function<void()>> behaviour;
 
 		MeshInfo(const Mesh& mesh, bool& isDynamic, std::string& shaderProgram, std::function<void()>& behaviour)
-			: mesh(mesh), isDynamic(isDynamic), shaderProgram(shaderProgram), behaviour(behaviour) {}
+			: mesh(mesh), isDynamic(&isDynamic), shaderProgram(&shaderProgram), behaviour(&behaviour) {}
 	
 	};
 	
@@ -144,9 +144,9 @@ namespace LGLStructs
 		{
 			for (auto& mesh : meshes)
 			{
-				mesh.isDynamic.ResetBackup(isDynamic);
-				mesh.shaderProgram.ResetBackup(shaderProgram);
-				mesh.behaviour.ResetBackup(behaviour);
+				mesh.isDynamic.ResetBackup(&isDynamic);
+				mesh.shaderProgram.ResetBackup(&shaderProgram);
+				mesh.behaviour.ResetBackup(&behaviour);
 			}
 		}
 

@@ -148,7 +148,7 @@ int main()
 
 	SolidSim coilSim({ 0.0f, 0.0f, 0.0f }, {0.2f, 0.2f, 0.2f});
 
-	glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+	glm::vec3 lightColor(1.0f, 0.0f, 0.0f);
 
 	std::vector<std::pair<std::string, std::vector<std::string>>> lightShaderValueNames
 	{
@@ -241,7 +241,7 @@ int main()
 		}
 	};
 
-	/*
+
 	std::vector<LGLStructs::Vertex> cubeV = GeneralHelpers::ConvertAVerySpecificFloatPointerToVertexVector(vertNT, sizeof(vertNT));
 	std::vector<unsigned int> cubeInd;
 
@@ -250,15 +250,16 @@ int main()
 	cubeModel.behaviour = lightBeh;
 	cubeModel.shaderProgram = "lightComb";
 	cubeModel.AddMesh({ cubeV, cubeInd });
-	cubeModel.meshes[0].textures = c
 	lgl.CreateModel(cubeModel);
 
-	*/
+
 	LGLStructs::ModelInfo coil;
 
 	lgl.GetModelFromFile("extraStuff\\coilHead.obj", coil);
 	coil.shaderProgram = "lightComb";
 	coil.behaviour = coilBeh;
+	coil.meshes[1].shaderProgram = "lamp";
+	coil.meshes[1].behaviour = lampBeh;
 	lgl.CreateModel(coil);
 
 	lgl.SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
