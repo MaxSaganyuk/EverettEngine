@@ -96,8 +96,8 @@ namespace LGLStructs
 			_SIZE
 		};
 
-		TextureType type;
 		std::string name;
+		TextureType type = TextureType::Normal;
 
 		constexpr static size_t GetTextureTypeAmount()
 		{

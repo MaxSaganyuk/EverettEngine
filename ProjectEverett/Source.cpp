@@ -117,7 +117,6 @@ int main()
 	lgl.CreateWindow(windowHeight, windowWidth, "ProjectEverett");
 	lgl.InitGLAD();
 	lgl.InitCallbacks();
-
 	std::vector<std::string> shaderNames { "lightComb", "lamp" };
 
 	lgl.LoadAndCompileShaders("shaders\\", shaderNames);
@@ -204,8 +203,9 @@ int main()
 		
 	};
 
-	auto cubeBeh = [&lgl, &camera, &cubes]()
+	auto cubeBeh = [&lgl, &lightBeh, &camera, &cubes]()
 	{
+		lightBeh();
 		for (auto& cube : cubes)
 		{
 			glm::mat4& model = cube.GetModelMatrixAddr();
@@ -247,9 +247,10 @@ int main()
 
 	LGLStructs::ModelInfo cubeModel;
 
-	cubeModel.behaviour = lightBeh;
+	cubeModel.behaviour = cubeBeh;
 	cubeModel.shaderProgram = "lightComb";
 	cubeModel.AddMesh({ cubeV, cubeInd });
+	cubeModel.meshes[0].mesh.textures = { {"box.png"}, { "boxEdge.png" } };
 	lgl.CreateModel(cubeModel);
 
 
@@ -258,8 +259,6 @@ int main()
 	lgl.GetModelFromFile("extraStuff\\coilHead.obj", coil);
 	coil.shaderProgram = "lightComb";
 	coil.behaviour = coilBeh;
-	coil.meshes[1].shaderProgram = "lamp";
-	coil.meshes[1].behaviour = lampBeh;
 	lgl.CreateModel(coil);
 
 	lgl.SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });

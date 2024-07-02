@@ -11,7 +11,7 @@
 
 using namespace LGLStructs;
 
-std::mutex LGL::GLFWContextManager::glfwMutex;
+std::recursive_mutex LGL::GLFWContextManager::glfwMutex;
 
 std::function<void(double, double)> LGL::cursorPositionFunc = nullptr;
 std::function<void(double, double)> LGL::scrollCallbackFunc = nullptr;
@@ -85,8 +85,7 @@ bool LGL::InitGLAD()
 		return false;
 	}
 
-	glEnable(GL_DEPTH_TEST);
-	//glDepthFunc(GL_ALWAYS);
+	SetDepthTest(DepthTestMode::Less);
 
 	std::cout << "GLAD initialized\n";
 
@@ -105,6 +104,21 @@ void LGL::TerminateOpenGL()
 	glfwTerminate();
 
 	std::cout << "Terminate OpenGL\n";
+}
+
+void LGL::SetDepthTest(DepthTestMode depthTestMode)
+{
+	GLFWContextLock
+
+	if (depthTestMode == DepthTestMode::Disable)
+	{
+		glDisable(GL_DEPTH_TEST);
+	}
+	else
+	{
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(static_cast<GLenum>(depthTestMode));
+	}
 }
 
 void LGL::CaptureMouse()

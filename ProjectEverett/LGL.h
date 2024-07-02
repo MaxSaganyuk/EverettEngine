@@ -117,6 +117,21 @@ public:
 	void InitCallbacks();
 	static void TerminateOpenGL();
 
+	enum class DepthTestMode
+	{
+		Disable,
+		Always         = GL_ALWAYS,
+		Never          = GL_NEVER,
+		Less           = GL_LESS,
+		Greater        = GL_GREATER,
+		Equal          = GL_EQUAL,
+		NotEqual       = GL_NOTEQUAL,
+		LessOrEqual    = GL_LEQUAL,
+		GreaterOrEqual = GL_GEQUAL
+	};
+
+	void SetDepthTest(DepthTestMode depthTestMode);
+
 	int GetMaxAmountOfVertexAttr();
 
 	void CaptureMouse();
@@ -189,7 +204,7 @@ private:
 
 	class GLFWContextManager
 	{
-		static std::mutex glfwMutex;
+		static std::recursive_mutex glfwMutex;
 	public:
 #define GLFWContextLock GLFWContextManager mux(window);
 

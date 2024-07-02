@@ -114,7 +114,7 @@ LGLStructs::Mesh AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 					strWithoutPrefix = strWithoutPrefix.substr(strWithoutPrefix.find('\\') + 1);
 				}
 				
-				mesh.textures.push_back({ texType, strWithoutPrefix });
+				mesh.textures.push_back({ strWithoutPrefix, texType });
 			}
 		};
 
