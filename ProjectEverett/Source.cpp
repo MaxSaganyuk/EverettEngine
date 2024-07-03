@@ -13,7 +13,13 @@
 #include "SolidSim.h"
 #include "CameraSim.h"
 
+#include "CommandHandler.h"
+
 #include "MazeGen.h"
+
+#include "stdEx/mapEx.h"
+
+using SolidSimManager = std::unordered_map<std::string, std::vector<SolidSim>>;
 
 namespace GeneralHelpers
 {
@@ -140,12 +146,13 @@ int main()
 
 	std::vector<glm::vec3> cubesPos = GeneralHelpers::PlaceCubesInAMaze(maze);
 	std::vector<glm::vec3> lightsPos = { {0.0f, 0.0f, 0.0f} };
+	
+	SolidSimManager solids;
 
-	std::vector<SolidSim> cubes = GeneralHelpers::ConvertPosesToSolids(cubesPos);
-	std::vector<SolidSim> lights = { SolidSim(camera.GetPositionVectorAddr(), {0.005f, 0.005f, 0.005f})};
-	lights.begin()->SetType(SolidSim::SolidType::Dynamic);
-
-	SolidSim coilSim({ 0.0f, 0.0f, 0.0f }, {0.2f, 0.2f, 0.2f});
+	solids["cube"]  = GeneralHelpers::ConvertPosesToSolids(cubesPos);
+	solids["light"] = { SolidSim(camera.GetPositionVectorAddr(), {0.005f, 0.005f, 0.005f}) };
+	solids.at("light").begin()->SetType(SolidSim::SolidType::Dynamic);
+	solids["coilHead"] = { SolidSim({ 0.0f, 0.0f, 0.0f }, {0.2f, 0.2f, 0.2f}) };
 
 	glm::vec3 lightColor(1.0f, 0.0f, 0.0f);
 
@@ -169,13 +176,14 @@ int main()
 		}
 	};
 
-	auto lightBeh = [&lgl, &cubes, &lights, &mat, &atte, &camera, &lightShaderValueNames, &coilSim]()
+	auto lightBeh = [&lgl, &solids, &mat, &atte, &camera, &lightShaderValueNames]()
 	{
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 
 		lgl.SetShaderUniformStruct(lightShaderValueNames[0].first, lightShaderValueNames[0].second, 0, 1, mat.shininess);
 
+		std::vector<SolidSim>& lights = solids.at("light");
 		lgl.SetShaderUniformValue("lightAmount", static_cast<int>(lights.size()));
 		for (int i = 0; i < lights.size(); ++i)
 		{
@@ -203,10 +211,10 @@ int main()
 		
 	};
 
-	auto cubeBeh = [&lgl, &lightBeh, &camera, &cubes]()
+	auto cubeBeh = [&lgl, &lightBeh, &camera, &solids]()
 	{
 		lightBeh();
-		for (auto& cube : cubes)
+		for (auto& cube : solids.at("cube"))
 		{
 			glm::mat4& model = cube.GetModelMatrixAddr();
 			lgl.SetShaderUniformValue("model", model);
@@ -219,20 +227,24 @@ int main()
 		}
 	};
 
-	auto coilBeh = [&lgl, &lightBeh, &coilSim]()
+	auto coilBeh = [&lgl, &lightBeh, &solids]()
 	{
 		lightBeh();
-		lgl.SetShaderUniformValue("model", coilSim.GetModelMatrixAddr());
-		lgl.SetShaderUniformValue("inv", glm::inverse(coilSim.GetModelMatrixAddr()), true);
+
+		for (auto& coil : solids.at("coilHead"))
+		{
+			lgl.SetShaderUniformValue("model", coil.GetModelMatrixAddr());
+			lgl.SetShaderUniformValue("inv", glm::inverse(coil.GetModelMatrixAddr()), true);
+		}
 	};
 
-	auto lampBeh = [&lgl, &camera, &lights, &lightColor]()
+	auto lampBeh = [&lgl, &camera, &solids, &lightColor]()
 	{
 		lgl.SetShaderUniformValue("lightColor", lightColor);
 
 		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
-		for (auto& light : lights)
+		for (auto& light : solids.at("light"))
 		{
 			light.SetPosition(SolidSim::Direction::Nowhere);
 			light.Rotate({ 0.0f, 0.005f, 0.0f });
@@ -240,7 +252,6 @@ int main()
 			lgl.SetShaderUniformValue("model", light.GetModelMatrixAddr());;
 		}
 	};
-
 
 	std::vector<LGLStructs::Vertex> cubeV = GeneralHelpers::ConvertAVerySpecificFloatPointerToVertexVector(vertNT, sizeof(vertNT));
 	std::vector<unsigned int> cubeInd;
@@ -252,7 +263,6 @@ int main()
 	cubeModel.AddMesh({ cubeV, cubeInd });
 	cubeModel.meshes[0].mesh.textures = { {"box.png"}, { "boxEdge.png" } };
 	lgl.CreateModel(cubeModel);
-
 
 	LGLStructs::ModelInfo coil;
 
@@ -270,11 +280,15 @@ int main()
 		[&camera](double xpos, double ypos) { camera.Zoom(static_cast<float>(xpos), static_cast<float>(ypos)); }
 	);
 
+	CommandHandler commandHandler(camera, solids);
+
 	lgl.SetInteractable(GLFW_KEY_W, [&camera]() { camera.SetPosition(CameraSim::Direction::Forward); });
 	lgl.SetInteractable(GLFW_KEY_S, [&camera]() { camera.SetPosition(CameraSim::Direction::Backward); });
 	lgl.SetInteractable(GLFW_KEY_A, [&camera]() { camera.SetPosition(CameraSim::Direction::Left); });
 	lgl.SetInteractable(GLFW_KEY_D, [&camera]() { camera.SetPosition(CameraSim::Direction::Right); });
 	lgl.SetInteractable(GLFW_KEY_R, [&camera]() { camera.SetPosition(CameraSim::Direction::Up); });
+
+	lgl.SetInteractable(GLFW_KEY_C, [&commandHandler]() { commandHandler.RunCommandLine(); });
 
 	lgl.GetMaxAmountOfVertexAttr();
 	lgl.CaptureMouse();

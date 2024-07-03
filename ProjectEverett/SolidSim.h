@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cassert>
-#include <map>
+#include <unordered_map>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -62,11 +62,13 @@ private:
 	bool lastBlocker;
 	float speed;
 
+	bool ghostMode;
+
 	Direction lastDir;
 
 	SolidType type;
 
-	std::map<Direction, bool> disabledDirs;
+	std::unordered_map<Direction, bool> disabledDirs;
 	std::pair<Rotation, Rotation> rotationLimits;
 
 	void CheckRotationLimits();
@@ -86,6 +88,9 @@ public:
 	glm::vec3& GetFrontVectorAddr();
 	glm::vec3& GetPositionVectorAddr();
 	glm::vec3& GetScaleVectorAddr();
+
+	void SetGhostMode(bool val);
+	bool IsGhostMode() const;
 
 	void DisableDirection(Direction dir);
 	void EnableDirection(Direction dir);

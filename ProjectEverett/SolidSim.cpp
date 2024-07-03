@@ -63,6 +63,7 @@ SolidSim::SolidSim(
 	lastPos = pos;
 
 	lastBlocker = false;
+	ghostMode = false;
 
 	for (size_t i = 0; i < realDirectionAmount; ++i)
 	{
@@ -70,6 +71,16 @@ SolidSim::SolidSim(
 	}
 
 	type = SolidType::Static;
+}
+
+void SolidSim::SetGhostMode(bool val)
+{
+	ghostMode = val;
+}
+
+bool SolidSim::IsGhostMode() const
+{
+	return ghostMode;
 }
 
 void SolidSim::SetType(SolidType type)
@@ -238,6 +249,11 @@ void SolidSim::Rotate(const Rotation& toRotate)
 
 bool SolidSim::CheckForCollision(const SolidSim& solid1, const SolidSim& solid2)
 {
+	if (solid1.IsGhostMode() || solid2.IsGhostMode())
+	{
+		return false;
+	}
+
 	bool res = true;
 
 	for (int i = 0; i <3; ++i)

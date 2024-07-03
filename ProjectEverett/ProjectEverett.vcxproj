@@ -153,6 +153,7 @@
   <ItemGroup>
     <ClInclude Include="AssimpHelper.h" />
     <ClInclude Include="CameraSim.h" />
+    <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="LGL.h" />
     <ClInclude Include="LGLStructs.h" />
@@ -166,6 +167,7 @@
   <ItemGroup>
     <ClCompile Include="AssimpHelper.cpp" />
     <ClCompile Include="CameraSim.cpp" />
+    <ClCompile Include="CommandHandler.cpp" />
     <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="include\glad\src\glad.c" />
     <ClCompile Include="LGL.cpp" />
