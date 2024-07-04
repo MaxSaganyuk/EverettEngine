@@ -201,25 +201,6 @@ private:
 	std::map<size_t, std::pair<OnPressFunction, OnReleaseFunction>> interactCollection;
 
 	static const std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators;
-
-	class GLFWContextManager
-	{
-		static std::recursive_mutex glfwMutex;
-	public:
-#define GLFWContextLock GLFWContextManager mux(window);
-
-		GLFWContextManager(GLFWwindow* window)
-		{
-			glfwMutex.lock();
-			glfwMakeContextCurrent(window);
-		}
-
-		~GLFWContextManager()
-		{
-			glfwMakeContextCurrent(nullptr);
-			glfwMutex.unlock();
-		}
-	};
 };
 
 /*

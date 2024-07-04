@@ -12,6 +12,7 @@
 #include "LightSim.h"
 #include "SolidSim.h"
 #include "CameraSim.h"
+#include "SoundSim.h"
 
 #include "CommandHandler.h"
 
@@ -117,6 +118,7 @@ int main()
 	constexpr int windowWidth = 600;
 
 	LGL::InitOpenGL(3, 3);
+	SoundSim::InitOpenAL();
 
 	LGL lgl;
 
@@ -282,10 +284,37 @@ int main()
 
 	CommandHandler commandHandler(camera, solids);
 
-	lgl.SetInteractable(GLFW_KEY_W, [&camera]() { camera.SetPosition(CameraSim::Direction::Forward); });
-	lgl.SetInteractable(GLFW_KEY_S, [&camera]() { camera.SetPosition(CameraSim::Direction::Backward); });
-	lgl.SetInteractable(GLFW_KEY_A, [&camera]() { camera.SetPosition(CameraSim::Direction::Left); });
-	lgl.SetInteractable(GLFW_KEY_D, [&camera]() { camera.SetPosition(CameraSim::Direction::Right); });
+	std::vector<int> walkingDirections { GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D };
+	std::vector<SoundSim> walkingSounds;
+	walkingSounds.reserve(walkingDirections.size());
+
+	for (size_t i = 0; i < walkingDirections.size(); ++i)
+	{
+		walkingSounds.emplace_back(SoundSim("sounds//walk" + std::to_string(i) + ".wav"));
+	}
+
+
+	auto PlayWalkingSound = [&walkingSounds]()
+	{
+		bool isPlaying;
+
+		for (size_t i = 0; i < walkingSounds.size(); ++i)
+		{
+			isPlaying = walkingSounds[i].IsPlaying();
+			if (isPlaying) return;
+		}
+
+		walkingSounds[rand() % walkingSounds.size()].Play();
+	};
+
+	for (size_t i = 0; i < walkingDirections.size(); ++i)
+	{
+		lgl.SetInteractable(
+			walkingDirections[i],
+			[&camera, &PlayWalkingSound, i]() { PlayWalkingSound(); camera.SetPosition(static_cast<CameraSim::Direction>(i)); }
+		);
+	}
+
 	lgl.SetInteractable(GLFW_KEY_R, [&camera]() { camera.SetPosition(CameraSim::Direction::Up); });
 
 	lgl.SetInteractable(GLFW_KEY_C, [&commandHandler]() { commandHandler.RunCommandLine(); });

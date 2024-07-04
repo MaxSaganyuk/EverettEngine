@@ -97,7 +97,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -129,7 +129,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;OpenAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -154,11 +154,13 @@
     <ClInclude Include="AssimpHelper.h" />
     <ClInclude Include="CameraSim.h" />
     <ClInclude Include="CommandHandler.h" />
+    <ClInclude Include="ContextManager.h" />
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="LGL.h" />
     <ClInclude Include="LGLStructs.h" />
     <ClInclude Include="MazeGen.h" />
     <ClInclude Include="SolidSim.h" />
+    <ClInclude Include="SoundSim.h" />
     <ClInclude Include="Verts.h" />
     <ClInclude Include="LightSim.h" />
     <ClInclude Include="stb_image.h" />
@@ -173,6 +175,7 @@
     <ClCompile Include="LGL.cpp" />
     <ClCompile Include="MazeGen.cpp" />
     <ClCompile Include="SolidSim.cpp" />
+    <ClCompile Include="SoundSim.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
