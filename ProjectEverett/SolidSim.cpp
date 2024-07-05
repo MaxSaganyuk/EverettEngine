@@ -60,6 +60,8 @@ SolidSim::SolidSim(
 		{fullRotation, fullRotation, fullRotation}
 	};
 
+	up = glm::vec3(0.0f, 1.0f, 0.0f);
+
 	lastPos = pos;
 
 	lastBlocker = false;
@@ -111,6 +113,11 @@ glm::vec3& SolidSim::GetFrontVectorAddr()
 glm::vec3& SolidSim::GetPositionVectorAddr()
 {
 	return pos;
+}
+
+glm::vec3& SolidSim::GetUpVectorAddr()
+{
+	return up;
 }
 
 glm::vec3& SolidSim::GetScaleVectorAddr()
@@ -185,16 +192,16 @@ void SolidSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		pos -= speed * front * limitAxis;
 		break;
 	case Direction::Left:
-		pos -= speed * glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f)));
+		pos -= speed * glm::normalize(glm::cross(front, up));
 		break;
 	case Direction::Right:
-		pos += speed * glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f)));
+		pos += speed * glm::normalize(glm::cross(front, up));
 		break;
 	case Direction::Up:
-		pos += glm::abs(speed * glm::normalize(front * glm::vec3(0.0f, 1.0f, 0.0f)));
+		pos += glm::abs(speed * glm::normalize(front * up));
 		break;
 	case Direction::Down:
-		pos -= glm::abs(speed * glm::normalize(front * glm::vec3(0.0f, 1.0f, 0.0f)));
+		pos -= glm::abs(speed * glm::normalize(front * up));
 		break;
 	case Direction::Nowhere:
 		return;

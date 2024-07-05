@@ -4,11 +4,11 @@
 #include <mutex>
 #include <functional>
 
-
 template<typename Context>
 class ContextManager
 {
 	static std::recursive_mutex rMutex;
+	static size_t counter;
 	std::function<void(Context*)> contextSetter;
 public:
 	ContextManager(Context* context, std::function<void(Context*)> contextSetter)
@@ -16,12 +16,20 @@ public:
 		this->contextSetter = contextSetter;
 
 		rMutex.lock();
-		contextSetter(context);
+		if (!counter)
+		{
+			contextSetter(context);
+		}
+		++counter;
 	}
 
 	~ContextManager()
 	{
-		contextSetter(nullptr);
+		--counter;
+		if (!counter)
+		{
+			contextSetter(nullptr);
+		}
 		rMutex.unlock();
 	}
 };

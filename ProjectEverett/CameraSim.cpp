@@ -44,13 +44,12 @@ glm::mat4& CameraSim::GetProjectionMatrixAddr()
 
 void CameraSim::SetPosition(Direction dir)
 {
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::vec3& pos = SolidSim::GetPositionVectorAddr();
 	glm::vec3& front = SolidSim::GetFrontVectorAddr();
 
 	SolidSim::SetPosition(dir, { 1.0f, static_cast<float>(mode == Mode::Fly), 1.0f });
 
-	view = glm::lookAt(pos, pos + front, up);
+	view = glm::lookAt(pos, pos + front, GetUpVectorAddr());
 	projection = glm::perspective(glm::radians(fov), static_cast<float>(windowHeight / windowWidth), 0.1f, 100.f);
 }
 

@@ -12,6 +12,7 @@
 #include "ContextManager.h"
 #define ContextLock ContextManager<GLFWwindow> mux(window, [this](GLFWwindow* context){ glfwMakeContextCurrent(context); });
 std::recursive_mutex ContextManager<GLFWwindow>::rMutex;
+size_t ContextManager<GLFWwindow>::counter = 0;
 
 using namespace LGLStructs;
 

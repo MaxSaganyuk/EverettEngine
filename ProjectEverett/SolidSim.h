@@ -56,6 +56,7 @@ private:
 	glm::mat4 model;
 	glm::vec3 scale;
 	glm::vec3 front;
+	glm::vec3 up;
 	glm::vec3 pos;
 	glm::vec3 lastPos;
 	Rotation rotate;
@@ -87,6 +88,7 @@ public:
 	glm::mat4& GetModelMatrixAddr();
 	glm::vec3& GetFrontVectorAddr();
 	glm::vec3& GetPositionVectorAddr();
+	glm::vec3& GetUpVectorAddr();
 	glm::vec3& GetScaleVectorAddr();
 
 	void SetGhostMode(bool val);

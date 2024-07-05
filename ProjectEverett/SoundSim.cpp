@@ -7,11 +7,14 @@ ALCdevice* SoundSim::device = nullptr;
 #include <DrWav/dr_wav.h>
 
 #include <iostream>
+#include <cassert>
 
 #include "ContextManager.h"
 #define ContextLock ContextManager<ALCcontext> mux(context, [this](ALCcontext* context){ alcMakeContextCurrent(context); });
 std::recursive_mutex ContextManager<ALCcontext>::rMutex;
+size_t ContextManager<ALCcontext>::counter = 0;
 
+CameraSim* SoundSim::camera = nullptr;
 
 void SoundSim::InitOpenAL()
 {
@@ -22,6 +25,11 @@ void SoundSim::InitOpenAL()
 	}
 
 	bool res = alcIsExtensionPresent(nullptr, "AL_EXT_float32");
+}
+
+void SoundSim::SetCamera(CameraSim& camera)
+{
+	SoundSim::camera = &camera;
 }
 
 bool SoundSim::LoadFile(const std::string& file)
@@ -65,9 +73,17 @@ bool SoundSim::CreateBufferAndSource()
 
 void SoundSim::Play()
 {
+	if (!SoundSim::camera)
+	{
+		assert(false && "Cannot play sound without listener (camera)");
+	}
+
 	ContextLock
 
 	alSourcei(sound.source, AL_BUFFER, sound.buffer);
+
+	UpdatePositions();
+
 	alSourcePlay(sound.source);
 }
 
@@ -89,11 +105,44 @@ void SoundSim::Stop()
 	alSourceStop(sound.source);
 }
 
-SoundSim::SoundSim(const std::string& file)
+void SoundSim::SetupSound(const std::string& file)
 {
 	CreateContext();
 	LoadFile(file);
 	CreateBufferAndSource();
+}
+
+void SoundSim::UpdatePositions()
+{
+	ContextLock
+
+	glm::vec3 pos = sound.pos;
+	alSource3f(sound.source, AL_POSITION, pos.x, pos.y, pos.z);
+	alSource3f(sound.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+
+	glm::vec3& listenerPos = SoundSim::camera->GetPositionVectorAddr();
+	alListener3f(AL_POSITION, listenerPos.x, listenerPos.y, listenerPos.z);
+	alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+
+	glm::vec3& listenerFront = SoundSim::camera->GetFrontVectorAddr();
+	glm::vec3& listenerUp = SoundSim::camera->GetUpVectorAddr();
+	std::vector<float> cameraOrientation {
+		listenerFront.x, listenerFront.y, listenerFront.z,
+		listenerUp.x,    listenerUp.y,    listenerUp.z
+	};
+	alListenerfv(AL_ORIENTATION, cameraOrientation.data());
+}
+
+SoundSim::SoundSim(const std::string& file, glm::vec3& pos)
+{
+	sound.pos.ResetBackup(&pos);
+	SetupSound(file);
+}
+
+SoundSim::SoundSim(const std::string& file, glm::vec3&& pos) 
+{
+	sound.pos = std::move(pos);
+	SetupSound(file);
 }
 
 SoundSim::~SoundSim()

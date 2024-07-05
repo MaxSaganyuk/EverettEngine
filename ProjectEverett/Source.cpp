@@ -146,6 +146,8 @@ int main()
 	CameraSim camera(windowHeight, windowWidth, {0.0f, 0.0f, 3.0f});
 	camera.SetMode(CameraSim::Mode::Fly);
 
+	SoundSim::SetCamera(camera);
+
 	std::vector<glm::vec3> cubesPos = GeneralHelpers::PlaceCubesInAMaze(maze);
 	std::vector<glm::vec3> lightsPos = { {0.0f, 0.0f, 0.0f} };
 	
@@ -290,12 +292,13 @@ int main()
 
 	for (size_t i = 0; i < walkingDirections.size(); ++i)
 	{
-		walkingSounds.emplace_back(SoundSim("sounds//walk" + std::to_string(i) + ".wav"));
+		walkingSounds.emplace_back(SoundSim("sounds//walk" + std::to_string(i) + ".wav", {0.0f, 0.0f, 0.0f}));
 	}
 
 
 	auto PlayWalkingSound = [&walkingSounds]()
 	{
+		/*
 		bool isPlaying;
 
 		for (size_t i = 0; i < walkingSounds.size(); ++i)
@@ -305,6 +308,7 @@ int main()
 		}
 
 		walkingSounds[rand() % walkingSounds.size()].Play();
+		*/
 	};
 
 	for (size_t i = 0; i < walkingDirections.size(); ++i)
@@ -322,8 +326,12 @@ int main()
 	lgl.GetMaxAmountOfVertexAttr();
 	lgl.CaptureMouse();
 
+	SoundSim coilSound("sounds//static.wav", solids.at("coilHead").back().GetPositionVectorAddr());
+	coilSound.Play();
+
 	lgl.RunRenderingCycle(
-		[&lgl, &camera]() {		
+		[&lgl, &camera, &coilSound]() {
+			coilSound.UpdatePositions();
 			camera.SetPosition(CameraSim::Direction::Nowhere);
 			lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 			lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
