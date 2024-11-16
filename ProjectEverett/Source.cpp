@@ -4,9 +4,11 @@
 #include <cstdlib>
 
 #include "LGL.h"
+#include "LGLUtils.h"
 #include "Verts.h"
 
 #include "FileLoader.h"
+#include "AssimpHelper.h"
 
 #include "MaterialSim.h"
 #include "LightSim.h"
@@ -179,13 +181,14 @@ int main()
 			}
 		}
 	};
-
+	
 	auto lightBeh = [&lgl, &solids, &mat, &atte, &camera, &lightShaderValueNames]()
 	{
+			
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 
-		lgl.SetShaderUniformStruct(lightShaderValueNames[0].first, lightShaderValueNames[0].second, 0, 1, mat.shininess);
+		LGLUtils::SetShaderUniformStruct(lgl, lightShaderValueNames[0].first, lightShaderValueNames[0].second, 0, 1, mat.shininess);
 
 		std::vector<SolidSim>& lights = solids.at("light");
 		lgl.SetShaderUniformValue("lightAmount", static_cast<int>(lights.size()));
@@ -193,7 +196,8 @@ int main()
 		{
 			std::string accessIndex = lightShaderValueNames[1].first + "[" + std::to_string(i) + "]";
 
-			lgl.SetShaderUniformStruct(
+			LGLUtils::SetShaderUniformStruct(
+				lgl,
 				accessIndex,
 				lightShaderValueNames[1].second,
 				lights[i].GetPositionVectorAddr(), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.4f, 0.4f, 0.4f),
@@ -202,7 +206,8 @@ int main()
 			);
 		}
 
-		lgl.SetShaderUniformStruct(
+		LGLUtils::SetShaderUniformStruct(
+			lgl,
 			lightShaderValueNames[2].first,
 			lightShaderValueNames[2].second,
 			camera.GetPositionVectorAddr(), camera.GetFrontVectorAddr(), glm::vec3(0.2f, 0.2f, 0.2f),
@@ -270,7 +275,7 @@ int main()
 
 	LGLStructs::ModelInfo coil;
 
-	lgl.GetModelFromFile("extraStuff\\coilHead.obj", coil);
+	AssimpHelper::GetModel("extraStuff\\coilHead.obj", coil);
 	coil.shaderProgram = "lightComb";
 	coil.behaviour = coilBeh;
 	lgl.CreateModel(coil);
@@ -286,10 +291,9 @@ int main()
 
 	CommandHandler commandHandler(camera, solids);
 
-	std::vector<int> walkingDirections { GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D };
+	std::string walkingDirections = "wsad";
 	std::vector<SoundSim> walkingSounds;
 	walkingSounds.reserve(walkingDirections.size());
-
 	for (size_t i = 0; i < walkingDirections.size(); ++i)
 	{
 		walkingSounds.emplace_back(SoundSim("sounds//walk" + std::to_string(i) + ".wav", {0.0f, 0.0f, 0.0f}));
@@ -298,7 +302,6 @@ int main()
 
 	auto PlayWalkingSound = [&walkingSounds]()
 	{
-		/*
 		bool isPlaying;
 
 		for (size_t i = 0; i < walkingSounds.size(); ++i)
@@ -308,7 +311,6 @@ int main()
 		}
 
 		walkingSounds[rand() % walkingSounds.size()].Play();
-		*/
 	};
 
 	for (size_t i = 0; i < walkingDirections.size(); ++i)
@@ -319,9 +321,9 @@ int main()
 		);
 	}
 
-	lgl.SetInteractable(GLFW_KEY_R, [&camera]() { camera.SetPosition(CameraSim::Direction::Up); });
+	lgl.SetInteractable('r', [&camera]() { camera.SetPosition(CameraSim::Direction::Up); });
 
-	lgl.SetInteractable(GLFW_KEY_C, [&commandHandler]() { commandHandler.RunCommandLine(); });
+	lgl.SetInteractable('c', [&commandHandler]() { commandHandler.RunCommandLine(); });
 
 	lgl.GetMaxAmountOfVertexAttr();
 	lgl.CaptureMouse();
@@ -337,6 +339,6 @@ int main()
 			lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 		}
 	);
-
+	
 	LGL::TerminateOpenGL();
 }

@@ -149,7 +149,9 @@ void AssimpHelper::ProcessNode(const aiNode* nodeHandle)
 	}
 }
 
-void AssimpHelper::GetModel(LGLStructs::ModelInfo& model)
+
+void AssimpHelper::GetModel(const std::string& file, LGLStructs::ModelInfo& model)
 {
-	model = this->model;
+	AssimpHelper helper(file);
+	model = helper.model;
 }

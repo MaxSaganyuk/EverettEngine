@@ -135,7 +135,7 @@ void SoundSim::UpdatePositions()
 
 SoundSim::SoundSim(const std::string& file, glm::vec3& pos)
 {
-	sound.pos.ResetBackup(&pos);
+	sound.pos = std::move(pos);
 	SetupSound(file);
 }
 

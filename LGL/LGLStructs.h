@@ -1,7 +1,5 @@
 #pragma once
 
-#include "glad/glad.h"
-
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -9,6 +7,8 @@
 #include "stdEx/utilityEx.h"
 
 #include <functional>
+
+#include "LGLEnums.h"
 
 namespace LGLStructs
 {
@@ -21,16 +21,8 @@ namespace LGLStructs
 
 	struct TextureParams
 	{
-		enum class TextureOverlayType
-		{
-			REPEAT = GL_REPEAT,
-			MIRRORED = GL_MIRRORED_REPEAT,
-			EDGECLAMP = GL_CLAMP_TO_EDGE,
-			BORDERCLAMP = GL_CLAMP_TO_BORDER
-		};
-
 		glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
-		TextureOverlayType overlay = TextureOverlayType::MIRRORED;
+		LGLEnums::TextureOverlayType overlay = LGLEnums::TextureOverlayType::Mirrored;
 		BilinearFiltrationConfig BFConfig = {};
 		bool createMipmaps = false;
 		BilinearFiltrationConfig mipmapBFConfig = {};

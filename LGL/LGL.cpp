@@ -2,12 +2,16 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cctype>
 
 #include "stb_image.h"
+
+#define LGL_EXPORT
 #include "LGL.h"
 #include "stdEx/mapEx.h"
 
-#include "AssimpHelper.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 #include "ContextManager.h"
 #define ContextLock ContextManager<GLFWwindow> mux(window, [this](GLFWwindow* context){ glfwMakeContextCurrent(context); });
@@ -15,6 +19,7 @@ std::recursive_mutex ContextManager<GLFWwindow>::rMutex;
 size_t ContextManager<GLFWwindow>::counter = 0;
 
 using namespace LGLStructs;
+using namespace LGLEnums;
 
 std::function<void(double, double)> LGL::cursorPositionFunc = nullptr;
 std::function<void(double, double)> LGL::scrollCallbackFunc = nullptr;
@@ -25,10 +30,22 @@ std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
 	{"frag", GL_FRAGMENT_SHADER}
 };
 
+const std::vector<int> LGL::LGLEnumInterpreter::DepthTestModeInter =
+{
+	{0, GL_ALWAYS, GL_NEVER, GL_LESS, GL_GREATER, GL_EQUAL, GL_NOTEQUAL, GL_LEQUAL, GL_GEQUAL}
+};
+
+const std::vector<int> LGL::LGLEnumInterpreter::TextureOverlayTypeInter =
+{
+	{GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER}
+};
+
+
 LGL::LGL()
 {
 	background = { 0, 0, 0, 1 };
 	currentVAOToRender = {};
+	window = nullptr;
 
 	stbi_set_flip_vertically_on_load(true);
 
@@ -61,7 +78,12 @@ bool LGL::CreateWindow(const int height, const int width, const std::string& tit
 		return false;
 	}
 
-	//glfwMakeContextCurrent(window);
+	glfwMakeContextCurrent(window);
+
+	if (!glfwGetCurrentContext())
+	{
+		std::cerr << "Context does not set correctly\n";
+	}
 
 	std::cout << "Created a GLFW window by address " << window << '\n';
 
@@ -100,6 +122,7 @@ void LGL::InitCallbacks()
 	ContextLock
 
 	glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
+	glfwSetErrorCallback(GLFWErrorCallback);
 }
 
 void LGL::TerminateOpenGL()
@@ -120,7 +143,7 @@ void LGL::SetDepthTest(DepthTestMode depthTestMode)
 	else
 	{
 		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(static_cast<GLenum>(depthTestMode));
+		glDepthFunc(static_cast<GLenum>(LGLEnumInterpreter::DepthTestModeInter[static_cast<GLenum>(depthTestMode)]));
 	}
 }
 
@@ -356,7 +379,7 @@ void LGL::CreateModel(LGLStructs::ModelInfo& model)
 	}
 }
 
-#ifdef LGL_DISABLEASSIMP
+#ifdef ENABLE_OLD_MODEL_IMPORT
 
 void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes, std::vector<unsigned int>& indeces)
 {
@@ -532,15 +555,6 @@ void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes
 	vertexes = resVertexes;
 	indeces = resIndeces;
 }
-#else
-
-
-void LGL::GetModelFromFile(const std::string& file, ModelInfo& model)
-{
-	AssimpHelper helper(file);
-	helper.GetModel(model);
-}
-
 #endif
 
 bool LGL::CompileShader(const std::string& name)
@@ -696,8 +710,16 @@ bool LGL::ConfigureTexture(const std::string& textureName, const TextureParams& 
 		textureParams.color.a,
 	};
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, static_cast<int>(textureParams.overlay));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, static_cast<int>(textureParams.overlay));
+	glTexParameteri(
+		GL_TEXTURE_2D, 
+		GL_TEXTURE_WRAP_S, 
+		LGLEnumInterpreter::TextureOverlayTypeInter[static_cast<int>(textureParams.overlay)]
+	);
+	glTexParameteri(
+		GL_TEXTURE_2D, 
+		GL_TEXTURE_WRAP_T, 
+		LGLEnumInterpreter::TextureOverlayTypeInter[static_cast<int>(textureParams.overlay)]
+	);
 
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
 	if (textureParams.createMipmaps) 
@@ -826,11 +848,16 @@ bool LGL::LoadAndConfigureTextures(const std::string& dir, const std::vector<std
 	return false;
 }
 
-void LGL::SetInteractable(int key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)
+void LGL::SetInteractable(unsigned char key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)
 {
-	interactCollection[key] = {preFunc, relFunc};
+	interactCollection[std::toupper(key)] = {preFunc, relFunc};
 	
 	std::cout << "Interactable for keyId " << key << " set\n";
+}
+
+void LGL::GLFWErrorCallback(int errorCode, const char* description)
+{
+	int x = errorCode;
 }
 
 void LGL::CursorPositionCallback(GLFWwindow* window, double xpos, double ypos)
@@ -849,7 +876,7 @@ void LGL::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	}
 }
 
-const std::unordered_map<std::type_index, std::function<void(int, void*)>> LGL::uniformValueLocators
+const std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators
 {
 	{ typeid(int), [](int uniformValueLocation, void* value) { glUniform1i(uniformValueLocation, *reinterpret_cast<int*>(value)); } },
 	{ typeid(float), [](int uniformValueLocation, void* value) { glUniform1f(uniformValueLocation, *reinterpret_cast<float*>(value)); } },
@@ -892,7 +919,7 @@ int LGL::CheckUnifromValueLocation(const std::string& valueName, const std::stri
 	return uniformValueLocation;
 }
 
-template<class Type>
+template<typename Type>
 bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName)
 {
 	int uniformValueLocation = CheckUnifromValueLocation(valueName, shaderProgramName);
@@ -912,8 +939,8 @@ bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool
 }
 
 #define ShaderUniformValueExplicit(Type) \
-template bool LGL::SetShaderUniformValue<Type>(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName); \
-template bool LGL::SetShaderUniformValue<Type&>(const std::string& valueName, Type& value, bool render, const std::string& shaderProgramName);
+template LGL_API bool LGL::SetShaderUniformValue<Type>(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName); \
+template LGL_API bool LGL::SetShaderUniformValue<Type&>(const std::string& valueName, Type& value, bool render, const std::string& shaderProgramName);
 
 ShaderUniformValueExplicit(int)
 ShaderUniformValueExplicit(float)

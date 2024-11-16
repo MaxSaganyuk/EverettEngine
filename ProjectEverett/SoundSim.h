@@ -31,6 +31,11 @@ class SoundSim
 
 		ALuint buffer;
 		ALuint source;
+
+		SoundInfo()
+		{
+			pos.ResetBackup(&camera->GetPositionVectorAddr());
+		}
 	};
 
 	SoundInfo sound;
