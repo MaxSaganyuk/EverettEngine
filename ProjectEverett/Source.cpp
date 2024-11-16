@@ -289,7 +289,28 @@ int main()
 		[&camera](double xpos, double ypos) { camera.Zoom(static_cast<float>(xpos), static_cast<float>(ypos)); }
 	);
 
-	CommandHandler commandHandler(camera, solids);
+	auto SpawnSolidCommand = [&camera, &solids](const std::string& arg)
+	{
+		glm::vec3 posToPlace = camera.GetPositionVectorAddr() + camera.GetFrontVectorAddr();
+		try
+		{
+			std::vector<SolidSim>& exactSolids = solids.at(arg);
+			exactSolids.push_back(posToPlace);
+		}
+		catch (std::out_of_range&)
+		{
+			std::cerr << "No solid named " + arg + '\n';
+		}
+	};
+
+	auto GhostModeToggleCommand = [&camera](const std::string& arg)
+	{
+		camera.SetGhostMode(arg == "1");
+	};
+
+	CommandHandler commandHandler;
+	commandHandler.AddCommandLambda("spawnSolid", SpawnSolidCommand);
+	commandHandler.AddCommandLambda("ghostMode", GhostModeToggleCommand);
 
 	std::string walkingDirections = "wsad";
 	std::vector<SoundSim> walkingSounds;

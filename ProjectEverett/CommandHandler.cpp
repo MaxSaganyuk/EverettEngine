@@ -3,39 +3,32 @@
 #include <iostream>
 #include <Windows.h>
 
-#define WrapInALambda(func) [this](const std::string& arg) { func(arg); };
-
-void CommandHandler::SpawnSolid(const std::string& arg)
+CommandHandler::CommandHandler()
 {
-	glm::vec3 posToPlace = camera.GetPositionVectorAddr() + camera.GetFrontVectorAddr();
-	try
-	{
-		std::vector<SolidSim>& exactSolids = solids.at(arg);
-		exactSolids.push_back(posToPlace);
-	}
-	catch (std::out_of_range&)
-	{
-		std::cerr << "No solid named " + arg;
-	}
-}
-
-void CommandHandler::GhostModeToggle(const std::string& arg)
-{
-	camera.SetGhostMode(arg == "1");
-}
-
-void CommandHandler::SetupCommands()
-{
-	commands["spawn"]     = WrapInALambda(SpawnSolid)
-	commands["ghostMode"] = WrapInALambda(GhostModeToggle)
-
 	commands.SetDefaultValue([](const std::string&) { std::cout << "This command does not exist\n"; });
+	commands["commandList"] = [this](const std::string&) { GetCommandList(""); };
 }
 
-CommandHandler::CommandHandler(CameraSim& camera, SolidSimManager& solids) :
-	camera(camera), solids(solids)
+void CommandHandler::GetCommandList(const std::string&)
 {
-	SetupCommands();
+	std::cout << '\n';
+	for (const auto& command : commands)
+	{
+		std::cout << command.first << '\n';
+	}
+}
+
+void CommandHandler::AddCommandLambda(const std::string& commandName, std::function<void(const std::string&)> command)
+{
+	if (commands.find(commandName) == commands.end())
+	{
+		commands[commandName] = command;
+		std::cout << "Added command " + commandName << '\n';
+	}
+	else
+	{
+		std::cerr << "Command " + commandName + " already exists\n";
+	}
 }
 
 void CommandHandler::RunCommandLine()
