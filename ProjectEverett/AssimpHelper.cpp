@@ -2,6 +2,7 @@
 #include <map>
 
 #include "AssimpHelper.h"
+#include "FileLoader.h"
 
 AssimpHelper::AssimpHelper(const std::string& file) 
 {
@@ -14,7 +15,18 @@ AssimpHelper::AssimpHelper(const std::string& file)
 		return;
 	}
 
+	GetTextureFilenames(file);
 	ProcessNode(modelHandle->mRootNode);
+}
+
+bool AssimpHelper::GetTextureFilenames(const std::string& path)
+{
+	auto GetTexturePath = [](const std::string& path)
+	{
+		return path.substr(0, path.rfind('\\') + 1) + "textures";
+	};
+
+	return FileLoader::GetFilesInDir(texturesFound, GetTexturePath(path));
 }
 
 LGLStructs::Mesh AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
@@ -91,17 +103,24 @@ LGLStructs::Mesh AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 	{
 		using TextureType = LGLStructs::Texture::TextureType;
 
-		auto LoadTextureByMaterial = [](LGLStructs::Mesh& mesh, aiMaterial* material, TextureType texType)
+		struct TextureTypeInfo
 		{
-			static std::map<TextureType, aiTextureType> textureTypeConvert 
-			{
-				{TextureType::Diffuse,  aiTextureType_DIFFUSE},
-				{TextureType::Specular, aiTextureType_SPECULAR},
-				{TextureType::Normal,   aiTextureType_NORMALS},
-				{TextureType::Height,   aiTextureType_HEIGHT}
-			};
+			TextureType lglTexType;
+			aiTextureType assimpTexType;
+			char filenameC;
+		};
 
-			aiTextureType convertedType = textureTypeConvert.at(texType);
+		static std::vector<TextureTypeInfo> textureTypeInfo
+		{
+			{TextureType::Diffuse,  aiTextureType_DIFFUSE,  'd'},
+			{TextureType::Specular, aiTextureType_SPECULAR, 's'},
+			{TextureType::Normal,   aiTextureType_NORMALS,  'n'},
+			{TextureType::Height,   aiTextureType_HEIGHT,   'h'}
+		};
+
+		auto LoadTextureByMaterial = [](LGLStructs::Mesh& mesh, aiMaterial* material, size_t texTypeIndex)
+		{
+			aiTextureType convertedType = textureTypeInfo[texTypeIndex].assimpTexType;
 
 			for (size_t i = 0; i < material->GetTextureCount(convertedType); ++i)
 			{
@@ -114,7 +133,32 @@ LGLStructs::Mesh AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 					strWithoutPrefix = strWithoutPrefix.substr(strWithoutPrefix.find('\\') + 1);
 				}
 				
-				mesh.textures.push_back({ strWithoutPrefix, texType });
+				mesh.textures.push_back({ strWithoutPrefix, textureTypeInfo[texTypeIndex].lglTexType });
+			}
+		};
+
+		auto CheckForAdditionalTextures = [this](LGLStructs::Mesh& mesh)
+		{
+			std::vector<bool> foundTexTypes(LGLStructs::Texture::GetTextureTypeAmount(), false);
+			std::string name = mesh.textures.front().name;
+
+			for (auto& tex : mesh.textures)
+			{
+				foundTexTypes[static_cast<int>(tex.type)] = true;
+			}
+
+			for(size_t i = 0; i < LGLStructs::Texture::GetTextureTypeAmount(); ++i)
+			{
+				if (!foundTexTypes[i])
+				{
+					//if(name.find('.') !)
+					bool isUpper = std::isupper(name[name.find('.') - 1]);
+					name[name.find('.') - 1] = isUpper ? std::toupper(textureTypeInfo[i].filenameC) : textureTypeInfo[i].filenameC;
+					if (std::find(texturesFound.begin(), texturesFound.end(), name) != texturesFound.end())
+					{
+						mesh.textures.push_back({ name, static_cast<LGLStructs::Texture::TextureType>(i) });
+					}
+				}
 			}
 		};
 
@@ -122,7 +166,11 @@ LGLStructs::Mesh AssimpHelper::ProcessMesh(const aiMesh* meshHandle)
 
 		for (size_t i = 0; i < LGLStructs::Texture::GetTextureTypeAmount(); ++i)
 		{
-			LoadTextureByMaterial(mesh, material, static_cast<TextureType>(i));
+			LoadTextureByMaterial(mesh, material, i);
+			if (mesh.textures.size())
+			{
+				CheckForAdditionalTextures(mesh);
+			}
 		}
 	};
 

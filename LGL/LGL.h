@@ -138,9 +138,13 @@ public:
 
 	LGL_API void SetInteractable(unsigned char key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc = nullptr);
 
+	LGL_API void SetAssetOnOpenGLFailure(bool value);
+
+	//Callback setters
 	LGL_API void SetCursorPositionCallback(std::function<void(double, double)> callbackFunc);
 	LGL_API void SetScrollCallback(std::function<void(double, double)> callbackFunc);
 
+	//Function templates
 	template<typename Type>
 	LGL_API bool SetShaderUniformValue(const std::string& valueName, Type&& value, bool render = false, const std::string& shaderProgramName = "");
 
@@ -159,7 +163,6 @@ private:
 	static std::function<void(double, double)> scrollCallbackFunc;
 
 	void ProcessInput();
-	bool HandleGLError(const unsigned int& glId, int statusToCheck);
 	void Render();
 
 	GLFWwindow* window;

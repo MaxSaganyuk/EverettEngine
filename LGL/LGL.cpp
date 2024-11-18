@@ -13,6 +13,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "GLExecutor.h"
+
 #include "ContextManager.h"
 #define ContextLock ContextManager<GLFWwindow> mux(window, [this](GLFWwindow* context){ glfwMakeContextCurrent(context); });
 std::recursive_mutex ContextManager<GLFWwindow>::rMutex;
@@ -56,7 +58,7 @@ LGL::~LGL()
 {
 	for (auto& shader : shaderInfoCollection)
 	{
-		glDeleteShader(shader.second.shaderId);
+		GLSafeExecute(glDeleteShader, shader.second.shaderId);
 	}
 
 	std::cout << "LambdaGL instance destroyed\n";
@@ -138,12 +140,12 @@ void LGL::SetDepthTest(DepthTestMode depthTestMode)
 
 	if (depthTestMode == DepthTestMode::Disable)
 	{
-		glDisable(GL_DEPTH_TEST);
+		GLSafeExecute(glDisable, GL_DEPTH_TEST);
 	}
 	else
 	{
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(static_cast<GLenum>(LGLEnumInterpreter::DepthTestModeInter[static_cast<GLenum>(depthTestMode)]));
+		GLSafeExecute(glEnable, GL_DEPTH_TEST);
+		GLSafeExecute(glDepthFunc, static_cast<GLenum>(LGLEnumInterpreter::DepthTestModeInter[static_cast<GLenum>(depthTestMode)]));
 	}
 }
 
@@ -175,7 +177,7 @@ int LGL::GetMaxAmountOfVertexAttr()
 	ContextLock
 
 	int attr;
-	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &attr);
+	GLSafeExecute(glGetIntegerv, GL_MAX_VERTEX_ATTRIBS, &attr);
 	
 	std::cout << "Max amount of vertex attributes: " << attr << '\n';
 	
@@ -199,24 +201,6 @@ void LGL::ProcessInput()
 	}
 }
 
-bool LGL::HandleGLError(const unsigned int& glId, int statusToCheck)
-{
-	constexpr int logSize = 512;
-	int success;
-	char log[logSize];
-
-	glGetShaderiv(glId, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(glId, logSize, nullptr, log);
-		std::cout << log << '\n';
-
-		return false;
-	}
-	
-	return true;
-}
-
 void LGL::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
@@ -228,11 +212,11 @@ void LGL::Render()
 	{
 		if (!currentVAOToRender.useIndices)
 		{
-			glDrawArrays(GL_TRIANGLES, 0, currentVAOToRender.pointAmount);
+			GLSafeExecute(glDrawArrays, GL_TRIANGLES, 0, currentVAOToRender.pointAmount);
 		}
 		else
 		{
-			glDrawElements(GL_TRIANGLES, currentVAOToRender.pointAmount, GL_UNSIGNED_INT, 0);
+			GLSafeExecute(glDrawElements, GL_TRIANGLES, currentVAOToRender.pointAmount, GL_UNSIGNED_INT, nullptr);
 		}
 	}
 }
@@ -245,8 +229,8 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 		ProcessInput();
 
-		glClearColor(background.r, background.g, background.b, background.a);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		GLSafeExecute(glClearColor, background.r, background.g, background.b, background.a);
+		GLSafeExecute(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (additionalSteps)
 		{
@@ -261,10 +245,10 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			if (lastProgram != shaderProgramToCheck)
 			{
 				lastProgram = shaderProgramToCheck;
-				glUseProgram(shaderProgramCollection[lastProgram]);
+				GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
 			}
 
-			glBindVertexArray(currentVAO.vboId);
+			GLSafeExecute(glBindVertexArray, currentVAO.vboId);
 
 			if (currentVAO.meshInfo->mesh.textures.size())
 			{
@@ -273,15 +257,15 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 					if (textureCollection.find(currentVAO.meshInfo->mesh.textures[i].name) != textureCollection.end())
 					{
 						TextureInfo& textureInfo = textureCollection.at(currentVAO.meshInfo->mesh.textures[i].name);
-						glActiveTexture(GL_TEXTURE0 + i);
-						glBindTexture(GL_TEXTURE_2D, textureInfo.textureId);
+						GLSafeExecute(glActiveTexture, GL_TEXTURE0 + i);
+						GLSafeExecute(glBindTexture, GL_TEXTURE_2D, textureInfo.textureId);
 					}
 				}
 			}
 			else
 			{
-				glActiveTexture(GL_TEXTURE0 + 0);
-				glBindTexture(GL_TEXTURE_2D, 0);
+				GLSafeExecute(glActiveTexture, GL_TEXTURE0 + 0);
+				GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
 			}
 
 			std::function<void()> behaviourToCheck = currentVAO.meshInfo->behaviour;
@@ -312,15 +296,16 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 
 	VAOCollection.push_back({0, false});
 	VAO* newVAO = &VAOCollection.back().vboId;
-	glGenVertexArrays(1, newVAO);
-	glBindVertexArray(*newVAO);
+	GLSafeExecute(glGenVertexArrays, 1, newVAO);
+	GLSafeExecute(glBindVertexArray, *newVAO);
 
 	VBOCollection.push_back(VBO());
 	VBO* newVBO = &VBOCollection.back();
 
-	glGenBuffers(1, newVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, *newVBO);
-	glBufferData(
+	GLSafeExecute(glGenBuffers, 1, newVBO);
+	GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, *newVBO);
+	GLSafeExecute(
+		glBufferData,
 		GL_ARRAY_BUFFER, 
 		meshInfo.mesh.vert.size() * sizeof(Vertex),
 		&meshInfo.mesh.vert[0],
@@ -337,9 +322,10 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 		EBOCollection.push_back(EBO());
 		EBO* newEBO = &EBOCollection.back();
 
-		glGenBuffers(1, newEBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *newEBO);
-		glBufferData(
+		GLSafeExecute(glGenBuffers, 1, newEBO);
+		GLSafeExecute(glBindBuffer, GL_ELEMENT_ARRAY_BUFFER, *newEBO);
+		GLSafeExecute(
+			glBufferData,
 			GL_ELEMENT_ARRAY_BUFFER, 
 			meshInfo.mesh.indices.size() * sizeof(unsigned int),
 			&meshInfo.mesh.indices[0],
@@ -361,8 +347,8 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 	for (int i = 0; i < steps.size(); ++i)
 	{
 		step = !i ? 0 : (step + steps[i - 1]);
-		glEnableVertexAttribArray(i);
-		glVertexAttribPointer(i, steps[i], GL_FLOAT, false, stride, (void*)(step * sizeof(float)));
+		GLSafeExecute(glEnableVertexAttribArray, i);
+		GLSafeExecute(glVertexAttribPointer, i, steps[i], GL_FLOAT, false, stride, (void*)(step * sizeof(float)));
 	}
 	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//glBindVertexArray(0);
@@ -580,12 +566,12 @@ bool LGL::CompileShader(const std::string& name)
 
 	Shader* newShader = &shaderInfoCollection[currentName].shaderId;
 
-	glShaderSource(*newShader, 1, &shaderToC, nullptr);
-	glCompileShader(*newShader);
+	GLSafeExecute(glShaderSource, *newShader, 1, &shaderToC, nullptr);
+	bool shaderCompiled = GLSafeExecute(glCompileShader, *newShader);
 
 	shaderInfoCollection[currentName].compiled = true;
 
-	return HandleGLError(*newShader, 0); // imporve
+	return shaderCompiled; // imporve
 }
 
 bool LGL::LoadShader(const std::string& code, const std::string& type, const std::string& name)
@@ -645,6 +631,7 @@ bool LGL::LoadTextureFromFile(const std::string& file, const std::string& textur
 	GLenum format;
 
 	TextureData textureData = stbi_load(file.c_str(), &textureWidth, &textureHeight, &nrChannels, 0);
+
 	if (!textureData)
 	{
 		std::cout << "Failed to load texture\n";
@@ -700,8 +687,8 @@ bool LGL::ConfigureTexture(const std::string& textureName, const TextureParams& 
 
 	TextureInfo* newTextureInfo = &textureCollection.at(textureName);
 	Texture* newTexture = &newTextureInfo->textureId;
-	glGenTextures(1, newTexture);
-	glBindTexture(GL_TEXTURE_2D, *newTexture);
+	GLSafeExecute(glGenTextures, 1, newTexture);
+	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, *newTexture);
 
 	float color[] {
 		textureParams.color.r,
@@ -710,18 +697,20 @@ bool LGL::ConfigureTexture(const std::string& textureName, const TextureParams& 
 		textureParams.color.a,
 	};
 
-	glTexParameteri(
+	GLSafeExecute(
+		glTexParameteri,
 		GL_TEXTURE_2D, 
 		GL_TEXTURE_WRAP_S, 
 		LGLEnumInterpreter::TextureOverlayTypeInter[static_cast<int>(textureParams.overlay)]
 	);
-	glTexParameteri(
+	GLSafeExecute(
+		glTexParameteri,
 		GL_TEXTURE_2D, 
 		GL_TEXTURE_WRAP_T, 
 		LGLEnumInterpreter::TextureOverlayTypeInter[static_cast<int>(textureParams.overlay)]
 	);
 
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+	GLSafeExecute(glTexParameterfv, GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
 	if (textureParams.createMipmaps) 
 	{
 		int glMipParams[2][2]
@@ -730,28 +719,31 @@ bool LGL::ConfigureTexture(const std::string& textureName, const TextureParams& 
 			{ GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST_MIPMAP_NEAREST}
 		};
 
-		glGenerateMipmap(GL_TEXTURE_2D);
+		GLSafeExecute(glGenerateMipmap, GL_TEXTURE_2D);
 
-		glTexParameteri(
+		GLSafeExecute(
+			glTexParameteri,
 			GL_TEXTURE_2D, 
 			GL_TEXTURE_MIN_FILTER, 
 			glMipParams[textureParams.mipmapBFConfig.minFilter][textureParams.BFConfig.minFilter]
 		);
-		glTexParameteri(
+		GLSafeExecute(
+			glTexParameteri,
 			GL_TEXTURE_2D,
 			GL_TEXTURE_MAG_FILTER,
-			glMipParams[textureParams.mipmapBFConfig.maxFilter][textureParams.BFConfig.maxFilter]
+		   glMipParams[textureParams.mipmapBFConfig.maxFilter][textureParams.BFConfig.maxFilter]
 		);
 	}
 	else 
 	{
 		int glParams[]{ GL_LINEAR, GL_NEAREST };
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glParams[textureParams.BFConfig.minFilter]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glParams[textureParams.BFConfig.maxFilter]);
+		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glParams[textureParams.BFConfig.minFilter]);
+		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glParams[textureParams.BFConfig.maxFilter]);
 	}
 
-	glTexImage2D(
+	GLSafeExecute(
+		glTexImage2D,
 		GL_TEXTURE_2D, 
 		0, 
 		newTextureInfo->textureFormat,
@@ -763,7 +755,7 @@ bool LGL::ConfigureTexture(const std::string& textureName, const TextureParams& 
 		newTextureInfo->textureData
 	);
 
-	//stbi_image_free(newTextureInfo.textureData);
+	//stbi_image_free(newTextureInfo->textureData);
 
 	std::cout << "Texture " << textureName << " configured\n";
 
@@ -786,23 +778,17 @@ bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::st
 	{
 		if (shaderInfo.second.compiled && (shaderNames.empty() || std::find(shaderNames.begin(), shaderNames.end(), shaderInfo.first) != std::end(shaderNames)))
 		{
-			glAttachShader(*newShaderProgram, shaderInfo.second.shaderId);
+			GLSafeExecute(glAttachShader, *newShaderProgram, shaderInfo.second.shaderId);
 			shaderInfo.second.compiled = false;
 		}
 	}
-	glLinkProgram(*newShaderProgram);
+	GLSafeExecute(glLinkProgram, *newShaderProgram);
 
 	// rewrite
 	int success;
 	char log[512];
 
-	glGetProgramiv(*newShaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(*newShaderProgram, 512, NULL, log);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << log << std::endl;
-
-		return false;
-	}
+	GLSafeExecute(glGetProgramiv, *newShaderProgram, GL_LINK_STATUS, &success);
 	
 	lastProgram = name;
 
@@ -874,6 +860,12 @@ void LGL::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	{
 		scrollCallbackFunc(xoffset, yoffset);
 	}
+}
+
+void LGL::SetAssetOnOpenGLFailure(bool value)
+{
+	GLExecutor::SetAssertOnFailure(value);
+	std::cout << "AssertOnFailure has been set to " << value << '\n';
 }
 
 const std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators

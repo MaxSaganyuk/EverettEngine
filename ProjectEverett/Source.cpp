@@ -123,6 +123,7 @@ int main()
 	SoundSim::InitOpenAL();
 
 	LGL lgl;
+	lgl.SetAssetOnOpenGLFailure(false);
 
 	lgl.CreateWindow(windowHeight, windowWidth, "ProjectEverett");
 	lgl.InitGLAD();
@@ -275,7 +276,7 @@ int main()
 
 	LGLStructs::ModelInfo coil;
 
-	AssimpHelper::GetModel("extraStuff\\coilHead.obj", coil);
+	AssimpHelper::GetModel("extraStuff\\nurse.obj", coil);
 	coil.shaderProgram = "lightComb";
 	coil.behaviour = coilBeh;
 	lgl.CreateModel(coil);
@@ -350,7 +351,6 @@ int main()
 	lgl.CaptureMouse();
 
 	SoundSim coilSound("sounds//static.wav", solids.at("coilHead").back().GetPositionVectorAddr());
-	coilSound.Play();
 
 	lgl.RunRenderingCycle(
 		[&lgl, &camera, &coilSound]() {

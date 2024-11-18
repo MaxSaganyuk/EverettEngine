@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GLExecutor.h" />
     <ClInclude Include="LGL.h" />
     <ClInclude Include="LGLEnums.h" />
     <ClInclude Include="LGLStructs.h" />

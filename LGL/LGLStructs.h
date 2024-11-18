@@ -22,7 +22,7 @@ namespace LGLStructs
 	struct TextureParams
 	{
 		glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
-		LGLEnums::TextureOverlayType overlay = LGLEnums::TextureOverlayType::Mirrored;
+		LGLEnums::TextureOverlayType overlay = LGLEnums::TextureOverlayType::Repeat;
 		BilinearFiltrationConfig BFConfig = {};
 		bool createMipmaps = false;
 		BilinearFiltrationConfig mipmapBFConfig = {};
@@ -71,7 +71,7 @@ namespace LGLStructs
 		{
 			constexpr size_t memberAmount = static_cast<size_t>(VertexData::_SIZE);
 			constexpr size_t memberAmountDoubleCheck = sizeof(Vertex) / sizeof(glm::vec3);
-			static_assert(memberAmount == memberAmount, "Member amount and enum mismatch");
+			static_assert(memberAmount == memberAmountDoubleCheck, "Member amount and enum mismatch");
 
 			return memberAmount;
 		}
