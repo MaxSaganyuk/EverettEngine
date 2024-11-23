@@ -30,7 +30,7 @@ class GLFWwindow;
 */
 class LGL
 {
-// Alias section
+	// Alias section
 private:
 	using VBO = unsigned int; // Vertex Buffer Object
 	using VAO = unsigned int; // Vertex Array Object
@@ -47,13 +47,12 @@ private:
 	using OnPressFunction = std::function<void()>;
 	using OnReleaseFunction = std::function<void()>;
 
-// Structs for internal use
+	// Structs for internal use
 	struct VAOInfo
 	{
 		VAO vboId = 0;
 		size_t pointAmount;
 		bool useIndices;
-		std::string modelParent;
 		LGLStructs::MeshInfo* meshInfo = nullptr;
 	};
 
@@ -61,7 +60,6 @@ private:
 	{
 		Shader shaderId;
 		ShaderCode shaderCode;
-		bool compiled = true;
 	};
 
 	class LGLEnumInterpreter
@@ -69,10 +67,12 @@ private:
 	public:
 		static const std::vector<int> DepthTestModeInter;
 		static const std::vector<int> TextureOverlayTypeInter;
+		static const std::vector<int> SpecialKeyInter;
 	};
 
 public:
 
+	// Enums
 	enum class DepthTestMode
 	{
 		Disable,
@@ -86,6 +86,18 @@ public:
 		GreaterOrEqual
 	};
 
+	enum class SpecialKeys
+	{
+		Enter,
+		Space,
+		LeftShift,
+		RightShift,
+		Tab,
+		Backspace,
+		Escape
+	};
+
+	// Public functions
 	LGL_API LGL();
 	LGL_API ~LGL();
 
@@ -110,23 +122,10 @@ public:
 	LGL_API void CreateMesh(LGLStructs::MeshInfo& meshInfo);
 	LGL_API void CreateModel(LGLStructs::ModelInfo& model);
 #endif
-	// If no name is given will compile last loaded shader
-	LGL_API bool CompileShader(const std::string& name = "");
-	LGL_API bool LoadShader(const std::string& code, const std::string& type, const std::string& name);
-	LGL_API bool LoadShaderFromFile(const std::string& file, const std::string& shaderName = "");
-
-	// If no list of shaders is provided, will create a program with all compiled shaders
-	LGL_API bool CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderVector = {});
-
-	// If shader file names can be identical to shader program name, general load and compile can be used
-	LGL_API bool LoadAndCompileShaders(const std::string& dir, const std::vector<std::string>& names);
-
 	LGL_API bool ConfigureTexture(const LGLStructs::Texture& texture);
 
 	LGL_API static void InitOpenGL(int major, int minor);
 
-	LGL_API bool InitGLAD();
-	LGL_API void InitCallbacks();
 	LGL_API static void TerminateOpenGL();
 
 	LGL_API void SetDepthTest(DepthTestMode depthTestMode);
@@ -136,6 +135,7 @@ public:
 	LGL_API void CaptureMouse();
 
 	LGL_API void SetInteractable(unsigned char key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc = nullptr);
+	LGL_API void SetInteractable(SpecialKeys key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc = nullptr);
 
 	LGL_API void SetAssetOnOpenGLFailure(bool value);
 
@@ -148,7 +148,21 @@ public:
 	LGL_API bool SetShaderUniformValue(const std::string& valueName, Type&& value, bool render = false, const std::string& shaderProgramName = "");
 
 private:
-	int CheckUnifromValueLocation(const std::string& valueName, const std::string& shaderProgramName);
+	bool InitGLAD();
+	void InitCallbacks();
+
+	int CheckUniformValueLocation(const std::string& valueName, const std::string& shaderProgramName);
+
+	// If no name is given will compile last loaded shader
+	bool CompileShader(const std::string& name = "");
+	bool LoadShaderFromFile(const std::string& name, const std::string& file);
+
+	// If no list of shaders is provided, will create a program with all compiled shaders
+	bool CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderVector = {});
+
+	// If shader file names can be identical to shader program name, general load and compile can be used
+	bool LoadAndCompileShader(const std::string& name);
+
 
 	// Callbacks
 	CALLBACK GLFWErrorCallback(int errorCode, const char* description);
@@ -176,15 +190,12 @@ private:
 	// Shader
 	static std::map<std::string, ShaderType> shaderTypeChoice;
 
-	std::string lastShader;
-	std::map<std::string, ShaderInfo> shaderInfoCollection;
+	std::map<std::string, std::vector<ShaderInfo>> shaderInfoCollection;
 	
-	// Shader Program
 	std::string lastProgram;
 	std::map<std::string, ShaderProgram> shaderProgramCollection;
 
 	// Texture
-	std::string lastTexture;
 	std::map<std::string, TextureID> textureCollection;
 
 	std::vector<std::string> uniformErrorAntispam;

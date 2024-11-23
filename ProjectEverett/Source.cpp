@@ -125,19 +125,8 @@ int main()
 	lgl.SetAssetOnOpenGLFailure(false);
 
 	lgl.CreateWindow(windowHeight, windowWidth, "ProjectEverett");
-	lgl.InitGLAD();
-	lgl.InitCallbacks();
-	std::vector<std::string> shaderNames { "lightComb", "lamp" };
-
-	lgl.LoadAndCompileShaders("shaders\\", shaderNames);
-
-	std::vector<std::string> textureNames;
-	std::vector<std::string> extraTextureNames;
 
 	FileLoader fileLoader;
-
-	fileLoader.GetFilesInDir(textureNames, "textures");
-	fileLoader.GetFilesInDir(extraTextureNames, "extraStuff\\textures");
 
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);

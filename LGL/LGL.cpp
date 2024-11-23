@@ -43,6 +43,13 @@ const std::vector<int> LGL::LGLEnumInterpreter::TextureOverlayTypeInter =
 	{GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER}
 };
 
+const std::vector<int> LGL::LGLEnumInterpreter::SpecialKeyInter =
+{
+	{
+		GLFW_KEY_ENTER, GLFW_KEY_SPACE, GLFW_KEY_LEFT_SHIFT, GLFW_KEY_RIGHT_SHIFT, 
+		GLFW_KEY_TAB, GLFW_KEY_BACKSPACE, GLFW_KEY_ESCAPE 
+	}
+};
 
 LGL::LGL()
 {
@@ -55,9 +62,12 @@ LGL::LGL()
 
 LGL::~LGL()
 {
-	for (auto& shader : shaderInfoCollection)
+	for (auto& shaderInfo : shaderInfoCollection)
 	{
-		GLSafeExecute(glDeleteShader, shader.second.shaderId);
+		for (auto& shader : shaderInfo.second)
+		{
+			GLSafeExecute(glDeleteShader, shader.shaderId);
+		}
 	}
 
 	std::cout << "LambdaGL instance destroyed\n";
@@ -84,9 +94,13 @@ bool LGL::CreateWindow(const int height, const int width, const std::string& tit
 	if (!glfwGetCurrentContext())
 	{
 		std::cerr << "Context does not set correctly\n";
+		return false;
 	}
 
 	std::cout << "Created a GLFW window by address " << window << '\n';
+
+	InitGLAD();
+	InitCallbacks();
 
 	return true;
 }
@@ -367,6 +381,7 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 	int polygons = VAOCollection.back().pointAmount / 3;
 	std::cout << "Mesh with " << VAOCollection.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
 
+	LoadAndCompileShader(meshInfo.shaderProgram);
 	for (auto& texture : meshInfo.mesh.textures)
 	{
 		ConfigureTexture(texture);
@@ -565,49 +580,24 @@ bool LGL::CompileShader(const std::string& name)
 
 	ContextLock
 
-	std::string currentName = name;
-
-	if (currentName == "")
-	{
-		currentName = lastShader;
-	}
-
-	if (shaderInfoCollection.find(currentName) == shaderInfoCollection.end())
+	if (shaderInfoCollection.find(name) == shaderInfoCollection.end())
 	{
 		std::cout << "Shader by this name is not found\n";
 		return false;
 	}
 
-	AcceptableShaderCode shaderToC = shaderInfoCollection[currentName].shaderCode.c_str();
+	ShaderInfo& currentShaderInfo = shaderInfoCollection[name].back();
+	AcceptableShaderCode shaderToC = currentShaderInfo.shaderCode.c_str();
 
-	Shader* newShader = &shaderInfoCollection[currentName].shaderId;
+	Shader* newShader = &currentShaderInfo.shaderId;
 
 	GLSafeExecute(glShaderSource, *newShader, 1, &shaderToC, nullptr);
 	bool shaderCompiled = GLSafeExecute(glCompileShader, *newShader);
 
-	shaderInfoCollection[currentName].compiled = true;
-
-	return shaderCompiled; // imporve
+	return shaderCompiled;
 }
 
-bool LGL::LoadShader(const std::string& code, const std::string& type, const std::string& name)
-{
-	ContextLock
-
-	shaderInfoCollection.emplace(
-		name,
-		ShaderInfo{
-			glCreateShader(shaderTypeChoice[type]),
-			code
-		}
-	);
-
-	std::cout << "Shader " << lastShader << " loaded\n";
-
-	return true;
-}
-
-bool LGL::LoadShaderFromFile(const std::string& file, const std::string& shaderName)
+bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file)
 {
 	std::string shader; // change to stringstream
 	std::string line;
@@ -634,9 +624,19 @@ bool LGL::LoadShaderFromFile(const std::string& file, const std::string& shaderN
 		return false;
 	}
 
-	lastShader = shaderName == "" ? file : shaderName;
+	if (shaderInfoCollection.find(name) == shaderInfoCollection.end())
+	{
+		shaderInfoCollection[name] = {};
+	}
 
-	return LoadShader(shader, shaderType, lastShader);
+	shaderInfoCollection[name].emplace_back(
+		ShaderInfo{
+			glCreateShader(shaderTypeChoice[shaderType]),
+			shader
+		}
+	);
+
+	std::cout << "Shader " << file << " loaded\n";
 }
 
 bool LGL::ConfigureTexture(const Texture& texture)
@@ -752,44 +752,38 @@ bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::st
 	shaderProgramCollection.emplace(name, glCreateProgram());
 	ShaderProgram* newShaderProgram = &shaderProgramCollection[name];
 
-	for (auto& shaderInfo : shaderInfoCollection)
+	for (auto& shaderInfo : shaderInfoCollection[name])
 	{
-		if (shaderInfo.second.compiled && (shaderNames.empty() || std::find(shaderNames.begin(), shaderNames.end(), shaderInfo.first) != std::end(shaderNames)))
-		{
-			GLSafeExecute(glAttachShader, *newShaderProgram, shaderInfo.second.shaderId);
-			shaderInfo.second.compiled = false;
-		}
+		GLSafeExecute(glAttachShader, *newShaderProgram, shaderInfo.shaderId);
 	}
 	GLSafeExecute(glLinkProgram, *newShaderProgram);
 
-	// rewrite
 	int success;
-	char log[512];
 
 	GLSafeExecute(glGetProgramiv, *newShaderProgram, GL_LINK_STATUS, &success);
-	
-	lastProgram = name;
 
-	std::cout << "Shader program: " << lastProgram << " created\n";
+	std::cout << "Shader program: " << name << " created\n";
 
-	//glUseProgram(*newShaderProgram);
-	return true;
+	return success;
 }
 
-bool LGL::LoadAndCompileShaders(const std::string& dir, const std::vector<std::string>& names)
+bool LGL::LoadAndCompileShader(const std::string& name)
 {
 	bool res = true;
 
-	for (const auto& name : names)
+	if (shaderProgramCollection.find(name) != shaderProgramCollection.end())
 	{
-		for (const auto& shaderFileType : shaderTypeChoice)
-		{
-			res &= LoadShaderFromFile(dir + name + '.' + shaderFileType.first);
-			res &= CompileShader();
-		}
-
-		res &= CreateShaderProgram(name);
+		return res;
 	}
+
+	// res = res && Func() causes short-circuit on failure
+	for (const auto& shaderFileType : shaderTypeChoice)
+	{
+		res = res && LoadShaderFromFile(name, "shaders\\" + name + '.' + shaderFileType.first);
+		res = res && CompileShader(name);
+	}
+
+	res = res && CreateShaderProgram(name);
 
 	return res;
 }
@@ -799,6 +793,14 @@ void LGL::SetInteractable(unsigned char key, const OnPressFunction& preFunc, con
 	interactCollection[std::toupper(key)] = {preFunc, relFunc};
 	
 	std::cout << "Interactable for keyId " << key << " set\n";
+}
+
+void LGL::SetInteractable(SpecialKeys key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)
+{
+	int specialKeyID = LGLEnumInterpreter::SpecialKeyInter[static_cast<int>(key)];
+	interactCollection[specialKeyID] = {preFunc, relFunc};
+
+	std::cout << "Interactable for special keyid " << specialKeyID << " set\n";
 }
 
 void LGL::GLFWErrorCallback(int errorCode, const char* description)
@@ -853,7 +855,7 @@ const std::unordered_map<std::type_index, std::function<void(int, void*)>> unifo
 };
 
 
-int LGL::CheckUnifromValueLocation(const std::string& valueName, const std::string& shaderProgramName)
+int LGL::CheckUniformValueLocation(const std::string& valueName, const std::string& shaderProgramName)
 {
 	ShaderProgram shaderProgramToUse = shaderProgramCollection[shaderProgramName == "" ? lastProgram : shaderProgramName];
 
@@ -874,7 +876,7 @@ int LGL::CheckUnifromValueLocation(const std::string& valueName, const std::stri
 template<typename Type>
 bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName)
 {
-	int uniformValueLocation = CheckUnifromValueLocation(valueName, shaderProgramName);
+	int uniformValueLocation = CheckUniformValueLocation(valueName, shaderProgramName);
 	if (uniformValueLocation == -1)
 	{
 		return false;
