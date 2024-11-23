@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef LGL_EXPORT
+#error "GLExecutor is LGL only"
+#endif
+
 #include <glad/glad.h>
 
 #include <iostream>

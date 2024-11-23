@@ -8,7 +8,6 @@
 #include "Verts.h"
 
 #include "FileLoader.h"
-#include "AssimpHelper.h"
 
 #include "MaterialSim.h"
 #include "LightSim.h"
@@ -135,10 +134,10 @@ int main()
 	std::vector<std::string> textureNames;
 	std::vector<std::string> extraTextureNames;
 
-	FileLoader::GetFilesInDir(textureNames, "textures");
-	FileLoader::GetFilesInDir(extraTextureNames, "extraStuff\\textures");
-	lgl.LoadAndConfigureTextures("textures\\", textureNames);
-	lgl.LoadAndConfigureTextures("extraStuff\\textures\\", extraTextureNames);
+	FileLoader fileLoader;
+
+	fileLoader.GetFilesInDir(textureNames, "textures");
+	fileLoader.GetFilesInDir(extraTextureNames, "extraStuff\\textures");
 
 	MaterialSim::Material mat = MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD);
 	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
@@ -159,7 +158,7 @@ int main()
 	solids["cube"]  = GeneralHelpers::ConvertPosesToSolids(cubesPos);
 	solids["light"] = { SolidSim(camera.GetPositionVectorAddr(), {0.005f, 0.005f, 0.005f}) };
 	solids.at("light").begin()->SetType(SolidSim::SolidType::Dynamic);
-	solids["coilHead"] = { SolidSim({ 0.0f, 0.0f, 0.0f }, {0.2f, 0.2f, 0.2f}) };
+	solids["coilHead"] = { SolidSim({ 0.0f, 0.0f, 0.0f }, {0.4f, 0.4f, 0.4f}) };
 
 	glm::vec3 lightColor(1.0f, 0.0f, 0.0f);
 
@@ -271,15 +270,21 @@ int main()
 	cubeModel.behaviour = cubeBeh;
 	cubeModel.shaderProgram = "lightComb";
 	cubeModel.AddMesh({ cubeV, cubeInd });
-	cubeModel.meshes[0].mesh.textures = { {"box.png"}, { "boxEdge.png" } };
+	cubeModel.meshes.back().mesh.textures.push_back({});
+	cubeModel.meshes.back().mesh.textures.back().type = LGLStructs::Texture::TextureType::Diffuse;
+	fileLoader.LoadTexture("textures\\box.png", cubeModel.meshes.back().mesh.textures.back());
+	cubeModel.meshes.back().mesh.textures.push_back({});
+	cubeModel.meshes.back().mesh.textures.back().type = LGLStructs::Texture::TextureType::Specular;
+	fileLoader.LoadTexture("textures\\boxEdge.png", cubeModel.meshes.back().mesh.textures.back());
 	lgl.CreateModel(cubeModel);
 
 	LGLStructs::ModelInfo coil;
-
-	AssimpHelper::GetModel("extraStuff\\nurse.obj", coil);
+	fileLoader.LoadModel("extraStuff\\nurseF.glb", coil);
 	coil.shaderProgram = "lightComb";
 	coil.behaviour = coilBeh;
 	lgl.CreateModel(coil);
+	coil.render = true;
+	fileLoader.FreeTextureData();
 
 	lgl.SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
@@ -344,7 +349,6 @@ int main()
 	}
 
 	lgl.SetInteractable('r', [&camera]() { camera.SetPosition(CameraSim::Direction::Up); });
-
 	lgl.SetInteractable('c', [&commandHandler]() { commandHandler.RunCommandLine(); });
 
 	lgl.GetMaxAmountOfVertexAttr();

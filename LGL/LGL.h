@@ -16,7 +16,6 @@
 #include <typeindex>
 
 #include "LGLStructs.h"
-#include "LGLEnums.h"
 
 #define CALLBACK static void
 
@@ -42,7 +41,7 @@ private:
 	using ShaderType = int;
 	using ShaderProgram = unsigned int;
 
-	using Texture = unsigned int;
+	using TextureID = unsigned int;
 	using TextureData = unsigned char*;
 
 	using OnPressFunction = std::function<void()>;
@@ -65,16 +64,6 @@ private:
 		bool compiled = true;
 	};
 
-	struct TextureInfo
-	{
-		Texture textureId;
-		TextureData textureData;
-		unsigned int textureFormat;
-		int width;
-		int height;
-		int nrChannels;
-	};
-
 	class LGLEnumInterpreter
 	{
 	public:
@@ -83,6 +72,19 @@ private:
 	};
 
 public:
+
+	enum class DepthTestMode
+	{
+		Disable,
+		Always,
+		Never,
+		Less,
+		Greater,
+		Equal,
+		NotEqual,
+		LessOrEqual,
+		GreaterOrEqual
+	};
 
 	LGL_API LGL();
 	LGL_API ~LGL();
@@ -119,10 +121,7 @@ public:
 	// If shader file names can be identical to shader program name, general load and compile can be used
 	LGL_API bool LoadAndCompileShaders(const std::string& dir, const std::vector<std::string>& names);
 
-	LGL_API bool LoadTextureFromFile(const std::string& file, const std::string& textureName = "");
-	LGL_API bool ConfigureTexture(const std::string& textureName, const LGLStructs::TextureParams& textureParams = {});
-	LGL_API bool ConfigureTexture(const LGLStructs::TextureParams& textureParams = {});
-	LGL_API bool LoadAndConfigureTextures(const std::string& dir, const std::vector<std::string>& files, const std::vector<LGLStructs::TextureParams>& texParamVect = {});
+	LGL_API bool ConfigureTexture(const LGLStructs::Texture& texture);
 
 	LGL_API static void InitOpenGL(int major, int minor);
 
@@ -130,7 +129,7 @@ public:
 	LGL_API void InitCallbacks();
 	LGL_API static void TerminateOpenGL();
 
-	LGL_API void SetDepthTest(LGLEnums::DepthTestMode depthTestMode);
+	LGL_API void SetDepthTest(DepthTestMode depthTestMode);
 
 	LGL_API int GetMaxAmountOfVertexAttr();
 
@@ -186,9 +185,11 @@ private:
 
 	// Texture
 	std::string lastTexture;
-	std::map<std::string, TextureInfo> textureCollection;
+	std::map<std::string, TextureID> textureCollection;
 
 	std::vector<std::string> uniformErrorAntispam;
 
 	std::map<size_t, std::pair<OnPressFunction, OnReleaseFunction>> interactCollection;
 };
+
+#undef CALLBACK

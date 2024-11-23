@@ -3,8 +3,10 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <array>
 
-#include "stb_image.h"
+#include <random>
+#include <algorithm>
 
 #define LGL_EXPORT
 #include "LGL.h"
@@ -21,7 +23,6 @@ std::recursive_mutex ContextManager<GLFWwindow>::rMutex;
 size_t ContextManager<GLFWwindow>::counter = 0;
 
 using namespace LGLStructs;
-using namespace LGLEnums;
 
 std::function<void(double, double)> LGL::cursorPositionFunc = nullptr;
 std::function<void(double, double)> LGL::scrollCallbackFunc = nullptr;
@@ -48,8 +49,6 @@ LGL::LGL()
 	background = { 0, 0, 0, 1 };
 	currentVAOToRender = {};
 	window = nullptr;
-
-	stbi_set_flip_vertically_on_load(true);
 
 	std::cout << "Created LambdaGL instance\n";
 }
@@ -223,6 +222,9 @@ void LGL::Render()
 
 void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 {
+	std::array<int, Texture::GetTextureTypeAmount()> textureTypesToUnbind;
+	std::fill(textureTypesToUnbind.begin(), textureTypesToUnbind.end(), false);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		ContextLock
@@ -239,42 +241,51 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 		for (auto& currentVAO : VAOCollection)
 		{
-			currentVAOToRender = currentVAO;
-
-			std::string shaderProgramToCheck = currentVAO.meshInfo->shaderProgram;
-			if (lastProgram != shaderProgramToCheck)
+			if (currentVAO.meshInfo->render)
 			{
-				lastProgram = shaderProgramToCheck;
-				GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
-			}
+				currentVAOToRender = currentVAO;
 
-			GLSafeExecute(glBindVertexArray, currentVAO.vboId);
-
-			if (currentVAO.meshInfo->mesh.textures.size())
-			{
-				for (int i = 0; i < currentVAO.meshInfo->mesh.textures.size(); ++i)
+				std::string shaderProgramToCheck = currentVAO.meshInfo->shaderProgram;
+				if (lastProgram != shaderProgramToCheck)
 				{
-					if (textureCollection.find(currentVAO.meshInfo->mesh.textures[i].name) != textureCollection.end())
+					lastProgram = shaderProgramToCheck;
+					GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
+				}
+
+				GLSafeExecute(glBindVertexArray, currentVAO.vboId);
+
+				for (auto& texture : currentVAO.meshInfo->mesh.textures)
+				{
+					auto currentTextureIter = textureCollection.find(texture.name);
+					if (currentTextureIter != textureCollection.end())
 					{
-						TextureInfo& textureInfo = textureCollection.at(currentVAO.meshInfo->mesh.textures[i].name);
-						GLSafeExecute(glActiveTexture, GL_TEXTURE0 + i);
-						GLSafeExecute(glBindTexture, GL_TEXTURE_2D, textureInfo.textureId);
+						TextureID textureID = (*currentTextureIter).second;
+						int convertedTextureType = static_cast<int>(texture.type);
+						GLSafeExecute(glActiveTexture, GL_TEXTURE0 + convertedTextureType);
+						GLSafeExecute(glBindTexture, GL_TEXTURE_2D, textureID);
+
+						textureTypesToUnbind[convertedTextureType] = true;
+					}
+				}
+
+				std::function<void()> behaviourToCheck = currentVAO.meshInfo->behaviour;
+				if (behaviourToCheck)
+				{
+					behaviourToCheck();
+				}
+
+				Render();
+
+				for (auto& textureTypeToUnbind : textureTypesToUnbind)
+				{
+					if (textureTypeToUnbind)
+					{
+						GLSafeExecute(glActiveTexture, GL_TEXTURE0 + textureTypeToUnbind);
+						GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
+						textureTypeToUnbind = false;
 					}
 				}
 			}
-			else
-			{
-				GLSafeExecute(glActiveTexture, GL_TEXTURE0 + 0);
-				GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
-			}
-
-			std::function<void()> behaviourToCheck = currentVAO.meshInfo->behaviour;
-			if (behaviourToCheck)
-			{
-				behaviourToCheck();
-			}
-
-			Render();
 		}
 		currentVAOToRender = {};
 
@@ -355,6 +366,11 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 
 	int polygons = VAOCollection.back().pointAmount / 3;
 	std::cout << "Mesh with " << VAOCollection.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
+
+	for (auto& texture : meshInfo.mesh.textures)
+	{
+		ConfigureTexture(texture);
+	}
 }
 
 void LGL::CreateModel(LGLStructs::ModelInfo& model)
@@ -623,95 +639,43 @@ bool LGL::LoadShaderFromFile(const std::string& file, const std::string& shaderN
 	return LoadShader(shader, shaderType, lastShader);
 }
 
-bool LGL::LoadTextureFromFile(const std::string& file, const std::string& textureName)
-{
-	int textureWidth;
-	int textureHeight;
-	int nrChannels;
-	GLenum format;
-
-	TextureData textureData = stbi_load(file.c_str(), &textureWidth, &textureHeight, &nrChannels, 0);
-
-	if (!textureData)
-	{
-		std::cout << "Failed to load texture\n";
-		return false;
-	}
-	else
-	{
-		switch (nrChannels)
-		{
-		case 1:
-			format = GL_RED;
-			break;
-		case 3:
-			format = GL_RGB;
-			break;
-		case 4:
-			format = GL_RGBA;
-			break;
-		default:
-			std::cout << "Unknown format\n";
-			return false;
-		}
-	}
-	
-	lastTexture = textureName == "" ? file : textureName;
-
-	textureCollection.emplace(
-		lastTexture,
-		TextureInfo{
-			Texture(),
-			textureData,
-			format,
-			textureWidth,
-			textureHeight,
-			nrChannels,
-		}
-	);
-
-	std::cout << "Loaded texture " << lastTexture << " from " << file << '\n';
-
-	return true;
-}
-
-bool LGL::ConfigureTexture(const std::string& textureName, const TextureParams& textureParams)
+bool LGL::ConfigureTexture(const Texture& texture)
 {
 	ContextLock
 
-	if (textureCollection.find(textureName) == textureCollection.end())
+	if (textureCollection.find(texture.name) != textureCollection.end())
 	{
-		std::cout << "Can't find the texture\n";
-		return false;
+		return true;
 	}
 
-	TextureInfo* newTextureInfo = &textureCollection.at(textureName);
-	Texture* newTexture = &newTextureInfo->textureId;
-	GLSafeExecute(glGenTextures, 1, newTexture);
-	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, *newTexture);
+	textureCollection[texture.name] = TextureID();
+
+	TextureID& newTextureID = textureCollection[texture.name];
+	GLSafeExecute(glGenTextures, 1, &newTextureID);
+	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, newTextureID);
 
 	float color[] {
-		textureParams.color.r,
-		textureParams.color.g,
-		textureParams.color.b,
-		textureParams.color.a,
+		texture.params.color.r,
+		texture.params.color.g,
+		texture.params.color.b,
+		texture.params.color.a,
 	};
 
 	GLSafeExecute(
 		glTexParameteri,
 		GL_TEXTURE_2D, 
 		GL_TEXTURE_WRAP_S, 
-		LGLEnumInterpreter::TextureOverlayTypeInter[static_cast<int>(textureParams.overlay)]
+		LGLEnumInterpreter::TextureOverlayTypeInter[static_cast<int>(texture.params.overlay)]
 	);
 	GLSafeExecute(
 		glTexParameteri,
 		GL_TEXTURE_2D, 
 		GL_TEXTURE_WRAP_T, 
-		LGLEnumInterpreter::TextureOverlayTypeInter[static_cast<int>(textureParams.overlay)]
+		LGLEnumInterpreter::TextureOverlayTypeInter[static_cast<int>(texture.params.overlay)]
 	);
 
-	GLSafeExecute(glTexParameterfv, GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
-	if (textureParams.createMipmaps) 
+	//GLSafeExecute(glTexParameterfv, GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+	if (texture.params.createMipmaps) 
 	{
 		int glMipParams[2][2]
 		{
@@ -719,52 +683,66 @@ bool LGL::ConfigureTexture(const std::string& textureName, const TextureParams& 
 			{ GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST_MIPMAP_NEAREST}
 		};
 
-		GLSafeExecute(glGenerateMipmap, GL_TEXTURE_2D);
-
 		GLSafeExecute(
 			glTexParameteri,
 			GL_TEXTURE_2D, 
 			GL_TEXTURE_MIN_FILTER, 
-			glMipParams[textureParams.mipmapBFConfig.minFilter][textureParams.BFConfig.minFilter]
+			GL_NEAREST_MIPMAP_NEAREST//glMipParams[texture.params.mipmapBFConfig.minFilter][texture.params.BFConfig.minFilter]
 		);
 		GLSafeExecute(
 			glTexParameteri,
 			GL_TEXTURE_2D,
 			GL_TEXTURE_MAG_FILTER,
-		   glMipParams[textureParams.mipmapBFConfig.maxFilter][textureParams.BFConfig.maxFilter]
+			GL_NEAREST//glMipParams[texture.params.mipmapBFConfig.maxFilter][texture.params.BFConfig.maxFilter]
 		);
+
+		GLSafeExecute(glGenerateMipmap, GL_TEXTURE_2D);
 	}
 	else 
 	{
 		int glParams[]{ GL_LINEAR, GL_NEAREST };
 
-		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glParams[textureParams.BFConfig.minFilter]);
-		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glParams[textureParams.BFConfig.maxFilter]);
+		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glParams[texture.params.BFConfig.minFilter]);
+		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glParams[texture.params.BFConfig.maxFilter]);
 	}
+
+	unsigned int textureFormat;
+
+	switch (texture.channelAmount)
+	{
+	case 1:
+		textureFormat = GL_RED;
+		break;
+	case 3:
+		textureFormat = GL_RGB;
+		break;
+	case 4:
+		textureFormat = GL_RGBA;
+		break;
+	default:
+		std::cout << "Unknown format\n";
+		return false;
+	}
+
+	GLSafeExecute(glPixelStorei, GL_UNPACK_ALIGNMENT, textureFormat == 3 ? 1 : 4);
+
 
 	GLSafeExecute(
 		glTexImage2D,
 		GL_TEXTURE_2D, 
 		0, 
-		newTextureInfo->textureFormat,
-		newTextureInfo->width, 
-		newTextureInfo->height, 
+		textureFormat,
+		texture.width, 
+		texture.height, 
 		0, 
-		newTextureInfo->textureFormat, 
+		textureFormat,
 		GL_UNSIGNED_BYTE, 
-		newTextureInfo->textureData
+		texture.data
 	);
 
-	//stbi_image_free(newTextureInfo->textureData);
-
-	std::cout << "Texture " << textureName << " configured\n";
+	std::cout << "Texture " << texture.name << " configured\n";
 
 	return true;
-}
-
-bool LGL::ConfigureTexture(const TextureParams& textureParams)
-{
-	return ConfigureTexture(lastTexture, textureParams);
 }
 
 bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderNames)
@@ -814,24 +792,6 @@ bool LGL::LoadAndCompileShaders(const std::string& dir, const std::vector<std::s
 	}
 
 	return res;
-}
-
-bool LGL::LoadAndConfigureTextures(const std::string& dir, const std::vector<std::string>& files, const std::vector<TextureParams>& texParamVect)
-{
-	bool res = true;
-
-	if ((files.size() == texParamVect.size()) || texParamVect.empty())
-	{
-		for (size_t i = 0; i < files.size(); ++i)
-		{
-			res &= LoadTextureFromFile(dir + files[i], files[i]);
-			res &= ConfigureTexture(!texParamVect.empty() ? texParamVect[i] : TextureParams());
-		}
-
-		return res;
-	}
-	
-	return false;
 }
 
 void LGL::SetInteractable(unsigned char key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)

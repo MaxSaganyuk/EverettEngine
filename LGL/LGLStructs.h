@@ -7,27 +7,11 @@
 #include "stdEx/utilityEx.h"
 
 #include <functional>
-
-#include "LGLEnums.h"
+#include <vector>
+#include <string>
 
 namespace LGLStructs
 {
-
-	struct BilinearFiltrationConfig
-	{
-		bool minFilter = false;
-		bool maxFilter = true;
-	};
-
-	struct TextureParams
-	{
-		glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
-		LGLEnums::TextureOverlayType overlay = LGLEnums::TextureOverlayType::Repeat;
-		BilinearFiltrationConfig BFConfig = {};
-		bool createMipmaps = false;
-		BilinearFiltrationConfig mipmapBFConfig = {};
-	};
-
 	struct Vertex
 	{
 		enum class VertexData
@@ -79,6 +63,8 @@ namespace LGLStructs
 
 	struct Texture
 	{
+		using TextureData = unsigned char*;
+
 		enum class TextureType
 		{
 			Diffuse,
@@ -88,8 +74,36 @@ namespace LGLStructs
 			_SIZE
 		};
 
+		struct TextureParams
+		{
+			enum class TextureOverlayType
+			{
+				Repeat,
+				Mirrored,
+				EdgeClamp,
+				BorderClamp
+			};
+
+			struct BilinearFiltrationConfig
+			{
+				bool minFilter = false;
+				bool maxFilter = true;
+			};
+
+			glm::vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f };
+			TextureOverlayType overlay = TextureOverlayType::Repeat;
+			BilinearFiltrationConfig BFConfig = {};
+			bool createMipmaps = false;
+			BilinearFiltrationConfig mipmapBFConfig = {};
+		};
+
 		std::string name;
-		TextureType type = TextureType::Normal;
+		TextureType type = TextureType::Diffuse;
+		TextureData data = nullptr;
+		TextureParams params;
+		int width;
+		int height;
+		int channelAmount;
 
 		constexpr static size_t GetTextureTypeAmount()
 		{
@@ -97,9 +111,7 @@ namespace LGLStructs
 
 			return typeAmount;
 		}
-
 	};
-
 
 	struct Mesh
 	{
@@ -112,30 +124,33 @@ namespace LGLStructs
 	{
 		Mesh mesh;
 		stdEx::ValWithBackup<bool> isDynamic;
+		stdEx::ValWithBackup<bool> render;
 		stdEx::ValWithBackup<std::string> shaderProgram;
 		stdEx::ValWithBackup<std::function<void()>> behaviour;
 
-		MeshInfo(const Mesh& mesh, bool& isDynamic, std::string& shaderProgram, std::function<void()>& behaviour)
-			: mesh(mesh), isDynamic(&isDynamic), shaderProgram(&shaderProgram), behaviour(&behaviour) {}
+		MeshInfo(const Mesh& mesh, bool& render, bool& isDynamic, std::string& shaderProgram, std::function<void()>& behaviour)
+			: mesh(mesh), render(&render), isDynamic(&isDynamic), shaderProgram(&shaderProgram), behaviour(&behaviour) {}
 	
 	};
 	
 	struct ModelInfo
 	{
 		std::vector<MeshInfo> meshes;
+		bool render = true;
 		bool isDynamic = false;
 		std::string shaderProgram = "0";
 		std::function<void()> behaviour = nullptr;
 
 		void AddMesh(const Mesh& mesh)
 		{
-			meshes.emplace_back(MeshInfo(mesh, isDynamic, shaderProgram, behaviour));
+			meshes.emplace_back(MeshInfo(mesh, render, isDynamic, shaderProgram, behaviour));
 		}
 
 		void ResetDefaults()
 		{
 			for (auto& mesh : meshes)
 			{
+				mesh.render.ResetBackup(&render);
 				mesh.isDynamic.ResetBackup(&isDynamic);
 				mesh.shaderProgram.ResetBackup(&shaderProgram);
 				mesh.behaviour.ResetBackup(&behaviour);
@@ -145,6 +160,7 @@ namespace LGLStructs
 		ModelInfo& operator=(ModelInfo& modelInfo)
 		{
 			meshes = modelInfo.meshes;
+			render = modelInfo.render;
 			isDynamic = modelInfo.isDynamic;
 			shaderProgram = modelInfo.shaderProgram;
 			behaviour = modelInfo.behaviour;
