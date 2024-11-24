@@ -62,12 +62,32 @@ LGL::LGL()
 
 LGL::~LGL()
 {
+	for (auto& VAO : VAOCollection)
+	{
+		GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
+	}
+	for (auto& VBO : VBOCollection)
+	{
+		GLSafeExecute(glDeleteBuffers, 1, &VBO);
+	}
+	for (auto& EBO : EBOCollection)
+	{
+		GLSafeExecute(glDeleteBuffers, 1, &EBO);
+	}
 	for (auto& shaderInfo : shaderInfoCollection)
 	{
 		for (auto& shader : shaderInfo.second)
 		{
 			GLSafeExecute(glDeleteShader, shader.shaderId);
 		}
+	}
+	for (auto& shaderProgram : shaderProgramCollection)
+	{
+		GLSafeExecute(glDeleteProgram, shaderProgram.second);
+	}
+	for (auto& texture : textureCollection)
+	{
+		GLSafeExecute(glDeleteTextures, 1, &texture.second);
 	}
 
 	std::cout << "LambdaGL instance destroyed\n";
@@ -637,6 +657,8 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file)
 	);
 
 	std::cout << "Shader " << file << " loaded\n";
+
+	return true;
 }
 
 bool LGL::ConfigureTexture(const Texture& texture)
