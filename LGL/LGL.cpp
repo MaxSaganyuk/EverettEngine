@@ -30,7 +30,8 @@ std::function<void(double, double)> LGL::scrollCallbackFunc = nullptr;
 std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
 {
 	{"vert", GL_VERTEX_SHADER},
-	{"frag", GL_FRAGMENT_SHADER}
+	{"frag", GL_FRAGMENT_SHADER},
+	{"geom", GL_GEOMETRY_SHADER},
 };
 
 const std::vector<int> LGL::LGLEnumInterpreter::DepthTestModeInter =
@@ -619,34 +620,30 @@ bool LGL::CompileShader(const std::string& name)
 
 bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file)
 {
-	std::string shader; // change to stringstream
-	std::string line;
-
-	std::ifstream reader(file);
-
-	if (!reader)
-	{
-		std::cout << "Could not load file\n";
-		return false;
-	}
-
-	while (std::getline(reader, line))
-	{
-		shader += (line + '\n');
-	}
-
 	size_t typePos = file.find('.') + 1;
 	std::string shaderType = file.substr(typePos);
-
 	if (shaderTypeChoice.find(shaderType) == shaderTypeChoice.end())
 	{
 		std::cout << "Unknown shader type\n";
 		return false;
 	}
 
-	if (shaderInfoCollection.find(name) == shaderInfoCollection.end())
+	std::string shader; // change to stringstream
+	std::string line;
+
+	bool atLeastOneFileLoaded = shaderInfoCollection.find(name) != shaderInfoCollection.end();
+
+	std::ifstream reader(file);
+
+	if (!reader)
 	{
-		shaderInfoCollection[name] = {};
+		std::cout << file + " shader does not exist\n";
+		return atLeastOneFileLoaded;
+	}
+
+	while (std::getline(reader, line))
+	{
+		shader += (line + '\n');
 	}
 
 	shaderInfoCollection[name].emplace_back(
@@ -791,23 +788,23 @@ bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::st
 
 bool LGL::LoadAndCompileShader(const std::string& name)
 {
-	bool res = true;
-
 	if (shaderProgramCollection.find(name) != shaderProgramCollection.end())
 	{
-		return res;
+		return true;
 	}
 
-	// res = res && Func() causes short-circuit on failure
+	shaderInfoCollection[name] = {};
+
 	for (const auto& shaderFileType : shaderTypeChoice)
 	{
-		res = res && LoadShaderFromFile(name, "shaders\\" + name + '.' + shaderFileType.first);
-		res = res && CompileShader(name);
+		if (!LoadShaderFromFile(name, "shaders\\" + name + '.' + shaderFileType.first)) continue;
+		if (!CompileShader(name)) // remove if did not compile
+		{
+			shaderInfoCollection[name].pop_back();
+		}
 	}
 
-	res = res && CreateShaderProgram(name);
-
-	return res;
+	return shaderInfoCollection[name].size() && CreateShaderProgram(name);
 }
 
 void LGL::SetInteractable(unsigned char key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)
