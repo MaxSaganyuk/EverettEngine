@@ -5,9 +5,6 @@
 #include <cctype>
 #include <array>
 
-#include <random>
-#include <algorithm>
-
 #define LGL_EXPORT
 #include "LGL.h"
 #include "stdEx/mapEx.h"

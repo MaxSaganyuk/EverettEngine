@@ -183,11 +183,10 @@ int main()
 		lgl.SetShaderUniformValue("lightAmount", static_cast<int>(lights.size()));
 		for (int i = 0; i < lights.size(); ++i)
 		{
-			std::string accessIndex = lightShaderValueNames[1].first + "[" + std::to_string(i) + "]";
-
-			LGLUtils::SetShaderUniformStruct(
+			LGLUtils::SetShaderUniformArrayAt(
 				lgl,
-				accessIndex,
+				lightShaderValueNames[1].first,
+				i,
 				lightShaderValueNames[1].second,
 				lights[i].GetPositionVectorAddr(), glm::vec3(0.05f, 0.05f, 0.05f), glm::vec3(0.4f, 0.4f, 0.4f),
 				glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, atte.linear,
@@ -268,7 +267,7 @@ int main()
 	lgl.CreateModel(cubeModel);
 
 	LGLStructs::ModelInfo coil;
-	fileLoader.LoadModel("extraStuff\\nurseF.glb", coil);
+	fileLoader.LoadModel("extraStuff\\n2.glb", coil);
 	coil.shaderProgram = "lightComb";
 	coil.behaviour = coilBeh;
 	lgl.CreateModel(coil);
