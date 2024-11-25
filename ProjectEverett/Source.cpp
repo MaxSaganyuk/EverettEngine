@@ -215,7 +215,7 @@ int main()
 		{
 			glm::mat4& model = cube.GetModelMatrixAddr();
 			lgl.SetShaderUniformValue("model", model);
-			lgl.SetShaderUniformValue("inv", glm::inverse(model), true);
+			lgl.SetShaderUniformValue("inv", glm::inverse(model));
 
 			if (SolidSim::CheckForCollision(camera, cube))
 			{
@@ -231,7 +231,7 @@ int main()
 		for (auto& coil : solids.at("coilHead"))
 		{
 			lgl.SetShaderUniformValue("model", coil.GetModelMatrixAddr());
-			lgl.SetShaderUniformValue("inv", glm::inverse(coil.GetModelMatrixAddr()), true);
+			lgl.SetShaderUniformValue("inv", glm::inverse(coil.GetModelMatrixAddr()));
 		}
 	};
 
@@ -348,8 +348,6 @@ int main()
 		[&lgl, &camera, &coilSound]() {
 			coilSound.UpdatePositions();
 			camera.SetPosition(CameraSim::Direction::Nowhere);
-			lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
-			lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 		}
 	);
 	

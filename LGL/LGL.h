@@ -14,6 +14,7 @@
 #include <thread>
 #include <mutex>
 #include <typeindex>
+#include <unordered_set>
 
 #include "LGLStructs.h"
 
@@ -145,7 +146,7 @@ public:
 
 	//Function templates
 	template<typename Type>
-	LGL_API bool SetShaderUniformValue(const std::string& valueName, Type&& value, bool render = false, const std::string& shaderProgramName = "");
+	LGL_API bool SetShaderUniformValue(const std::string& valueName, Type&& value, const std::string& shaderProgramName = "");
 
 private:
 	bool InitGLAD();
@@ -201,6 +202,8 @@ private:
 	std::vector<std::string> uniformErrorAntispam;
 
 	std::map<size_t, std::pair<OnPressFunction, OnReleaseFunction>> interactCollection;
+
+	std::unordered_set<size_t> uniformLocationTracker;
 };
 
 #undef CALLBACK

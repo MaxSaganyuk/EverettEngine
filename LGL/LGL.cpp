@@ -249,6 +249,8 @@ void LGL::Render()
 		{
 			GLSafeExecute(glDrawElements, GL_TRIANGLES, currentVAOToRender.pointAmount, GL_UNSIGNED_INT, nullptr);
 		}
+
+		uniformLocationTracker.clear();
 	}
 }
 
@@ -890,7 +892,7 @@ int LGL::CheckUniformValueLocation(const std::string& valueName, const std::stri
 }
 
 template<typename Type>
-bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName)
+bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, const std::string& shaderProgramName)
 {
 	int uniformValueLocation = CheckUniformValueLocation(valueName, shaderProgramName);
 	if (uniformValueLocation == -1)
@@ -898,19 +900,19 @@ bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, bool
 		return false;
 	}
 
-	uniformValueLocators.at(typeid(Type))(uniformValueLocation, &value);
-
-	if (render)
+	if (uniformLocationTracker.find(uniformValueLocation) != uniformLocationTracker.end())
 	{
 		Render();
 	}
+	uniformLocationTracker.insert(uniformValueLocation);
+	uniformValueLocators.at(typeid(Type))(uniformValueLocation, &value);
 
 	return true;
 }
 
 #define ShaderUniformValueExplicit(Type) \
-template LGL_API bool LGL::SetShaderUniformValue<Type>(const std::string& valueName, Type&& value, bool render, const std::string& shaderProgramName); \
-template LGL_API bool LGL::SetShaderUniformValue<Type&>(const std::string& valueName, Type& value, bool render, const std::string& shaderProgramName);
+template LGL_API bool LGL::SetShaderUniformValue<Type>(const std::string& valueName, Type&& value, const std::string& shaderProgramName); \
+template LGL_API bool LGL::SetShaderUniformValue<Type&>(const std::string& valueName, Type& value, const std::string& shaderProgramName);
 
 ShaderUniformValueExplicit(int)
 ShaderUniformValueExplicit(float)
