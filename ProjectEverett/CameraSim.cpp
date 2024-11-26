@@ -69,17 +69,9 @@ void CameraSim::Rotate(float xpos, float ypos)
 
 void CameraSim::Zoom(float xpos, float ypos)
 {
-	if (fov + ypos > 1.0f && fov - ypos < 45.0f)
+	if (fov - ypos > 1.0f && fov - ypos < 45.0f)
 	{
 		fov -= ypos;
-	}
-	else if (fov <= 1.0f)
-	{
-		fov = 1.0f;
-	}
-	else if (fov >= 45.0f)
-	{
-		fov = 45.0f;
 	}
 }
 
