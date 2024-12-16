@@ -2,47 +2,48 @@
 
 #include <cassert>
 #include <map>
+#include <string>
+
+#include "SolidSim.h"
 
 // Source: https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
 
-class LightSim
+class LightSim : public SolidSim
 {
 public:
+	enum LightTypes
+	{
+		Direction,
+		Point,
+		Spot
+	};
+
 	struct Attenuation
 	{
 		float linear;
 		float quadratic;
 	};
 
-	static Attenuation GetAttenuation(int range)
-	{
-		for (const auto& attenuationVal : attenuationVals)
-		{
-			if (range < attenuationVal.first)
-			{
-				return attenuationVal.second;
-			}
-		}
+	LightSim(
+		LightTypes lightType,
+		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
+		const glm::vec3& scale = glm::vec3(1.0f, 1.0f, 1.0f),
+		const glm::vec3& front = glm::vec3(0.0f, 0.0f, 1.0f),
+		const float speed = 0.0f,
+		const float range = 60.0f
+	);
 
-		assert(false && "Unexpected Attenuation range value\n");
-		return { 0.0f, 0.0f };
-	}
+	static std::vector<std::string> GetLightTypeNames();
+	static std::map<LightTypes, std::string>& GetLightTypeNameMap();
+	std::string GetCurrentLightType();
+
+	int lightRange;
+
+	static Attenuation GetAttenuation(int range);
+	Attenuation GetAttenuation();
 private:
 	static std::map<int, Attenuation> attenuationVals;
-};
+	static std::map<LightTypes, std::string> lightTypeNames;
 
-std::map<int, LightSim::Attenuation> LightSim::attenuationVals
-{
-	{7,    {0.7f,    1.8f}      },
-	{13,   {0.35f,   0.44f}     },
-	{20,   {0.22f,   0.2f}      },
-	{32,   {0.14f,   0.07f}     },
-	{50,   {0.09f,   0.032f}    },
-	{65,   {0.07f,   0.017f}    },
-	{100,  {0.045f,  0.0075f}   },
-	{160,  {0.027f,  0.0028f}   },
-	{200,  {0.022f,  0.0019f}   },
-	{325,  {0.014f,  0.0007f}   },
-	{600,  {0.007f,  0.0002f}   },
-	{3250, {0.0014f, 0.000007f} }
+	LightTypes lightType;
 };

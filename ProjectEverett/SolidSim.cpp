@@ -29,6 +29,11 @@ void SolidSim::CheckRotationLimits()
 	}
 }
 
+void SolidSim::ForceModelUpdate()
+{
+	ResetModelMatrix();
+}
+
 void SolidSim::ResetModelMatrix(const Rotation& toRotate)
 {
 	rotate += toRotate;

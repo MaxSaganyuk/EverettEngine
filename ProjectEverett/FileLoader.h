@@ -15,6 +15,7 @@ class FileLoader
 	const aiScene* modelHandle;
 	std::vector<std::string> extraTextureName;
 	std::map<std::string, LGLStructs::Texture> texturesLoaded;
+	std::string nameToSet;
 
 	void ProcessNode(const aiNode* nodeHandle, LGLStructs::ModelInfo& model);
 	bool GetTextureFilenames(const std::string& path);
@@ -23,14 +24,15 @@ public:
 	FileLoader();
 	~FileLoader();
 
-	bool LoadModel(const std::string& file, LGLStructs::ModelInfo& model);
+	bool LoadModel(const std::string& file, const std::string& name, LGLStructs::ModelInfo& model);
 	bool LoadTexture(
 		const std::string& file,
 		LGLStructs::Texture& texture, 
 		unsigned char* data = nullptr, 
-		size_t dataSize = -1
+		size_t dataSize = 0
 	);
 
 	void FreeTextureData();
+	std::string GetCurrentDir();
 	bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);
 };

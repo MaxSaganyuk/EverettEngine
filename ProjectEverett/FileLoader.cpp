@@ -10,15 +10,25 @@
 
 #include "stb_image.h"
 
+std::string FileLoader::GetCurrentDir()
+{
+	char path[MAX_PATH];
+	GetCurrentDirectoryA(MAX_PATH, path);
+
+	return path;
+}
+
 bool FileLoader::GetFilesInDir(std::vector<std::string>& files, const std::string& dir)
 {
 	HANDLE dirHandle;
 	WIN32_FIND_DATAA fileData;
 
-	char path[MAX_PATH];
-	GetCurrentDirectoryA(MAX_PATH, path);
-	std::string currentDir = path;
-	std::string pathToCheck = currentDir + '\\' + dir + "\\*";
+	std::string pathToCheck = dir + "\\*";
+
+	if (dir.find(':') == dir.npos)
+	{
+		pathToCheck = GetCurrentDir() + '\\' + pathToCheck;
+	}
 
 	if ((dirHandle = FindFirstFileA(pathToCheck.c_str(), &fileData)) == INVALID_HANDLE_VALUE)
 	{
@@ -57,14 +67,14 @@ bool FileLoader::LoadTexture(
 
 	if (texture.data)
 	{
-		std::string fileWithoutPath = file;
+		std::string textureName = texture.name.size() ? texture.name : file;
 
-		while (fileWithoutPath.find('\\') != std::string::npos)
+		while (textureName.find('\\') != std::string::npos)
 		{
-			fileWithoutPath = fileWithoutPath.substr(fileWithoutPath.find('\\') + 1);
+			textureName = textureName.substr(textureName.find('\\') + 1);
 		}
 
-		texture.name = fileWithoutPath;
+		texture.name = textureName;
 		texturesLoaded[texture.name] = texture;
 
 		return true;
@@ -218,7 +228,7 @@ LGLStructs::Mesh FileLoader::ProcessMesh(const aiMesh* meshHandle)
 
 				LGLStructs::Texture newTexture;
 
-				newTexture.name = strWithoutPrefix;
+				newTexture.name = nameToSet + '_' + strWithoutPrefix;
 				newTexture.type = textureTypeInfo[texTypeIndex].lglTexType;
 
 				const aiTexture* embeddedTexture = modelHandle->GetEmbeddedTexture(strWithoutPrefix.c_str());
@@ -280,10 +290,13 @@ void FileLoader::FreeTextureData()
 	for (auto& texture : texturesLoaded)
 	{
 		stbi_image_free(texture.second.data);
+		texture.second.data = nullptr;
 	}
+
+	texturesLoaded.clear();
 }
 
-bool FileLoader::LoadModel(const std::string& file, LGLStructs::ModelInfo& model)
+bool FileLoader::LoadModel(const std::string& file, const std::string& name, LGLStructs::ModelInfo& model)
 {
 	Assimp::Importer importer;
 	modelHandle = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
@@ -294,6 +307,7 @@ bool FileLoader::LoadModel(const std::string& file, LGLStructs::ModelInfo& model
 		return false;
 	}
 
+	nameToSet = name;
 	GetTextureFilenames(file);
 	ProcessNode(modelHandle->mRootNode, model);
 

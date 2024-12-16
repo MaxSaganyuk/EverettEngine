@@ -140,6 +140,8 @@ public:
 
 	LGL_API void SetAssetOnOpenGLFailure(bool value);
 
+	LGL_API void SetShaderFolder(const std::string& path);
+
 	//Callback setters
 	LGL_API void SetCursorPositionCallback(std::function<void(double, double)> callbackFunc);
 	LGL_API void SetScrollCallback(std::function<void(double, double)> callbackFunc);
@@ -156,13 +158,14 @@ private:
 
 	// If no name is given will compile last loaded shader
 	bool CompileShader(const std::string& name = "");
-	bool LoadShaderFromFile(const std::string& name, const std::string& file);
+	bool LoadShaderFromFile(const std::string& name, const std::string& file, const std::string& shaderType);
 
 	// If no list of shaders is provided, will create a program with all compiled shaders
 	bool CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderVector = {});
 
 	// If shader file names can be identical to shader program name, general load and compile can be used
 	bool LoadAndCompileShader(const std::string& name);
+
 
 
 	// Callbacks
@@ -189,6 +192,7 @@ private:
 	std::vector<EBO> EBOCollection;
 
 	// Shader
+	std::string shaderPath;
 	static std::map<std::string, ShaderType> shaderTypeChoice;
 
 	std::map<std::string, std::vector<ShaderInfo>> shaderInfoCollection;

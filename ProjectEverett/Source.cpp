@@ -1,3 +1,4 @@
+/*
 #include <iostream>
 #include <time.h>
 #include <cmath>
@@ -177,7 +178,7 @@ int main()
 		lgl.SetShaderUniformValue("proj", camera.GetProjectionMatrixAddr());
 		lgl.SetShaderUniformValue("view", camera.GetViewMatrixAddr());
 
-		LGLUtils::SetShaderUniformStruct(lgl, lightShaderValueNames[0].first, lightShaderValueNames[0].second, 0, 1, mat.shininess);
+		LGLUtils::SetShaderUniformStruct(lgl, lightShaderValueNames[0].first, lightShaderValueNames[0].second, 0, 1, MaterialSim::GetMaterial(MaterialSim::MaterialID::GOLD).shininess);
 
 		std::vector<SolidSim>& lights = solids.at("light");
 		lgl.SetShaderUniformValue("lightAmount", static_cast<int>(lights.size()));
@@ -353,3 +354,4 @@ int main()
 	
 	LGL::TerminateOpenGL();
 }
+*/

@@ -617,16 +617,8 @@ bool LGL::CompileShader(const std::string& name)
 	return shaderCompiled;
 }
 
-bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file)
+bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, const std::string& shaderType)
 {
-	size_t typePos = file.find('.') + 1;
-	std::string shaderType = file.substr(typePos);
-	if (shaderTypeChoice.find(shaderType) == shaderTypeChoice.end())
-	{
-		std::cout << "Unknown shader type\n";
-		return false;
-	}
-
 	std::string shader; // change to stringstream
 	std::string line;
 
@@ -785,6 +777,11 @@ bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::st
 	return success;
 }
 
+void LGL::SetShaderFolder(const std::string& path)
+{
+	shaderPath = path;
+}
+
 bool LGL::LoadAndCompileShader(const std::string& name)
 {
 	if (shaderProgramCollection.find(name) != shaderProgramCollection.end())
@@ -796,7 +793,7 @@ bool LGL::LoadAndCompileShader(const std::string& name)
 
 	for (const auto& shaderFileType : shaderTypeChoice)
 	{
-		if (!LoadShaderFromFile(name, "shaders\\" + name + '.' + shaderFileType.first)) continue;
+		if (!LoadShaderFromFile(name, shaderPath + '\\' + name + '.' + shaderFileType.first, shaderFileType.first)) continue;
 		if (!CompileShader(name)) // remove if did not compile
 		{
 			shaderInfoCollection[name].pop_back();

@@ -90,6 +90,7 @@ public:
 	glm::vec3& GetPositionVectorAddr();
 	glm::vec3& GetUpVectorAddr();
 	glm::vec3& GetScaleVectorAddr();
+	void ForceModelUpdate();
 
 	void SetGhostMode(bool val);
 	bool IsGhostMode() const;
