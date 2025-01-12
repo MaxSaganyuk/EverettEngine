@@ -189,6 +189,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CBrowseDialog.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="CLoadingDialog.h" />
     <ClInclude Include="CLoadModelDialog.h" />
@@ -203,6 +204,7 @@
     <ClInclude Include="TreeManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CBrowseDialog.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="CLoadingDialog.cpp" />
     <ClCompile Include="CLoadModelDialog.cpp" />

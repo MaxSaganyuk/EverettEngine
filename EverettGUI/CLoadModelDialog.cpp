@@ -5,6 +5,7 @@
 #include "EverettGUI.h"
 #include "afxdialogex.h"
 #include "CLoadModelDialog.h"
+#include "CBrowseDialog.h"
 
 #include <fstream>
 
@@ -90,17 +91,11 @@ void CLoadModelDialog::UpdateModelChoice(const LPCTSTR filePath)
 
 void CLoadModelDialog::OnBnClickedButton1()
 {
-	BROWSEINFO browseInfo { 0 };
-	LPITEMIDLIST pidl = SHBrowseForFolderW(&browseInfo);
-
-	if (pidl)
+	CString pathStr;
+	
+	if (CBrowseDialog::OpenAndGetFolderPath(pathStr))
 	{
-		TCHAR path[MAX_PATH];
-		if (SHGetPathFromIDListW(pidl, path))
-		{
-			UpdateModelChoice(path);
-		}
-		CoTaskMemFree(pidl);
+		UpdateModelChoice(pathStr);
 	}
 }
 

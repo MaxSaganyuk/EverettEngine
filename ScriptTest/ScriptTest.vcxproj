@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>16.0</VCProjectVersion>
+    <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{6783a4c1-7394-4f38-986d-c19b32944cee}</ProjectGuid>
-    <RootNamespace>ProjectEverett</RootNamespace>
+    <ProjectGuid>{5bab32cd-84c4-49be-8cc0-d4557d323953}</ProjectGuid>
+    <RootNamespace>ScriptTest</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -70,35 +70,17 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>$(SolutionDir)ProjectEverett\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)ProjectEverett\include;$(SolutionDir)ProjectEverett\include\glad\include;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LibraryPath>$(SolutionDir)ProjectEverett\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)ProjectEverett\include;$(SolutionDir)ProjectEverett\include\glad\include;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>$(SolutionDir)ProjectEverett\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)ProjectEverett\include;$(SolutionDir)ProjectEverett\include\glad\include;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>$(SolutionDir)ProjectEverett\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)ProjectEverett\include;$(SolutionDir)ProjectEverett\include\glad\include;$(IncludePath)</IncludePath>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\CommonUtils;..\LGL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\ProjectEverett\interfaces;..\CommonUtils;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\LGL\x64\Debug;..\x64\Debug;..\LGL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenAL32.lib;assimp-vc143-mtd.lib;LGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -109,14 +91,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -125,13 +105,11 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\CommonUtils;..\LGL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\ProjectEverett\interfaces;..\CommonUtils;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\LGL\x64\Debug;..\x64\Debug;..\LGL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenAL32.lib;assimp-vc143-mtd.lib;LGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -142,69 +120,19 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>.\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="EverettEngine.h" />
-    <ClInclude Include="FileLoader.h" />
-    <ClInclude Include="CameraSim.h" />
-    <ClInclude Include="CommandHandler.h" />
-    <ClInclude Include="interfaces\ISolidSim.h" />
-    <ClInclude Include="MazeGen.h" />
-    <ClInclude Include="SolidSim.h" />
-    <ClInclude Include="SoundSim.h" />
-    <ClInclude Include="LightSim.h" />
-    <ClInclude Include="MaterialSim.h" />
-    <ClInclude Include="stb_image.h" />
-    <ClInclude Include="Verts.h" />
+    <ClInclude Include="EverettScript.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EverettEngine.cpp" />
-    <ClCompile Include="FileLoader.cpp" />
-    <ClCompile Include="CameraSim.cpp" />
-    <ClCompile Include="CommandHandler.cpp" />
-    <ClCompile Include="LightSim.cpp" />
-    <ClCompile Include="MazeGen.cpp" />
-    <ClCompile Include="SolidSim.cpp" />
-    <ClCompile Include="SoundSim.cpp" />
-    <ClCompile Include="Source.cpp" />
-    <ClCompile Include="stb_image.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\colorChange.frag" />
-    <None Include="shaders\colors.frag" />
-    <None Include="shaders\colors.vert" />
-    <None Include="shaders\colorsTex.frag" />
-    <None Include="shaders\colorsTex.vert" />
-    <None Include="shaders\lamp.frag" />
-    <None Include="shaders\lamp.vert" />
-    <None Include="shaders\lightArea.frag" />
-    <None Include="shaders\lightArea.vert" />
-    <None Include="shaders\lightComb.frag" />
-    <None Include="shaders\lightComb.vert" />
-    <None Include="shaders\lightDir.frag" />
-    <None Include="shaders\lightDir.vert" />
-    <None Include="shaders\lightPoint.frag" />
-    <None Include="shaders\lightPoint.vert" />
-    <None Include="shaders\simple.frag" />
-    <None Include="shaders\simple.vert" />
-    <None Include="shaders\texColor.frag" />
-    <None Include="shaders\texColor.vert" />
-    <None Include="shaders\threeColor.frag" />
-    <None Include="shaders\threeColor.vert" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\LGL\LGL.vcxproj">
-      <Project>{70bb61df-5f8b-44d3-ab11-663ca97d737a}</Project>
-    </ProjectReference>
+    <ClCompile Include="EverettScript.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

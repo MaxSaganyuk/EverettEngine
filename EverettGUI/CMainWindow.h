@@ -57,8 +57,18 @@ private:
 
 	EverettEngine* engineP;
 	TreeManager objectTree;
+
+	CEdit scriptEdit;
+	CButton scriptBrowseButton;
+	CButton loadScriptButton;
+
+	std::string chosenObjectName;
+	std::string dllScriptPath;
 public:
 	afx_msg void OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnBrowseButtonClick();
+	afx_msg void OnLoadScriptButton();
+	afx_msg void OnUnloadScriptButton();
 };
 
 

@@ -278,3 +278,8 @@ bool SolidSim::CheckForCollision(const SolidSim& solid1, const SolidSim& solid2)
 
 	return res;
 }
+
+bool SolidSim::CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2)
+{
+	return CheckForCollision(solid1, solid2);
+}

@@ -5,6 +5,9 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <functional>
+
+#include "interfaces/ISolidSim.h"
 
 class aiScene;
 class aiMesh;
@@ -33,6 +36,13 @@ public:
 	);
 
 	void FreeTextureData();
+	void FreeDllData();
 	std::string GetCurrentDir();
 	bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);
+
+	bool GetScriptFuncFromDLL(
+		std::function<void(const std::string&, ISolidSim&)>& scriptFunc,
+		const std::string& dllPath, 
+		const std::string& funcName
+	);
 };

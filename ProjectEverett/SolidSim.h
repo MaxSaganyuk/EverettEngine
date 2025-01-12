@@ -3,53 +3,10 @@
 #include <cassert>
 #include <unordered_map>
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
+#include "interfaces/ISolidSim.h"
 
-class SolidSim
+class SolidSim : public ISolidSim
 {
-public:
-
-	enum class Direction
-	{
-		Forward,
-		Backward,
-		Left,
-		Right,
-		Up,
-		Down,
-		Nowhere
-	};
-
-	struct Rotation : public glm::vec3
-	{
-		Rotation(const glm::vec3& axis = {}) : glm::vec3(axis) {}
-		Rotation(float pitch, float yaw, float roll) : Rotation(glm::vec3{pitch, yaw, roll}) {}
-
-		float GetPitch() { return x; };
-		float GetYaw()   { return y; };
-		float GetRoll()  { return z; };
-
-		Rotation& operator+=(const Rotation& toRotate)
-		{
-			x += toRotate.x;
-			y += toRotate.y;
-			z += toRotate.z;
-
-			return *this;
-		}
-	};
-
-	enum class SolidType
-	{
-		Static, // Set if solid is unchanging or changes it's position, rotation or scale rarely
-		Dynamic // UNIMPLEMENTED Set if solid changes it's position, rotation or scale constantly or often
-	};
-
-
-	constexpr static float fullRotation = 360.0f;
-
 private:
 	constexpr static size_t realDirectionAmount = 6;
 
@@ -82,32 +39,33 @@ public:
 		const float speed = 0.006f
 	);
 
-	void InvertMovement();
-	bool IsMovementInverted();
+	void InvertMovement() override;
+	bool IsMovementInverted() override;
 
-	glm::mat4& GetModelMatrixAddr();
-	glm::vec3& GetFrontVectorAddr();
-	glm::vec3& GetPositionVectorAddr();
-	glm::vec3& GetUpVectorAddr();
-	glm::vec3& GetScaleVectorAddr();
-	void ForceModelUpdate();
+	glm::mat4& GetModelMatrixAddr() override;
+	glm::vec3& GetFrontVectorAddr() override;
+	glm::vec3& GetPositionVectorAddr() override;
+	glm::vec3& GetUpVectorAddr() override;
+	glm::vec3& GetScaleVectorAddr() override;
+	void ForceModelUpdate() override;
 
-	void SetGhostMode(bool val);
-	bool IsGhostMode() const;
+	void SetGhostMode(bool val) override;
+	bool IsGhostMode() const override;
 
-	void DisableDirection(Direction dir);
-	void EnableDirection(Direction dir);
-	void EnableAllDirections();
-	size_t GetAmountOfDisabledDirs();
-	Direction GetLastDirection();
+	void DisableDirection(Direction dir) override;
+	void EnableDirection(Direction dir) override;
+	void EnableAllDirections() override;
+	size_t GetAmountOfDisabledDirs() override;
+	Direction GetLastDirection() override;
 
-	void SetType(SolidType type);
+	void SetType(SolidType type) override;
 
-	void SetLastPosition();
-	void SetPosition(Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f });
+	void SetLastPosition() override;
+	void SetPosition(Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }) override;
 
-	void LimitRotations(const Rotation& min, const Rotation& max);
-	void Rotate(const Rotation& toRotate);
+	void LimitRotations(const Rotation& min, const Rotation& max) override;
+	void Rotate(const Rotation& toRotate) override;
 
 	static bool CheckForCollision(const SolidSim& solid1, const SolidSim& solid2);
+	bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) override;
 };

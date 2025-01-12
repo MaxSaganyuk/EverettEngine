@@ -26,6 +26,9 @@
 #define IDC_CHECK1                      1015
 #define IDC_TREE1                       1016
 #define IDC_PROGRESS1                   1017
+#define IDC_BUTTON2                     1018
+#define IDC_BUTTON3                     1019
+#define IDC_BUTTON4                     1020
 #define ID_BUTTON32771                  32771
 #define ID_BUTTON32772                  32772
 
@@ -35,7 +38,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        319
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1021
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

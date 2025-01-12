@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "EverettGUI.h"
 #include "CMainWindow.h"
+#include "CBrowseDialog.h"
 
 
 // CMainWindow
@@ -63,11 +64,17 @@ void CMainWindow::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT8, objectInfoEdits[2][1]);
 	DDX_Control(pDX, IDC_EDIT9, objectInfoEdits[2][2]);
 	DDX_Control(pDX, IDC_TREE1, objectTree.GetTreeCtrl());
+	DDX_Control(pDX, IDC_EDIT10, scriptEdit);
+	DDX_Control(pDX, IDC_BUTTON2, scriptBrowseButton);
+	DDX_Control(pDX, IDC_BUTTON3, loadScriptButton);
 }
 
 BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON1, &CMainWindow::OnUpdateParamsClick)
 	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE1, &CMainWindow::OnTreeSelectionChanged)
+	ON_BN_CLICKED(IDC_BUTTON2, &CMainWindow::OnBrowseButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON3, &CMainWindow::OnLoadScriptButton)
+	ON_BN_CLICKED(IDC_BUTTON4, &CMainWindow::OnUnloadScriptButton)
 END_MESSAGE_MAP()
 
 // CMainWindow diagnostics
@@ -156,6 +163,7 @@ void CMainWindow::OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult)
 	{
 		if (nodeStrings.find("Model") != nodeStrings.end())
 		{
+			chosenObjectName = nodeStrings["Solid"];
 			SetObjectParams(engineP->GetSolidParamsByName(nodeStrings["Model"], nodeStrings["Solid"]));
 		}
 	}
@@ -165,4 +173,31 @@ void CMainWindow::OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 
 	*pResult = 0;
+}
+
+
+void CMainWindow::OnBrowseButtonClick()
+{
+	CString pathStr;
+
+	if (CBrowseDialog::OpenAndGetFilePath(pathStr))
+	{
+		scriptEdit.SetWindowTextW(pathStr);
+		dllScriptPath = CT2A(pathStr);
+	}
+}
+
+
+void CMainWindow::OnLoadScriptButton()
+{
+	if (engineP)
+	{
+		engineP->SetScriptToObject(chosenObjectName, dllScriptPath);
+	}
+}
+
+
+void CMainWindow::OnUnloadScriptButton()
+{
+
 }

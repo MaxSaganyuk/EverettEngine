@@ -10,6 +10,8 @@
 
 #include "stb_image.h"
 
+static std::map<std::string, HMODULE> dllHandleMap;
+
 std::string FileLoader::GetCurrentDir()
 {
 	char path[MAX_PATH];
@@ -88,6 +90,7 @@ FileLoader::FileLoader() {}
 FileLoader::~FileLoader()
 {
 	FreeTextureData();
+	FreeDllData();
 }
 
 bool FileLoader::GetTextureFilenames(const std::string& path)
@@ -312,4 +315,63 @@ bool FileLoader::LoadModel(const std::string& file, const std::string& name, LGL
 	ProcessNode(modelHandle->mRootNode, model);
 
 	return true;
+}
+
+bool FileLoader::GetScriptFuncFromDLL(
+	std::function<void(const std::string&, ISolidSim&)>& scriptFunc,
+	const std::string& dllPath,
+	const std::string& funcName
+)
+{
+	bool success = false;
+
+	HMODULE dllHandle = LoadLibraryA(dllPath.c_str());
+
+	if (dllHandle)
+	{
+		if (dllHandleMap.find(dllPath) != dllHandleMap.end())
+		{
+			if (dllHandleMap[dllPath] != dllHandle)
+			{
+				FreeLibrary(dllHandleMap[dllPath]);
+				dllHandleMap.erase(dllPath);
+				dllHandleMap[dllPath] = dllHandle;
+			}
+		}
+		else
+		{
+			dllHandleMap[dllPath] = dllHandle;
+		}
+
+		using ScriptWrapperType = void(*)(const char*, void*);
+		ScriptWrapperType scriptWrapperFunc = reinterpret_cast<ScriptWrapperType>(
+			GetProcAddress(dllHandleMap[dllPath], funcName.c_str())
+		);
+
+		if (scriptWrapperFunc)
+		{
+			scriptFunc = [scriptWrapperFunc](const std::string& name, ISolidSim& solid) 
+			{ 
+				scriptWrapperFunc(name.c_str(), reinterpret_cast<void*>(&solid));
+			};
+
+			success = true;
+		}
+	}
+
+	return success;
+
+}
+
+void FileLoader::FreeDllData()
+{
+	for (auto& dllHandle : dllHandleMap)
+	{
+		if (dllHandle.second)
+		{
+			FreeLibrary(dllHandle.second);
+		}
+	}
+
+	dllHandleMap.clear();
 }

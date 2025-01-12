@@ -64,11 +64,7 @@ public:
 	EVERETT_API EverettEngine();
 	EVERETT_API ~EverettEngine();
 	EVERETT_API void CreateAndSetupMainWindow(int windowWidth, int windowHeight, const std::string& title);
-	EVERETT_API bool CreateModel(
-		const std::string& path, 
-		const std::string& name, 
-		std::function<void()> additionalBehaviour = nullptr
-	);
+	EVERETT_API bool CreateModel(const std::string& path, const std::string& name);
 	EVERETT_API bool CreateSolid(const std::string& modelName, const std::string& solidName);
 	EVERETT_API void CreateLight(const std::string& lightName, LightTypes lightType);
 
@@ -79,6 +75,9 @@ public:
 		const std::vector<glm::vec3>& params
 	);
 
+	EVERETT_API void SetScriptToObject(const std::string& objectName, const std::string& dllPath);
+	EVERETT_API void UnsetScriptFromObject(const std::string& objectName);
+
 	EVERETT_API std::vector<std::string> GetModelList(const std::string& path);
 	EVERETT_API std::vector<std::string> GetCreatedModels();
 	EVERETT_API std::vector<std::string> GetNamesByObject(ObjectTypes objType);
@@ -86,8 +85,9 @@ public:
 
 	EVERETT_API static std::vector<std::string> GetObjectTypes();
 private:
-	using ModelSolidPair = std::pair<LGLStructs::ModelInfo, std::map<std::string, SolidSim>>;
-	using ModelSolidsMap = std::unordered_map<std::string, ModelSolidPair>;
+	struct ModelSolidInfo;
+
+	using ModelSolidsMap = std::unordered_map<std::string, ModelSolidInfo>;
 
 	using LightShaderValueNames = std::vector<std::pair<std::string, std::vector<std::string>>>;
 	using LightCollection = std::map<LightTypes, std::map<std::string, LightSim>>;

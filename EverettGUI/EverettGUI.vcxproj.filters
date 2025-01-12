@@ -51,6 +51,9 @@
     <ClInclude Include="CLoadingDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CBrowseDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EverettGUI.cpp">
@@ -78,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CLoadingDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CBrowseDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

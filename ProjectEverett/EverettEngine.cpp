@@ -7,13 +7,13 @@
 #include "LGLUtils.h"
 #include "Verts.h"
 
-#include "FileLoader.h"
-
 #include "MaterialSim.h"
 #include "LightSim.h"
 #include "SolidSim.h"
 #include "CameraSim.h"
 #include "SoundSim.h"
+
+#include "FileLoader.h"
 
 #include "CommandHandler.h"
 
@@ -23,6 +23,13 @@
 
 #define EVERETT_EXPORT
 #include "EverettEngine.h"
+
+struct EverettEngine::ModelSolidInfo
+{
+	LGLStructs::ModelInfo model;
+	std::map<std::string, SolidSim> solids;
+	std::function<void(const std::string&, ISolidSim&)> scriptFunc = nullptr;
+};
 
 EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 {
@@ -106,14 +113,10 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	);
 }
 
-bool EverettEngine::CreateModel(
-	const std::string& path, 
-	const std::string& name, 
-	std::function<void()> additionalBehaviour
-)
+bool EverettEngine::CreateModel(const std::string& path, const std::string& name)
 {
-	MSM.emplace(name, ModelSolidPair{});
-	LGLStructs::ModelInfo& newModel = MSM[name].first;
+	MSM.emplace(name, ModelSolidInfo{});
+	LGLStructs::ModelInfo& newModel = MSM[name].model;
 	
 	if (!fileLoader->LoadModel(path, name, newModel))
 	{
@@ -123,19 +126,19 @@ bool EverettEngine::CreateModel(
 
 	newModel.shaderProgram = "lightComb";
 	newModel.render = false;
-	newModel.behaviour = [this, name, additionalBehaviour]()
+	newModel.behaviour = [this, name]()
 	{
-		if (additionalBehaviour)
-		{
-			additionalBehaviour();
-		}
-
 		LightUpdater();
 
 		if(MSM.find(name) != MSM.end())
 		{
-			for (auto& solid : MSM.at(name).second)
+			for (auto& solid : MSM.at(name).solids)
 			{
+				if (MSM[name].scriptFunc)
+				{
+					MSM[name].scriptFunc(solid.first, solid.second);
+				}
+
 				LGLUtils::SetShaderUniformStruct(
 					*mainLGL, 
 					lightShaderValueNames[0].first, 
@@ -166,8 +169,8 @@ bool EverettEngine::CreateModel(
 
 bool EverettEngine::CreateSolid(const std::string& modelName, const std::string& solidName)
 {
-	MSM[modelName].second.emplace(solidName, camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
-	MSM[modelName].first.render = true;
+	MSM[modelName].solids.emplace(solidName, camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
+	MSM[modelName].model.render = true;
 
 	return true;
 }
@@ -211,27 +214,47 @@ void EverettEngine::LightUpdater()
 		);
 	}
 
-	/*
-	LightSim::Attenuation atte = LightSim::GetAttenuation(60);
-	LGLUtils::SetShaderUniformArrayAt(
-		*mainLGL,
-		lightShaderValueNames[2].first,
-		0,
-		lightShaderValueNames[2].second,
-		camera->GetPositionVectorAddr(), camera->GetFrontVectorAddr(),
-		glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
-		atte.linear, atte.quadratic, glm::cos(glm::radians(12.5f)),
-		glm::cos(glm::radians(17.5f))
-	);
-	*/
+	index = 0;
+	for (auto& light : lights[LightTypes::Spot])
+	{
+		LightSim::Attenuation atten = light.second.GetAttenuation();
+
+		LGLUtils::SetShaderUniformArrayAt(
+			*mainLGL,
+			lightShaderValueNames[2].first,
+			index++,
+			lightShaderValueNames[2].second,
+			light.second.GetPositionVectorAddr(), light.second.GetFrontVectorAddr(),
+			glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
+			atten.linear, atten.quadratic, glm::cos(glm::radians(12.5f)),
+			glm::cos(glm::radians(17.5f))
+		);
+	}
 
 
 	mainLGL->SetShaderUniformValue("viewPos", camera->GetPositionVectorAddr());
 }
 
+void EverettEngine::SetScriptToObject(const std::string& objectName, const std::string& dllPath)
+{
+	if (fileLoader)
+	{
+		MSM[objectName].scriptFunc = nullptr;
+		fileLoader->GetScriptFuncFromDLL(MSM[objectName].scriptFunc, dllPath, objectName);
+	}
+}
+
+void EverettEngine::UnsetScriptFromObject(const std::string& objectName)
+{
+	if(fileLoader)
+	{ 
+		
+	}
+}
+
 std::vector<glm::vec3> EverettEngine::GetSolidParamsByName(const std::string& modelName, const std::string& solidName)
 {
-	SolidSim& solid = MSM[modelName].second[solidName];
+	SolidSim& solid = MSM[modelName].solids[solidName];
 
 	return { solid.GetPositionVectorAddr(), solid.GetScaleVectorAddr(), solid.GetFrontVectorAddr() };
 }
@@ -242,7 +265,7 @@ void EverettEngine::SetSolidParamsByName(
 	const std::vector<glm::vec3>& params
 )
 {
-	SolidSim& solid = MSM[modelName].second[solidName];
+	SolidSim& solid = MSM[modelName].solids[solidName];
 
 	solid.GetPositionVectorAddr() = params[0];
 	solid.GetScaleVectorAddr()    = params[1];
@@ -335,7 +358,7 @@ std::vector<std::string> EverettEngine::GetSolidList()
 	for (auto& model : MSM)
 	{
 		solidNames.push_back('.' + model.first);
-		std::vector<std::string> modelSolidNames = GetNameList(model.second.second);
+		std::vector<std::string> modelSolidNames = GetNameList(model.second.solids);
 		solidNames.insert(solidNames.end(), modelSolidNames.begin(), modelSolidNames.end());
 	}
 
