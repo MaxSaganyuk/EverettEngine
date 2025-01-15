@@ -3,6 +3,8 @@
 
 bool CBrowseDialog::OpenAndGetFolderPath(CString& pathStr)
 {
+	bool success = false;
+
 	BROWSEINFO browseInfo{ 0 };
 	LPITEMIDLIST pidl = SHBrowseForFolderW(&browseInfo);
 
@@ -12,12 +14,12 @@ bool CBrowseDialog::OpenAndGetFolderPath(CString& pathStr)
 		if (SHGetPathFromIDListW(pidl, path))
 		{
 			pathStr = path;
-			return true;
+			success = true;
 		}
 		CoTaskMemFree(pidl);
 	}
 
-	return false;
+	return success;
 }
 
 bool CBrowseDialog::OpenAndGetFilePath(CString& pathStr)

@@ -190,6 +190,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CBrowseDialog.h" />
+    <ClInclude Include="CChoiceDialog.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="CLoadingDialog.h" />
     <ClInclude Include="CLoadModelDialog.h" />
@@ -205,6 +206,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CBrowseDialog.cpp" />
+    <ClCompile Include="CChoiceDialog.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="CLoadingDialog.cpp" />
     <ClCompile Include="CLoadModelDialog.cpp" />

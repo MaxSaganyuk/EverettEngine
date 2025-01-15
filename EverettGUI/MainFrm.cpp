@@ -12,6 +12,8 @@
 #include "CPlaceObjectDialog.h"
 #include "CLoadingDialog.h"
 
+#include "CChoiceDialog.h"
+
 #include "MainFrm.h"
 
 #ifdef _DEBUG
@@ -143,6 +145,9 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 
 void CMainFrame::OnLoadModel()
 {
+	CChoiceDialog test;
+	test.AddBrowseEdit("modelPath", "Model path:", "", CChoiceDialog::BrowseEditInfo::BrowseEditType::Folder);
+
 	CLoadModelDialog loadModelDlg([this](const std::string& path) { return engine.GetModelList(path); }, engine.GetCreatedModels());
 	
 	if (loadModelDlg.DoModal() == IDOK)
