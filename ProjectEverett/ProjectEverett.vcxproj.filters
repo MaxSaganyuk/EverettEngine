@@ -60,6 +60,9 @@
     <ClInclude Include="interfaces\ISolidSim.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="ModelSim.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">

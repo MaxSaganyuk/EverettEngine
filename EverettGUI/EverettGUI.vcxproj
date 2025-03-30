@@ -194,6 +194,7 @@
     <ClInclude Include="CLoadingDialog.h" />
     <ClInclude Include="CLoadModelDialog.h" />
     <ClInclude Include="CMainWindow.h" />
+    <ClInclude Include="CObjectEditDialog.h" />
     <ClInclude Include="CPlaceObjectDialog.h" />
     <ClInclude Include="EverettGUI.h" />
     <ClInclude Include="framework.h" />
@@ -209,6 +210,7 @@
     <ClCompile Include="CLoadingDialog.cpp" />
     <ClCompile Include="CLoadModelDialog.cpp" />
     <ClCompile Include="CMainWindow.cpp" />
+    <ClCompile Include="CObjectEditDialog.cpp" />
     <ClCompile Include="CPlaceObjectDialog.cpp" />
     <ClCompile Include="EverettGUI.cpp" />
     <ClCompile Include="MainFrm.cpp" />

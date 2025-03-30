@@ -111,15 +111,15 @@ TreeManager::TreeManagerNode* TreeManager::FindNodeByItem(HTREEITEM item)
 	return nullptr;
 }
 
-std::map<std::string, std::string> TreeManager::GetAllOfRootsSelectedNode()
+std::vector<std::pair<std::string, std::string>> TreeManager::GetAllOfRootsSelectedNode()
 {
-	std::map<std::string, std::string> allDataRoots;
+	std::vector<std::pair<std::string, std::string>> allDataRoots;
  	
 	TreeManagerNode* currentNode = FindNodeByItem(objectTree.GetSelectedItem());
 	
 	while (currentNode->previousNode)
 	{
-		allDataRoots.emplace(currentNode->title, currentNode->data);
+		allDataRoots.push_back({ currentNode->title, currentNode->data });
 		currentNode = currentNode->previousNode;
 	}
 

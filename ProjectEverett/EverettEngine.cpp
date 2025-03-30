@@ -28,7 +28,7 @@ struct EverettEngine::ModelSolidInfo
 {
 	LGLStructs::ModelInfo model;
 	std::map<std::string, SolidSim> solids;
-	std::function<void(const std::string&, ISolidSim&)> scriptFunc = nullptr;
+	std::weak_ptr<std::function<void(const std::string&, ISolidSim&)>> scriptFunc;
 };
 
 EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
@@ -134,9 +134,9 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 		{
 			for (auto& solid : MSM.at(name).solids)
 			{
-				if (MSM[name].scriptFunc)
+				if (MSM[name].scriptFunc.lock())
 				{
-					MSM[name].scriptFunc(solid.first, solid.second);
+					(*MSM[name].scriptFunc.lock())(solid.first, solid.second);
 				}
 
 				LGLUtils::SetShaderUniformStruct(
@@ -239,17 +239,21 @@ void EverettEngine::SetScriptToObject(const std::string& objectName, const std::
 {
 	if (fileLoader)
 	{
-		MSM[objectName].scriptFunc = nullptr;
 		fileLoader->GetScriptFuncFromDLL(MSM[objectName].scriptFunc, dllPath, objectName);
 	}
 }
 
-void EverettEngine::UnsetScriptFromObject(const std::string& objectName)
+void EverettEngine::UnsetScriptFromObject(const std::string& dllPath)
 {
 	if(fileLoader)
 	{ 
-		
+		fileLoader->UnloadScriptDLL(dllPath);
 	}
+}
+
+bool EverettEngine::IsObjectScriptSet(const std::string& objectName)
+{
+	return MSM[objectName].scriptFunc.lock() != nullptr;
 }
 
 std::vector<glm::vec3> EverettEngine::GetSolidParamsByName(const std::string& modelName, const std::string& solidName)

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <functional>
 #include <Windows.h>
 
 #include <assimp/Importer.hpp>
@@ -10,7 +11,10 @@
 
 #include "stb_image.h"
 
-static std::map<std::string, HMODULE> dllHandleMap;
+static std::map<
+	std::string, 
+	std::pair<HMODULE, std::vector<std::shared_ptr<std::function<void(const std::string&, ISolidSim&)>>>>
+> dllHandleMap;
 
 std::string FileLoader::GetCurrentDir()
 {
@@ -318,7 +322,7 @@ bool FileLoader::LoadModel(const std::string& file, const std::string& name, LGL
 }
 
 bool FileLoader::GetScriptFuncFromDLL(
-	std::function<void(const std::string&, ISolidSim&)>& scriptFunc,
+	std::weak_ptr<std::function<void(const std::string&, ISolidSim&)>>& scriptFuncWeakPtr,
 	const std::string& dllPath,
 	const std::string& funcName
 )
@@ -331,30 +335,34 @@ bool FileLoader::GetScriptFuncFromDLL(
 	{
 		if (dllHandleMap.find(dllPath) != dllHandleMap.end())
 		{
-			if (dllHandleMap[dllPath] != dllHandle)
+			if (dllHandleMap[dllPath].first != dllHandle)
 			{
-				FreeLibrary(dllHandleMap[dllPath]);
+				FreeLibrary(dllHandleMap[dllPath].first);
 				dllHandleMap.erase(dllPath);
-				dllHandleMap[dllPath] = dllHandle;
+				dllHandleMap[dllPath].first = dllHandle;
 			}
 		}
 		else
 		{
-			dllHandleMap[dllPath] = dllHandle;
+			dllHandleMap[dllPath].first = dllHandle;
 		}
 
 		using ScriptWrapperType = void(*)(const char*, void*);
 		ScriptWrapperType scriptWrapperFunc = reinterpret_cast<ScriptWrapperType>(
-			GetProcAddress(dllHandleMap[dllPath], funcName.c_str())
+			GetProcAddress(dllHandleMap[dllPath].first, funcName.c_str())
 		);
 
 		if (scriptWrapperFunc)
 		{
-			scriptFunc = [scriptWrapperFunc](const std::string& name, ISolidSim& solid) 
+			auto scriptFunc = [this, scriptWrapperFunc](const std::string& name, ISolidSim& solid)
 			{ 
+				scriptWrapperLock.lock();
 				scriptWrapperFunc(name.c_str(), reinterpret_cast<void*>(&solid));
+				scriptWrapperLock.unlock();
 			};
 
+			dllHandleMap[dllPath].second.push_back(std::make_shared<std::function<void(const std::string&, ISolidSim&)>>(scriptFunc));
+			scriptFuncWeakPtr = dllHandleMap[dllPath].second.back();
 			success = true;
 		}
 	}
@@ -363,13 +371,40 @@ bool FileLoader::GetScriptFuncFromDLL(
 
 }
 
+void FileLoader::UnloadScriptDLL(const std::string& dllPath)
+{
+	scriptWrapperLock.lock();
+	for (auto& scriptFuns : dllHandleMap[dllPath].second)
+	{
+		scriptFuns.reset();
+	}
+	scriptWrapperLock.unlock();
+
+	FreeLibrary(dllHandleMap[dllPath].first);
+
+	dllHandleMap.erase(dllPath);
+}
+
+std::vector<std::string> FileLoader::GetLoadedScriptDlls()
+{
+	std::vector<std::string> loadedDlls;
+	loadedDlls.reserve(dllHandleMap.size());
+
+	for (auto& dllHandle : dllHandleMap)
+	{
+		loadedDlls.push_back(dllHandle.first);
+	}
+
+	return loadedDlls;
+}
+
 void FileLoader::FreeDllData()
 {
 	for (auto& dllHandle : dllHandleMap)
 	{
-		if (dllHandle.second)
+		if (dllHandle.second.first)
 		{
-			FreeLibrary(dllHandle.second);
+			FreeLibrary(dllHandle.second.first);
 		}
 	}
 

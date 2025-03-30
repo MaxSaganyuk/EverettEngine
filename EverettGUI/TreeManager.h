@@ -44,7 +44,7 @@ public:
 
 	void AddRootNode(const std::string& leftString, const std::string& rightString);
 
-	std::map<std::string, std::string> GetAllOfRootsSelectedNode();
+	std::vector<std::pair<std::string, std::string>> GetAllOfRootsSelectedNode();
 
 	CTreeCtrl& GetTreeCtrl();
 private:

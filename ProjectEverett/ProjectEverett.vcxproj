@@ -159,6 +159,7 @@
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="interfaces\ISolidSim.h" />
     <ClInclude Include="MazeGen.h" />
+    <ClInclude Include="ModelSim.h" />
     <ClInclude Include="SolidSim.h" />
     <ClInclude Include="SoundSim.h" />
     <ClInclude Include="LightSim.h" />

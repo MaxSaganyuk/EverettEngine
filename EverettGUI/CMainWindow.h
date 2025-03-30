@@ -42,33 +42,19 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnUpdateParamsClick();
-
 	void SetEverettEngineRef(EverettEngine& engineRef);
 	TreeManager& GetObjectTree();
 private:
-	void UpdateModelChoice();
-	void SetObjectParams(const std::vector<glm::vec3>& params);
-	void ClearObjectParams();
 
 	void OnInitialUpdate() override;
-
-	std::array<std::array<CEdit, 3>, 3> objectInfoEdits;
 
 	EverettEngine* engineP;
 	TreeManager objectTree;
 
-	CEdit scriptEdit;
-	CButton scriptBrowseButton;
-	CButton loadScriptButton;
-
-	std::string chosenObjectName;
-	std::string dllScriptPath;
+	std::vector<std::pair<std::string, std::string>> selectedScriptDllInfo;
 public:
 	afx_msg void OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnBrowseButtonClick();
-	afx_msg void OnLoadScriptButton();
-	afx_msg void OnUnloadScriptButton();
+	afx_msg void OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 

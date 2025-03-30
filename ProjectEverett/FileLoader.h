@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <mutex>
 
 #include "interfaces/ISolidSim.h"
 
@@ -19,6 +20,8 @@ class FileLoader
 	std::vector<std::string> extraTextureName;
 	std::map<std::string, LGLStructs::Texture> texturesLoaded;
 	std::string nameToSet;
+
+	std::mutex scriptWrapperLock;
 
 	void ProcessNode(const aiNode* nodeHandle, LGLStructs::ModelInfo& model);
 	bool GetTextureFilenames(const std::string& path);
@@ -41,8 +44,10 @@ public:
 	bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);
 
 	bool GetScriptFuncFromDLL(
-		std::function<void(const std::string&, ISolidSim&)>& scriptFunc,
+		std::weak_ptr<std::function<void(const std::string&, ISolidSim&)>>& scriptFuncWeakPtr,
 		const std::string& dllPath, 
 		const std::string& funcName
 	);
+	void UnloadScriptDLL(const std::string& dllPath);
+	std::vector<std::string> GetLoadedScriptDlls();
 };

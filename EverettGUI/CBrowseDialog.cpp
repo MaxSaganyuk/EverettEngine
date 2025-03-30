@@ -3,6 +3,8 @@
 
 bool CBrowseDialog::OpenAndGetFolderPath(CString& pathStr)
 {
+	bool success = false;
+
 	BROWSEINFO browseInfo{ 0 };
 	LPITEMIDLIST pidl = SHBrowseForFolderW(&browseInfo);
 
@@ -12,21 +14,22 @@ bool CBrowseDialog::OpenAndGetFolderPath(CString& pathStr)
 		if (SHGetPathFromIDListW(pidl, path))
 		{
 			pathStr = path;
-			return true;
+			success = true;
 		}
 		CoTaskMemFree(pidl);
 	}
 
-	return false;
+	return success;
 }
 
-bool CBrowseDialog::OpenAndGetFilePath(CString& pathStr)
+bool CBrowseDialog::OpenAndGetFilePath(CString& pathStr, CString& fileStr)
 {
 	CFileDialog fileDlg(true, _T("dll"), nullptr, OFN_FILEMUSTEXIST, _T("DLL files (*.dll)|*.dll", this));
 
 	if (fileDlg.DoModal() == IDOK)
 	{
 		pathStr = fileDlg.GetPathName();
+		fileStr = fileDlg.GetFileName();
 		return true;
 	}
 

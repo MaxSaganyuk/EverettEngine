@@ -77,6 +77,7 @@ public:
 
 	EVERETT_API void SetScriptToObject(const std::string& objectName, const std::string& dllPath);
 	EVERETT_API void UnsetScriptFromObject(const std::string& objectName);
+	EVERETT_API bool IsObjectScriptSet(const std::string& dllPath);
 
 	EVERETT_API std::vector<std::string> GetModelList(const std::string& path);
 	EVERETT_API std::vector<std::string> GetCreatedModels();
