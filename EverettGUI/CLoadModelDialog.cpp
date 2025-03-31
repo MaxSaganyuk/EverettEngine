@@ -11,42 +11,44 @@
 
 // CLoadModelDialog dialog
 
-IMPLEMENT_DYNAMIC(CLoadModelDialog, CDialogEx)
+IMPLEMENT_DYNAMIC(CBrowseAndLoadDialog, CDialogEx)
 
-CLoadModelDialog::CLoadModelDialog(
-	ModelLoaderFunc modelLoader, 
+CBrowseAndLoadDialog::CBrowseAndLoadDialog(
+	const std::string& objectName,
+	LoaderFunc modelLoader, 
 	const std::vector<std::string>& loadedModelList, 
 	CWnd* pParent
 )
 	: CDialogEx(IDD_DIALOG1, pParent)
 {
+	this->objectName = objectName;
 	this->modelLoader = modelLoader;
 	this->loadedModelList = loadedModelList;
 	path = "";
 	name = "";
 }
 
-CLoadModelDialog::~CLoadModelDialog()
+CBrowseAndLoadDialog::~CBrowseAndLoadDialog()
 {
 }
 
-BOOL CLoadModelDialog::OnInitDialog()
+BOOL CBrowseAndLoadDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
 	TCHAR buffer[MAX_PATH];
 	std::ifstream file;
-	file.open(cacheFileName, std::ios::in);
+	file.open(cacheFileName + objectName, std::ios::in);
 	
 	if (file)
 	{
 		std::string path;
 		file >> path;
-		UpdateModelChoice(CA2T(path.c_str()));
+		UpdateObjectChoice(CA2T(path.c_str()));
 	}
 	else if (GetCurrentDirectory(MAX_PATH, buffer))
 	{
-		UpdateModelChoice(buffer);
+		UpdateObjectChoice(buffer);
 	}
 
 	file.close();
@@ -54,7 +56,7 @@ BOOL CLoadModelDialog::OnInitDialog()
 	return true;
 }
 
-void CLoadModelDialog::DoDataExchange(CDataExchange* pDX)
+void CBrowseAndLoadDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT1, modelFolderEdit);
@@ -65,17 +67,17 @@ void CLoadModelDialog::DoDataExchange(CDataExchange* pDX)
 }
 
 
-BEGIN_MESSAGE_MAP(CLoadModelDialog, CDialogEx)
-	ON_BN_CLICKED(IDC_BUTTON1, &CLoadModelDialog::OnBnClickedButton1)
-	ON_BN_CLICKED(IDOK, &CLoadModelDialog::OnBnClickedOk)
-	ON_CBN_SELCHANGE(IDC_COMBO1, &CLoadModelDialog::OnModelSelection)
-	ON_BN_CLICKED(IDCANCEL, &CLoadModelDialog::OnBnClickedCancel)
+BEGIN_MESSAGE_MAP(CBrowseAndLoadDialog, CDialogEx)
+	ON_BN_CLICKED(IDC_BUTTON1, &CBrowseAndLoadDialog::OnBnClickedButton1)
+	ON_BN_CLICKED(IDOK, &CBrowseAndLoadDialog::OnBnClickedOk)
+	ON_CBN_SELCHANGE(IDC_COMBO1, &CBrowseAndLoadDialog::OnObjectSelection)
+	ON_BN_CLICKED(IDCANCEL, &CBrowseAndLoadDialog::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
 // CLoadModelDialog message handlers
 
-void CLoadModelDialog::UpdateModelChoice(const LPCTSTR filePath)
+void CBrowseAndLoadDialog::UpdateObjectChoice(const LPCTSTR filePath)
 {
 	modelFolderEdit.SetWindowTextW(filePath);
 
@@ -89,20 +91,20 @@ void CLoadModelDialog::UpdateModelChoice(const LPCTSTR filePath)
 	}
 }
 
-void CLoadModelDialog::OnBnClickedButton1()
+void CBrowseAndLoadDialog::OnBnClickedButton1()
 {
 	CString pathStr;
 	
 	if (CBrowseDialog::OpenAndGetFolderPath(pathStr))
 	{
-		UpdateModelChoice(pathStr);
+		UpdateObjectChoice(pathStr);
 	}
 }
 
 
-void CLoadModelDialog::OnBnClickedOk()
+void CBrowseAndLoadDialog::OnBnClickedOk()
 {
-	std::fstream file(cacheFileName, std::ios::out, std::ios::trunc);
+	std::fstream file(cacheFileName + objectName, std::ios::out, std::ios::trunc);
 
 	file << GetChosenPath();
 	
@@ -123,7 +125,7 @@ void CLoadModelDialog::OnBnClickedOk()
 	CDialogEx::OnOK();
 }
 
-void CLoadModelDialog::OnModelSelection()
+void CBrowseAndLoadDialog::OnObjectSelection()
 {
 	bool curSelExists = modelChoice.GetCurSel() != -1;
 	
@@ -144,27 +146,27 @@ void CLoadModelDialog::OnModelSelection()
 	loadModelButton.EnableWindow(curSelExists);
 }
 
-std::string CLoadModelDialog::GetChosenPath()
+std::string CBrowseAndLoadDialog::GetChosenPath()
 {
 	return path;
 }
 
-std::string CLoadModelDialog::GetChosenName()
+std::string CBrowseAndLoadDialog::GetChosenName()
 {
 	return name;
 }
 
-std::string CLoadModelDialog::GetChosenFilename()
+std::string CBrowseAndLoadDialog::GetChosenFilename()
 {
 	return filename;
 }
 
-std::string CLoadModelDialog::GetChosenPathAndFilename()
+std::string CBrowseAndLoadDialog::GetChosenPathAndFilename()
 {
 	return GetChosenPath() + '\\' + GetChosenFilename();
 }
 
-void CLoadModelDialog::OnBnClickedCancel()
+void CBrowseAndLoadDialog::OnBnClickedCancel()
 {
 	CDialogEx::OnCancel();
 }

@@ -67,6 +67,7 @@ public:
 	EVERETT_API bool CreateModel(const std::string& path, const std::string& name);
 	EVERETT_API bool CreateSolid(const std::string& modelName, const std::string& solidName);
 	EVERETT_API void CreateLight(const std::string& lightName, LightTypes lightType);
+	EVERETT_API void CreateSound(const std::string& path, const std::string& soundName);
 
 	EVERETT_API std::vector<glm::vec3> GetSolidParamsByName(const std::string& modelName, const std::string& solidName);
 	EVERETT_API void SetSolidParamsByName(
@@ -79,7 +80,10 @@ public:
 	EVERETT_API void UnsetScriptFromObject(const std::string& objectName);
 	EVERETT_API bool IsObjectScriptSet(const std::string& dllPath);
 
-	EVERETT_API std::vector<std::string> GetModelList(const std::string& path);
+
+	EVERETT_API std::vector<std::string> GetModelInDirList(const std::string& path);
+	EVERETT_API std::vector<std::string> GetSoundInDirList(const std::string& path);
+
 	EVERETT_API std::vector<std::string> GetCreatedModels();
 	EVERETT_API std::vector<std::string> GetNamesByObject(ObjectTypes objType);
 	EVERETT_API std::vector<std::string> GetLightTypeList();
@@ -98,6 +102,8 @@ private:
 
 	template<typename Sim>
 	std::vector<std::string> GetNameList(const std::map<std::string, Sim>& sims);
+
+	std::vector<std::string> GetObjectsInDirList(const std::string& path, const std::vector<std::string>& fileTypes);
 
 	std::vector<std::string> GetSolidList();
 	std::vector<std::string> GetLightList();

@@ -6,18 +6,19 @@
 
 // CLoadModelDialog dialog
 
-class CLoadModelDialog : public CDialogEx
+class CBrowseAndLoadDialog : public CDialogEx
 {
-	DECLARE_DYNAMIC(CLoadModelDialog)
-	using ModelLoaderFunc = std::function<std::vector<std::string>(const std::string&)>;
+	DECLARE_DYNAMIC(CBrowseAndLoadDialog)
+	using LoaderFunc = std::function<std::vector<std::string>(const std::string&)>;
 
 public:
-	CLoadModelDialog(
-		ModelLoaderFunc modelLoader, 
-		const std::vector<std::string>& loadedModelList, 
+	CBrowseAndLoadDialog(
+		const std::string& objectName,
+		LoaderFunc loader,
+		const std::vector<std::string>& loadedObjectsList, 
 		CWnd* pParent = nullptr
 	);   // standard constructor
-	virtual ~CLoadModelDialog();
+	virtual ~CBrowseAndLoadDialog();
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -30,22 +31,23 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 private:
-	void UpdateModelChoice(const LPCTSTR filePath);
+	void UpdateObjectChoice(const LPCTSTR filePath);
 
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedButton1();
-	afx_msg void OnModelSelection();
+	afx_msg void OnObjectSelection();
 
 	CEdit modelFolderEdit;
 	CButton browseButton;
 	CButton loadModelButton;
 	CComboBox modelChoice;
 
+	std::string objectName;
 	std::string path;
 	std::string filename;
 	std::string name;
 
-    ModelLoaderFunc modelLoader;
+	LoaderFunc modelLoader;
 	std::vector<std::string> loadedModelList;
 		
 	constexpr static const char cacheFileName[] = "loadCache";

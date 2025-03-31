@@ -188,6 +188,18 @@ void EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 	);
 }
 
+void EverettEngine::CreateSound(const std::string& path, const std::string& soundName)
+{
+	sounds.emplace(
+		soundName,
+		SoundSim{
+			path,
+			glm::vec3(camera->GetPositionVectorAddr())
+		}
+	);
+	sounds[soundName].Play();
+}
+
 void EverettEngine::LightUpdater()
 {
 	mainLGL->SetShaderUniformValue("proj", camera->GetProjectionMatrixAddr());
@@ -278,12 +290,13 @@ void EverettEngine::SetSolidParamsByName(
 	solid.ForceModelUpdate();
 }
 
-std::vector<std::string> EverettEngine::GetModelList(const std::string& path)
+std::vector<std::string> EverettEngine::GetObjectsInDirList(
+	const std::string& path, 
+	const std::vector<std::string>& fileTypes
+)
 {
-	auto FilterNonModelFiles = [](std::vector<std::string>& files) 
+	auto FilterNonModelFiles = [&fileTypes](std::vector<std::string>& files)
 	{
-		static std::vector<std::string> fileTypes {".glb", ".obj"};
-		
 		std::vector<std::string> modelFiles;
 
 		for (auto& file : files)
@@ -306,6 +319,16 @@ std::vector<std::string> EverettEngine::GetModelList(const std::string& path)
 	fileLoader->GetFilesInDir(files, path);
 
 	return FilterNonModelFiles(files);
+}
+
+std::vector<std::string> EverettEngine::GetModelInDirList(const std::string& path)
+{
+	return GetObjectsInDirList(path, { ".glb", ".obj" });
+}
+
+std::vector<std::string> EverettEngine::GetSoundInDirList(const std::string& path)
+{
+	return GetObjectsInDirList(path, {".wav"});
 }
 
 

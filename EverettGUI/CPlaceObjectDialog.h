@@ -13,7 +13,7 @@ class CPlaceObjectDialog : public CDialogEx
 public:
 	CPlaceObjectDialog(
 		const std::string& objectTypeName, 
-		const std::vector<std::string>& objectNameList, 
+		const std::vector<std::string>& objectNameList = {},
 		CWnd* pParent = nullptr
 	);   // standard constructor
 	virtual ~CPlaceObjectDialog();

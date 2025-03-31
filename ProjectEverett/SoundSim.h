@@ -47,6 +47,7 @@ class SoundSim
 public:
 	static void InitOpenAL();
 	static void SetCamera(CameraSim& camera);
+	SoundSim() = default;
 	SoundSim(const std::string& file, glm::vec3& pos);
 	SoundSim(const std::string& file, glm::vec3&& pos);
 	void Play();

@@ -50,6 +50,7 @@ private:
 	void OnLoadModel();
 	void OnPlaceSolid();
 	void OnPlaceLight();
+	void OnPlaceSound();
 	EverettEngine engine;
 	std::unique_ptr<CMainWindow> mainWindow;
 };

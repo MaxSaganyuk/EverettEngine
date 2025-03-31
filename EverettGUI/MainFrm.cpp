@@ -28,6 +28,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_APP_ABOUT, &CMainFrame::OnLoadModel)
 	ON_COMMAND(ID_BUTTON32771, &CMainFrame::OnPlaceSolid)
 	ON_COMMAND(ID_BUTTON32772, &CMainFrame::OnPlaceLight)
+	ON_COMMAND(ID_BUTTON32773, &CMainFrame::OnPlaceSound)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -143,7 +144,7 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 
 void CMainFrame::OnLoadModel()
 {
-	CLoadModelDialog loadModelDlg([this](const std::string& path) { return engine.GetModelList(path); }, engine.GetCreatedModels());
+	CBrowseAndLoadDialog loadModelDlg("Model", [this](const std::string& path) { return engine.GetModelInDirList(path); }, engine.GetCreatedModels());
 	
 	if (loadModelDlg.DoModal() == IDOK)
 	{
@@ -189,3 +190,17 @@ void CMainFrame::OnPlaceLight()
 	}
 }
 
+void CMainFrame::OnPlaceSound()
+{
+	CBrowseAndLoadDialog placeSoundDlg(
+		"Sound", 
+		[this](const std::string& path) { return engine.GetSoundInDirList(path); }, 
+		engine.GetNamesByObject(EverettEngine::ObjectTypes::Sound)
+	);
+
+	if (placeSoundDlg.DoModal() == IDOK)
+	{
+		engine.CreateSound(placeSoundDlg.GetChosenPathAndFilename(), placeSoundDlg.GetChosenName());
+		mainWindow->GetObjectTree().AddSoundToTree(placeSoundDlg.GetChosenName());
+	}
+}

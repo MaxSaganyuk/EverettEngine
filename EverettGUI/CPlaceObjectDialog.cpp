@@ -29,9 +29,16 @@ BOOL CPlaceObjectDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	for (auto& object : objectNameList)
+	if (objectNameList.size() > 0)
 	{
-		objectChoice.AddString(CA2T(object.c_str()));
+		for (auto& object : objectNameList)
+		{
+			objectChoice.AddString(CA2T(object.c_str()));
+		}
+	}
+	else
+	{
+		objectChoice.ShowWindow(0);
 	}
 
 	return true;
