@@ -13,6 +13,7 @@
 class aiScene;
 class aiMesh;
 class aiNode;
+class SolidSim;
 
 class FileLoader
 {
@@ -21,7 +22,7 @@ class FileLoader
 	std::map<std::string, LGLStructs::Texture> texturesLoaded;
 	std::string nameToSet;
 
-	std::mutex scriptWrapperLock;
+	std::recursive_mutex scriptWrapperLock;
 
 	void ProcessNode(const aiNode* nodeHandle, LGLStructs::ModelInfo& model);
 	bool GetTextureFilenames(const std::string& path);
@@ -44,9 +45,10 @@ public:
 	bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);
 
 	bool GetScriptFuncFromDLL(
-		std::weak_ptr<std::function<void(const std::string&, ISolidSim&)>>& scriptFuncWeakPtr,
-		const std::string& dllPath, 
-		const std::string& funcName
+		const std::string& dllPath,
+		const std::string& dllName,
+		const std::string& funcName,
+		SolidSim* relatedObject = nullptr
 	);
 	void UnloadScriptDLL(const std::string& dllPath);
 	std::vector<std::string> GetLoadedScriptDlls();

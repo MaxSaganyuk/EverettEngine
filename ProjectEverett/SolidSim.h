@@ -2,11 +2,20 @@
 
 #include <cassert>
 #include <unordered_map>
+#include <map>
+#include <memory>
+#include <string>
+#include <functional>
 
 #include "interfaces/ISolidSim.h"
 
-class SolidSim : public ISolidSim
+class SolidSim : virtual public ISolidSim
 {
+public:
+	using ScriptFunc          = std::function<void(ISolidSim&)>;
+	using ScriptFuncSharedPtr = std::shared_ptr<ScriptFunc>;
+	using ScriptFuncWeakPtr   = std::weak_ptr<ScriptFunc>;
+	using ScriptFuncMap       = std::map<std::string, ScriptFuncWeakPtr>;
 private:
 	constexpr static size_t realDirectionAmount = 6;
 
@@ -28,6 +37,9 @@ private:
 
 	std::unordered_map<Direction, bool> disabledDirs;
 	std::pair<Rotation, Rotation> rotationLimits;
+
+	std::string lastExecutedScriptDll;
+	ScriptFuncMap scriptFuncMap;
 
 	void CheckRotationLimits();
 	void ResetModelMatrix(const Rotation& toRotate = {});
@@ -68,4 +80,8 @@ public:
 
 	static bool CheckForCollision(const SolidSim& solid1, const SolidSim& solid2);
 	bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) override;
+
+	void AddScriptFunc(const std::string& dllName, ScriptFuncSharedPtr& scriptFunc);
+	void ExecuteScriptFunc(const std::string& dllName = "") override;
+	void ExecuteAllScriptFuncs() override;
 };

@@ -69,7 +69,10 @@ void TreeManager::SetObjectTypes(
 
 	for (auto& type : objectTypes)
 	{
-		AddRootNode("Object", type);
+		if (type != "Camera")
+		{
+			AddRootNode("Object", type);
+		}
 	}
 
 	for (auto& lightType : lightTypes)

@@ -32,7 +32,7 @@ void CMainWindow::OnInitialUpdate()
 {
 	CFormView::OnInitialUpdate();
 
-	objectTree.SetObjectTypes(engineP->GetObjectTypes(), engineP->GetLightTypeList());
+	objectTree.SetObjectTypes(EverettEngine::GetAllObjectTypeNames(), engineP->GetLightTypeList());
 	objectTree.GetTreeCtrl().ModifyStyle(0, TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS);
 }
 
@@ -92,9 +92,19 @@ void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if (selectedNodes.size() == 2)
 	{
-		CObjectEditDialog objEditDlg(*engineP, selectedNodes, selectedScriptDllInfo);
+		CObjectEditDialog objEditDlg(
+			*engineP, 
+			EverettEngine::GetObjectTypeToName(selectedNodes[0].first), 
+			selectedScriptDllInfo, 
+			selectedNodes
+		);
 		objEditDlg.DoModal();
 	}
 
 	*pResult = 0;
+}
+
+std::vector<std::pair<std::string, std::string>>& CMainWindow::GetSelectedScriptDllInfo()
+{
+	return selectedScriptDllInfo;
 }

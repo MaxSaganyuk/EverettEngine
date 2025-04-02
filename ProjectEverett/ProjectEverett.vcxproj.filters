@@ -63,6 +63,15 @@
     <ClInclude Include="ModelSim.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="interfaces\ICameraSim.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="interfaces\ILightSim.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="interfaces\ISoundSim.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">

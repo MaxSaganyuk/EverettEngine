@@ -16,7 +16,7 @@ std::map<int, LightSim::Attenuation> LightSim::attenuationVals
 	{3250, {0.0014f, 0.000007f} }
 };
 
-std::map<LightSim::LightTypes, std::string> LightSim::lightTypeNames
+std::vector<std::pair<LightSim::LightTypes, std::string>> LightSim::lightTypeToName
 {
 	{ LightSim::LightTypes::Direction, "Direction" },
 	{ LightSim::LightTypes::Point,     "Point"     },
@@ -59,7 +59,7 @@ std::vector<std::string> LightSim::GetLightTypeNames()
 {
 	std::vector<std::string> lightTypeNamesVect;
 	
-	for(auto& lightType : lightTypeNames) 
+	for(auto& lightType : lightTypeToName)
 	{
 		lightTypeNamesVect.push_back(lightType.second);
 	}
@@ -67,13 +67,34 @@ std::vector<std::string> LightSim::GetLightTypeNames()
 	return lightTypeNamesVect;
 }
 
-std::string LightSim::GetCurrentLightType()
+LightSim::LightTypes LightSim::GetTypeToName(const std::string& name)
 {
-	return lightTypeNames[lightType];
+	for (auto& nameType : lightTypeToName)
+	{
+		if (nameType.second == name)
+		{
+			return nameType.first;
+		}
+	}
+
+	assert(false && "Nonexistent type");
 }
 
-std::map<LightSim::LightTypes, std::string>& LightSim::GetLightTypeNameMap()
+std::string LightSim::GetTypeToName(LightSim::LightTypes lightType)
 {
-	return lightTypeNames;
+	for (auto& nameType : lightTypeToName)
+	{
+		if (nameType.first == lightType)
+		{
+			return nameType.second;
+		}
+	}
+
+	assert(false && "Nonexistent name");
+}
+
+std::string LightSim::GetCurrentLightType()
+{
+	return GetTypeToName(lightType);
 }
 

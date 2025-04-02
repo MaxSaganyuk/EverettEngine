@@ -28,7 +28,6 @@ struct EverettEngine::ModelSolidInfo
 {
 	LGLStructs::ModelInfo model;
 	std::map<std::string, SolidSim> solids;
-	std::weak_ptr<std::function<void(const std::string&, ISolidSim&)>> scriptFunc;
 };
 
 EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
@@ -51,9 +50,12 @@ EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 	}
 };
 
-std::vector<std::string> EverettEngine::objectTypes
+std::vector<std::pair<EverettEngine::ObjectTypes, std::string>> EverettEngine::objectTypes
 {
-	"Solid", "Light", "Sound"
+	{EverettEngine::ObjectTypes::Camera, "Camera"}, 
+	{EverettEngine::ObjectTypes::Solid,  "Solid" }, 
+	{EverettEngine::ObjectTypes::Light,  "Light" },
+	{EverettEngine::ObjectTypes::Sound,  "Sound" }
 };
 
 EverettEngine::EverettEngine()
@@ -108,8 +110,13 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->GetMaxAmountOfVertexAttr();
 	mainLGL->CaptureMouse();
 
+	auto cameraMainLoop = [this](){
+		camera->SetPosition(CameraSim::Direction::Nowhere);
+		camera->ExecuteAllScriptFuncs();
+	};
+
 	mainLGLRenderThread = std::make_unique<std::thread>(
-		[this](){ mainLGL->RunRenderingCycle([this](){ camera->SetPosition(CameraSim::Direction::Nowhere); }); }
+		[this, cameraMainLoop](){ mainLGL->RunRenderingCycle(cameraMainLoop); }
 	);
 }
 
@@ -134,11 +141,6 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 		{
 			for (auto& solid : MSM.at(name).solids)
 			{
-				if (MSM[name].scriptFunc.lock())
-				{
-					(*MSM[name].scriptFunc.lock())(solid.first, solid.second);
-				}
-
 				LGLUtils::SetShaderUniformStruct(
 					*mainLGL, 
 					lightShaderValueNames[0].first, 
@@ -247,11 +249,22 @@ void EverettEngine::LightUpdater()
 	mainLGL->SetShaderUniformValue("viewPos", camera->GetPositionVectorAddr());
 }
 
-void EverettEngine::SetScriptToObject(const std::string& objectName, const std::string& dllPath)
+void EverettEngine::SetScriptToObject(
+	ObjectTypes objectType,
+	const std::string& subtypeName,
+	const std::string& objectName,
+	const std::string& dllPath,
+	const std::string& dllName
+)
 {
 	if (fileLoader)
 	{
-		fileLoader->GetScriptFuncFromDLL(MSM[objectName].scriptFunc, dllPath, objectName);
+		fileLoader->GetScriptFuncFromDLL(
+			dllPath,
+			dllName,
+			objectType == ObjectTypes::Camera ? "Camera" : objectName,
+			GetObjectFromMap(objectType, subtypeName, objectName)
+		);
 	}
 }
 
@@ -265,29 +278,44 @@ void EverettEngine::UnsetScriptFromObject(const std::string& dllPath)
 
 bool EverettEngine::IsObjectScriptSet(const std::string& objectName)
 {
-	return MSM[objectName].scriptFunc.lock() != nullptr;
+	return true;
 }
 
-std::vector<glm::vec3> EverettEngine::GetSolidParamsByName(const std::string& modelName, const std::string& solidName)
+std::vector<glm::vec3> EverettEngine::GetObjectParamsByName(
+	EverettEngine::ObjectTypes objectType,
+	const std::string& subtypeName, 
+	const std::string& objectName
+)
 {
-	SolidSim& solid = MSM[modelName].solids[solidName];
+	SolidSim* solid = GetObjectFromMap(objectType, subtypeName, objectName);
 
-	return { solid.GetPositionVectorAddr(), solid.GetScaleVectorAddr(), solid.GetFrontVectorAddr() };
+	if (solid)
+	{
+		return { solid->GetPositionVectorAddr(), solid->GetScaleVectorAddr(), solid->GetFrontVectorAddr() };
+	}
+	else
+	{
+		return { {} };
+	}
 }
 
-void EverettEngine::SetSolidParamsByName(
+void EverettEngine::SetObjectParamsByName(
+	EverettEngine::ObjectTypes objectType,
 	const std::string& modelName,
-	const std::string& solidName,
+	const std::string& objectName,
 	const std::vector<glm::vec3>& params
 )
 {
-	SolidSim& solid = MSM[modelName].solids[solidName];
+	SolidSim* solid = GetObjectFromMap(objectType, modelName, objectName);
 
-	solid.GetPositionVectorAddr() = params[0];
-	solid.GetScaleVectorAddr()    = params[1];
-	solid.GetFrontVectorAddr()    = params[2];
+	if (solid)
+	{
+		solid->GetPositionVectorAddr() = params[0];
+		solid->GetScaleVectorAddr()    = params[1];
+		solid->GetFrontVectorAddr()    = params[2];
 
-	solid.ForceModelUpdate();
+		solid->ForceModelUpdate();
+	}
 }
 
 std::vector<std::string> EverettEngine::GetObjectsInDirList(
@@ -331,6 +359,36 @@ std::vector<std::string> EverettEngine::GetSoundInDirList(const std::string& pat
 	return GetObjectsInDirList(path, {".wav"});
 }
 
+SolidSim* EverettEngine::GetObjectFromMap(
+	EverettEngine::ObjectTypes objectType, 
+	const std::string& subtypeName, 
+	const std::string& objectName
+)
+{
+	SolidSim* object = nullptr;
+
+	switch (objectType)
+	{
+	case EverettEngine::ObjectTypes::Camera:
+		object = dynamic_cast<SolidSim*>(camera.get());
+		break;
+	case EverettEngine::ObjectTypes::Solid:
+		object = &MSM[subtypeName].solids[objectName];
+		break;
+	case EverettEngine::ObjectTypes::Light:
+		object = dynamic_cast<SolidSim*>(
+			&lights[static_cast<EverettEngine::LightTypes>(LightSim::GetTypeToName(subtypeName))][objectName]
+		);
+		break;
+	case EverettEngine::ObjectTypes::Sound:
+		object = dynamic_cast<SolidSim*>(&sounds[objectName]);
+		break;
+	default:
+		break;
+	}
+
+	return object;
+}
 
 template<typename Sim>
 std::vector<std::string> EverettEngine::GetNameList(const std::map<std::string, Sim>& sims)
@@ -358,9 +416,42 @@ std::vector<std::string> EverettEngine::GetCreatedModels()
 	return createdModels;
 }
 
-std::vector<std::string> EverettEngine::GetObjectTypes()
+std::vector<std::string> EverettEngine::GetAllObjectTypeNames()
 {
-	return objectTypes;
+	std::vector<std::string> objectNames;
+
+	for (auto& objectNamePair : objectTypes)
+	{
+		objectNames.push_back(objectNamePair.second);
+	}
+
+	return objectNames;
+}
+
+std::string EverettEngine::GetObjectTypeToName(ObjectTypes objectType)
+{
+	for (auto& objectNamePair : objectTypes)
+	{
+		if (objectNamePair.first == objectType)
+		{
+			return objectNamePair.second;
+		}
+	}
+
+	assert(false && "Nonexistent type");
+}
+
+EverettEngine::ObjectTypes EverettEngine::GetObjectTypeToName(const std::string& objectName)
+{
+	for (auto& objectNamePair : objectTypes)
+	{
+		if (objectNamePair.second == objectName)
+		{
+			return objectNamePair.first;
+		}
+	}
+
+	assert(false && "Nonexistent name");
 }
 
 std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType)

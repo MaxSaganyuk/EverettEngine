@@ -1,4 +1,5 @@
 #pragma once
+#pragma warning(disable : 4250) // GCC and Clang treat automatic dominance resolve as a feature
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -73,4 +74,7 @@ public:
 	virtual void Rotate(const Rotation& toRotate) = 0;
 
 	virtual bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) = 0;
+
+	virtual void ExecuteScriptFunc(const std::string& dllName = "") = 0;
+	virtual void ExecuteAllScriptFuncs() = 0;
 };

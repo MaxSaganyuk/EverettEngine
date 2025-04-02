@@ -16,8 +16,9 @@ class CObjectEditDialog : public CDialogEx
 public:
 	CObjectEditDialog(
 		EverettEngine& engine, 
-		std::vector<std::pair<std::string, std::string>>& selectedNodes,
+		EverettEngine::ObjectTypes objectType,
 		std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo,
+		const std::vector<std::pair<std::string, std::string>>& selectedNodes = {},
 		CWnd* pParent = nullptr
 	);
 	virtual ~CObjectEditDialog();
@@ -35,9 +36,12 @@ private:
 	void UpdateScriptButtons();
 
 	EverettEngine& engineRef;
-	std::vector<std::pair<std::string, std::string>>& selectedNodes;
 
 	std::array<std::array<CEdit, 3>, 3> objectInfoEdits;
+
+	EverettEngine::ObjectTypes objectType;
+	std::string subtypeName;
+	std::string objectName;
 
 	CButton scriptBrowseButton;
 	CButton loadScriptButton;

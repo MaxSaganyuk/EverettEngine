@@ -1,13 +1,25 @@
 #include <string>
 
 #include "ISolidSim.h"
+#include "ICameraSim.h"
+#include "ILightSim.h"
+#include "ISoundSim.h"
 
-#define ScriptFunc(Name)                                                  \
-void Impl##Name(const std::string& name, ISolidSim& solid);               \
+#define CameraScriptLoop()                                                \
+void ImplCamera(ICameraSim& camera);                                      \
                                                                           \
-extern "C" __declspec(dllexport) void Name(const char* name, void* solid) \
+extern "C" __declspec(dllexport) void Camera(void* camera)                \
 {                                                                         \
-    Impl##Name(name, *reinterpret_cast<ISolidSim*>(solid));               \
+    ImplCamera(*reinterpret_cast<ICameraSim*>(camera));                   \
 }                                                                         \
                                                                           \
-void Impl##Name(const std::string& name, ISolidSim& solid)                \
+void ImplCamera(ICameraSim& camera)                                       \
+
+#define ScriptObjectInit(name, objectType)                                \
+void Impl##name(I##objectType##Sim& object##name);                        \
+                                                                          \
+extern "C" __declspec(dllexport) void name(void* object)                  \
+{                                                                         \
+    Impl##name(*reinterpret_cast<I##objectType##Sim*>(object));           \
+}                                                                         \
+void Impl##name(I##objectType##Sim& object##name)                         \

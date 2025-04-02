@@ -78,6 +78,7 @@ SolidSim::SolidSim(
 	}
 
 	type = SolidType::Static;
+	lastExecutedScriptDll = "";
 }
 
 void SolidSim::SetGhostMode(bool val)
@@ -282,4 +283,39 @@ bool SolidSim::CheckForCollision(const SolidSim& solid1, const SolidSim& solid2)
 bool SolidSim::CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2)
 {
 	return CheckForCollision(solid1, solid2);
+}
+
+void SolidSim::AddScriptFunc(const std::string& dllName, ScriptFuncSharedPtr& scriptFunc)
+{
+	scriptFuncMap.emplace(dllName, scriptFunc);
+	lastExecutedScriptDll = dllName;
+}
+
+void SolidSim::ExecuteScriptFunc(const std::string& dllName)
+{
+	if (!scriptFuncMap.empty())
+	{
+		const std::string& dllToExecute = dllName.empty() ? lastExecutedScriptDll : dllName;
+		
+		if (scriptFuncMap[dllToExecute].lock())
+		{
+			((*scriptFuncMap[dllToExecute].lock())(*dynamic_cast<ISolidSim*>(this)));
+		}
+		else
+		{
+			scriptFuncMap.erase(dllToExecute);
+		}
+
+	}
+}
+
+void SolidSim::ExecuteAllScriptFuncs()
+{
+	for (auto& scriptFuncPair : scriptFuncMap)
+	{
+		if (scriptFuncPair.second.lock())
+		{
+			((*scriptFuncPair.second.lock())(*dynamic_cast<ISolidSim*>(this)));
+		}
+	}
 }

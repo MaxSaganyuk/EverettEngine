@@ -1,16 +1,10 @@
 #pragma once
 
 #include "SolidSim.h"
+#include "interfaces/ICameraSim.h"
 
-class CameraSim : public SolidSim
+class CameraSim : public SolidSim, public ICameraSim
 {
-public:
-	enum class Mode
-	{
-		Fly,
-		Walk
-	};
-
 private:
 	int windowHeight;
 	int windowWidth;
@@ -34,11 +28,11 @@ public:
 		const float speed = 0.006f
 	);
 
-	glm::mat4& GetViewMatrixAddr();
-	glm::mat4& GetProjectionMatrixAddr();
+	glm::mat4& GetViewMatrixAddr() override;
+	glm::mat4& GetProjectionMatrixAddr() override;
 
-	void SetPosition(Direction dir);
-	void Rotate(float xpos, float ypos);
-	void Zoom(float xpos, float ypos);
-	void SetMode(Mode mode);
+	void SetPosition(Direction dir) override;
+	void Rotate(float xpos, float ypos) override;
+	void Zoom(float xpos, float ypos) override;
+	void SetMode(Mode mode) override;
 };

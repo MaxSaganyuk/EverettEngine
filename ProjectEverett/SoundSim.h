@@ -11,9 +11,10 @@
 
 #include <string>
 
+#include "interfaces/ISoundSim.h"
 #include "CameraSim.h"
 
-class SoundSim
+class SoundSim : public SolidSim, public ISoundSim
 {
 	static ALCdevice* device;
 	static CameraSim* camera;
@@ -50,9 +51,11 @@ public:
 	SoundSim() = default;
 	SoundSim(const std::string& file, glm::vec3& pos);
 	SoundSim(const std::string& file, glm::vec3&& pos);
-	void Play();
-	bool IsPlaying();
-	void Stop();
-	void UpdatePositions();
+
+	void Play() override;
+	bool IsPlaying() override;
+	void Stop() override;
+	void UpdatePositions() override;
+	
 	~SoundSim();
 };

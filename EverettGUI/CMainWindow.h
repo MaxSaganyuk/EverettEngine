@@ -44,6 +44,7 @@ protected:
 public:
 	void SetEverettEngineRef(EverettEngine& engineRef);
 	TreeManager& GetObjectTree();
+	std::vector<std::pair<std::string, std::string>>& GetSelectedScriptDllInfo();
 private:
 
 	void OnInitialUpdate() override;

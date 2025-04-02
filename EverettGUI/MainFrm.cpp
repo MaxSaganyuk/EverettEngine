@@ -11,6 +11,7 @@
 #include "CLoadModelDialog.h"
 #include "CPlaceObjectDialog.h"
 #include "CLoadingDialog.h"
+#include "CObjectEditDialog.h"
 
 #include "MainFrm.h"
 
@@ -25,10 +26,11 @@ IMPLEMENT_DYNAMIC(CMainFrame, CFrameWnd)
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_WM_CREATE()
 	ON_WM_SETFOCUS()
-	ON_COMMAND(ID_APP_ABOUT, &CMainFrame::OnLoadModel)
+	ON_COMMAND(ID_APP_ABOUT,   &CMainFrame::OnLoadModel)
 	ON_COMMAND(ID_BUTTON32771, &CMainFrame::OnPlaceSolid)
 	ON_COMMAND(ID_BUTTON32772, &CMainFrame::OnPlaceLight)
 	ON_COMMAND(ID_BUTTON32773, &CMainFrame::OnPlaceSound)
+	ON_COMMAND(ID_BUTTON32774, &CMainFrame::OnCameraOptions)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -203,4 +205,11 @@ void CMainFrame::OnPlaceSound()
 		engine.CreateSound(placeSoundDlg.GetChosenPathAndFilename(), placeSoundDlg.GetChosenName());
 		mainWindow->GetObjectTree().AddSoundToTree(placeSoundDlg.GetChosenName());
 	}
+}
+
+void CMainFrame::OnCameraOptions()
+{
+	CObjectEditDialog objectEditDlg(engine, EverettEngine::ObjectTypes::Camera, mainWindow->GetSelectedScriptDllInfo());
+
+	objectEditDlg.DoModal();
 }

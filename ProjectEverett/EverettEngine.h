@@ -56,6 +56,7 @@ public:
 
 	enum class ObjectTypes
 	{
+		Camera,
 		Solid,
 		Light,
 		Sound
@@ -69,14 +70,25 @@ public:
 	EVERETT_API void CreateLight(const std::string& lightName, LightTypes lightType);
 	EVERETT_API void CreateSound(const std::string& path, const std::string& soundName);
 
-	EVERETT_API std::vector<glm::vec3> GetSolidParamsByName(const std::string& modelName, const std::string& solidName);
-	EVERETT_API void SetSolidParamsByName(
-		const std::string& modelName, 
-		const std::string& solidName, 
+	EVERETT_API std::vector<glm::vec3> GetObjectParamsByName(
+		ObjectTypes objectType,
+		const std::string& subtypeName, 
+		const std::string& objectName
+	);
+	EVERETT_API void SetObjectParamsByName(
+		ObjectTypes objectType,
+		const std::string& subtypeName, 
+		const std::string& objectName, 
 		const std::vector<glm::vec3>& params
 	);
 
-	EVERETT_API void SetScriptToObject(const std::string& objectName, const std::string& dllPath);
+	EVERETT_API void SetScriptToObject(
+		ObjectTypes objectType, 
+		const std::string& subtypeName, 
+		const std::string& objectName, 
+		const std::string& dllPath,
+		const std::string& dllName
+	);
 	EVERETT_API void UnsetScriptFromObject(const std::string& objectName);
 	EVERETT_API bool IsObjectScriptSet(const std::string& dllPath);
 
@@ -88,7 +100,9 @@ public:
 	EVERETT_API std::vector<std::string> GetNamesByObject(ObjectTypes objType);
 	EVERETT_API std::vector<std::string> GetLightTypeList();
 
-	EVERETT_API static std::vector<std::string> GetObjectTypes();
+	EVERETT_API static std::vector<std::string> GetAllObjectTypeNames();
+	EVERETT_API static std::string GetObjectTypeToName(ObjectTypes objectType);
+	EVERETT_API static ObjectTypes GetObjectTypeToName(const std::string& objectName);
 private:
 	struct ModelSolidInfo;
 
@@ -99,6 +113,12 @@ private:
 	using SoundCollection = std::map<std::string, SoundSim>;
 
 	void LightUpdater();
+
+	SolidSim* GetObjectFromMap(
+		ObjectTypes objectType,
+		const std::string& subtypeName,
+		const std::string& objectName
+	);
 
 	template<typename Sim>
 	std::vector<std::string> GetNameList(const std::map<std::string, Sim>& sims);
@@ -120,7 +140,7 @@ private:
 	SoundCollection sounds;
 
 	static LightShaderValueNames lightShaderValueNames;
-	static std::vector<std::string> objectTypes;
+	static std::vector<std::pair<ObjectTypes, std::string>> objectTypes;
 
 	std::unique_ptr<CameraSim> camera;
 };

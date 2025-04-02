@@ -4,26 +4,15 @@
 #include <map>
 #include <string>
 
+#include "interfaces/ILightSim.h"
 #include "SolidSim.h"
 
 // Source: https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
 
-class LightSim : public SolidSim
+class LightSim : public SolidSim, public ILightSim
 {
 public:
-	enum LightTypes
-	{
-		Direction,
-		Point,
-		Spot
-	};
-
-	struct Attenuation
-	{
-		float linear;
-		float quadratic;
-	};
-
+	LightSim() = default;
 	LightSim(
 		LightTypes lightType,
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
@@ -34,16 +23,19 @@ public:
 	);
 
 	static std::vector<std::string> GetLightTypeNames();
-	static std::map<LightTypes, std::string>& GetLightTypeNameMap();
-	std::string GetCurrentLightType();
+	std::string GetCurrentLightType() override;
+
+	static LightTypes GetTypeToName(const std::string& name);
+	static std::string GetTypeToName(LightTypes lightType);
 
 	int lightRange;
 
 	static Attenuation GetAttenuation(int range);
-	Attenuation GetAttenuation();
+	Attenuation GetAttenuation() override;
 private:
 	static std::map<int, Attenuation> attenuationVals;
-	static std::map<LightTypes, std::string> lightTypeNames;
+
+	static std::vector<std::pair<LightTypes, std::string>> lightTypeToName;
 
 	LightTypes lightType;
 };

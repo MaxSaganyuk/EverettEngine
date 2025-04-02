@@ -14,15 +14,18 @@ IMPLEMENT_DYNAMIC(CObjectEditDialog, CDialogEx)
 
 CObjectEditDialog::CObjectEditDialog(
 	EverettEngine& engine, 
-	std::vector<std::pair<std::string, std::string>>& selectedNodes,
+	EverettEngine::ObjectTypes objectType,
 	std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo,
+	const std::vector<std::pair<std::string, std::string>>& selectedNodes,
 	CWnd* pParent 
 )
 	: 
 	CDialogEx(IDD_DIALOG4, pParent), 
 	engineRef(engine), 
-	selectedNodes(selectedNodes), 
-	selectedScriptDllInfo(selectedScriptDllInfo)
+	objectType(objectType),
+	selectedScriptDllInfo(selectedScriptDllInfo),
+	subtypeName(selectedNodes.empty() ? "" : selectedNodes[0].second),
+	objectName(selectedNodes.empty() ? "" : selectedNodes[1].second)
 {}
 
 CObjectEditDialog::~CObjectEditDialog()
@@ -53,13 +56,13 @@ BOOL CObjectEditDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	SetObjectParams(engineRef.GetSolidParamsByName(selectedNodes[0].second, selectedNodes[1].second));
+	SetObjectParams(engineRef.GetObjectParamsByName(objectType, subtypeName, objectName));
 	
 	if (selectedScriptDllInfo.size() > 0)
 	{
 		FillComboBoxWithScriptInfo();
 		loadScriptButton.EnableWindow(true);
-		scriptRunIndicator.SetCheck(engineRef.IsObjectScriptSet(selectedNodes[1].second));
+		scriptRunIndicator.SetCheck(engineRef.IsObjectScriptSet(objectName));
 	}
 	return true;
 }
@@ -111,10 +114,12 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 		}
 	}
 
-	if (selectedNodes[0].first == "Solid")
-	{
-		engineRef.SetSolidParamsByName(selectedNodes[0].second, selectedNodes[1].second, valuesToSet);
-	}
+	engineRef.SetObjectParamsByName(
+		objectType, 
+		subtypeName, 
+		objectName, 
+		valuesToSet
+	);
 }
 
 
@@ -134,7 +139,7 @@ void CObjectEditDialog::OnBrowseScriptButton()
 
 void CObjectEditDialog::UpdateScriptButtons()
 {
-	bool isObjectScriptSet = engineRef.IsObjectScriptSet(selectedNodes[1].second);
+	bool isObjectScriptSet = engineRef.IsObjectScriptSet(objectName);
 
 	scriptRunIndicator.SetCheck(isObjectScriptSet);
 	loadScriptButton.EnableWindow(!isObjectScriptSet);
@@ -144,7 +149,15 @@ void CObjectEditDialog::UpdateScriptButtons()
 
 void CObjectEditDialog::OnLoadScriptButtonClick()
 {
-	engineRef.SetScriptToObject(selectedNodes[1].second, selectedScriptDllInfo[dllComboBox.GetCurSel()].second);
+	int curSel = dllComboBox.GetCurSel();
+
+	engineRef.SetScriptToObject(
+		objectType, 
+		objectName, 
+		subtypeName,
+		selectedScriptDllInfo[curSel].first,
+		selectedScriptDllInfo[curSel].second
+	);
 
 	UpdateScriptButtons();
 }

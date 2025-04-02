@@ -157,7 +157,10 @@
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="CameraSim.h" />
     <ClInclude Include="CommandHandler.h" />
+    <ClInclude Include="interfaces\ICameraSim.h" />
+    <ClInclude Include="interfaces\ILightSim.h" />
     <ClInclude Include="interfaces\ISolidSim.h" />
+    <ClInclude Include="interfaces\ISoundSim.h" />
     <ClInclude Include="MazeGen.h" />
     <ClInclude Include="ModelSim.h" />
     <ClInclude Include="SolidSim.h" />

@@ -1,9 +1,29 @@
 #include "EverettScript.h"
 
-ScriptFunc(Rise)
+class InternalState
 {
-    glm::vec3& pos = solid.GetPositionVectorAddr();
-    solid.Rotate(ISolidSim::Rotation{ 0, 0.0001, 0 });
+public:
+	bool charInterRunning = false;
+	ISolidSim* charInter = nullptr;
+};
 
-    solid.ForceModelUpdate();
+InternalState interState;
+
+CameraScriptLoop()
+{
+	if (interState.charInter)
+	{
+		if (!interState.charInterRunning)
+		{
+			interState.charInterRunning = true;
+			interState.charInter->ExecuteScriptFunc(); // Call of other script func from script func test
+		}
+		interState.charInter->Rotate({ 0.0f, 0.001f, 0.0f });
+		interState.charInter->ForceModelUpdate();
+	}
+}
+
+ScriptObjectInit(Rise, Solid)
+{
+	interState.charInter = &objectRise;
 }

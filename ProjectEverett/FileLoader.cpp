@@ -11,9 +11,11 @@
 
 #include "stb_image.h"
 
+#include "SolidSim.h"
+
 static std::map<
 	std::string, 
-	std::pair<HMODULE, std::vector<std::shared_ptr<std::function<void(const std::string&, ISolidSim&)>>>>
+	std::pair<HMODULE, std::vector<std::shared_ptr<std::function<void(ISolidSim&)>>>>
 > dllHandleMap;
 
 std::string FileLoader::GetCurrentDir()
@@ -322,9 +324,10 @@ bool FileLoader::LoadModel(const std::string& file, const std::string& name, LGL
 }
 
 bool FileLoader::GetScriptFuncFromDLL(
-	std::weak_ptr<std::function<void(const std::string&, ISolidSim&)>>& scriptFuncWeakPtr,
 	const std::string& dllPath,
-	const std::string& funcName
+	const std::string& dllName,
+	const std::string& funcName,
+	SolidSim* relatedObject
 )
 {
 	bool success = false;
@@ -347,22 +350,26 @@ bool FileLoader::GetScriptFuncFromDLL(
 			dllHandleMap[dllPath].first = dllHandle;
 		}
 
-		using ScriptWrapperType = void(*)(const char*, void*);
+		using ScriptWrapperType = void(*)(void*);
 		ScriptWrapperType scriptWrapperFunc = reinterpret_cast<ScriptWrapperType>(
 			GetProcAddress(dllHandleMap[dllPath].first, funcName.c_str())
 		);
 
 		if (scriptWrapperFunc)
 		{
-			auto scriptFunc = [this, scriptWrapperFunc](const std::string& name, ISolidSim& solid)
+			auto scriptFunc = [this, scriptWrapperFunc](ISolidSim& solid)
 			{ 
 				scriptWrapperLock.lock();
-				scriptWrapperFunc(name.c_str(), reinterpret_cast<void*>(&solid));
+				scriptWrapperFunc(reinterpret_cast<void*>(&solid));
 				scriptWrapperLock.unlock();
 			};
 
-			dllHandleMap[dllPath].second.push_back(std::make_shared<std::function<void(const std::string&, ISolidSim&)>>(scriptFunc));
-			scriptFuncWeakPtr = dllHandleMap[dllPath].second.back();
+			dllHandleMap[dllPath].second.push_back(std::make_shared<std::function<void(ISolidSim&)>>(scriptFunc));
+			if (relatedObject)
+			{
+				relatedObject->AddScriptFunc(dllName, dllHandleMap[dllPath].second.back());
+				relatedObject->ExecuteScriptFunc();
+			}
 			success = true;
 		}
 	}
