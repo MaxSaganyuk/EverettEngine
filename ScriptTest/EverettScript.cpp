@@ -5,25 +5,26 @@ class InternalState
 public:
 	bool charInterRunning = false;
 	ISolidSim* charInter = nullptr;
+	ILightSim* lightInter = nullptr;
 };
 
 InternalState interState;
 
 CameraScriptLoop()
 {
-	if (interState.charInter)
+	if (interState.lightInter)
 	{
-		if (!interState.charInterRunning)
-		{
-			interState.charInterRunning = true;
-			interState.charInter->ExecuteScriptFunc(); // Call of other script func from script func test
-		}
-		interState.charInter->Rotate({ 0.0f, 0.001f, 0.0f });
-		interState.charInter->ForceModelUpdate();
+		interState.lightInter->Rotate({ 0.0f, 0.01f, 0.0f });
+		interState.lightInter->ForceModelUpdate();
 	}
 }
 
-ScriptObjectInit(Rise, Solid)
+ScriptObjectInit(Rise, ISolidSim)
 {
 	interState.charInter = &objectRise;
+}
+
+ScriptObjectInit(Spot0, ILightSim)
+{
+	interState.lightInter = &objectSpot0;
 }

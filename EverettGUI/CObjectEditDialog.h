@@ -61,4 +61,6 @@ public:
 	afx_msg void OnBrowseScriptButton();
 	afx_msg void OnLoadScriptButtonClick();
 	afx_msg void OnUnloadDllButtonClick();
+	afx_msg void OnScriptSelectionChange();
+	afx_msg void OnScriptSelectionChangeOk();
 };

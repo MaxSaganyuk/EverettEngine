@@ -276,9 +276,14 @@ void EverettEngine::UnsetScriptFromObject(const std::string& dllPath)
 	}
 }
 
-bool EverettEngine::IsObjectScriptSet(const std::string& objectName)
+bool EverettEngine::IsObjectScriptSet(
+	ObjectTypes objectType,
+	const std::string& subtypeName,
+	const std::string& objectName,
+	const std::string& dllName
+)
 {
-	return true;
+	return GetObjectFromMap(objectType, subtypeName, objectName)->IsScriptFuncAdded(dllName);
 }
 
 std::vector<glm::vec3> EverettEngine::GetObjectParamsByName(

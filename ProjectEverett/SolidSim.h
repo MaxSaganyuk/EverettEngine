@@ -84,4 +84,5 @@ public:
 	void AddScriptFunc(const std::string& dllName, ScriptFuncSharedPtr& scriptFunc);
 	void ExecuteScriptFunc(const std::string& dllName = "") override;
 	void ExecuteAllScriptFuncs() override;
+	bool IsScriptFuncAdded(const std::string& dllName = "") override;
 };

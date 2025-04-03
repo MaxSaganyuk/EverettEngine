@@ -15,11 +15,12 @@ extern "C" __declspec(dllexport) void Camera(void* camera)                \
                                                                           \
 void ImplCamera(ICameraSim& camera)                                       \
 
-#define ScriptObjectInit(name, objectType)                                \
-void Impl##name(I##objectType##Sim& object##name);                        \
-                                                                          \
-extern "C" __declspec(dllexport) void name(void* object)                  \
-{                                                                         \
-    Impl##name(*reinterpret_cast<I##objectType##Sim*>(object));           \
-}                                                                         \
-void Impl##name(I##objectType##Sim& object##name)                         \
+#define ScriptObjectInit(name, objectType)                                        \
+void Impl##name(objectType& object##name);                                        \
+                                                                                  \
+extern "C" __declspec(dllexport) void name(void* object)                          \
+{                                                                                 \
+    Impl##name(*dynamic_cast<objectType*>(reinterpret_cast<ISolidSim*>(object))); \
+}                                                                                 \
+                                                                                  \
+void Impl##name(objectType& object##name)                                         \

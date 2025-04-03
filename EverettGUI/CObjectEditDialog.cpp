@@ -23,10 +23,21 @@ CObjectEditDialog::CObjectEditDialog(
 	CDialogEx(IDD_DIALOG4, pParent), 
 	engineRef(engine), 
 	objectType(objectType),
-	selectedScriptDllInfo(selectedScriptDllInfo),
-	subtypeName(selectedNodes.empty() ? "" : selectedNodes[0].second),
-	objectName(selectedNodes.empty() ? "" : selectedNodes[1].second)
-{}
+	selectedScriptDllInfo(selectedScriptDllInfo)
+{
+	subtypeName = "";
+	objectName = "";
+
+	if (selectedNodes.size() == 2)
+	{
+		subtypeName = selectedNodes[1].second;
+		objectName = selectedNodes[0].second;
+	}
+	else if (selectedNodes.size() == 1)
+	{
+		objectName = selectedNodes[0].second;
+	}
+}
 
 CObjectEditDialog::~CObjectEditDialog()
 {
@@ -61,8 +72,11 @@ BOOL CObjectEditDialog::OnInitDialog()
 	if (selectedScriptDllInfo.size() > 0)
 	{
 		FillComboBoxWithScriptInfo();
+		dllComboBox.SetCurSel(0);
 		loadScriptButton.EnableWindow(true);
-		scriptRunIndicator.SetCheck(engineRef.IsObjectScriptSet(objectName));
+		scriptRunIndicator.SetCheck(
+			engineRef.IsObjectScriptSet(objectType, subtypeName, objectName, selectedScriptDllInfo[0].second)
+		);
 	}
 	return true;
 }
@@ -71,7 +85,7 @@ void CObjectEditDialog::FillComboBoxWithScriptInfo()
 {
 	for (auto& scriptDllInfo : selectedScriptDllInfo)
 	{
-		dllComboBox.AddString(CA2T(scriptDllInfo.first.c_str()));
+		dllComboBox.AddString(CA2T(scriptDllInfo.second.c_str()));
 	}
 }
 
@@ -80,6 +94,8 @@ BEGIN_MESSAGE_MAP(CObjectEditDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON2, &CObjectEditDialog::OnBrowseScriptButton)
 	ON_BN_CLICKED(IDC_BUTTON3, &CObjectEditDialog::OnLoadScriptButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON4, &CObjectEditDialog::OnUnloadDllButtonClick)
+	ON_CBN_SELCHANGE(IDC_COMBO1, &CObjectEditDialog::OnScriptSelectionChange)
+	ON_CBN_SELENDOK(IDC_COMBO1, &CObjectEditDialog::OnScriptSelectionChangeOk)
 END_MESSAGE_MAP()
 
 
@@ -139,7 +155,12 @@ void CObjectEditDialog::OnBrowseScriptButton()
 
 void CObjectEditDialog::UpdateScriptButtons()
 {
-	bool isObjectScriptSet = engineRef.IsObjectScriptSet(objectName);
+	bool isObjectScriptSet = engineRef.IsObjectScriptSet(
+		objectType, 
+		subtypeName, 
+		objectName, 
+		selectedScriptDllInfo[dllComboBox.GetCurSel()].second
+	);
 
 	scriptRunIndicator.SetCheck(isObjectScriptSet);
 	loadScriptButton.EnableWindow(!isObjectScriptSet);
@@ -153,8 +174,8 @@ void CObjectEditDialog::OnLoadScriptButtonClick()
 
 	engineRef.SetScriptToObject(
 		objectType, 
-		objectName, 
 		subtypeName,
+		objectName,
 		selectedScriptDllInfo[curSel].first,
 		selectedScriptDllInfo[curSel].second
 	);
@@ -167,5 +188,16 @@ void CObjectEditDialog::OnUnloadDllButtonClick()
 {
 	engineRef.UnsetScriptFromObject(selectedScriptDllInfo[dllComboBox.GetCurSel()].second);
 
+	UpdateScriptButtons();
+}
+
+
+void CObjectEditDialog::OnScriptSelectionChange()
+{
+}
+
+
+void CObjectEditDialog::OnScriptSelectionChangeOk()
+{
 	UpdateScriptButtons();
 }

@@ -319,3 +319,8 @@ void SolidSim::ExecuteAllScriptFuncs()
 		}
 	}
 }
+
+bool SolidSim::IsScriptFuncAdded(const std::string& dllName)
+{
+	return scriptFuncMap.find(dllName == "" ? lastExecutedScriptDll : dllName) != scriptFuncMap.end();
+}

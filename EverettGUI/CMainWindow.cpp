@@ -89,12 +89,13 @@ void CMainWindow::OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult)
 void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
+	EverettEngine::ObjectTypes currentType = EverettEngine::GetObjectTypeToName(selectedNodes[0].first);
 
-	if (selectedNodes.size() == 2)
+	if (selectedNodes.size() == (currentType == EverettEngine::ObjectTypes::Sound ? 1 : 2))
 	{
 		CObjectEditDialog objEditDlg(
 			*engineP, 
-			EverettEngine::GetObjectTypeToName(selectedNodes[0].first), 
+			currentType, 
 			selectedScriptDllInfo, 
 			selectedNodes
 		);

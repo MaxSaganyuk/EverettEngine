@@ -90,7 +90,12 @@ public:
 		const std::string& dllName
 	);
 	EVERETT_API void UnsetScriptFromObject(const std::string& objectName);
-	EVERETT_API bool IsObjectScriptSet(const std::string& dllPath);
+	EVERETT_API bool IsObjectScriptSet(
+		ObjectTypes objectType,
+		const std::string& subtypeName,
+		const std::string& objectName,
+		const std::string& dllName
+	);
 
 
 	EVERETT_API std::vector<std::string> GetModelInDirList(const std::string& path);
