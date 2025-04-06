@@ -8,14 +8,10 @@
 #include <functional>
 
 #include "interfaces/ISolidSim.h"
+#include "ScriptFuncStorage.h"
 
 class SolidSim : virtual public ISolidSim
 {
-public:
-	using ScriptFunc          = std::function<void(ISolidSim&)>;
-	using ScriptFuncSharedPtr = std::shared_ptr<ScriptFunc>;
-	using ScriptFuncWeakPtr   = std::weak_ptr<ScriptFunc>;
-	using ScriptFuncMap       = std::map<std::string, ScriptFuncWeakPtr>;
 private:
 	constexpr static size_t realDirectionAmount = 6;
 
@@ -38,8 +34,7 @@ private:
 	std::unordered_map<Direction, bool> disabledDirs;
 	std::pair<Rotation, Rotation> rotationLimits;
 
-	std::string lastExecutedScriptDll;
-	ScriptFuncMap scriptFuncMap;
+	ScriptFuncStorage scriptFuncStorage;
 
 	void CheckRotationLimits();
 	void ResetModelMatrix(const Rotation& toRotate = {});
@@ -81,7 +76,7 @@ public:
 	static bool CheckForCollision(const SolidSim& solid1, const SolidSim& solid2);
 	bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) override;
 
-	void AddScriptFunc(const std::string& dllName, ScriptFuncSharedPtr& scriptFunc);
+	void AddScriptFunc(const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc);
 	void ExecuteScriptFunc(const std::string& dllName = "") override;
 	void ExecuteAllScriptFuncs() override;
 	bool IsScriptFuncAdded(const std::string& dllName = "") override;

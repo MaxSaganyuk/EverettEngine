@@ -17,6 +17,8 @@
 #include <memory>
 #include <thread>
 #include <functional>
+#include <mutex>
+#include <condition_variable>
 
 class FileLoader;
 class CameraSim;
@@ -25,6 +27,8 @@ class LightSim;
 class SoundSim;
 class CommandHandler;
 class LGL;
+class WindowHandleHolder;
+class ScriptFuncStorage;
 
 namespace LGLStructs
 {
@@ -97,6 +101,16 @@ public:
 		const std::string& dllName
 	);
 
+	EVERETT_API void SetScriptToKey(
+		const std::string& keyName,
+		const std::string& dllPath,
+		const std::string& dllName
+	);
+	EVERETT_API void UnsetScriptFromKey(const std::string& objectName);
+	EVERETT_API bool IsKeyScriptSet(
+		const std::string& keyName,
+		const std::string& dllName
+	);
 
 	EVERETT_API std::vector<std::string> GetModelInDirList(const std::string& path);
 	EVERETT_API std::vector<std::string> GetSoundInDirList(const std::string& path);
@@ -108,6 +122,14 @@ public:
 	EVERETT_API static std::vector<std::string> GetAllObjectTypeNames();
 	EVERETT_API static std::string GetObjectTypeToName(ObjectTypes objectType);
 	EVERETT_API static ObjectTypes GetObjectTypeToName(const std::string& objectName);
+
+	// Must be called on separate thread
+	EVERETT_API int PollForLastKeyPressed();
+
+	EVERETT_API static std::string ConvertKeyTo(int keyId);
+	EVERETT_API static int         ConvertKeyTo(const std::string& keyName);
+
+	EVERETT_API void ForceFocusOnWindow(const std::string& name);
 private:
 	struct ModelSolidInfo;
 
@@ -148,4 +170,25 @@ private:
 	static std::vector<std::pair<ObjectTypes, std::string>> objectTypes;
 
 	std::unique_ptr<CameraSim> camera;
+
+	std::unique_ptr<WindowHandleHolder> hwndHolder;
+
+	std::map<std::string, std::pair<ScriptFuncStorage, ScriptFuncStorage>> keyScriptFuncMap;
+
+	class LastKeyPressPoll
+	{
+	public:
+		LastKeyPressPoll();
+
+		void KeyPressCallback(int key, int scancode, int action, int mods);
+		void WaitForKeyPress();
+		int GetLastKeyPressedID();
+
+	private:
+		std::mutex mux;
+		std::condition_variable cv;
+	    int lastKeyPressedID;
+		bool isValidKeyPress;
+	};
+
 };

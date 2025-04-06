@@ -14,6 +14,8 @@
 
 #include "GLExecutor.h"
 
+#include "LGLKeyToStringMap.h"
+
 #include "ContextManager.h"
 #define ContextLock ContextManager<GLFWwindow> mux(window, [this](GLFWwindow* context){ glfwMakeContextCurrent(context); });
 std::recursive_mutex ContextManager<GLFWwindow>::rMutex;
@@ -23,6 +25,7 @@ using namespace LGLStructs;
 
 std::function<void(double, double)> LGL::cursorPositionFunc = nullptr;
 std::function<void(double, double)> LGL::scrollCallbackFunc = nullptr;
+std::function<void(int, int, int, int)> LGL::keyPressCallbackFunc = nullptr;
 
 std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
 {
@@ -39,14 +42,6 @@ const std::vector<int> LGL::LGLEnumInterpreter::DepthTestModeInter =
 const std::vector<int> LGL::LGLEnumInterpreter::TextureOverlayTypeInter =
 {
 	{GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER}
-};
-
-const std::vector<int> LGL::LGLEnumInterpreter::SpecialKeyInter =
-{
-	{
-		GLFW_KEY_ENTER, GLFW_KEY_SPACE, GLFW_KEY_LEFT_SHIFT, GLFW_KEY_RIGHT_SHIFT, 
-		GLFW_KEY_TAB, GLFW_KEY_BACKSPACE, GLFW_KEY_ESCAPE 
-	}
 };
 
 LGL::LGL()
@@ -201,6 +196,14 @@ void LGL::SetScrollCallback(std::function<void(double, double)> callbackFunc)
 	scrollCallbackFunc = callbackFunc;
 
 	std::cout << "Scroll callback set\n";
+}
+
+void LGL::SetKeyPressCallback(std::function<void(int, int, int, int)> callbackFunc)
+{
+	glfwSetKeyCallback(window, KeyPressCallback);
+	keyPressCallbackFunc = callbackFunc;
+
+	std::cout << "Key press callback set\n";
 }
 
 int LGL::GetMaxAmountOfVertexAttr()
@@ -803,19 +806,25 @@ bool LGL::LoadAndCompileShader(const std::string& name)
 	return shaderInfoCollection[name].size() && CreateShaderProgram(name);
 }
 
-void LGL::SetInteractable(unsigned char key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)
+void LGL::SetInteractable(int keyID, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)
 {
-	interactCollection[std::toupper(key)] = {preFunc, relFunc};
+	interactCollection[keyID] = {preFunc, relFunc};
 	
-	std::cout << "Interactable for keyId " << key << " set\n";
+	std::cout << "Interactable for keyId " << keyID << " set\n";
 }
 
-void LGL::SetInteractable(SpecialKeys key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)
+std::string LGL::ConvertKeyTo(int keyId)
 {
-	int specialKeyID = LGLEnumInterpreter::SpecialKeyInter[static_cast<int>(key)];
-	interactCollection[specialKeyID] = {preFunc, relFunc};
+	auto& keyToStringMap = LGLKeyToStringMap::keyToStringMap;
 
-	std::cout << "Interactable for special keyid " << specialKeyID << " set\n";
+	return keyToStringMap.Exists(keyId) ? keyToStringMap[keyId] : "InvalidKey";
+}
+
+int LGL::ConvertKeyTo(const std::string& keyName)
+{
+	auto& keyToStringMap = LGLKeyToStringMap::keyToStringMap;
+
+	return keyToStringMap.Exists(keyName) ? keyToStringMap[keyName] : -1;
 }
 
 void LGL::GLFWErrorCallback(int errorCode, const char* description)
@@ -836,6 +845,14 @@ void LGL::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	if (scrollCallbackFunc)
 	{
 		scrollCallbackFunc(xoffset, yoffset);
+	}
+}
+
+void LGL::KeyPressCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if(keyPressCallbackFunc)
+	{
+		keyPressCallbackFunc(key, scancode, action, mods);
 	}
 }
 

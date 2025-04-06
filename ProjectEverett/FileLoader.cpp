@@ -327,7 +327,7 @@ bool FileLoader::GetScriptFuncFromDLL(
 	const std::string& dllPath,
 	const std::string& dllName,
 	const std::string& funcName,
-	SolidSim* relatedObject
+	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
 )
 {
 	bool success = false;
@@ -357,19 +357,15 @@ bool FileLoader::GetScriptFuncFromDLL(
 
 		if (scriptWrapperFunc)
 		{
-			auto scriptFunc = [this, scriptWrapperFunc](ISolidSim& solid)
+			auto scriptFunc = [this, scriptWrapperFunc](ISolidSim* solid)
 			{ 
 				scriptWrapperLock.lock();
-				scriptWrapperFunc(reinterpret_cast<void*>(&solid));
+				scriptWrapperFunc(reinterpret_cast<void*>(solid));
 				scriptWrapperLock.unlock();
 			};
 
-			dllHandleMap[dllPath].second.push_back(std::make_shared<std::function<void(ISolidSim&)>>(scriptFunc));
-			if (relatedObject)
-			{
-				relatedObject->AddScriptFunc(dllName, dllHandleMap[dllPath].second.back());
-				relatedObject->ExecuteScriptFunc();
-			}
+			dllHandleMap[dllPath].second.push_back(std::make_shared<ScriptFuncStorage::InterfaceScriptFunc>(scriptFunc));
+			scriptFuncWeakPtr = dllHandleMap[dllPath].second.back();
 			success = true;
 		}
 	}

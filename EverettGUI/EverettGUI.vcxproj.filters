@@ -57,6 +57,12 @@
     <ClInclude Include="CObjectEditDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CKeybindOptionDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DLLLoaderCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EverettGUI.cpp">
@@ -90,6 +96,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CObjectEditDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CKeybindOptionDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DLLLoaderCommon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

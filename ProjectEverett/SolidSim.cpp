@@ -78,7 +78,6 @@ SolidSim::SolidSim(
 	}
 
 	type = SolidType::Static;
-	lastExecutedScriptDll = "";
 }
 
 void SolidSim::SetGhostMode(bool val)
@@ -285,42 +284,22 @@ bool SolidSim::CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid
 	return CheckForCollision(solid1, solid2);
 }
 
-void SolidSim::AddScriptFunc(const std::string& dllName, ScriptFuncSharedPtr& scriptFunc)
+void SolidSim::AddScriptFunc(const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc)
 {
-	scriptFuncMap.emplace(dllName, scriptFunc);
-	lastExecutedScriptDll = dllName;
+	scriptFuncStorage.AddScriptFunc(dllName, scriptFunc);
 }
 
 void SolidSim::ExecuteScriptFunc(const std::string& dllName)
 {
-	if (!scriptFuncMap.empty())
-	{
-		const std::string& dllToExecute = dllName.empty() ? lastExecutedScriptDll : dllName;
-		
-		if (scriptFuncMap[dllToExecute].lock())
-		{
-			((*scriptFuncMap[dllToExecute].lock())(*dynamic_cast<ISolidSim*>(this)));
-		}
-		else
-		{
-			scriptFuncMap.erase(dllToExecute);
-		}
-
-	}
+	scriptFuncStorage.ExecuteScriptFunc(this, dllName);
 }
 
 void SolidSim::ExecuteAllScriptFuncs()
 {
-	for (auto& scriptFuncPair : scriptFuncMap)
-	{
-		if (scriptFuncPair.second.lock())
-		{
-			((*scriptFuncPair.second.lock())(*dynamic_cast<ISolidSim*>(this)));
-		}
-	}
+	scriptFuncStorage.ExecuteAllScriptFuncs(this);
 }
 
 bool SolidSim::IsScriptFuncAdded(const std::string& dllName)
 {
-	return scriptFuncMap.find(dllName == "" ? lastExecutedScriptDll : dllName) != scriptFuncMap.end();
+	return scriptFuncStorage.IsScriptFuncAdded(dllName);
 }

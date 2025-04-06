@@ -6,10 +6,11 @@
 
 #include "EverettEngine.h"
 
+#include "DLLLoaderCommon.h"
 
 // CObjectEditDialog dialog
 
-class CObjectEditDialog : public CDialogEx
+class CObjectEditDialog : public DLLLoaderCommon
 {
 	DECLARE_DYNAMIC(CObjectEditDialog)
 
@@ -32,8 +33,6 @@ private:
 	BOOL OnInitDialog() override;
 
 	void SetObjectParams(const std::vector<glm::vec3>& params);
-	void FillComboBoxWithScriptInfo();
-	void UpdateScriptButtons();
 
 	EverettEngine& engineRef;
 
@@ -43,13 +42,6 @@ private:
 	std::string subtypeName;
 	std::string objectName;
 
-	CButton scriptBrowseButton;
-	CButton loadScriptButton;
-	CButton unloadScriptButton;
-	CComboBox dllComboBox;
-	CButton scriptRunIndicator;
-
-	std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo;
 	std::string chosenObjectName;
 
 protected:
@@ -58,9 +50,4 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnUpdateParamsButtonClick();
-	afx_msg void OnBrowseScriptButton();
-	afx_msg void OnLoadScriptButtonClick();
-	afx_msg void OnUnloadDllButtonClick();
-	afx_msg void OnScriptSelectionChange();
-	afx_msg void OnScriptSelectionChangeOk();
 };

@@ -27,12 +27,18 @@
     <ClInclude Include="GLExecutor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LGLKeyToStringMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="LGL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LGLKeyToStringMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

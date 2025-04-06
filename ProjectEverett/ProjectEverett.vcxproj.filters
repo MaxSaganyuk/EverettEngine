@@ -72,6 +72,12 @@
     <ClInclude Include="interfaces\ISoundSim.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="WindowHandleHolder.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptFuncStorage.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
@@ -102,6 +108,12 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="LightSim.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowHandleHolder.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="ScriptFuncStorage.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

@@ -163,12 +163,14 @@
     <ClInclude Include="interfaces\ISoundSim.h" />
     <ClInclude Include="MazeGen.h" />
     <ClInclude Include="ModelSim.h" />
+    <ClInclude Include="ScriptFuncStorage.h" />
     <ClInclude Include="SolidSim.h" />
     <ClInclude Include="SoundSim.h" />
     <ClInclude Include="LightSim.h" />
     <ClInclude Include="MaterialSim.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Verts.h" />
+    <ClInclude Include="WindowHandleHolder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EverettEngine.cpp" />
@@ -177,10 +179,12 @@
     <ClCompile Include="CommandHandler.cpp" />
     <ClCompile Include="LightSim.cpp" />
     <ClCompile Include="MazeGen.cpp" />
+    <ClCompile Include="ScriptFuncStorage.cpp" />
     <ClCompile Include="SolidSim.cpp" />
     <ClCompile Include="SoundSim.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="stb_image.cpp" />
+    <ClCompile Include="WindowHandleHolder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\colorChange.frag" />

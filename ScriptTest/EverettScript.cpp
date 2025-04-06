@@ -28,3 +28,11 @@ ScriptObjectInit(Spot0, ILightSim)
 {
 	interState.lightInter = &objectSpot0;
 }
+
+ScriptKeybindPressed(T)
+{
+	if (interState.charInter)
+	{
+		interState.charInter->SetPosition(ISolidSim::Direction::Forward);
+	}
+}

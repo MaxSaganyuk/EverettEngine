@@ -68,7 +68,6 @@ private:
 	public:
 		static const std::vector<int> DepthTestModeInter;
 		static const std::vector<int> TextureOverlayTypeInter;
-		static const std::vector<int> SpecialKeyInter;
 	};
 
 public:
@@ -85,17 +84,6 @@ public:
 		NotEqual,
 		LessOrEqual,
 		GreaterOrEqual
-	};
-
-	enum class SpecialKeys
-	{
-		Enter,
-		Space,
-		LeftShift,
-		RightShift,
-		Tab,
-		Backspace,
-		Escape
 	};
 
 	// Public functions
@@ -135,16 +123,19 @@ public:
 
 	LGL_API void CaptureMouse();
 
-	LGL_API void SetInteractable(unsigned char key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc = nullptr);
-	LGL_API void SetInteractable(SpecialKeys key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc = nullptr);
+	LGL_API void SetInteractable(int key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc = nullptr);
+	
+	LGL_API static std::string ConvertKeyTo(int keyId);
+	LGL_API static int         ConvertKeyTo(const std::string& keyName);
 
 	LGL_API void SetAssetOnOpenGLFailure(bool value);
 
 	LGL_API void SetShaderFolder(const std::string& path);
 
-	//Callback setters
+	//Callback setters - Pass nothing to make callback self-contained
 	LGL_API void SetCursorPositionCallback(std::function<void(double, double)> callbackFunc);
 	LGL_API void SetScrollCallback(std::function<void(double, double)> callbackFunc);
+	LGL_API void SetKeyPressCallback(std::function<void(int, int, int, int)> callbackFunc);
 
 	//Function templates
 	template<typename Type>
@@ -166,8 +157,6 @@ private:
 	// If shader file names can be identical to shader program name, general load and compile can be used
 	bool LoadAndCompileShader(const std::string& name);
 
-
-
 	// Callbacks
 	CALLBACK GLFWErrorCallback(int errorCode, const char* description);
 
@@ -178,6 +167,9 @@ private:
 	
 	CALLBACK ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 	static std::function<void(double, double)> scrollCallbackFunc;
+
+	CALLBACK KeyPressCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static std::function<void(int, int, int, int)> keyPressCallbackFunc;
 
 	void ProcessInput();
 	void Render();

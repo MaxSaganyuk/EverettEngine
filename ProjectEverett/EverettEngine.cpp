@@ -19,6 +19,9 @@
 
 #include "MazeGen.h"
 
+#include "WindowHandleHolder.h"
+#include "ScriptFuncStorage.h"
+
 #include "stdEx/mapEx.h"
 
 #define EVERETT_EXPORT
@@ -78,6 +81,10 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL = std::make_unique<LGL>();
 
 	mainLGL->CreateWindow(windowHeight, windowWidth, title);
+
+	hwndHolder = std::make_unique<WindowHandleHolder>();
+	hwndHolder->AddCurrentWindowHandle("LGL");
+
 	mainLGL->SetAssetOnOpenGLFailure(true);
 #if _DEBUG
 	std::string debugShaderPath = "\\..\\ProjectEverett\\shaders";
@@ -97,7 +104,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 		[this](double xpos, double ypos) { camera->Zoom(static_cast<float>(xpos), static_cast<float>(ypos)); }
 	);
 
-	std::string walkingDirections = "wsad";
+	std::string walkingDirections = "WSAD";
 	for (size_t i = 0; i < walkingDirections.size(); ++i)
 	{
 		mainLGL->SetInteractable(
@@ -105,7 +112,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 			[this, i]() { camera->SetPosition(static_cast<CameraSim::Direction>(i)); }
 		);
 	}
-	mainLGL->SetInteractable('r', [this]() { camera->SetPosition(CameraSim::Direction::Up); });
+	mainLGL->SetInteractable('R', [this]() { camera->SetPosition(CameraSim::Direction::Up); });
 
 	mainLGL->GetMaxAmountOfVertexAttr();
 	mainLGL->CaptureMouse();
@@ -118,6 +125,34 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGLRenderThread = std::make_unique<std::thread>(
 		[this, cameraMainLoop](){ mainLGL->RunRenderingCycle(cameraMainLoop); }
 	);
+}
+
+int EverettEngine::PollForLastKeyPressed()
+{
+	LastKeyPressPoll lastKeyPressPoll;
+
+	mainLGL->SetKeyPressCallback(
+		[&lastKeyPressPoll](int key, int scancode, int action, int mods) { 
+			lastKeyPressPoll.KeyPressCallback(key, scancode, action, mods); 
+		}
+	);
+	
+	lastKeyPressPoll.WaitForKeyPress();
+
+	mainLGL->SetKeyPressCallback(nullptr);
+
+	return lastKeyPressPoll.GetLastKeyPressedID();
+}
+
+
+std::string EverettEngine::ConvertKeyTo(int keyId)
+{
+	return LGL::ConvertKeyTo(keyId);
+}
+
+int EverettEngine::ConvertKeyTo(const std::string& keyName)
+{
+	return LGL::ConvertKeyTo(keyName);
 }
 
 bool EverettEngine::CreateModel(const std::string& path, const std::string& name)
@@ -259,12 +294,22 @@ void EverettEngine::SetScriptToObject(
 {
 	if (fileLoader)
 	{
+		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncWeakPtr;
+
 		fileLoader->GetScriptFuncFromDLL(
 			dllPath,
 			dllName,
 			objectType == ObjectTypes::Camera ? "Camera" : objectName,
-			GetObjectFromMap(objectType, subtypeName, objectName)
+			scriptFuncWeakPtr
 		);
+
+		SolidSim* object = GetObjectFromMap(objectType, subtypeName, objectName);
+
+		if (object)
+		{
+			object->AddScriptFunc(dllName, scriptFuncWeakPtr);
+			object->ExecuteScriptFunc();
+		}
 	}
 }
 
@@ -284,6 +329,66 @@ bool EverettEngine::IsObjectScriptSet(
 )
 {
 	return GetObjectFromMap(objectType, subtypeName, objectName)->IsScriptFuncAdded(dllName);
+}
+
+void EverettEngine::SetScriptToKey(
+	const std::string& keyName,
+	const std::string& dllPath,
+	const std::string& dllName
+)
+{
+	if (fileLoader && !keyName.empty())
+	{
+		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncPress;
+		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncRelease;
+
+		fileLoader->GetScriptFuncFromDLL(dllPath, dllName, "Key" + keyName + "Pressed", scriptFuncPress);
+		fileLoader->GetScriptFuncFromDLL(dllPath, dllName, "Key" + keyName + "Released", scriptFuncRelease);
+
+		bool addNewKey = false;
+
+		if (keyScriptFuncMap.find(keyName) == keyScriptFuncMap.end())
+		{
+			keyScriptFuncMap.emplace(keyName, std::pair<ScriptFuncStorage, ScriptFuncStorage>{});
+			addNewKey = true;
+		}
+
+		keyScriptFuncMap[keyName].first.AddScriptFunc(dllName, scriptFuncPress);
+		if (scriptFuncRelease.lock())
+		{
+			keyScriptFuncMap[keyName].second.AddScriptFunc(dllName, scriptFuncRelease);
+		}
+
+		if (addNewKey)
+		{
+			std::function<void()> scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].first.ExecuteAllScriptFuncs(nullptr); };
+			std::function<void()> scriptFuncReleaseWrapper = nullptr;
+
+			if (scriptFuncRelease.lock())
+			{
+				scriptFuncReleaseWrapper = [this, keyName]() { keyScriptFuncMap[keyName].second.ExecuteAllScriptFuncs(nullptr); };
+			}
+
+			mainLGL->SetInteractable(
+				LGL::ConvertKeyTo(keyName),
+				scriptFuncPressWrapper,
+				scriptFuncReleaseWrapper
+			);
+		}
+	}
+}
+
+void EverettEngine::UnsetScriptFromKey(const std::string& objectName)
+{
+	//TODO
+}
+
+bool EverettEngine::IsKeyScriptSet(
+	const std::string& keyName,
+	const std::string& dllName
+)
+{
+	return keyScriptFuncMap[keyName].first.IsScriptFuncAdded(dllName);
 }
 
 std::vector<glm::vec3> EverettEngine::GetObjectParamsByName(
@@ -512,4 +617,36 @@ std::vector<std::string> EverettEngine::GetSoundList()
 std::vector<std::string> EverettEngine::GetLightTypeList()
 {
 	return LightSim::GetLightTypeNames();
+}
+
+void EverettEngine::ForceFocusOnWindow(const std::string& name)
+{
+	hwndHolder->BringWindowOnTop(name);
+}
+
+EverettEngine::LastKeyPressPoll::LastKeyPressPoll()
+{
+	lastKeyPressedID = -1;
+	isValidKeyPress = false;
+}
+
+void EverettEngine::LastKeyPressPoll::KeyPressCallback(int key, int scancode, int action, int mods)
+{
+	if (action)
+	{
+		lastKeyPressedID = key;
+		isValidKeyPress = true;
+		cv.notify_one();
+	}
+}
+
+void EverettEngine::LastKeyPressPoll::WaitForKeyPress()
+{
+	std::unique_lock<std::mutex> lk(mux);
+	cv.wait(lk, [this]() { return isValidKeyPress; });
+}
+
+int EverettEngine::LastKeyPressPoll::GetLastKeyPressedID()
+{
+	return lastKeyPressedID;
 }

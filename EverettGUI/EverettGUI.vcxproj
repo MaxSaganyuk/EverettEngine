@@ -191,11 +191,13 @@
   <ItemGroup>
     <ClInclude Include="CBrowseDialog.h" />
     <ClInclude Include="ChildView.h" />
+    <ClInclude Include="CKeybindOptionDlg.h" />
     <ClInclude Include="CLoadingDialog.h" />
     <ClInclude Include="CLoadModelDialog.h" />
     <ClInclude Include="CMainWindow.h" />
     <ClInclude Include="CObjectEditDialog.h" />
     <ClInclude Include="CPlaceObjectDialog.h" />
+    <ClInclude Include="DLLLoaderCommon.h" />
     <ClInclude Include="EverettGUI.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MainFrm.h" />
@@ -207,11 +209,13 @@
   <ItemGroup>
     <ClCompile Include="CBrowseDialog.cpp" />
     <ClCompile Include="ChildView.cpp" />
+    <ClCompile Include="CKeybindOptionDlg.cpp" />
     <ClCompile Include="CLoadingDialog.cpp" />
     <ClCompile Include="CLoadModelDialog.cpp" />
     <ClCompile Include="CMainWindow.cpp" />
     <ClCompile Include="CObjectEditDialog.cpp" />
     <ClCompile Include="CPlaceObjectDialog.cpp" />
+    <ClCompile Include="DLLLoaderCommon.cpp" />
     <ClCompile Include="EverettGUI.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="pch.cpp">

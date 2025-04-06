@@ -21,12 +21,14 @@
   <ItemGroup>
     <ClInclude Include="GLExecutor.h" />
     <ClInclude Include="LGL.h" />
+    <ClInclude Include="LGLKeyToStringMap.h" />
     <ClInclude Include="LGLStructs.h" />
     <ClInclude Include="LGLUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="LGL.cpp" />
+    <ClCompile Include="LGLKeyToStringMap.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

@@ -10,20 +10,30 @@
 
 // CObjectEditDialog dialog
 
-IMPLEMENT_DYNAMIC(CObjectEditDialog, CDialogEx)
+IMPLEMENT_DYNAMIC(CObjectEditDialog, DLLLoaderCommon)
 
 CObjectEditDialog::CObjectEditDialog(
 	EverettEngine& engine, 
-	EverettEngine::ObjectTypes objectType,
+	EverettEngine::ObjectTypes objectTypeP,
 	std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo,
 	const std::vector<std::pair<std::string, std::string>>& selectedNodes,
 	CWnd* pParent 
 )
 	: 
-	CDialogEx(IDD_DIALOG4, pParent), 
+	DLLLoaderCommon(
+		IDD_DIALOG4, 
+		selectedScriptDllInfo, 
+		[this](const std::string& dllName) { 
+			return engineRef.IsObjectScriptSet(objectType, subtypeName, objectName, dllName); 
+		},
+		[this](const std::string& dllName, const std::string& dllPath) { 
+			engineRef.SetScriptToObject(objectType, subtypeName, objectName, dllName, dllPath); 
+		},
+		[this](const std::string& dllPath) { engineRef.UnsetScriptFromObject(dllPath); },
+		pParent
+	),
 	engineRef(engine), 
-	objectType(objectType),
-	selectedScriptDllInfo(selectedScriptDllInfo)
+	objectType(objectTypeP)
 {
 	subtypeName = "";
 	objectName = "";
@@ -45,7 +55,7 @@ CObjectEditDialog::~CObjectEditDialog()
 
 void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	DLLLoaderCommon::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT1, objectInfoEdits[0][0]);
 	DDX_Control(pDX, IDC_EDIT2, objectInfoEdits[0][1]);
 	DDX_Control(pDX, IDC_EDIT3, objectInfoEdits[0][2]);
@@ -55,47 +65,21 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT7, objectInfoEdits[2][0]);
 	DDX_Control(pDX, IDC_EDIT8, objectInfoEdits[2][1]);
 	DDX_Control(pDX, IDC_EDIT9, objectInfoEdits[2][2]);
-	DDX_Control(pDX, IDC_BUTTON2, scriptBrowseButton);
-	DDX_Control(pDX, IDC_BUTTON3, loadScriptButton);
-	DDX_Control(pDX, IDC_BUTTON4, unloadScriptButton);
-	DDX_Control(pDX, IDC_COMBO1, dllComboBox);
-	DDX_Control(pDX, IDC_CHECK2, scriptRunIndicator);
+
 }
 
 
 BOOL CObjectEditDialog::OnInitDialog()
 {
-	CDialogEx::OnInitDialog();
+	DLLLoaderCommon::OnInitDialog();
 
 	SetObjectParams(engineRef.GetObjectParamsByName(objectType, subtypeName, objectName));
-	
-	if (selectedScriptDllInfo.size() > 0)
-	{
-		FillComboBoxWithScriptInfo();
-		dllComboBox.SetCurSel(0);
-		loadScriptButton.EnableWindow(true);
-		scriptRunIndicator.SetCheck(
-			engineRef.IsObjectScriptSet(objectType, subtypeName, objectName, selectedScriptDllInfo[0].second)
-		);
-	}
+
 	return true;
 }
 
-void CObjectEditDialog::FillComboBoxWithScriptInfo()
-{
-	for (auto& scriptDllInfo : selectedScriptDllInfo)
-	{
-		dllComboBox.AddString(CA2T(scriptDllInfo.second.c_str()));
-	}
-}
-
-BEGIN_MESSAGE_MAP(CObjectEditDialog, CDialogEx)
+BEGIN_MESSAGE_MAP(CObjectEditDialog, DLLLoaderCommon)
 	ON_BN_CLICKED(IDC_BUTTON1, &CObjectEditDialog::OnUpdateParamsButtonClick)
-	ON_BN_CLICKED(IDC_BUTTON2, &CObjectEditDialog::OnBrowseScriptButton)
-	ON_BN_CLICKED(IDC_BUTTON3, &CObjectEditDialog::OnLoadScriptButtonClick)
-	ON_BN_CLICKED(IDC_BUTTON4, &CObjectEditDialog::OnUnloadDllButtonClick)
-	ON_CBN_SELCHANGE(IDC_COMBO1, &CObjectEditDialog::OnScriptSelectionChange)
-	ON_CBN_SELENDOK(IDC_COMBO1, &CObjectEditDialog::OnScriptSelectionChangeOk)
 END_MESSAGE_MAP()
 
 
@@ -136,68 +120,4 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 		objectName, 
 		valuesToSet
 	);
-}
-
-
-void CObjectEditDialog::OnBrowseScriptButton()
-{
-	CString pathStr;
-	CString fileStr;
-
-	if (CBrowseDialog::OpenAndGetFilePath(pathStr, fileStr))
-	{
-		selectedScriptDllInfo.push_back(std::pair<std::string, std::string>{ CT2A(pathStr), CT2A(fileStr) });
-		dllComboBox.AddString(fileStr);
-		dllComboBox.SetCurSel(selectedScriptDllInfo.size() - 1);
-		loadScriptButton.EnableWindow(true);
-	}
-}
-
-void CObjectEditDialog::UpdateScriptButtons()
-{
-	bool isObjectScriptSet = engineRef.IsObjectScriptSet(
-		objectType, 
-		subtypeName, 
-		objectName, 
-		selectedScriptDllInfo[dllComboBox.GetCurSel()].second
-	);
-
-	scriptRunIndicator.SetCheck(isObjectScriptSet);
-	loadScriptButton.EnableWindow(!isObjectScriptSet);
-	unloadScriptButton.EnableWindow(isObjectScriptSet);
-}
-
-
-void CObjectEditDialog::OnLoadScriptButtonClick()
-{
-	int curSel = dllComboBox.GetCurSel();
-
-	engineRef.SetScriptToObject(
-		objectType, 
-		subtypeName,
-		objectName,
-		selectedScriptDllInfo[curSel].first,
-		selectedScriptDllInfo[curSel].second
-	);
-
-	UpdateScriptButtons();
-}
-
-
-void CObjectEditDialog::OnUnloadDllButtonClick()
-{
-	engineRef.UnsetScriptFromObject(selectedScriptDllInfo[dllComboBox.GetCurSel()].second);
-
-	UpdateScriptButtons();
-}
-
-
-void CObjectEditDialog::OnScriptSelectionChange()
-{
-}
-
-
-void CObjectEditDialog::OnScriptSelectionChangeOk()
-{
-	UpdateScriptButtons();
 }

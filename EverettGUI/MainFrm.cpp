@@ -12,6 +12,7 @@
 #include "CPlaceObjectDialog.h"
 #include "CLoadingDialog.h"
 #include "CObjectEditDialog.h"
+#include "CKeybindOptionDlg.h"
 
 #include "MainFrm.h"
 
@@ -31,6 +32,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_BUTTON32772, &CMainFrame::OnPlaceLight)
 	ON_COMMAND(ID_BUTTON32773, &CMainFrame::OnPlaceSound)
 	ON_COMMAND(ID_BUTTON32774, &CMainFrame::OnCameraOptions)
+	ON_COMMAND(ID_BUTTON32775, &CMainFrame::OnKeybindOptions)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -212,4 +214,11 @@ void CMainFrame::OnCameraOptions()
 	CObjectEditDialog objectEditDlg(engine, EverettEngine::ObjectTypes::Camera, mainWindow->GetSelectedScriptDllInfo());
 
 	objectEditDlg.DoModal();
+}
+
+void CMainFrame::OnKeybindOptions()
+{
+	CKeybindOptionDlg keybindDlg(engine, mainWindow->GetSelectedScriptDllInfo());
+
+	keybindDlg.DoModal();
 }

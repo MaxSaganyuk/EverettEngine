@@ -52,6 +52,7 @@ private:
 	void OnPlaceLight();
 	void OnPlaceSound();
 	void OnCameraOptions();
+	void OnKeybindOptions();
 	EverettEngine engine;
 	std::unique_ptr<CMainWindow> mainWindow;
 };

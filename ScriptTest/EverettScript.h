@@ -24,3 +24,24 @@ extern "C" __declspec(dllexport) void name(void* object)                        
 }                                                                                 \
                                                                                   \
 void Impl##name(objectType& object##name)                                         \
+
+#define ScriptKeybindPressed(keyname)                                             \
+void ImplKey##keyname##Pressed();                                                 \
+                                                                                  \
+extern "C" __declspec(dllexport) void Key##keyname##Pressed(void* placeholder)    \
+{                                                                                 \
+    ImplKey##keyname##Pressed();                                                  \
+}                                                                                 \
+                                                                                  \
+void ImplKey##keyname##Pressed()                                                  \
+
+#define ScriptKeybindReleased(keyname)                                            \
+void ImplKey##keyname##Released();                                                \
+                                                                                  \
+extern "C" __declspec(dllexport) void Key##keyname##Released(void* placeholder)   \
+{                                                                                 \
+    ImplKey##keyname##Released();                                                 \
+}                                                                                 \
+                                                                                  \
+void ImplKey##keyname##Released()                                                 \
+

@@ -9,11 +9,14 @@
 #include <mutex>
 
 #include "interfaces/ISolidSim.h"
+#include "ScriptFuncStorage.h"
 
 class aiScene;
 class aiMesh;
 class aiNode;
 class SolidSim;
+class HINSTANCE__;
+using HMODULE = HINSTANCE__*;
 
 class FileLoader
 {
@@ -27,6 +30,15 @@ class FileLoader
 	void ProcessNode(const aiNode* nodeHandle, LGLStructs::ModelInfo& model);
 	bool GetTextureFilenames(const std::string& path);
 	LGLStructs::Mesh ProcessMesh(const aiMesh* meshHandle);
+
+	using ScriptFuncMap = 
+	std::map<
+		std::string,
+		std::pair<HMODULE, std::vector<std::shared_ptr<ScriptFuncStorage::InterfaceScriptFunc>>>
+	>;
+
+	ScriptFuncMap dllHandleMap;
+
 public:
 	FileLoader();
 	~FileLoader();
@@ -48,7 +60,7 @@ public:
 		const std::string& dllPath,
 		const std::string& dllName,
 		const std::string& funcName,
-		SolidSim* relatedObject = nullptr
+		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
 	);
 	void UnloadScriptDLL(const std::string& dllPath);
 	std::vector<std::string> GetLoadedScriptDlls();
