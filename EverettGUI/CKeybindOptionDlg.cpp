@@ -36,6 +36,8 @@ CKeybindOptionDlg::CKeybindOptionDlg(
 BOOL CKeybindOptionDlg::OnInitDialog()
 {
 	DLLLoaderCommon::OnInitDialog();
+
+	SetWindowText(_T("Keybind Options"));
 	
 	return true;
 }
@@ -81,5 +83,6 @@ void CKeybindOptionDlg::OnKeybindInterClick()
 void CKeybindOptionDlg::SetEditToKeyName()
 {
 	keyName = EverettEngine::ConvertKeyTo(engineRef.PollForLastKeyPressed());
+	engineRef.ForceFocusOnWindow("EverettGUI");
 	keyNameEdit.SetWindowTextW(CA2T(keyName.c_str()));
 }

@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "EverettGUI.h"
 #include "afxdialogex.h"
-#include "CLoadModelDialog.h"
+#include "CBrowseAndLoadDialog.h"
 #include "CBrowseDialog.h"
 
 #include <fstream>
@@ -19,13 +19,14 @@ CBrowseAndLoadDialog::CBrowseAndLoadDialog(
 	const std::vector<std::string>& loadedModelList, 
 	CWnd* pParent
 )
-	: CDialogEx(IDD_DIALOG1, pParent)
+	: 
+	CDialogEx(IDD_DIALOG1, pParent), 
+	objectName(objectName),
+	modelLoader(modelLoader), 
+	loadedModelList(loadedModelList), 
+	path(""), 
+	name("")
 {
-	this->objectName = objectName;
-	this->modelLoader = modelLoader;
-	this->loadedModelList = loadedModelList;
-	path = "";
-	name = "";
 }
 
 CBrowseAndLoadDialog::~CBrowseAndLoadDialog()
@@ -35,6 +36,8 @@ CBrowseAndLoadDialog::~CBrowseAndLoadDialog()
 BOOL CBrowseAndLoadDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+
+	SetWindowText(CA2T(("Load " + objectName).c_str()));
 
 	TCHAR buffer[MAX_PATH];
 	std::ifstream file;

@@ -30,6 +30,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	std::vector<std::string> objectNameList;
+	std::string objectTypeName;
 	size_t chosenIndex;
 	std::string chosenObject;
 	std::string newName;

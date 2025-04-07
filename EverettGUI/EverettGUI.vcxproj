@@ -193,7 +193,7 @@
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="CKeybindOptionDlg.h" />
     <ClInclude Include="CLoadingDialog.h" />
-    <ClInclude Include="CLoadModelDialog.h" />
+    <ClInclude Include="CBrowseAndLoadDialog.h" />
     <ClInclude Include="CMainWindow.h" />
     <ClInclude Include="CObjectEditDialog.h" />
     <ClInclude Include="CPlaceObjectDialog.h" />
@@ -211,7 +211,7 @@
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="CKeybindOptionDlg.cpp" />
     <ClCompile Include="CLoadingDialog.cpp" />
-    <ClCompile Include="CLoadModelDialog.cpp" />
+    <ClCompile Include="CBrowseAndLoadDialog.cpp" />
     <ClCompile Include="CMainWindow.cpp" />
     <ClCompile Include="CObjectEditDialog.cpp" />
     <ClCompile Include="CPlaceObjectDialog.cpp" />

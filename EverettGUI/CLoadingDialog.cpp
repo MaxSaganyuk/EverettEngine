@@ -30,6 +30,8 @@ BOOL CLoadingDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
+	SetWindowText(_T("Load Dialog"));
+
 	okButton.EnableWindow(false);
 
 	loadingProgressBar.SetRange32(0, loadingFuncs.size());

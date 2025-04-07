@@ -39,7 +39,7 @@
     <ClInclude Include="CMainWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CLoadModelDialog.h">
+    <ClInclude Include="CBrowseAndLoadDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CPlaceObjectDialog.h">
@@ -80,7 +80,7 @@
     <ClCompile Include="CMainWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CLoadModelDialog.cpp">
+    <ClCompile Include="CBrowseAndLoadDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CPlaceObjectDialog.cpp">

@@ -9,7 +9,12 @@ WindowHandleHolder::WindowHandleHolder()
 
 void WindowHandleHolder::AddCurrentWindowHandle(const std::string& name)
 {
-	windowHandleMap.emplace(name, GetActiveWindow());
+	AddWindowHandle(nullptr, name);
+}
+
+void WindowHandleHolder::AddWindowHandle(HWND windowHandle, const std::string& name)
+{
+	windowHandleMap.emplace(name, windowHandle ? windowHandle : GetActiveWindow());
 }
 
 void WindowHandleHolder::BringWindowOnTop(const std::string& name)

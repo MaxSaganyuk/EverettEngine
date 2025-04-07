@@ -20,6 +20,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "WindowHandleHolder.h"
+
 class FileLoader;
 class CameraSim;
 class SolidSim;
@@ -130,6 +132,8 @@ public:
 	EVERETT_API static int         ConvertKeyTo(const std::string& keyName);
 
 	EVERETT_API void ForceFocusOnWindow(const std::string& name);
+	EVERETT_API void AddWindowHandler(HWND windowHandler, const std::string& name);
+	EVERETT_API void AddCurrentWindowHandler(const std::string& name);
 private:
 	struct ModelSolidInfo;
 

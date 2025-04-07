@@ -16,9 +16,8 @@ CPlaceObjectDialog::CPlaceObjectDialog(
 	const std::vector<std::string>& objectNameList, 
 	CWnd* pParent
 )
-	: CDialogEx(IDD_DIALOG2, pParent)
+	: CDialogEx(IDD_DIALOG2, pParent), objectTypeName(objectTypeName), objectNameList(objectNameList)
 {
-	this->objectNameList = objectNameList;
 }
 
 CPlaceObjectDialog::~CPlaceObjectDialog()
@@ -28,6 +27,8 @@ CPlaceObjectDialog::~CPlaceObjectDialog()
 BOOL CPlaceObjectDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+
+	SetWindowText(CA2T(("Place " + objectTypeName).c_str()));
 
 	if (objectNameList.size() > 0)
 	{

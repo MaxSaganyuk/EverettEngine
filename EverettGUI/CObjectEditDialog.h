@@ -33,6 +33,7 @@ private:
 	BOOL OnInitDialog() override;
 
 	void SetObjectParams(const std::vector<glm::vec3>& params);
+	CString GenerateTitle();
 
 	EverettEngine& engineRef;
 

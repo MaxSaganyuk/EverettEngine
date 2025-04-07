@@ -621,7 +621,26 @@ std::vector<std::string> EverettEngine::GetLightTypeList()
 
 void EverettEngine::ForceFocusOnWindow(const std::string& name)
 {
-	hwndHolder->BringWindowOnTop(name);
+	if (hwndHolder)
+	{
+		hwndHolder->BringWindowOnTop(name);
+	}
+}
+
+void EverettEngine::AddWindowHandler(HWND windowHandler, const std::string& name)
+{
+	if (hwndHolder)
+	{
+		hwndHolder->AddWindowHandle(windowHandler, name);
+	}
+}
+
+void EverettEngine::AddCurrentWindowHandler(const std::string& name)
+{
+	if (hwndHolder)
+	{
+		hwndHolder->AddCurrentWindowHandle(name);
+	}
 }
 
 EverettEngine::LastKeyPressPoll::LastKeyPressPoll()

@@ -33,20 +33,10 @@ CObjectEditDialog::CObjectEditDialog(
 		pParent
 	),
 	engineRef(engine), 
-	objectType(objectTypeP)
+	objectType(objectTypeP),
+	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : ""),
+	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : "")
 {
-	subtypeName = "";
-	objectName = "";
-
-	if (selectedNodes.size() == 2)
-	{
-		subtypeName = selectedNodes[1].second;
-		objectName = selectedNodes[0].second;
-	}
-	else if (selectedNodes.size() == 1)
-	{
-		objectName = selectedNodes[0].second;
-	}
 }
 
 CObjectEditDialog::~CObjectEditDialog()
@@ -68,10 +58,23 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 
 }
 
+CString CObjectEditDialog::GenerateTitle()
+{
+	CString titleRes(_T("Edit "));
+
+	titleRes.Append(CA2T(EverettEngine::GetObjectTypeToName(objectType).c_str()));
+	titleRes.Append(CA2T((!subtypeName.empty() ? " : " + subtypeName : "").c_str()));
+	titleRes.Append(CA2T((!objectName.empty() ? " : " + objectName : "").c_str()));
+
+	return titleRes;
+}
+
 
 BOOL CObjectEditDialog::OnInitDialog()
 {
 	DLLLoaderCommon::OnInitDialog();
+
+	SetWindowText(GenerateTitle());
 
 	SetObjectParams(engineRef.GetObjectParamsByName(objectType, subtypeName, objectName));
 

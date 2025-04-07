@@ -8,7 +8,7 @@
 
 #include "TreeManager.h"
 
-#include "CLoadModelDialog.h"
+#include "CBrowseAndLoadDialog.h"
 #include "CPlaceObjectDialog.h"
 #include "CLoadingDialog.h"
 #include "CObjectEditDialog.h"
@@ -90,6 +90,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	mainWindow->ShowWindow(SW_SHOW);
 	SetActiveView(mainWindow.get());
+	BringWindowToTop();
+	engine.AddCurrentWindowHandler("EverettGUI");
 	RecalcLayout();
 
 	// TODO: Delete these three lines if you don't want the toolbar to be dockable
