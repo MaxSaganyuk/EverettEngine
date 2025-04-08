@@ -29,7 +29,7 @@ CObjectEditDialog::CObjectEditDialog(
 		[this](const std::string& dllName, const std::string& dllPath) { 
 			engineRef.SetScriptToObject(objectType, subtypeName, objectName, dllName, dllPath); 
 		},
-		[this](const std::string& dllPath) { engineRef.UnsetScriptFromObject(dllPath); },
+		[this](const std::string& dllPath) { engineRef.UnsetScript(dllPath); },
 		pParent
 	),
 	engineRef(engine), 

@@ -80,4 +80,5 @@ public:
 	void ExecuteScriptFunc(const std::string& dllName = "") override;
 	void ExecuteAllScriptFuncs() override;
 	bool IsScriptFuncAdded(const std::string& dllName = "") override;
+	bool IsScriptFuncRunnable(const std::string& dllName = "") override;
 };

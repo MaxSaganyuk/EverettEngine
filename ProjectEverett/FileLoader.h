@@ -31,13 +31,15 @@ class FileLoader
 	bool GetTextureFilenames(const std::string& path);
 	LGLStructs::Mesh ProcessMesh(const aiMesh* meshHandle);
 
-	using ScriptFuncMap = 
-	std::map<
-		std::string,
-		std::pair<HMODULE, std::vector<std::shared_ptr<ScriptFuncStorage::InterfaceScriptFunc>>>
-	>;
+	bool GetScriptFuncFromDLLImpl(
+		const std::string& dllPath,
+		const std::string& funcName,
+		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
+	);
 
-	ScriptFuncMap dllHandleMap;
+	using ScriptMap = std::map<std::string, std::pair<HMODULE, ScriptFuncStorage::ScriptFuncMainMap>>;
+
+	ScriptMap dllHandleMap;
 
 public:
 	FileLoader();
@@ -58,7 +60,6 @@ public:
 
 	bool GetScriptFuncFromDLL(
 		const std::string& dllPath,
-		const std::string& dllName,
 		const std::string& funcName,
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
 	);

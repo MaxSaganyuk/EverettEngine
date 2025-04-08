@@ -13,6 +13,7 @@ public:
 	using InterfaceScriptFunc = std::function<void(ISolidSim*)>;
 	using ScriptFuncSharedPtr = std::shared_ptr<InterfaceScriptFunc>;
 	using ScriptFuncWeakPtr = std::weak_ptr<InterfaceScriptFunc>;
+	using ScriptFuncMainMap = std::map<std::string, ScriptFuncSharedPtr>;
 	using ScriptFuncMap = std::map<std::string, ScriptFuncWeakPtr>;
 
 	ScriptFuncStorage();
@@ -21,6 +22,7 @@ public:
 	void ExecuteScriptFunc(ISolidSim* object, const std::string& dllName = "");
 	void ExecuteAllScriptFuncs(ISolidSim* object);
 	bool IsScriptFuncAdded(const std::string& dllName = "");
+	bool IsScriptFuncRunnable(const std::string& dllName = "");
 
 private:
 	std::string lastExecutedScriptDll;

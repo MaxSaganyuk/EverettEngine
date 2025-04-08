@@ -25,7 +25,7 @@ CKeybindOptionDlg::CKeybindOptionDlg(
 		[this](const std::string& dllName, const std::string& dllPath) { 
 			engineRef.SetScriptToKey(keyName, dllName, dllPath); 
 		},
-		[this](const std::string& dllName) { engineRef.UnsetScriptFromKey(dllName); },
+		[this](const std::string& dllPath) { engineRef.UnsetScript(dllPath); },
 		pParent
 	), 
 	engineRef(engine), keyName("")

@@ -303,3 +303,8 @@ bool SolidSim::IsScriptFuncAdded(const std::string& dllName)
 {
 	return scriptFuncStorage.IsScriptFuncAdded(dllName);
 }
+
+bool SolidSim::IsScriptFuncRunnable(const std::string& dllName)
+{
+	return scriptFuncStorage.IsScriptFuncRunnable(dllName);
+}

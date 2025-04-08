@@ -80,4 +80,5 @@ public:
 	virtual void ExecuteScriptFunc(const std::string& dllName = "") = 0;
 	virtual void ExecuteAllScriptFuncs() = 0;
 	virtual bool IsScriptFuncAdded(const std::string& dllName = "") = 0;
+	virtual bool IsScriptFuncRunnable(const std::string& dllName = "") = 0;
 };

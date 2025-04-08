@@ -95,7 +95,6 @@ public:
 		const std::string& dllPath,
 		const std::string& dllName
 	);
-	EVERETT_API void UnsetScriptFromObject(const std::string& objectName);
 	EVERETT_API bool IsObjectScriptSet(
 		ObjectTypes objectType,
 		const std::string& subtypeName,
@@ -108,11 +107,12 @@ public:
 		const std::string& dllPath,
 		const std::string& dllName
 	);
-	EVERETT_API void UnsetScriptFromKey(const std::string& objectName);
 	EVERETT_API bool IsKeyScriptSet(
 		const std::string& keyName,
 		const std::string& dllName
 	);
+
+	EVERETT_API void UnsetScript(const std::string& dllName);
 
 	EVERETT_API std::vector<std::string> GetModelInDirList(const std::string& path);
 	EVERETT_API std::vector<std::string> GetSoundInDirList(const std::string& path);

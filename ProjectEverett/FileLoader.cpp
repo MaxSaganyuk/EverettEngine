@@ -325,12 +325,11 @@ bool FileLoader::LoadModel(const std::string& file, const std::string& name, LGL
 
 bool FileLoader::GetScriptFuncFromDLL(
 	const std::string& dllPath,
-	const std::string& dllName,
 	const std::string& funcName,
 	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
 )
 {
-	bool success = false;
+	bool success = true;
 
 	HMODULE dllHandle = LoadLibraryA(dllPath.c_str());
 
@@ -338,11 +337,18 @@ bool FileLoader::GetScriptFuncFromDLL(
 	{
 		if (dllHandleMap.find(dllPath) != dllHandleMap.end())
 		{
-			if (dllHandleMap[dllPath].first != dllHandle)
+			if (dllHandle != dllHandleMap[dllPath].first)
 			{
-				FreeLibrary(dllHandleMap[dllPath].first);
-				dllHandleMap.erase(dllPath);
 				dllHandleMap[dllPath].first = dllHandle;
+
+				for (auto& currentScriptFuncPair : dllHandleMap[dllPath].second)
+				{
+					if (funcName != currentScriptFuncPair.first)
+					{
+						success &= GetScriptFuncFromDLLImpl(dllPath, currentScriptFuncPair.first, scriptFuncWeakPtr);
+					}
+				}
+
 			}
 		}
 		else
@@ -350,42 +356,61 @@ bool FileLoader::GetScriptFuncFromDLL(
 			dllHandleMap[dllPath].first = dllHandle;
 		}
 
-		using ScriptWrapperType = void(*)(void*);
-		ScriptWrapperType scriptWrapperFunc = reinterpret_cast<ScriptWrapperType>(
-			GetProcAddress(dllHandleMap[dllPath].first, funcName.c_str())
-		);
-
-		if (scriptWrapperFunc)
-		{
-			auto scriptFunc = [this, scriptWrapperFunc](ISolidSim* solid)
-			{ 
-				scriptWrapperLock.lock();
-				scriptWrapperFunc(reinterpret_cast<void*>(solid));
-				scriptWrapperLock.unlock();
-			};
-
-			dllHandleMap[dllPath].second.push_back(std::make_shared<ScriptFuncStorage::InterfaceScriptFunc>(scriptFunc));
-			scriptFuncWeakPtr = dllHandleMap[dllPath].second.back();
-			success = true;
-		}
+		success &= GetScriptFuncFromDLLImpl(dllPath, funcName, scriptFuncWeakPtr);
 	}
 
 	return success;
 
 }
 
+bool FileLoader::GetScriptFuncFromDLLImpl(
+	const std::string& dllPath,
+	const std::string& funcName,
+	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
+)
+{
+	using ScriptWrapperType = void(*)(void*);
+	ScriptWrapperType scriptWrapperFunc = reinterpret_cast<ScriptWrapperType>(
+		GetProcAddress(dllHandleMap[dllPath].first, funcName.c_str())
+	);
+
+	if (scriptWrapperFunc)
+	{
+		auto scriptFunc = [this, scriptWrapperFunc](ISolidSim* solid)
+		{
+			std::lock_guard<std::recursive_mutex> lock(scriptWrapperLock);
+			scriptWrapperFunc(reinterpret_cast<void*>(solid));
+		};
+
+		if (dllHandleMap[dllPath].second.find(funcName) == dllHandleMap[dllPath].second.end())
+		{
+			dllHandleMap[dllPath].second.emplace(funcName, std::make_shared<ScriptFuncStorage::InterfaceScriptFunc>(scriptFunc));
+			scriptFuncWeakPtr = dllHandleMap[dllPath].second[funcName];
+		}
+		else
+		{
+			ScriptFuncStorage::InterfaceScriptFunc* currentScriptWrapperFunc = dllHandleMap[dllPath].second[funcName].get();
+			*currentScriptWrapperFunc = scriptFunc;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 void FileLoader::UnloadScriptDLL(const std::string& dllPath)
 {
 	scriptWrapperLock.lock();
-	for (auto& scriptFuns : dllHandleMap[dllPath].second)
+	for (auto& scriptFunc : dllHandleMap[dllPath].second)
 	{
-		scriptFuns.reset();
+		ScriptFuncStorage::InterfaceScriptFunc* scriptFuncWrapper = scriptFunc.second.get();
+		*scriptFuncWrapper = nullptr;
 	}
 	scriptWrapperLock.unlock();
 
 	FreeLibrary(dllHandleMap[dllPath].first);
-
-	dllHandleMap.erase(dllPath);
+	dllHandleMap[dllPath].first = nullptr;
 }
 
 std::vector<std::string> FileLoader::GetLoadedScriptDlls()

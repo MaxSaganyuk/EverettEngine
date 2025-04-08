@@ -102,7 +102,7 @@ void DLLLoaderCommon::OnLoadScriptButtonClick()
 
 void DLLLoaderCommon::OnUnloadDllButtonClick()
 {
-	unsetScriptFunc(selectedScriptDllInfo[dllComboBox.GetCurSel()].second);
+	unsetScriptFunc(selectedScriptDllInfo[dllComboBox.GetCurSel()].first);
 
 	UpdateScriptButtons();
 }

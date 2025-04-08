@@ -298,22 +298,25 @@ void EverettEngine::SetScriptToObject(
 
 		fileLoader->GetScriptFuncFromDLL(
 			dllPath,
-			dllName,
 			objectType == ObjectTypes::Camera ? "Camera" : objectName,
 			scriptFuncWeakPtr
 		);
 
 		SolidSim* object = GetObjectFromMap(objectType, subtypeName, objectName);
 
-		if (object)
+		if (object && scriptFuncWeakPtr.lock())
 		{
 			object->AddScriptFunc(dllName, scriptFuncWeakPtr);
-			object->ExecuteScriptFunc();
+		}
+
+		if (object->IsScriptFuncAdded(dllName))
+		{
+			object->ExecuteScriptFunc(dllName);
 		}
 	}
 }
 
-void EverettEngine::UnsetScriptFromObject(const std::string& dllPath)
+void EverettEngine::UnsetScript(const std::string& dllPath)
 {
 	if(fileLoader)
 	{ 
@@ -328,7 +331,7 @@ bool EverettEngine::IsObjectScriptSet(
 	const std::string& dllName
 )
 {
-	return GetObjectFromMap(objectType, subtypeName, objectName)->IsScriptFuncAdded(dllName);
+	return GetObjectFromMap(objectType, subtypeName, objectName)->IsScriptFuncRunnable(dllName);
 }
 
 void EverettEngine::SetScriptToKey(
@@ -342,8 +345,8 @@ void EverettEngine::SetScriptToKey(
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncPress;
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncRelease;
 
-		fileLoader->GetScriptFuncFromDLL(dllPath, dllName, "Key" + keyName + "Pressed", scriptFuncPress);
-		fileLoader->GetScriptFuncFromDLL(dllPath, dllName, "Key" + keyName + "Released", scriptFuncRelease);
+		fileLoader->GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress);
+		fileLoader->GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease);
 
 		bool addNewKey = false;
 
@@ -353,10 +356,14 @@ void EverettEngine::SetScriptToKey(
 			addNewKey = true;
 		}
 
-		keyScriptFuncMap[keyName].first.AddScriptFunc(dllName, scriptFuncPress);
-		if (scriptFuncRelease.lock())
+		if (!keyScriptFuncMap[keyName].first.IsScriptFuncAdded(dllName))
 		{
-			keyScriptFuncMap[keyName].second.AddScriptFunc(dllName, scriptFuncRelease);
+			keyScriptFuncMap[keyName].first.AddScriptFunc(dllName, scriptFuncPress);
+
+			if (scriptFuncRelease.lock())
+			{
+				keyScriptFuncMap[keyName].second.AddScriptFunc(dllName, scriptFuncRelease);
+			}
 		}
 
 		if (addNewKey)
@@ -378,17 +385,12 @@ void EverettEngine::SetScriptToKey(
 	}
 }
 
-void EverettEngine::UnsetScriptFromKey(const std::string& objectName)
-{
-	//TODO
-}
-
 bool EverettEngine::IsKeyScriptSet(
 	const std::string& keyName,
 	const std::string& dllName
 )
 {
-	return keyScriptFuncMap[keyName].first.IsScriptFuncAdded(dllName);
+	return keyScriptFuncMap[keyName].first.IsScriptFuncRunnable(dllName);
 }
 
 std::vector<glm::vec3> EverettEngine::GetObjectParamsByName(
