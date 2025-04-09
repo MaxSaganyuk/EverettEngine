@@ -41,6 +41,8 @@ private:
 	CButton browseButton;
 	CButton loadModelButton;
 	CComboBox modelChoice;
+	CStatic folderLabel;
+	CStatic choiceLabel;
 
 	std::string objectName;
 	std::string path;
@@ -58,6 +60,4 @@ public:
 	std::string GetChosenPathAndFilename();
 private:
 	CEdit nameEdit;
-public:
-	afx_msg void OnBnClickedCancel();
 };

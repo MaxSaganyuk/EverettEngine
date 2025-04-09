@@ -66,6 +66,7 @@ void CKeybindOptionDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CKeybindOptionDlg, DLLLoaderCommon)
 	ON_BN_CLICKED(IDC_BUTTON1, &CKeybindOptionDlg::OnKeybindInterClick)
+	ON_MESSAGE(BringEverettGuiBack, OnBringEverettGuiBack)
 END_MESSAGE_MAP()
 
 
@@ -82,7 +83,15 @@ void CKeybindOptionDlg::OnKeybindInterClick()
 
 void CKeybindOptionDlg::SetEditToKeyName()
 {
-	keyName = EverettEngine::ConvertKeyTo(engineRef.PollForLastKeyPressed());
-	engineRef.ForceFocusOnWindow("EverettGUI");
+	keyName = EverettEngine::ConvertKeyTo(engineRef.PollForLastKeyPressed());;
+	PostMessage(BringEverettGuiBack);
 	keyNameEdit.SetWindowTextW(CA2T(keyName.c_str()));
 }
+
+LRESULT CKeybindOptionDlg::OnBringEverettGuiBack(WPARAM wParam, LPARAM lParam)
+{
+	engineRef.ForceFocusOnWindow("EverettGUI");
+
+	return 0;
+}
+

@@ -175,16 +175,18 @@ void LGL::SetDepthTest(DepthTestMode depthTestMode)
 	}
 }
 
-void LGL::CaptureMouse()
+void LGL::CaptureMouse(bool value)
 {
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	ContextLock
+
+	glfwSetInputMode(window, GLFW_CURSOR, value ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 
 	std::cout << "Mouse has been captured\n";
 }
 
 void LGL::SetCursorPositionCallback(std::function<void(double, double)> callbackFunc)
 {
-	glfwSetCursorPosCallback(window, CursorPositionCallback);
+	glfwSetCursorPosCallback(window, callbackFunc ? CursorPositionCallback : nullptr);
 	cursorPositionFunc = callbackFunc;
 
 	std::cout << "Cursor callback set\n";
@@ -192,7 +194,7 @@ void LGL::SetCursorPositionCallback(std::function<void(double, double)> callback
 
 void LGL::SetScrollCallback(std::function<void(double, double)> callbackFunc)
 {
-	glfwSetScrollCallback(window, ScrollCallback);
+	glfwSetScrollCallback(window, callbackFunc ? ScrollCallback : nullptr);
 	scrollCallbackFunc = callbackFunc;
 
 	std::cout << "Scroll callback set\n";
@@ -200,7 +202,7 @@ void LGL::SetScrollCallback(std::function<void(double, double)> callbackFunc)
 
 void LGL::SetKeyPressCallback(std::function<void(int, int, int, int)> callbackFunc)
 {
-	glfwSetKeyCallback(window, KeyPressCallback);
+	glfwSetKeyCallback(window, callbackFunc ? KeyPressCallback : nullptr);
 	keyPressCallbackFunc = callbackFunc;
 
 	std::cout << "Key press callback set\n";

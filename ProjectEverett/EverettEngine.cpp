@@ -97,9 +97,11 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	SoundSim::SetCamera(*camera);
 
 	mainLGL->SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
-	mainLGL->SetCursorPositionCallback(
-		[this](double xpos, double ypos) { camera->Rotate(static_cast<float>(xpos), static_cast<float>(ypos)); }
-	);
+
+	cursorCaptureCallback = 
+		[this](double xpos, double ypos) { camera->Rotate(static_cast<float>(xpos), static_cast<float>(ypos)); };
+	mainLGL->SetCursorPositionCallback(cursorCaptureCallback);
+
 	mainLGL->SetScrollCallback(
 		[this](double xpos, double ypos) { camera->Zoom(static_cast<float>(xpos), static_cast<float>(ypos)); }
 	);
@@ -115,7 +117,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->SetInteractable('R', [this]() { camera->SetPosition(CameraSim::Direction::Up); });
 
 	mainLGL->GetMaxAmountOfVertexAttr();
-	mainLGL->CaptureMouse();
+	mainLGL->CaptureMouse(true);
 
 	auto cameraMainLoop = [this](){
 		camera->SetPosition(CameraSim::Direction::Nowhere);
@@ -136,10 +138,12 @@ int EverettEngine::PollForLastKeyPressed()
 			lastKeyPressPoll.KeyPressCallback(key, scancode, action, mods); 
 		}
 	);
+	mainLGL->SetCursorPositionCallback(nullptr);
 	
 	lastKeyPressPoll.WaitForKeyPress();
 
 	mainLGL->SetKeyPressCallback(nullptr);
+	mainLGL->SetCursorPositionCallback(cursorCaptureCallback);
 
 	return lastKeyPressPoll.GetLastKeyPressedID();
 }
@@ -625,6 +629,7 @@ void EverettEngine::ForceFocusOnWindow(const std::string& name)
 {
 	if (hwndHolder)
 	{
+		mainLGL->CaptureMouse("LGL" != name);
 		hwndHolder->BringWindowOnTop(name);
 	}
 }

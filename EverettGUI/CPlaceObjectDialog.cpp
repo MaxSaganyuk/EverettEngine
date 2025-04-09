@@ -13,10 +13,15 @@ IMPLEMENT_DYNAMIC(CPlaceObjectDialog, CDialogEx)
 
 CPlaceObjectDialog::CPlaceObjectDialog(
 	const std::string& objectTypeName, 
+	const std::string& sourceObjectTypeName,
 	const std::vector<std::string>& objectNameList, 
 	CWnd* pParent
 )
-	: CDialogEx(IDD_DIALOG2, pParent), objectTypeName(objectTypeName), objectNameList(objectNameList)
+	: 
+	CDialogEx(IDD_DIALOG2, pParent), 
+	objectTypeName(objectTypeName), 
+	sourceObjectTypeName(sourceObjectTypeName), 
+	objectNameList(objectNameList)
 {
 }
 
@@ -29,17 +34,12 @@ BOOL CPlaceObjectDialog::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	SetWindowText(CA2T(("Place " + objectTypeName).c_str()));
+	choiceLabel.SetWindowTextW(CA2T(("Choose " + sourceObjectTypeName + ':').c_str()));
+	nameLabel.SetWindowTextW(CA2T((objectTypeName + " name:").c_str()));
 
-	if (objectNameList.size() > 0)
+	for (auto& object : objectNameList)
 	{
-		for (auto& object : objectNameList)
-		{
-			objectChoice.AddString(CA2T(object.c_str()));
-		}
-	}
-	else
-	{
-		objectChoice.ShowWindow(0);
+		objectChoice.AddString(CA2T(object.c_str()));
 	}
 
 	return true;
@@ -50,6 +50,8 @@ void CPlaceObjectDialog::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO1, objectChoice);
 	DDX_Control(pDX, IDC_EDIT1, nameEdit);
+	DDX_Control(pDX, IDC_CHOICE_LABEL, choiceLabel);
+	DDX_Control(pDX, IDC_NAME_LABEL, nameLabel);
 }
 
 

@@ -121,7 +121,7 @@ public:
 
 	LGL_API int GetMaxAmountOfVertexAttr();
 
-	LGL_API void CaptureMouse();
+	LGL_API void CaptureMouse(bool value);
 
 	LGL_API void SetInteractable(int key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc = nullptr);
 	

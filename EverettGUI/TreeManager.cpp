@@ -120,7 +120,7 @@ std::vector<std::pair<std::string, std::string>> TreeManager::GetAllOfRootsSelec
  	
 	TreeManagerNode* currentNode = FindNodeByItem(objectTree.GetSelectedItem());
 	
-	while (currentNode->previousNode)
+	while (currentNode)
 	{
 		allDataRoots.push_back({ currentNode->title, currentNode->data });
 		currentNode = currentNode->previousNode;

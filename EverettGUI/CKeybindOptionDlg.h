@@ -36,6 +36,8 @@ private:
 	void SetEditToKeyName();
 	void ResetPollForKeyPressThread();
 
+	LRESULT OnBringEverettGuiBack(WPARAM wParam, LPARAM lParam);
+
 	EverettEngine& engineRef;
 	CEdit keyNameEdit;
 	CButton keybindInterButton;
@@ -44,4 +46,6 @@ private:
 	std::string keyName;
 
 	afx_msg void OnKeybindInterClick();
+
+	constexpr static int BringEverettGuiBack = WM_USER + 4;
 };

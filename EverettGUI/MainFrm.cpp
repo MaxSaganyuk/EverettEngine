@@ -173,7 +173,7 @@ void CMainFrame::OnLoadModel()
 
 void CMainFrame::OnPlaceSolid()
 {
-	CPlaceObjectDialog placeSolidDlg("Solid", engine.GetCreatedModels());
+	CPlaceObjectDialog placeSolidDlg("Solid", "Model", engine.GetCreatedModels());
 
 	if (placeSolidDlg.DoModal() == IDOK)
 	{
@@ -184,7 +184,7 @@ void CMainFrame::OnPlaceSolid()
 
 void CMainFrame::OnPlaceLight()
 {
-	CPlaceObjectDialog placeLightDlg("Light", engine.GetLightTypeList());
+	CPlaceObjectDialog placeLightDlg("Light", "Light type", engine.GetLightTypeList());
 
 	if (placeLightDlg.DoModal() == IDOK)
 	{

@@ -88,15 +88,24 @@ void CMainWindow::OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
-	EverettEngine::ObjectTypes currentType = EverettEngine::GetObjectTypeToName(selectedNodes[0].first);
+	static std::map<EverettEngine::ObjectTypes, int> validSubnodeAmount
+	{
+		{EverettEngine::ObjectTypes::Solid, 2 },
+		{EverettEngine::ObjectTypes::Light, 2 },
+		{EverettEngine::ObjectTypes::Sound, 1 }
+	};
 
-	if (selectedNodes.size() == (currentType == EverettEngine::ObjectTypes::Sound ? 1 : 2))
+	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
+
+	EverettEngine::ObjectTypes currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
+	selectedNodes.pop_back();
+
+	if (selectedNodes.size() == validSubnodeAmount[currentType])
 	{
 		CObjectEditDialog objEditDlg(
-			*engineP, 
-			currentType, 
-			selectedScriptDllInfo, 
+			*engineP,
+			currentType,
+			selectedScriptDllInfo,
 			selectedNodes
 		);
 		objEditDlg.DoModal();

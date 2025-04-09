@@ -13,6 +13,7 @@ class CPlaceObjectDialog : public CDialogEx
 public:
 	CPlaceObjectDialog(
 		const std::string& objectTypeName, 
+		const std::string& sourceObjectTypeName,
 		const std::vector<std::string>& objectNameList = {},
 		CWnd* pParent = nullptr
 	);   // standard constructor
@@ -31,18 +32,21 @@ protected:
 private:
 	std::vector<std::string> objectNameList;
 	std::string objectTypeName;
+	std::string sourceObjectTypeName;
 	size_t chosenIndex;
 	std::string chosenObject;
 	std::string newName;
+
 	CComboBox objectChoice;
+	CStatic choiceLabel;
+	CStatic nameLabel;
 public:
 	afx_msg void OnBnClickedOk();
+	afx_msg void OnModelChoiceChange();
 
 	size_t      GetChosenIndex();
 	std::string GetChosenObject();
 	std::string GetNewObjectName();
 private:
 	CEdit nameEdit;
-public:
-	afx_msg void OnModelChoiceChange();
 };

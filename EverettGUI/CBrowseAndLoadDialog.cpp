@@ -38,6 +38,8 @@ BOOL CBrowseAndLoadDialog::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	SetWindowText(CA2T(("Load " + objectName).c_str()));
+	folderLabel.SetWindowTextW(CA2T((objectName + " folder:").c_str()));
+	choiceLabel.SetWindowTextW(CA2T((objectName + ':').c_str()));
 
 	TCHAR buffer[MAX_PATH];
 	std::ifstream file;
@@ -67,6 +69,8 @@ void CBrowseAndLoadDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO1, modelChoice);
 	DDX_Control(pDX, IDOK, loadModelButton);
 	DDX_Control(pDX, IDC_EDIT10, nameEdit);
+	DDX_Control(pDX, IDC_FOLDER_LABEL, folderLabel);
+	DDX_Control(pDX, IDC_CHOICE_LABEL, choiceLabel);
 }
 
 
@@ -74,7 +78,6 @@ BEGIN_MESSAGE_MAP(CBrowseAndLoadDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CBrowseAndLoadDialog::OnBnClickedButton1)
 	ON_BN_CLICKED(IDOK, &CBrowseAndLoadDialog::OnBnClickedOk)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &CBrowseAndLoadDialog::OnObjectSelection)
-	ON_BN_CLICKED(IDCANCEL, &CBrowseAndLoadDialog::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -167,9 +170,4 @@ std::string CBrowseAndLoadDialog::GetChosenFilename()
 std::string CBrowseAndLoadDialog::GetChosenPathAndFilename()
 {
 	return GetChosenPath() + '\\' + GetChosenFilename();
-}
-
-void CBrowseAndLoadDialog::OnBnClickedCancel()
-{
-	CDialogEx::OnCancel();
 }

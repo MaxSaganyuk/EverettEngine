@@ -135,6 +135,8 @@ public:
 	EVERETT_API void AddWindowHandler(HWND windowHandler, const std::string& name);
 	EVERETT_API void AddCurrentWindowHandler(const std::string& name);
 private:
+	std::function<void(double, double)> cursorCaptureCallback;
+
 	struct ModelSolidInfo;
 
 	using ModelSolidsMap = std::unordered_map<std::string, ModelSolidInfo>;
