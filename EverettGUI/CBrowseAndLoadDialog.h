@@ -10,11 +10,13 @@ class CBrowseAndLoadDialog : public CDialogEx
 {
 	DECLARE_DYNAMIC(CBrowseAndLoadDialog)
 	using LoaderFunc = std::function<std::vector<std::string>(const std::string&)>;
+	using NameCheckFunc = std::function<std::string(const std::string&)>;
 
 public:
 	CBrowseAndLoadDialog(
 		const std::string& objectName,
 		LoaderFunc loader,
+		NameCheckFunc nameCheckFunc,
 		const std::vector<std::string>& loadedObjectsList, 
 		CWnd* pParent = nullptr
 	);   // standard constructor
@@ -50,6 +52,7 @@ private:
 	std::string name;
 
 	LoaderFunc modelLoader;
+	NameCheckFunc nameCheckFunc;
 	std::vector<std::string> loadedModelList;
 		
 	constexpr static const char cacheFileName[] = "loadCache";

@@ -19,8 +19,10 @@
 #include <functional>
 #include <mutex>
 #include <condition_variable>
+#include <unordered_set>
 
 #include "WindowHandleHolder.h"
+#include "UnorderedPtrMap.h"
 
 class FileLoader;
 class CameraSim;
@@ -73,8 +75,8 @@ public:
 	EVERETT_API void CreateAndSetupMainWindow(int windowWidth, int windowHeight, const std::string& title);
 	EVERETT_API bool CreateModel(const std::string& path, const std::string& name);
 	EVERETT_API bool CreateSolid(const std::string& modelName, const std::string& solidName);
-	EVERETT_API void CreateLight(const std::string& lightName, LightTypes lightType);
-	EVERETT_API void CreateSound(const std::string& path, const std::string& soundName);
+	EVERETT_API bool CreateLight(const std::string& lightName, LightTypes lightType);
+	EVERETT_API bool CreateSound(const std::string& path, const std::string& soundName);
 
 	EVERETT_API std::vector<glm::vec3> GetObjectParamsByName(
 		ObjectTypes objectType,
@@ -134,6 +136,8 @@ public:
 	EVERETT_API void ForceFocusOnWindow(const std::string& name);
 	EVERETT_API void AddWindowHandler(HWND windowHandler, const std::string& name);
 	EVERETT_API void AddCurrentWindowHandler(const std::string& name);
+
+	EVERETT_API std::string GetAvailableObjectName(const std::string& name);
 private:
 	std::function<void(double, double)> cursorCaptureCallback;
 
@@ -158,6 +162,9 @@ private:
 
 	std::vector<std::string> GetObjectsInDirList(const std::string& path, const std::vector<std::string>& fileTypes);
 
+	void CheckAndAddToNameTracker(const std::string& name);
+	std::string RemoveDigitsFromStringEnd(const std::string& str);
+
 	std::vector<std::string> GetSolidList();
 	std::vector<std::string> GetLightList();
 	std::vector<std::string> GetSoundList();
@@ -180,6 +187,8 @@ private:
 	std::unique_ptr<WindowHandleHolder> hwndHolder;
 
 	std::map<std::string, std::pair<ScriptFuncStorage, ScriptFuncStorage>> keyScriptFuncMap;
+
+	UnorderedPtrMap<const std::string*, int> allNameTracker;
 
 	class LastKeyPressPoll
 	{

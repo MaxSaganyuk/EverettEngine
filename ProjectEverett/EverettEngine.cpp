@@ -161,7 +161,8 @@ int EverettEngine::ConvertKeyTo(const std::string& keyName)
 
 bool EverettEngine::CreateModel(const std::string& path, const std::string& name)
 {
-	MSM.emplace(name, ModelSolidInfo{});
+	auto resPair = MSM.emplace(name, ModelSolidInfo{});
+	
 	LGLStructs::ModelInfo& newModel = MSM[name].model;
 	
 	if (!fileLoader->LoadModel(path, name, newModel))
@@ -169,6 +170,8 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 		MSM.erase(name);
 		return false;
 	}
+
+	CheckAndAddToNameTracker((*resPair.first).first);
 
 	newModel.shaderProgram = "lightComb";
 	newModel.render = false;
@@ -210,15 +213,25 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 bool EverettEngine::CreateSolid(const std::string& modelName, const std::string& solidName)
 {
-	MSM[modelName].solids.emplace(solidName, camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
-	MSM[modelName].model.render = true;
+	auto resPair = MSM[modelName].solids.emplace(
+		solidName, camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr()
+	);
 
-	return true;
+	if (resPair.second)
+	{
+		MSM[modelName].model.render = true;
+
+		CheckAndAddToNameTracker((*resPair.first).first);
+
+		return true;
+	}
+
+	return false;
 }
 
-void EverettEngine::CreateLight(const std::string& lightName, LightTypes lightType)
+bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightType)
 {
-	lights[lightType].emplace(
+	auto resPair = lights[lightType].emplace(
 		lightName,
 		LightSim{
 			static_cast<LightSim::LightTypes>(lightType),
@@ -227,18 +240,36 @@ void EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 			camera->GetFrontVectorAddr()
 		}
 	);
+
+	if (resPair.second)
+	{
+		CheckAndAddToNameTracker((*resPair.first).first);
+
+		return true;
+	}
+
+	return false;
 }
 
-void EverettEngine::CreateSound(const std::string& path, const std::string& soundName)
+bool EverettEngine::CreateSound(const std::string& path, const std::string& soundName)
 {
-	sounds.emplace(
+	auto resPair = sounds.emplace(
 		soundName,
 		SoundSim{
 			path,
 			glm::vec3(camera->GetPositionVectorAddr())
 		}
 	);
-	sounds[soundName].Play();
+
+	if (resPair.second)
+	{
+		sounds[soundName].Play();
+		CheckAndAddToNameTracker((*resPair.first).first);
+
+		return true;
+	}
+
+	return false;
 }
 
 void EverettEngine::LightUpdater()
@@ -648,6 +679,49 @@ void EverettEngine::AddCurrentWindowHandler(const std::string& name)
 	{
 		hwndHolder->AddCurrentWindowHandle(name);
 	}
+}
+
+std::string EverettEngine::RemoveDigitsFromStringEnd(const std::string& str)
+{
+	std::string resStr = str;
+
+	for (auto iter = str.rbegin(); iter != str.rend(); ++iter)
+	{
+		if (!std::isdigit(*iter))
+		{
+			break;
+		}
+
+		resStr.pop_back();
+	}
+
+	return resStr;
+}
+
+void EverettEngine::CheckAndAddToNameTracker(const std::string& name)
+{
+	std::string namePure = RemoveDigitsFromStringEnd(name);
+
+	if (allNameTracker.find(&namePure) != allNameTracker.end())
+	{
+		++allNameTracker[&namePure];
+	}
+	else
+	{
+		allNameTracker.emplace(&name, 1);
+	}
+}
+
+std::string EverettEngine::GetAvailableObjectName(const std::string& name)
+{
+	std::string pureName = RemoveDigitsFromStringEnd(name);
+
+	if (allNameTracker.find(&name) != allNameTracker.end())
+	{
+		return (name + std::to_string(allNameTracker[&name]));
+	}
+
+	return name;
 }
 
 EverettEngine::LastKeyPressPoll::LastKeyPressPoll()

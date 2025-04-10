@@ -48,6 +48,7 @@ static UINT indicators[] =
 CMainFrame::CMainFrame() noexcept
 {
 	engine.CreateAndSetupMainWindow(800, 600, "Everett");
+	nameCheckFunc = [this](const std::string& name) { return engine.GetAvailableObjectName(name); };
 }
 
 CMainFrame::~CMainFrame()
@@ -150,7 +151,12 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 
 void CMainFrame::OnLoadModel()
 {
-	CBrowseAndLoadDialog loadModelDlg("Model", [this](const std::string& path) { return engine.GetModelInDirList(path); }, engine.GetCreatedModels());
+	CBrowseAndLoadDialog loadModelDlg(
+		"Model", 
+		[this](const std::string& path) { return engine.GetModelInDirList(path); },
+		nameCheckFunc,
+		engine.GetCreatedModels()
+	);
 	
 	if (loadModelDlg.DoModal() == IDOK)
 	{
@@ -173,7 +179,12 @@ void CMainFrame::OnLoadModel()
 
 void CMainFrame::OnPlaceSolid()
 {
-	CPlaceObjectDialog placeSolidDlg("Solid", "Model", engine.GetCreatedModels());
+	CPlaceObjectDialog placeSolidDlg(
+		"Solid", 
+		"Model", 
+		nameCheckFunc,
+		engine.GetCreatedModels()
+	);
 
 	if (placeSolidDlg.DoModal() == IDOK)
 	{
@@ -184,7 +195,12 @@ void CMainFrame::OnPlaceSolid()
 
 void CMainFrame::OnPlaceLight()
 {
-	CPlaceObjectDialog placeLightDlg("Light", "Light type", engine.GetLightTypeList());
+	CPlaceObjectDialog placeLightDlg(
+		"Light", 
+		"Light type",
+		nameCheckFunc,
+		engine.GetLightTypeList()
+	);
 
 	if (placeLightDlg.DoModal() == IDOK)
 	{
@@ -201,6 +217,7 @@ void CMainFrame::OnPlaceSound()
 	CBrowseAndLoadDialog placeSoundDlg(
 		"Sound", 
 		[this](const std::string& path) { return engine.GetSoundInDirList(path); }, 
+		nameCheckFunc,
 		engine.GetNamesByObject(EverettEngine::ObjectTypes::Sound)
 	);
 

@@ -55,6 +55,8 @@ private:
 	void OnKeybindOptions();
 	EverettEngine engine;
 	std::unique_ptr<CMainWindow> mainWindow;
+
+	std::function<std::string(const std::string&)> nameCheckFunc;
 };
 
 

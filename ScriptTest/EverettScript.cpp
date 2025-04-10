@@ -19,9 +19,9 @@ CameraScriptLoop()
 	}
 }
 
-ScriptObjectInit(Rise, ISolidSim)
+ScriptObjectInit(Rise1, ISolidSim)
 {
-	interState.charInter = &objectRise;
+	interState.charInter = &objectRise1;
 }
 
 ScriptObjectInit(Spot0, ILightSim)

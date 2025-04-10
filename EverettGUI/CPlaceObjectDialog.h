@@ -3,17 +3,20 @@
 
 #include <vector>
 #include <string>
+#include <functional>
 
 // CPlaceObjectDialog dialog
 
 class CPlaceObjectDialog : public CDialogEx
 {
 	DECLARE_DYNAMIC(CPlaceObjectDialog)
+	using NameCheckFunc = std::function<std::string(const std::string&)>;
 
 public:
 	CPlaceObjectDialog(
 		const std::string& objectTypeName, 
 		const std::string& sourceObjectTypeName,
+		NameCheckFunc nameCheckFunc,
 		const std::vector<std::string>& objectNameList = {},
 		CWnd* pParent = nullptr
 	);   // standard constructor
@@ -36,6 +39,8 @@ private:
 	size_t chosenIndex;
 	std::string chosenObject;
 	std::string newName;
+
+	NameCheckFunc nameCheckFunc;
 
 	CComboBox objectChoice;
 	CStatic choiceLabel;

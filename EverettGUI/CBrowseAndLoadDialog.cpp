@@ -16,6 +16,7 @@ IMPLEMENT_DYNAMIC(CBrowseAndLoadDialog, CDialogEx)
 CBrowseAndLoadDialog::CBrowseAndLoadDialog(
 	const std::string& objectName,
 	LoaderFunc modelLoader, 
+	NameCheckFunc nameCheckFunc,
 	const std::vector<std::string>& loadedModelList, 
 	CWnd* pParent
 )
@@ -23,6 +24,7 @@ CBrowseAndLoadDialog::CBrowseAndLoadDialog(
 	CDialogEx(IDD_DIALOG1, pParent), 
 	objectName(objectName),
 	modelLoader(modelLoader), 
+	nameCheckFunc(nameCheckFunc),
 	loadedModelList(loadedModelList), 
 	path(""), 
 	name("")
@@ -110,23 +112,22 @@ void CBrowseAndLoadDialog::OnBnClickedButton1()
 
 void CBrowseAndLoadDialog::OnBnClickedOk()
 {
+	CString nameStr;
+	nameEdit.GetWindowTextW(nameStr);
+	std::string nameStdStr = CT2A(nameStr);
+	std::string pathStdStrNameChecked = nameCheckFunc(nameStdStr);
+
+	name = nameStdStr;
+	if (pathStdStrNameChecked != nameStdStr)
+	{
+		name = pathStdStrNameChecked;
+	}
+
 	std::fstream file(cacheFileName + objectName, std::ios::out, std::ios::trunc);
 
 	file << GetChosenPath();
 	
 	file.close();
-
-	CString nameStr;
-	nameEdit.GetWindowTextW(nameStr);
-	name = CT2A(nameStr);
-
-	for (auto& loadedModelName : loadedModelList)
-	{
-		if (loadedModelName == name)
-		{
-			name += '_';
-		}
-	}
 
 	CDialogEx::OnOK();
 }
@@ -148,7 +149,7 @@ void CBrowseAndLoadDialog::OnObjectSelection()
 		path = CT2A(pathStr);
 	}
 
-	nameEdit.SetWindowTextW(CA2T(GetChosenName().c_str()));
+	nameEdit.SetWindowTextW(CA2T(nameCheckFunc(GetChosenName()).c_str()));
 	loadModelButton.EnableWindow(curSelExists);
 }
 

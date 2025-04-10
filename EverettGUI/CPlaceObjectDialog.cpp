@@ -14,6 +14,7 @@ IMPLEMENT_DYNAMIC(CPlaceObjectDialog, CDialogEx)
 CPlaceObjectDialog::CPlaceObjectDialog(
 	const std::string& objectTypeName, 
 	const std::string& sourceObjectTypeName,
+	NameCheckFunc nameCheckFunc,
 	const std::vector<std::string>& objectNameList, 
 	CWnd* pParent
 )
@@ -21,6 +22,7 @@ CPlaceObjectDialog::CPlaceObjectDialog(
 	CDialogEx(IDD_DIALOG2, pParent), 
 	objectTypeName(objectTypeName), 
 	sourceObjectTypeName(sourceObjectTypeName), 
+	nameCheckFunc(nameCheckFunc),
 	objectNameList(objectNameList)
 {
 }
@@ -66,10 +68,16 @@ END_MESSAGE_MAP()
 
 void CPlaceObjectDialog::OnBnClickedOk()
 {
-	CString newNameStr;
-	nameEdit.GetWindowTextW(newNameStr);
+	CString nameStr;
+	nameEdit.GetWindowTextW(nameStr);
+	std::string nameStdStr = newName = CT2A(nameStr);
+	std::string pathStdStrNameChecked = nameCheckFunc(nameStdStr);
 
-	newName = CT2A(newNameStr);
+	if (pathStdStrNameChecked != nameStdStr)
+	{
+		newName = pathStdStrNameChecked;
+	}
+
 
 	CDialogEx::OnOK();
 }
@@ -96,7 +104,10 @@ void CPlaceObjectDialog::OnModelChoiceChange()
 	CString modelStr;
 	objectChoice.GetLBText(chosenIndex, modelStr);
 
-	nameEdit.SetWindowTextW(modelStr);
-
 	chosenObject = CT2A(modelStr);
+
+	std::string modelStdStr = CT2A(modelStr);
+	std::string modelStdStrChecked = nameCheckFunc(modelStdStr);
+
+	nameEdit.SetWindowTextW(CA2T(modelStdStrChecked.c_str()));
 }
