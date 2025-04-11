@@ -22,6 +22,8 @@
 #include "WindowHandleHolder.h"
 #include "ScriptFuncStorage.h"
 
+#include "CommonStrEdits.h"
+
 #include "stdEx/mapEx.h"
 
 #define EVERETT_EXPORT
@@ -380,42 +382,47 @@ void EverettEngine::SetScriptToKey(
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncPress;
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncRelease;
 
-		fileLoader->GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress);
-		fileLoader->GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease);
+		// Using bitwise or to avoid short-circuiting second call
+		bool anyFuncAdded = 
+			fileLoader->GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress) | 
+			fileLoader->GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease);
 
-		bool addNewKey = false;
-
-		if (keyScriptFuncMap.find(keyName) == keyScriptFuncMap.end())
+		if (anyFuncAdded)
 		{
-			keyScriptFuncMap.emplace(keyName, std::pair<ScriptFuncStorage, ScriptFuncStorage>{});
-			addNewKey = true;
-		}
+			bool addNewKey = false;
 
-		if (!keyScriptFuncMap[keyName].first.IsScriptFuncAdded(dllName))
-		{
-			keyScriptFuncMap[keyName].first.AddScriptFunc(dllName, scriptFuncPress);
-
-			if (scriptFuncRelease.lock())
+			if (keyScriptFuncMap.find(keyName) == keyScriptFuncMap.end())
 			{
-				keyScriptFuncMap[keyName].second.AddScriptFunc(dllName, scriptFuncRelease);
-			}
-		}
-
-		if (addNewKey)
-		{
-			std::function<void()> scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].first.ExecuteAllScriptFuncs(nullptr); };
-			std::function<void()> scriptFuncReleaseWrapper = nullptr;
-
-			if (scriptFuncRelease.lock())
-			{
-				scriptFuncReleaseWrapper = [this, keyName]() { keyScriptFuncMap[keyName].second.ExecuteAllScriptFuncs(nullptr); };
+				keyScriptFuncMap.emplace(keyName, std::pair<ScriptFuncStorage, ScriptFuncStorage>{});
+				addNewKey = true;
 			}
 
-			mainLGL->SetInteractable(
-				LGL::ConvertKeyTo(keyName),
-				scriptFuncPressWrapper,
-				scriptFuncReleaseWrapper
-			);
+			if (!keyScriptFuncMap[keyName].first.IsScriptFuncAdded(dllName))
+			{
+				keyScriptFuncMap[keyName].first.AddScriptFunc(dllName, scriptFuncPress);
+
+				if (scriptFuncRelease.lock())
+				{
+					keyScriptFuncMap[keyName].second.AddScriptFunc(dllName, scriptFuncRelease);
+				}
+			}
+
+			if (addNewKey)
+			{
+				std::function<void()> scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].first.ExecuteAllScriptFuncs(nullptr); };
+				std::function<void()> scriptFuncReleaseWrapper = nullptr;
+
+				if (scriptFuncRelease.lock())
+				{
+					scriptFuncReleaseWrapper = [this, keyName]() { keyScriptFuncMap[keyName].second.ExecuteAllScriptFuncs(nullptr); };
+				}
+
+				mainLGL->SetInteractable(
+					LGL::ConvertKeyTo(keyName),
+					scriptFuncPressWrapper,
+					scriptFuncReleaseWrapper
+				);
+			}
 		}
 	}
 }
@@ -681,26 +688,9 @@ void EverettEngine::AddCurrentWindowHandler(const std::string& name)
 	}
 }
 
-std::string EverettEngine::RemoveDigitsFromStringEnd(const std::string& str)
-{
-	std::string resStr = str;
-
-	for (auto iter = str.rbegin(); iter != str.rend(); ++iter)
-	{
-		if (!std::isdigit(*iter))
-		{
-			break;
-		}
-
-		resStr.pop_back();
-	}
-
-	return resStr;
-}
-
 void EverettEngine::CheckAndAddToNameTracker(const std::string& name)
 {
-	std::string namePure = RemoveDigitsFromStringEnd(name);
+	std::string namePure = CommonStrEdits::RemoveDigitsFromStringEnd(name);
 
 	if (allNameTracker.find(&namePure) != allNameTracker.end())
 	{
@@ -714,8 +704,6 @@ void EverettEngine::CheckAndAddToNameTracker(const std::string& name)
 
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)
 {
-	std::string pureName = RemoveDigitsFromStringEnd(name);
-
 	if (allNameTracker.find(&name) != allNameTracker.end())
 	{
 		return (name + std::to_string(allNameTracker[&name]));

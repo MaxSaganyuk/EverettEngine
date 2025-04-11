@@ -6,6 +6,8 @@
 #include "afxdialogex.h"
 #include "CPlaceObjectDialog.h"
 
+#include "CommonStrEdits.h"
+#include "NameEditChecker.h"
 
 // CPlaceObjectDialog dialog
 
@@ -54,12 +56,14 @@ void CPlaceObjectDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT1, nameEdit);
 	DDX_Control(pDX, IDC_CHOICE_LABEL, choiceLabel);
 	DDX_Control(pDX, IDC_NAME_LABEL, nameLabel);
+	DDX_Control(pDX, IDC_NAME_WARNING, nameWarning);
 }
 
 
 BEGIN_MESSAGE_MAP(CPlaceObjectDialog, CDialogEx)
 	ON_BN_CLICKED(IDOK, &CPlaceObjectDialog::OnBnClickedOk)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &CPlaceObjectDialog::OnModelChoiceChange)
+	ON_EN_CHANGE(IDC_EDIT1, &CPlaceObjectDialog::OnNameEditChanged)
 END_MESSAGE_MAP()
 
 
@@ -110,4 +114,10 @@ void CPlaceObjectDialog::OnModelChoiceChange()
 	std::string modelStdStrChecked = nameCheckFunc(modelStdStr);
 
 	nameEdit.SetWindowTextW(CA2T(modelStdStrChecked.c_str()));
+}
+
+
+void CPlaceObjectDialog::OnNameEditChanged()
+{
+	NameEditChecker::CheckAndEditName(nameEdit, nameWarning);
 }

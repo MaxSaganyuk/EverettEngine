@@ -17,7 +17,7 @@ template<typename Type, typename std::enable_if_t<std::is_pointer_v<Type>, bool>
 class PtrComparator
 {
 public:
-	//using is_transparent = void; Not valid for unordered_set in C++14, sadly
+	//using is_transparent = void; Not valid for unordered_map in C++14, sadly
 
 	bool operator()(const Type left, const Type right) const
 	{

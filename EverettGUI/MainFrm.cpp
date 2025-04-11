@@ -49,6 +49,7 @@ CMainFrame::CMainFrame() noexcept
 {
 	engine.CreateAndSetupMainWindow(800, 600, "Everett");
 	nameCheckFunc = [this](const std::string& name) { return engine.GetAvailableObjectName(name); };
+	NameEditChecker::SetNameCheckFunc(nameCheckFunc);
 }
 
 CMainFrame::~CMainFrame()

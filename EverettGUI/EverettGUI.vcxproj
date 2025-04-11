@@ -201,6 +201,7 @@
     <ClInclude Include="EverettGUI.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="NameEditChecker.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
@@ -218,6 +219,7 @@
     <ClCompile Include="DLLLoaderCommon.cpp" />
     <ClCompile Include="EverettGUI.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="NameEditChecker.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

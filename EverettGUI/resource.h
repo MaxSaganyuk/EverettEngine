@@ -34,8 +34,8 @@
 #define IDC_CHECK2                      1021
 #define IDC_FOLDER_LABEL                1022
 #define IDC_CHOICE_LABEL                1023
-#define IDC_CHOICE                      1024
 #define IDC_NAME_LABEL                  1025
+#define IDC_NAME_WARNING                1026
 #define ID_BUTTON32771                  32771
 #define ID_BUTTON32772                  32772
 #define ID_BUTTON32773                  32773
@@ -48,7 +48,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        323
 #define _APS_NEXT_COMMAND_VALUE         32776
-#define _APS_NEXT_CONTROL_VALUE         1026
+#define _APS_NEXT_CONTROL_VALUE         1027
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

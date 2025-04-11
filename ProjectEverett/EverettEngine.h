@@ -163,7 +163,6 @@ private:
 	std::vector<std::string> GetObjectsInDirList(const std::string& path, const std::vector<std::string>& fileTypes);
 
 	void CheckAndAddToNameTracker(const std::string& name);
-	std::string RemoveDigitsFromStringEnd(const std::string& str);
 
 	std::vector<std::string> GetSolidList();
 	std::vector<std::string> GetLightList();

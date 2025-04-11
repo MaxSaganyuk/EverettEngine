@@ -38,6 +38,7 @@ private:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedButton1();
 	afx_msg void OnObjectSelection();
+	afx_msg void OnNameEditChanged();
 
 	CEdit modelFolderEdit;
 	CButton browseButton;
@@ -45,6 +46,8 @@ private:
 	CComboBox modelChoice;
 	CStatic folderLabel;
 	CStatic choiceLabel;
+	CEdit nameEdit;
+	CStatic nameWarning;
 
 	std::string objectName;
 	std::string path;
@@ -61,6 +64,4 @@ public:
 	std::string GetChosenFilename();
 	std::string GetChosenName();
 	std::string GetChosenPathAndFilename();
-private:
-	CEdit nameEdit;
 };

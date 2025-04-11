@@ -84,7 +84,7 @@ void CKeybindOptionDlg::OnKeybindInterClick()
 void CKeybindOptionDlg::SetEditToKeyName()
 {
 	keyName = EverettEngine::ConvertKeyTo(engineRef.PollForLastKeyPressed());;
-	PostMessage(BringEverettGuiBack);
+	SendMessage(BringEverettGuiBack);
 	keyNameEdit.SetWindowTextW(CA2T(keyName.c_str()));
 }
 

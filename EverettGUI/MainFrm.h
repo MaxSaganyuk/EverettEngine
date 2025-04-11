@@ -7,6 +7,7 @@
 
 #include "CMainWindow.h"
 #include "EverettEngine.h"
+#include "NameEditChecker.h"
 
 class CMainFrame : public CFrameWnd
 {
@@ -56,7 +57,7 @@ private:
 	EverettEngine engine;
 	std::unique_ptr<CMainWindow> mainWindow;
 
-	std::function<std::string(const std::string&)> nameCheckFunc;
+	NameEditChecker::NameCheckFunc nameCheckFunc;
 };
 
 

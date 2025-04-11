@@ -45,6 +45,7 @@ private:
 	CComboBox objectChoice;
 	CStatic choiceLabel;
 	CStatic nameLabel;
+	CStatic nameWarning;
 public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnModelChoiceChange();
@@ -54,4 +55,6 @@ public:
 	std::string GetNewObjectName();
 private:
 	CEdit nameEdit;
+public:
+	afx_msg void OnNameEditChanged();
 };

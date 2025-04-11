@@ -7,6 +7,9 @@
 #include "CBrowseAndLoadDialog.h"
 #include "CBrowseDialog.h"
 
+#include "CommonStrEdits.h"
+#include "NameEditChecker.h"
+
 #include <fstream>
 
 // CLoadModelDialog dialog
@@ -73,6 +76,7 @@ void CBrowseAndLoadDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT10, nameEdit);
 	DDX_Control(pDX, IDC_FOLDER_LABEL, folderLabel);
 	DDX_Control(pDX, IDC_CHOICE_LABEL, choiceLabel);
+	DDX_Control(pDX, IDC_NAME_WARNING, nameWarning);
 }
 
 
@@ -80,6 +84,7 @@ BEGIN_MESSAGE_MAP(CBrowseAndLoadDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CBrowseAndLoadDialog::OnBnClickedButton1)
 	ON_BN_CLICKED(IDOK, &CBrowseAndLoadDialog::OnBnClickedOk)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &CBrowseAndLoadDialog::OnObjectSelection)
+	ON_EN_CHANGE(IDC_EDIT10, &CBrowseAndLoadDialog::OnNameEditChanged)
 END_MESSAGE_MAP()
 
 
@@ -112,15 +117,27 @@ void CBrowseAndLoadDialog::OnBnClickedButton1()
 
 void CBrowseAndLoadDialog::OnBnClickedOk()
 {
-	CString nameStr;
-	nameEdit.GetWindowTextW(nameStr);
-	std::string nameStdStr = CT2A(nameStr);
-	std::string pathStdStrNameChecked = nameCheckFunc(nameStdStr);
+	CString pathStr;
+	modelFolderEdit.GetWindowTextW(pathStr);
 
-	name = nameStdStr;
-	if (pathStdStrNameChecked != nameStdStr)
+	CString filenameStr;
+	modelChoice.GetLBText(modelChoice.GetCurSel(), filenameStr);
+
+	filename = CT2A(filenameStr);
+	path = CT2A(pathStr);
+
+	if (nameWarning.IsWindowVisible())
 	{
-		name = pathStdStrNameChecked;
+		CString nameStr;
+		nameEdit.GetWindowTextW(nameStr);
+		std::string nameStdStr = CT2A(nameStr);
+		std::string pathStdStrNameChecked = nameCheckFunc(nameStdStr);
+
+		name = nameStdStr;
+		if (pathStdStrNameChecked != nameStdStr)
+		{
+			name = pathStdStrNameChecked;
+		}
 	}
 
 	std::fstream file(cacheFileName + objectName, std::ios::out, std::ios::trunc);
@@ -136,20 +153,13 @@ void CBrowseAndLoadDialog::OnObjectSelection()
 {
 	bool curSelExists = modelChoice.GetCurSel() != -1;
 	
-	if (curSelExists)
-	{
-		CString pathStr;
-		modelFolderEdit.GetWindowTextW(pathStr);
+	CString filenameStr;
+	modelChoice.GetLBText(modelChoice.GetCurSel(), filenameStr);
 
-		CString filenameStr;
-		modelChoice.GetLBText(modelChoice.GetCurSel(), filenameStr);
+	filename = CT2A(filenameStr);
+	name = filename.substr(0, filename.find('.'));
 
-		filename = CT2A(filenameStr);
-		name = filename.substr(0, filename.find('.'));
-		path = CT2A(pathStr);
-	}
-
-	nameEdit.SetWindowTextW(CA2T(nameCheckFunc(GetChosenName()).c_str()));
+	nameEdit.SetWindowTextW(CA2T(GetChosenName().c_str()));
 	loadModelButton.EnableWindow(curSelExists);
 }
 
@@ -171,4 +181,9 @@ std::string CBrowseAndLoadDialog::GetChosenFilename()
 std::string CBrowseAndLoadDialog::GetChosenPathAndFilename()
 {
 	return GetChosenPath() + '\\' + GetChosenFilename();
+}
+
+void CBrowseAndLoadDialog::OnNameEditChanged()
+{
+	NameEditChecker::CheckAndEditName(nameEdit, nameWarning);
 }
