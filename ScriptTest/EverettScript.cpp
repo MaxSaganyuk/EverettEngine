@@ -29,7 +29,7 @@ ScriptObjectInit(Spot0, ILightSim)
 	interState.lightInter = &objectSpot0;
 }
 
-ScriptKeybindPressed(T)
+ScriptKeybindReleased(T)
 {
 	if (interState.charInter)
 	{

@@ -397,20 +397,25 @@ void EverettEngine::SetScriptToKey(
 				addNewKey = true;
 			}
 
-			if (!keyScriptFuncMap[keyName].first.IsScriptFuncAdded(dllName))
+			if (scriptFuncPress.lock() && !keyScriptFuncMap[keyName].first.IsScriptFuncAdded(dllName))
 			{
 				keyScriptFuncMap[keyName].first.AddScriptFunc(dllName, scriptFuncPress);
+			}
 
-				if (scriptFuncRelease.lock())
-				{
-					keyScriptFuncMap[keyName].second.AddScriptFunc(dllName, scriptFuncRelease);
-				}
+			if (scriptFuncRelease.lock() && !keyScriptFuncMap[keyName].second.IsScriptFuncAdded(dllName))
+			{
+				keyScriptFuncMap[keyName].second.AddScriptFunc(dllName, scriptFuncRelease);
 			}
 
 			if (addNewKey)
 			{
-				std::function<void()> scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].first.ExecuteAllScriptFuncs(nullptr); };
+				std::function<void()> scriptFuncPressWrapper = nullptr;
 				std::function<void()> scriptFuncReleaseWrapper = nullptr;
+
+				if (scriptFuncPress.lock())
+				{
+					scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].first.ExecuteAllScriptFuncs(nullptr); };
+				}
 
 				if (scriptFuncRelease.lock())
 				{
