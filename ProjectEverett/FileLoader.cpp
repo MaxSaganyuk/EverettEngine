@@ -6,6 +6,7 @@
 #include <assimp/Importer.hpp>
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
+#include "assimp/matrix4x4.h"
 
 #include "FileLoader.h"
 
@@ -17,6 +18,32 @@ static std::map<
 	std::string, 
 	std::pair<HMODULE, std::vector<std::shared_ptr<std::function<void(ISolidSim&)>>>>
 > dllHandleMap;
+
+void ConvertFromAssimpToGLM(const aiMatrix4x4& assimpMatrix, glm::mat4& glmMatrix)
+{
+	glmMatrix = {
+		assimpMatrix.a1, assimpMatrix.b1, assimpMatrix.c1, assimpMatrix.d1,
+		assimpMatrix.a2, assimpMatrix.b2, assimpMatrix.c2, assimpMatrix.d2,
+		assimpMatrix.a3, assimpMatrix.b3, assimpMatrix.c3, assimpMatrix.d3,
+		assimpMatrix.a4, assimpMatrix.b4, assimpMatrix.c4, assimpMatrix.d4
+	};
+}
+
+void ConvertFromAssimpToGLM(const aiVector3D& assimpVect, glm::vec3& glmVect)
+{
+	for (size_t axis = 0; axis < 3; ++axis)
+	{
+		glmVect[axis] = assimpVect[axis];
+	}
+}
+
+void ConvertFromAssimpToGLM(const aiQuaternion& assimpQuat, glm::quat& glmQuat)
+{
+	glmQuat.x = assimpQuat.x;
+	glmQuat.y = assimpQuat.y;
+	glmQuat.z = assimpQuat.z;
+	glmQuat.w = assimpQuat.w;
+}
 
 std::string FileLoader::GetCurrentDir()
 {
@@ -109,29 +136,32 @@ bool FileLoader::GetTextureFilenames(const std::string& path)
 	return GetFilesInDir(extraTextureName, GetTexturePath(path));
 }
 
-LGLStructs::Mesh FileLoader::ProcessMesh(const aiMesh* meshHandle)
+LGLStructs::Mesh FileLoader::ProcessMesh(
+	const aiMesh* meshHandle, 
+	BoneMap& boneMap
+)
 {
-	auto GetVertexParam = [&meshHandle](LGLStructs::Vertex::VertexData whichData)
+	auto GetVertexParam = [&meshHandle](LGLStructs::Vertex::BasicVertexData whichData)
 	{
-		using VertexData = LGLStructs::Vertex::VertexData;
+		using BasicVertexData = LGLStructs::Vertex::BasicVertexData;
 
 		aiVector3D* tempVector = nullptr;
 
 		switch (whichData)
 		{
-		case VertexData::Position:
+		case BasicVertexData::Position:
 			tempVector = meshHandle->mVertices;
 			break;
-		case VertexData::Normal:
+		case BasicVertexData::Normal:
 			tempVector = meshHandle->mNormals;
 			break;
-		case VertexData::TexCoords:
+		case BasicVertexData::TexCoords:
 			tempVector = meshHandle->mTextureCoords[0];
 			break;
-		case VertexData::Tangent:
+		case BasicVertexData::Tangent:
 			tempVector = meshHandle->mTangents;
 			break;
-		case VertexData::Bitangent:
+		case BasicVertexData::Bitangent:
 			tempVector = meshHandle->mBitangents;
 			break;
 		default:
@@ -146,23 +176,51 @@ LGLStructs::Mesh FileLoader::ProcessMesh(const aiMesh* meshHandle)
 		for (size_t i = 0; i < meshHandle->mNumVertices; ++i)
 		{
 			LGLStructs::Vertex vert;
-			for (size_t vertData = 0; vertData < LGLStructs::Vertex::GetMemberAmount(); ++vertData)
+			for (size_t vertData = 0; vertData < 5; ++vertData)
 			{
 				glm::vec3 glmVect{ 0.0f, 0.0f, 0.0f };
-				aiVector3D* assimpVect = GetVertexParam(static_cast<LGLStructs::Vertex::VertexData>(vertData));
+				aiVector3D* assimpVect = GetVertexParam(static_cast<LGLStructs::Vertex::BasicVertexData>(vertData));
 	
 				if (assimpVect)
 				{
-					for (size_t axis = 0; axis < 3; ++axis)
-					{
-						glmVect[axis] = (assimpVect + i)->operator[](axis);
-					}
+					ConvertFromAssimpToGLM(*(assimpVect + i), glmVect);
 				}
 				
 				vert[vertData] = glmVect;
 			}
 
 			mesh.vert.push_back(vert);
+		}
+	};
+
+	auto ProcessBones = [this, &meshHandle](LGLStructs::Mesh& mesh, BoneMap& boneMap)
+	{
+		for (size_t i = 0; i < meshHandle->mNumBones; ++i)
+		{
+			aiBone* bone = meshHandle->mBones[i];
+
+			std::string boneName = meshHandle->mBones[i]->mName.C_Str();
+
+			if (boneMap.find(boneName) == boneMap.end())
+			{
+				boneMap[boneName].id = boneMap.size();
+			}
+
+			bool bonesSet = true;
+			for (size_t j = 0; j < bone->mNumWeights; ++j)
+			{
+				aiVertexWeight& vertWeight = bone->mWeights[j];
+
+				if (vertWeight.mWeight == 0.0f)
+				{
+					bonesSet = false;
+					break;
+				}
+				
+				mesh.vert[vertWeight.mVertexId].AddBoneData(boneMap[boneName].id, vertWeight.mWeight);
+			}
+
+			ConvertFromAssimpToGLM(bone->mOffsetMatrix, boneMap[boneName].offsetMatrix);
 		}
 	};
 
@@ -276,23 +334,131 @@ LGLStructs::Mesh FileLoader::ProcessMesh(const aiMesh* meshHandle)
 	ProcessVerteces(mesh);
 	ProcessFaces(mesh);
 	ProcessTextures(mesh);
+	ProcessBones(mesh, boneMap);
 
 	return mesh;
 }
 
-void FileLoader::ProcessNode(const aiNode* nodeHandle, LGLStructs::ModelInfo& model)
+void FileLoader::ProcessNodeForModelInfo(
+	const aiNode* nodeHandle,
+	LGLStructs::ModelInfo& model,
+	BoneMap& boneMap
+)
 {
 	for (size_t i = 0; i < nodeHandle->mNumMeshes; ++i)
 	{
 		aiMesh* meshHandle = modelHandle->mMeshes[nodeHandle->mMeshes[i]];
-		model.AddMesh(ProcessMesh(meshHandle));
+		model.AddMesh(ProcessMesh(meshHandle, boneMap));
 	}
 
 	for (size_t i = 0; i < nodeHandle->mNumChildren; ++i)
 	{
-		ProcessNode(nodeHandle->mChildren[i], model);
+		ProcessNodeForModelInfo(nodeHandle->mChildren[i], model, boneMap);
 	}
 }
+
+void FileLoader::ProcessNodeForBoneTree(
+	const std::string& rootNodeName,
+	const aiNode* nodeHandle,
+	BoneMap& boneMap,
+	LGLStructs::ModelInfo::BoneTree::TreeManagerNode* parentTreeNode,
+	glm::mat4& globalTransform
+)
+{
+	std::string nodeName = nodeHandle->mName.C_Str();
+
+	LGLStructs::ModelInfo::BoneTree::TreeManagerNode* currentNode = parentTreeNode;
+	LGLStructs::ModelInfo::BoneInfo* currentBoneInfo = &parentTreeNode->GetValue();
+
+	if (nodeName != rootNodeName)
+	{
+		parentTreeNode->AddNode(nodeName, {});
+		currentNode = parentTreeNode->FindNodeBy(nodeName);
+		currentBoneInfo = &currentNode->GetValue();
+		ConvertFromAssimpToGLM(nodeHandle->mTransformation, currentBoneInfo->localTransform);
+		globalTransform = currentBoneInfo->globalTransform = parentTreeNode->GetValue().globalTransform * currentBoneInfo->localTransform;
+	}
+	else
+	{
+		ConvertFromAssimpToGLM(nodeHandle->mTransformation, currentBoneInfo->localTransform);
+		globalTransform = currentBoneInfo->globalTransform = currentBoneInfo->localTransform;
+	}
+
+	if (boneMap.find(nodeName) != boneMap.end())
+	{
+		currentBoneInfo->id = boneMap[nodeName].id;
+		currentBoneInfo->offsetMatrix = boneMap[nodeName].offsetMatrix;
+	}
+
+	for (size_t i = 0; i < nodeHandle->mNumChildren; ++i)
+	{
+		ProcessNodeForBoneTree(rootNodeName, nodeHandle->mChildren[i], boneMap, currentNode, globalTransform);
+	}
+}
+
+template<typename AssimpType, typename GLMCont>
+void FileLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmCont)
+{
+	if (keys && keyAmount)
+	{
+		bool validKeys = false;
+
+		glmCont.reserve(keyAmount);
+	
+		for (size_t animInfoIndex = 0; animInfoIndex < keyAmount; ++animInfoIndex)
+		{
+			glmCont.push_back({});
+			glmCont.back().first = (keys + animInfoIndex)->mTime;
+
+			if (glmCont.back().first != 0.0f)
+			{
+				validKeys = true;
+			}
+
+			ConvertFromAssimpToGLM((keys + animInfoIndex)->mValue, glmCont.back().second);
+		}
+
+		assert(validKeys && "Invalid keys for animation, check if animation is baked");
+	}
+}
+
+void FileLoader::LoadAnimations(
+	LGLStructs::ModelInfo::AnimKeyMap& animKeyMap,
+	LGLStructs::ModelInfo::AnimInfoVect& animInfoVect
+)
+{
+	size_t animAmount = modelHandle->mNumAnimations;
+
+	for (size_t animIndex = 0; animIndex < animAmount; ++animIndex)
+	{
+		const aiAnimation* animHandle = modelHandle->mAnimations[animIndex];
+
+		if (animHandle)
+		{
+			animInfoVect.push_back({ animHandle->mDuration , animHandle->mTicksPerSecond });
+
+			for (size_t channelIndex = 0; channelIndex < animHandle->mNumChannels; ++channelIndex)
+			{
+				const aiNodeAnim* animNode = animHandle->mChannels[channelIndex];
+
+				LGLStructs::ModelInfo::AnimKeys currentAnimInfo;
+
+				ParseAnimInfo(animNode->mPositionKeys, animNode->mNumPositionKeys, currentAnimInfo.positionKeys);
+				ParseAnimInfo(animNode->mRotationKeys, animNode->mNumRotationKeys, currentAnimInfo.rotationKeys);
+				ParseAnimInfo(animNode->mScalingKeys,  animNode->mNumScalingKeys,  currentAnimInfo.scalingKeys );
+
+				std::string nodeName = animNode->mNodeName.C_Str();
+				if (animKeyMap.find(nodeName) == animKeyMap.end())
+				{
+					animKeyMap[nodeName].resize(animAmount);
+				}
+
+				animKeyMap[nodeName][animIndex] = currentAnimInfo;
+			}
+		}
+	}
+}
+
 
 void FileLoader::FreeTextureData()
 {
@@ -308,7 +474,7 @@ void FileLoader::FreeTextureData()
 bool FileLoader::LoadModel(const std::string& file, const std::string& name, LGLStructs::ModelInfo& model)
 {
 	Assimp::Importer importer;
-	modelHandle = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs);
+	modelHandle = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_LimitBoneWeights);
 
 	if (!modelHandle || modelHandle->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !modelHandle->mRootNode)
 	{
@@ -318,8 +484,20 @@ bool FileLoader::LoadModel(const std::string& file, const std::string& name, LGL
 
 	nameToSet = name;
 	GetTextureFilenames(file);
-	ProcessNode(modelHandle->mRootNode, model);
 
+	BoneMap boneMap;
+
+	ProcessNodeForModelInfo(modelHandle->mRootNode, model, boneMap);
+	model.NormalizeAllEmptyWeights();
+
+	glm::mat4 globalTransform = glm::mat4(1.0f);
+	std::string rootNodeName = modelHandle->mRootNode->mName.C_Str();
+	model.boneTree.AddRootNode(rootNodeName, {});
+	ProcessNodeForBoneTree(rootNodeName, modelHandle->mRootNode, boneMap, model.boneTree.FindNodeBy(rootNodeName), globalTransform);
+	model.globalInverseTransform = glm::inverse(model.boneTree.FindNodeBy(rootNodeName)->GetValue().globalTransform);
+
+	LoadAnimations(model.animKeyMap, model.animInfoVect);
+	
 	return true;
 }
 

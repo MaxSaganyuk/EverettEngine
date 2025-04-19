@@ -23,7 +23,7 @@ CMainWindow::~CMainWindow()
 	engineP = nullptr;
 }
 
-TreeManager& CMainWindow::GetObjectTree()
+MFCTreeManager& CMainWindow::GetObjectTree()
 {
 	return objectTree;
 }

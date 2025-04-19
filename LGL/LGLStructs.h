@@ -3,18 +3,23 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 #include "stdEx/utilityEx.h"
 
 #include <functional>
 #include <vector>
 #include <string>
+#include <array>
+#include <unordered_map>
+
+#include "TreeManager.h"
 
 namespace LGLStructs
 {
-	struct Vertex
+	struct BasicVertex
 	{
-		enum class VertexData
+		enum class BasicVertexData
 		{
 			Position,
 			Normal,
@@ -32,32 +37,102 @@ namespace LGLStructs
 
 		glm::vec3& operator[](const size_t index)
 		{
-			VertexData vertData = static_cast<VertexData>(index);
+			BasicVertexData vertData = static_cast<BasicVertexData>(index);
 
 			switch (vertData)
 			{
-			case VertexData::Position:
+			case BasicVertexData::Position:
 				return Position;
-			case VertexData::Normal:
+			case BasicVertexData::Normal:
 				return Normal;
-			case VertexData::TexCoords:
+			case BasicVertexData::TexCoords:
 				return TexCoords;
-			case VertexData::Tangent:
+			case BasicVertexData::Tangent:
 				return Tangent;
-			case VertexData::Bitangent:
+			case BasicVertexData::Bitangent:
 				return Bitangent;
 			default:
 				assert(false && "Invaling index in VertexData");
 			}
 		}
 
-		constexpr static size_t GetMemberAmount()
+		constexpr static size_t GetLocalMemberAmount()
 		{
-			constexpr size_t memberAmount = static_cast<size_t>(VertexData::_SIZE);
-			constexpr size_t memberAmountDoubleCheck = sizeof(Vertex) / sizeof(glm::vec3);
+			constexpr size_t memberAmount = static_cast<size_t>(BasicVertexData::_SIZE);
+			constexpr size_t memberAmountDoubleCheck = sizeof(BasicVertex) / sizeof(glm::vec3);
 			static_assert(memberAmount == memberAmountDoubleCheck, "Member amount and enum mismatch");
 
 			return memberAmount;
+		}
+
+		constexpr static size_t GetMemberElementSize()
+		{
+			return glm::vec3::length();
+		}
+	};
+
+
+	struct Vertex : BasicVertex
+	{
+		constexpr static size_t maxWeightPerVertex = 4;
+
+		enum class VertexData
+		{
+			BoneID,
+			Weights,
+			_SIZE
+		};
+
+		std::array<int, maxWeightPerVertex> boneIDs{};
+		std::array<float, maxWeightPerVertex>  boneWeights{};
+
+		void AddBoneData(unsigned int boneID, float boneWeight)
+		{
+			for (size_t i = 0; i < maxWeightPerVertex; ++i)
+			{
+				if (boneWeights[i] == 0.0f)
+				{
+					boneIDs[i] = boneID;
+					boneWeights[i] = boneWeight;
+
+					return;
+				}
+			}
+
+			//assert(false && "Attempt to add more than 4 weights to vertex");
+		}
+
+		void NormalizeIfEmptyWeights()
+		{
+			float sum = 0.0f;
+			
+			for (auto weight : boneWeights)
+			{
+				if (weight > 0.0f)
+				{
+					return;
+				}
+			}
+
+			boneWeights[0] = 1.0f;
+		}
+
+		constexpr static size_t GetLocalMemberAmount()
+		{
+			// Reconfirmation of equivalency of float and int raw sizes
+			static_assert(sizeof(float) == sizeof(int), "Unexpected diffs in float and uint sizes");
+
+			constexpr size_t memberAmount = static_cast<size_t>(VertexData::_SIZE);
+			constexpr size_t memberAmountDoubleCheck =
+				(sizeof(Vertex) - sizeof(BasicVertex)) / sizeof(std::array<float, maxWeightPerVertex>);
+			static_assert(memberAmount == memberAmountDoubleCheck, "Member amount and enum mismatch");
+
+			return memberAmount;
+		}
+
+		constexpr static size_t GetMemberElementSize()
+		{
+			return maxWeightPerVertex;
 		}
 	};
 
@@ -130,16 +205,58 @@ namespace LGLStructs
 
 		MeshInfo(const Mesh& mesh, bool& render, bool& isDynamic, std::string& shaderProgram, std::function<void()>& behaviour)
 			: mesh(mesh), render(&render), isDynamic(&isDynamic), shaderProgram(&shaderProgram), behaviour(&behaviour) {}
-	
+
 	};
 	
 	struct ModelInfo
 	{
+		struct BoneInfo
+		{
+			int id = -1;
+			glm::mat4 offsetMatrix = glm::mat4(1.0f);
+			glm::mat4 localTransform = glm::mat4(1.0f);
+			glm::mat4 globalTransform = glm::mat4(1.0f);
+			glm::mat4 finalTransform = glm::mat4(1.0f);
+		};
+
+		struct AnimInfo
+		{
+			constexpr static double defaultTicksPerSecond = 25;
+
+			double animDuration;
+			double ticksPerSecond;
+
+			AnimInfo(double animDuration, double ticksPerSecond) 
+				: 
+				animDuration(animDuration), 
+				ticksPerSecond(!ticksPerSecond ? defaultTicksPerSecond : ticksPerSecond) {}
+		};
+
+		struct AnimKeys
+		{
+			std::vector<std::pair<double, glm::vec3>> positionKeys;
+			std::vector<std::pair<double, glm::quat>> rotationKeys;
+			std::vector<std::pair<double, glm::vec3>> scalingKeys;
+
+			bool KeysExist()
+			{
+				return !(positionKeys.empty() && rotationKeys.empty() && scalingKeys.empty());
+			}
+		};
+
+		using BoneTree = TreeManager<std::string, BoneInfo>;
+		using AnimKeyMap = std::unordered_map<std::string, std::vector<AnimKeys>>;
+		using AnimInfoVect = std::vector<AnimInfo>;
+
 		std::vector<MeshInfo> meshes;
 		bool render = true;
 		bool isDynamic = false;
 		std::string shaderProgram = "0";
 		std::function<void()> behaviour = nullptr;
+		BoneTree boneTree;
+		AnimKeyMap animKeyMap;
+		AnimInfoVect animInfoVect;
+		glm::mat4 globalInverseTransform = glm::mat4(1.0f);
 
 		void AddMesh(const Mesh& mesh)
 		{
@@ -157,18 +274,29 @@ namespace LGLStructs
 			}
 		}
 
-		ModelInfo& operator=(ModelInfo& modelInfo)
+		void NormalizeAllEmptyWeights()
+		{
+			for (auto& mesh : meshes)
+			{
+				for (auto& vert : mesh.mesh.vert)
+				{
+					vert.NormalizeIfEmptyWeights();
+				}
+			}
+		}
+
+		ModelInfo& operator=(const ModelInfo& modelInfo)
 		{
 			meshes = modelInfo.meshes;
 			render = modelInfo.render;
 			isDynamic = modelInfo.isDynamic;
 			shaderProgram = modelInfo.shaderProgram;
 			behaviour = modelInfo.behaviour;
+			boneTree = modelInfo.boneTree;
 
 			ResetDefaults();
 
 			return *this;
 		}
 	};
-
 }

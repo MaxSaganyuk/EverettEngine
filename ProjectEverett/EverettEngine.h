@@ -139,6 +139,8 @@ public:
 
 	EVERETT_API std::string GetAvailableObjectName(const std::string& name);
 private:
+	std::string defaultShaderProgram;
+
 	std::function<void(double, double)> cursorCaptureCallback;
 
 	struct ModelSolidInfo;

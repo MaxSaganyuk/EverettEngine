@@ -184,5 +184,17 @@
     <None Include="shaders\threeColor.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\lightCombAndBone.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\lightCombAndBone.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\boneTest.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\boneTest.vert">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

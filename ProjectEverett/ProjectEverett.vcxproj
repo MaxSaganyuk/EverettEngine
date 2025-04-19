@@ -188,6 +188,8 @@
     <ClCompile Include="WindowHandleHolder.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\boneTest.frag" />
+    <None Include="shaders\boneTest.vert" />
     <None Include="shaders\colorChange.frag" />
     <None Include="shaders\colors.frag" />
     <None Include="shaders\colors.vert" />
@@ -199,6 +201,8 @@
     <None Include="shaders\lightArea.vert" />
     <None Include="shaders\lightComb.frag" />
     <None Include="shaders\lightComb.vert" />
+    <None Include="shaders\lightCombAndBone.frag" />
+    <None Include="shaders\lightCombAndBone.vert" />
     <None Include="shaders\lightDir.frag" />
     <None Include="shaders\lightDir.vert" />
     <None Include="shaders\lightPoint.frag" />

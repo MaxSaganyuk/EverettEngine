@@ -7,31 +7,36 @@
 #include <memory>
 #include <tuple>
 
-class TreeManager
+/*
+	This version of a TreeManager specific to handling MFC tree object
+	Might have way too many extra MFC stuff to just overload basic
+	TreeManager template. Will look into this later.
+*/
+class MFCTreeManager
 {
-	class TreeManagerNode
+	class MFCTreeManagerNode
 	{
-		friend TreeManager;
+		friend MFCTreeManager;
 
 	public:
-		TreeManagerNode(
+		MFCTreeManagerNode(
 			const std::string& title,
 			const std::string& data,
 			CTreeCtrl& objectTree,
 			HTREEITEM nodeInfo,
-			TreeManagerNode* previousNode
+			MFCTreeManagerNode* previousNode
 		);
 
 		void AddNode(const std::string& title, const std::string& data);
-		TreeManagerNode* FindNodeBy(HTREEITEM item);
+		MFCTreeManagerNode* FindNodeBy(HTREEITEM item);
 
 	private:
 		std::string title;
 		std::string data;
 		CTreeCtrl& objectTree;
 		HTREEITEM nodeInfo;
-		TreeManagerNode* previousNode;
-		std::map<std::string, std::unique_ptr<TreeManagerNode>> nextNodes;
+		MFCTreeManagerNode* previousNode;
+		std::map<std::string, std::unique_ptr<MFCTreeManagerNode>> nextNodes;
 	};
 
 public:
@@ -49,11 +54,11 @@ public:
 	CTreeCtrl& GetTreeCtrl();
 private:
 
-	TreeManagerNode* FindNodeByItem(HTREEITEM item);
+	MFCTreeManagerNode* FindNodeByItem(HTREEITEM item);
 
 	std::vector<std::string> objectTypes;
 
-	std::map<std::string, std::unique_ptr<TreeManagerNode>> rootNodes;
+	std::map<std::string, std::unique_ptr<MFCTreeManagerNode>> rootNodes;
 	
 	CTreeCtrl objectTree;
 };

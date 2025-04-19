@@ -29,6 +29,8 @@
 #define EVERETT_EXPORT
 #include "EverettEngine.h"
 
+//#define BONE_TEST
+
 struct EverettEngine::ModelSolidInfo
 {
 	LGLStructs::ModelInfo model;
@@ -126,6 +128,29 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 		camera->ExecuteAllScriptFuncs();
 	};
 
+#ifdef BONE_TEST
+	defaultShaderProgram = "boneTest";
+
+	static bool j = true;
+	mainLGL->SetInteractable(LGL::ConvertKeyTo("Y"), [this]() 
+		{
+			static int i = 0;
+			if (j)
+			{
+				j = false;
+				mainLGL->SetShaderUniformValue("boneIDChoice", ++i);
+			}
+		},
+		[this]() 
+		{
+			j = true;
+		}
+	);
+
+	mainLGL->SetShaderUniformValue("boneIDChoice", 0);
+#else
+	defaultShaderProgram = "lightCombAndBone";
+#endif
 	mainLGLRenderThread = std::make_unique<std::thread>(
 		[this, cameraMainLoop](){ mainLGL->RunRenderingCycle(cameraMainLoop); }
 	);
@@ -163,7 +188,7 @@ int EverettEngine::ConvertKeyTo(const std::string& keyName)
 
 bool EverettEngine::CreateModel(const std::string& path, const std::string& name)
 {
-	auto resPair = MSM.emplace(name, ModelSolidInfo{});
+	auto resPair = MSM.emplace(name, std::move(ModelSolidInfo{}));
 	
 	LGLStructs::ModelInfo& newModel = MSM[name].model;
 	
@@ -175,7 +200,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 	CheckAndAddToNameTracker((*resPair.first).first);
 
-	newModel.shaderProgram = "lightComb";
+	newModel.shaderProgram = defaultShaderProgram;
 	newModel.render = false;
 	newModel.behaviour = [this, name]()
 	{
@@ -217,8 +242,8 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 {
 	auto resPair = MSM[modelName].solids.emplace(
 		solidName, camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr()
-	);
 
+	);
 	if (resPair.second)
 	{
 		MSM[modelName].model.render = true;
@@ -510,7 +535,7 @@ std::vector<std::string> EverettEngine::GetObjectsInDirList(
 
 std::vector<std::string> EverettEngine::GetModelInDirList(const std::string& path)
 {
-	return GetObjectsInDirList(path, { ".glb", ".obj" });
+	return GetObjectsInDirList(path, { ".glb", ".dae", ".fbx", ".obj" });
 }
 
 std::vector<std::string> EverettEngine::GetSoundInDirList(const std::string& path)

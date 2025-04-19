@@ -5,7 +5,7 @@
 #include <array>
 #include <map>
 #include "EverettEngine.h"
-#include "TreeManager.h"
+#include "MFCTreeManager.h"
 
 // CMainWindow form view
 
@@ -43,14 +43,14 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	void SetEverettEngineRef(EverettEngine& engineRef);
-	TreeManager& GetObjectTree();
+	MFCTreeManager& GetObjectTree();
 	std::vector<std::pair<std::string, std::string>>& GetSelectedScriptDllInfo();
 private:
 
 	void OnInitialUpdate() override;
 
 	EverettEngine* engineP;
-	TreeManager objectTree;
+	MFCTreeManager objectTree;
 
 	std::vector<std::pair<std::string, std::string>> selectedScriptDllInfo;
 public:

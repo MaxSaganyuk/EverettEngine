@@ -6,7 +6,7 @@
 #include "framework.h"
 #include "EverettGUI.h"
 
-#include "TreeManager.h"
+#include "MFCTreeManager.h"
 
 #include "CBrowseAndLoadDialog.h"
 #include "CPlaceObjectDialog.h"

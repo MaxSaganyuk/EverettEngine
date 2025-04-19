@@ -45,7 +45,7 @@
     <ClInclude Include="CPlaceObjectDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TreeManager.h">
+    <ClInclude Include="MFCTreeManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CLoadingDialog.h">
@@ -89,7 +89,7 @@
     <ClCompile Include="CPlaceObjectDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TreeManager.cpp">
+    <ClCompile Include="MFCTreeManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CLoadingDialog.cpp">

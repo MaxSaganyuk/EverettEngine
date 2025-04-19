@@ -57,6 +57,14 @@ private:
 		LGLStructs::MeshInfo* meshInfo = nullptr;
 	};
 
+	struct AnimInfo
+	{
+		LGLStructs::ModelInfo::BoneTree* boneTree = nullptr;
+		LGLStructs::ModelInfo::AnimKeyMap* animKeyMap = nullptr;
+		LGLStructs::ModelInfo::AnimInfoVect* animInfoVect = nullptr;
+		glm::mat4* globalInverseTransform = nullptr;
+	};
+
 	struct ShaderInfo
 	{
 		Shader shaderId;
@@ -172,7 +180,34 @@ private:
 	static std::function<void(int, int, int, int)> keyPressCallbackFunc;
 
 	void ProcessInput();
+
+	// Helpers for animation processing - start
+	double GetAnimationTimeTicks(double currentTime, LGLStructs::ModelInfo::AnimInfo& currentAnimInfo);
+	
+	template<typename GLMType>
+	void InterpolateKey(std::vector<std::pair<double, GLMType>>& keys, GLMType& res, double animTime);
+	void InterpolateImpl(const glm::vec3& vec1, const glm::vec3& vec2, glm::vec3& resVec, float factor);
+	void InterpolateImpl(const glm::quat& quat1, const glm::quat& quat2, glm::quat& resQuat, float factor);
+	void ParseBoneTree(
+		LGLStructs::ModelInfo::BoneTree::TreeManagerNode* currentBoneNode, 
+		double animationTimeTicks,
+		size_t animIndex,
+		glm::mat4& globalInverseTransform,
+		LGLStructs::ModelInfo::AnimKeyMap& animKeyMap
+	);
+	void CollectAllFinalTransforms(
+		LGLStructs::ModelInfo::BoneTree::TreeManagerNode* boneTreeNode,
+		std::vector<glm::mat4>& finalTransforms
+	);
+	void PassFinalTransformsToShader(std::vector<glm::mat4>& finalTransorms);
+	// Helpers for animation processing - end
+
+	void ProcessAnimations(double current);
+	
+	
 	void Render();
+
+	double startTime;
 
 	GLFWwindow* window;
 
@@ -182,6 +217,8 @@ private:
 	std::vector<VBO> VBOCollection;
 	std::vector<VAOInfo> VAOCollection;
 	std::vector<EBO> EBOCollection;
+
+	std::vector<AnimInfo> animCollection;
 
 	// Shader
 	std::string shaderPath;

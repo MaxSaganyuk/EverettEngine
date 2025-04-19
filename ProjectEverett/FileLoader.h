@@ -27,9 +27,27 @@ class FileLoader
 
 	std::recursive_mutex scriptWrapperLock;
 
-	void ProcessNode(const aiNode* nodeHandle, LGLStructs::ModelInfo& model);
+	using BoneMap = std::unordered_map<std::string, LGLStructs::ModelInfo::BoneInfo>;
+
+	void ProcessNodeForModelInfo(
+		const aiNode* nodeHandle, 
+		LGLStructs::ModelInfo& model, 
+		BoneMap& boneMap
+	);
+	void ProcessNodeForBoneTree(
+		const std::string& rootNodeName,
+		const aiNode* nodeHandle,
+		BoneMap& boneMap,
+		LGLStructs::ModelInfo::BoneTree::TreeManagerNode* parentTreeNode,
+		glm::mat4& globalTransform
+	);
+	void LoadAnimations(
+		LGLStructs::ModelInfo::AnimKeyMap& animKeyMap,
+		LGLStructs::ModelInfo::AnimInfoVect& animInfo
+	);
+	
 	bool GetTextureFilenames(const std::string& path);
-	LGLStructs::Mesh ProcessMesh(const aiMesh* meshHandle);
+	LGLStructs::Mesh ProcessMesh(const aiMesh* meshHandle, BoneMap& boneMap);
 
 	bool GetScriptFuncFromDLLImpl(
 		const std::string& dllPath,
@@ -54,6 +72,10 @@ public:
 	);
 
 	void FreeTextureData();
+
+	template<typename AssimpType, typename GLMCont>
+	void ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmCont);
+
 	void FreeDllData();
 	std::string GetCurrentDir();
 	bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);

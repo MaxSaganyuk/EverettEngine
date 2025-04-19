@@ -1,21 +1,21 @@
 #include "pch.h"
-#include "TreeManager.h"
+#include "MFCTreeManager.h"
 
-TreeManager::TreeManagerNode::TreeManagerNode(
+MFCTreeManager::MFCTreeManagerNode::MFCTreeManagerNode(
 	const std::string& title,
 	const std::string& data,
 	CTreeCtrl& objectTree,
 	HTREEITEM nodeInfo,
-	TreeManagerNode* previousNode
+	MFCTreeManagerNode* previousNode
 )
 	: title(title), data(data), objectTree(objectTree), nodeInfo(nodeInfo), previousNode(previousNode) {}
 
-void TreeManager::TreeManagerNode::AddNode(const std::string& title, const std::string& data)
+void MFCTreeManager::MFCTreeManagerNode::AddNode(const std::string& title, const std::string& data)
 {
 	HTREEITEM newNodeInfo = objectTree.InsertItem(CA2T((title + ": " + data).c_str()), nodeInfo);
 	nextNodes.emplace(
 		data,
-		std::make_unique<TreeManagerNode>(
+		std::make_unique<MFCTreeManagerNode>(
 			title,
 			data,
 			objectTree,
@@ -27,7 +27,7 @@ void TreeManager::TreeManagerNode::AddNode(const std::string& title, const std::
 	objectTree.RedrawWindow();
 }
 
-TreeManager::TreeManagerNode* TreeManager::TreeManagerNode::FindNodeBy(HTREEITEM item)
+MFCTreeManager::MFCTreeManagerNode* MFCTreeManager::MFCTreeManagerNode::FindNodeBy(HTREEITEM item)
 {
 	if (item == nodeInfo)
 	{
@@ -36,7 +36,7 @@ TreeManager::TreeManagerNode* TreeManager::TreeManagerNode::FindNodeBy(HTREEITEM
 
 	for (auto& node : nextNodes)
 	{
-		TreeManagerNode* currentNode = node.second->FindNodeBy(item);
+		MFCTreeManagerNode* currentNode = node.second->FindNodeBy(item);
 		if (currentNode)
 		{
 			return currentNode;
@@ -46,21 +46,21 @@ TreeManager::TreeManagerNode* TreeManager::TreeManagerNode::FindNodeBy(HTREEITEM
 	return nullptr;
 }
 
-CTreeCtrl& TreeManager::GetTreeCtrl()
+CTreeCtrl& MFCTreeManager::GetTreeCtrl()
 {
 	return objectTree;
 }
 
-void TreeManager::AddRootNode(const std::string& title, const std::string& data)
+void MFCTreeManager::AddRootNode(const std::string& title, const std::string& data)
 {
 	HTREEITEM newNodeInfo = objectTree.InsertItem(CA2T((title + ": " + data).c_str()));
 	rootNodes.emplace(
 		data,
-		std::make_unique<TreeManagerNode>(title, data, GetTreeCtrl(), newNodeInfo, nullptr)
+		std::make_unique<MFCTreeManagerNode>(title, data, GetTreeCtrl(), newNodeInfo, nullptr)
 	);
 }
 
-void TreeManager::SetObjectTypes(
+void MFCTreeManager::SetObjectTypes(
 	const std::vector<std::string>& objectTypes, 
 	const std::vector<std::string>& lightTypes
 )
@@ -81,30 +81,30 @@ void TreeManager::SetObjectTypes(
 	}
 }
 
-void TreeManager::AddModelToTree(const std::string& modelName)
+void MFCTreeManager::AddModelToTree(const std::string& modelName)
 {
 	rootNodes["Solid"]->AddNode("Model", modelName);
 }
 
-void TreeManager::AddSolidToTree(const std::string& modelName, const std::string& solidName)
+void MFCTreeManager::AddSolidToTree(const std::string& modelName, const std::string& solidName)
 {
 	rootNodes["Solid"]->nextNodes[modelName]->AddNode("Solid", solidName);
 }
-void TreeManager::AddLightToTree(const std::string& lightType, const std::string& lightName)
+void MFCTreeManager::AddLightToTree(const std::string& lightType, const std::string& lightName)
 {
 	rootNodes["Light"]->nextNodes[lightType]->AddNode("Light", lightName);
 }
 
-void TreeManager::AddSoundToTree(const std::string& soundName)
+void MFCTreeManager::AddSoundToTree(const std::string& soundName)
 {
 	rootNodes["Sound"]->AddNode("Sound", soundName);
 }
 
-TreeManager::TreeManagerNode* TreeManager::FindNodeByItem(HTREEITEM item)
+MFCTreeManager::MFCTreeManagerNode* MFCTreeManager::FindNodeByItem(HTREEITEM item)
 {
 	for (auto& node : rootNodes)
 	{
-		TreeManagerNode* currentNode = node.second->FindNodeBy(item);
+		MFCTreeManagerNode* currentNode = node.second->FindNodeBy(item);
 		if (currentNode)
 		{
 			return currentNode;
@@ -114,11 +114,11 @@ TreeManager::TreeManagerNode* TreeManager::FindNodeByItem(HTREEITEM item)
 	return nullptr;
 }
 
-std::vector<std::pair<std::string, std::string>> TreeManager::GetAllOfRootsSelectedNode()
+std::vector<std::pair<std::string, std::string>> MFCTreeManager::GetAllOfRootsSelectedNode()
 {
 	std::vector<std::pair<std::string, std::string>> allDataRoots;
  	
-	TreeManagerNode* currentNode = FindNodeByItem(objectTree.GetSelectedItem());
+	MFCTreeManagerNode* currentNode = FindNodeByItem(objectTree.GetSelectedItem());
 	
 	while (currentNode)
 	{
