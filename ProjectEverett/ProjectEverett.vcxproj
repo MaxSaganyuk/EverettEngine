@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AnimSystem.h" />
     <ClInclude Include="EverettEngine.h" />
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="CameraSim.h" />
@@ -174,6 +175,7 @@
     <ClInclude Include="WindowHandleHolder.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnimSystem.cpp" />
     <ClCompile Include="EverettEngine.cpp" />
     <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="CameraSim.cpp" />

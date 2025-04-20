@@ -1,5 +1,4 @@
 #include <iostream>
-#include <time.h>
 #include <cmath>
 #include <cstdlib>
 
@@ -26,6 +25,8 @@
 
 #include "stdEx/mapEx.h"
 
+#include "AnimSystem.h"
+
 #define EVERETT_EXPORT
 #include "EverettEngine.h"
 
@@ -34,6 +35,7 @@
 struct EverettEngine::ModelSolidInfo
 {
 	LGLStructs::ModelInfo model;
+	AnimSystem::ModelAnim modelAnim;
 	std::map<std::string, SolidSim> solids;
 };
 
@@ -102,7 +104,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 
 	mainLGL->SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
-	cursorCaptureCallback = 
+	cursorCaptureCallback =
 		[this](double xpos, double ypos) { camera->Rotate(static_cast<float>(xpos), static_cast<float>(ypos)); };
 	mainLGL->SetCursorPositionCallback(cursorCaptureCallback);
 
@@ -123,7 +125,18 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->GetMaxAmountOfVertexAttr();
 	mainLGL->CaptureMouse(true);
 
-	auto cameraMainLoop = [this](){
+	auto additionalFuncs = [this]() {
+		constexpr static size_t maxAmountOfBones = 1000;
+
+		static std::vector<glm::mat4> finalTransforms(1000, glm::mat4());
+		std::fill(finalTransforms.begin(), finalTransforms.end(), glm::mat4(1.0f));
+
+		animSystem->ProcessAnimations(
+			std::chrono::duration<double>(std::chrono::system_clock::now() - startTime).count(), finalTransforms
+		);
+
+		mainLGL->SetShaderUniformValue("Bones", finalTransforms);
+
 		camera->SetPosition(CameraSim::Direction::Nowhere);
 		camera->ExecuteAllScriptFuncs();
 	};
@@ -132,7 +145,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	defaultShaderProgram = "boneTest";
 
 	static bool j = true;
-	mainLGL->SetInteractable(LGL::ConvertKeyTo("Y"), [this]() 
+	mainLGL->SetInteractable(LGL::ConvertKeyTo("Y"), [this]()
 		{
 			static int i = 0;
 			if (j)
@@ -141,7 +154,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 				mainLGL->SetShaderUniformValue("boneIDChoice", ++i);
 			}
 		},
-		[this]() 
+		[this]()
 		{
 			j = true;
 		}
@@ -152,8 +165,12 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	defaultShaderProgram = "lightCombAndBone";
 #endif
 	mainLGLRenderThread = std::make_unique<std::thread>(
-		[this, cameraMainLoop](){ mainLGL->RunRenderingCycle(cameraMainLoop); }
+		[this, additionalFuncs]() { mainLGL->RunRenderingCycle(additionalFuncs); }
 	);
+
+	startTime = std::chrono::system_clock::now();
+
+	animSystem = std::make_unique<AnimSystem>();
 }
 
 int EverettEngine::PollForLastKeyPressed()
@@ -191,14 +208,16 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 	auto resPair = MSM.emplace(name, std::move(ModelSolidInfo{}));
 	
 	LGLStructs::ModelInfo& newModel = MSM[name].model;
-	
-	if (!fileLoader->LoadModel(path, name, newModel))
+	AnimSystem::ModelAnim& newModelAnim = MSM[name].modelAnim;
+
+	if (!fileLoader->LoadModel(path, name, newModel, newModelAnim))
 	{
 		MSM.erase(name);
 		return false;
 	}
 
 	CheckAndAddToNameTracker((*resPair.first).first);
+	animSystem->AddModelAnim(newModelAnim);
 
 	newModel.shaderProgram = defaultShaderProgram;
 	newModel.render = false;

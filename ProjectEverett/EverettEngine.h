@@ -20,6 +20,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <unordered_set>
+#include <chrono>
 
 #include "WindowHandleHolder.h"
 #include "UnorderedPtrMap.h"
@@ -33,6 +34,7 @@ class CommandHandler;
 class LGL;
 class WindowHandleHolder;
 class ScriptFuncStorage;
+class AnimSystem;
 
 namespace LGLStructs
 {
@@ -140,6 +142,7 @@ public:
 	EVERETT_API std::string GetAvailableObjectName(const std::string& name);
 private:
 	std::string defaultShaderProgram;
+	std::chrono::system_clock::time_point startTime;
 
 	std::function<void(double, double)> cursorCaptureCallback;
 
@@ -175,6 +178,8 @@ private:
 
 	std::unique_ptr<FileLoader> fileLoader;
 	std::unique_ptr<CommandHandler> cmdHandler;
+
+	std::unique_ptr<AnimSystem> animSystem;
 
 	ModelSolidsMap MSM;
 	LightCollection lights;

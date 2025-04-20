@@ -162,7 +162,7 @@ void main()
     }
 
     // For textureless model testing
-    // FragColor = vec4(1.0, 1.0, 1.0, 1.0) 
+    // FragColor = vec4(1.0, 1.0, 1.0, 1.0);
     
     FragColor = vec4(res, 1.0);
 }

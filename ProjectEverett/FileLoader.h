@@ -10,6 +10,7 @@
 
 #include "interfaces/ISolidSim.h"
 #include "ScriptFuncStorage.h"
+#include "AnimSystem.h"
 
 class aiScene;
 class aiMesh;
@@ -27,7 +28,7 @@ class FileLoader
 
 	std::recursive_mutex scriptWrapperLock;
 
-	using BoneMap = std::unordered_map<std::string, LGLStructs::ModelInfo::BoneInfo>;
+	using BoneMap = std::unordered_map<std::string, AnimSystem::BoneInfo>;
 
 	void ProcessNodeForModelInfo(
 		const aiNode* nodeHandle, 
@@ -38,12 +39,12 @@ class FileLoader
 		const std::string& rootNodeName,
 		const aiNode* nodeHandle,
 		BoneMap& boneMap,
-		LGLStructs::ModelInfo::BoneTree::TreeManagerNode* parentTreeNode,
+		AnimSystem::BoneTree::TreeManagerNode* parentTreeNode,
 		glm::mat4& globalTransform
 	);
 	void LoadAnimations(
-		LGLStructs::ModelInfo::AnimKeyMap& animKeyMap,
-		LGLStructs::ModelInfo::AnimInfoVect& animInfo
+		AnimSystem::AnimKeyMap& animKeyMap,
+		AnimSystem::AnimInfoVect& animInfo
 	);
 	
 	bool GetTextureFilenames(const std::string& path);
@@ -63,7 +64,12 @@ public:
 	FileLoader();
 	~FileLoader();
 
-	bool LoadModel(const std::string& file, const std::string& name, LGLStructs::ModelInfo& model);
+	bool LoadModel(
+		const std::string& file,
+		const std::string& name,
+		LGLStructs::ModelInfo& model,
+		AnimSystem::ModelAnim& modelAnim
+	);
 	bool LoadTexture(
 		const std::string& file,
 		LGLStructs::Texture& texture, 

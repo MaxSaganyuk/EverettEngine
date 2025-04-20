@@ -361,14 +361,14 @@ void FileLoader::ProcessNodeForBoneTree(
 	const std::string& rootNodeName,
 	const aiNode* nodeHandle,
 	BoneMap& boneMap,
-	LGLStructs::ModelInfo::BoneTree::TreeManagerNode* parentTreeNode,
+	AnimSystem::BoneTree::TreeManagerNode* parentTreeNode,
 	glm::mat4& globalTransform
 )
 {
 	std::string nodeName = nodeHandle->mName.C_Str();
 
-	LGLStructs::ModelInfo::BoneTree::TreeManagerNode* currentNode = parentTreeNode;
-	LGLStructs::ModelInfo::BoneInfo* currentBoneInfo = &parentTreeNode->GetValue();
+	AnimSystem::BoneTree::TreeManagerNode* currentNode = parentTreeNode;
+	AnimSystem::BoneInfo* currentBoneInfo = &parentTreeNode->GetValue();
 
 	if (nodeName != rootNodeName)
 	{
@@ -423,8 +423,8 @@ void FileLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmC
 }
 
 void FileLoader::LoadAnimations(
-	LGLStructs::ModelInfo::AnimKeyMap& animKeyMap,
-	LGLStructs::ModelInfo::AnimInfoVect& animInfoVect
+	AnimSystem::AnimKeyMap& animKeyMap,
+	AnimSystem::AnimInfoVect& animInfoVect
 )
 {
 	size_t animAmount = modelHandle->mNumAnimations;
@@ -441,7 +441,7 @@ void FileLoader::LoadAnimations(
 			{
 				const aiNodeAnim* animNode = animHandle->mChannels[channelIndex];
 
-				LGLStructs::ModelInfo::AnimKeys currentAnimInfo;
+				AnimSystem::AnimKeys currentAnimInfo;
 
 				ParseAnimInfo(animNode->mPositionKeys, animNode->mNumPositionKeys, currentAnimInfo.positionKeys);
 				ParseAnimInfo(animNode->mRotationKeys, animNode->mNumRotationKeys, currentAnimInfo.rotationKeys);
@@ -471,7 +471,12 @@ void FileLoader::FreeTextureData()
 	texturesLoaded.clear();
 }
 
-bool FileLoader::LoadModel(const std::string& file, const std::string& name, LGLStructs::ModelInfo& model)
+bool FileLoader::LoadModel(
+	const std::string& file,
+	const std::string& name,
+	LGLStructs::ModelInfo& model,
+	AnimSystem::ModelAnim& modelAnim
+)
 {
 	Assimp::Importer importer;
 	modelHandle = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_LimitBoneWeights);
@@ -492,11 +497,11 @@ bool FileLoader::LoadModel(const std::string& file, const std::string& name, LGL
 
 	glm::mat4 globalTransform = glm::mat4(1.0f);
 	std::string rootNodeName = modelHandle->mRootNode->mName.C_Str();
-	model.boneTree.AddRootNode(rootNodeName, {});
-	ProcessNodeForBoneTree(rootNodeName, modelHandle->mRootNode, boneMap, model.boneTree.FindNodeBy(rootNodeName), globalTransform);
-	model.globalInverseTransform = glm::inverse(model.boneTree.FindNodeBy(rootNodeName)->GetValue().globalTransform);
+	modelAnim.boneTree.AddRootNode(rootNodeName, {});
+	ProcessNodeForBoneTree(rootNodeName, modelHandle->mRootNode, boneMap, modelAnim.boneTree.FindNodeBy(rootNodeName), globalTransform);
+	modelAnim.globalInverseTransform = glm::inverse(modelAnim.boneTree.FindNodeBy(rootNodeName)->GetValue().globalTransform);
 
-	LoadAnimations(model.animKeyMap, model.animInfoVect);
+	LoadAnimations(modelAnim.animKeyMap, modelAnim.animInfoVect);
 	
 	return true;
 }

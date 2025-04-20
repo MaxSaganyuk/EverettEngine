@@ -239,174 +239,6 @@ void LGL::ProcessInput()
 	}
 }
 
-double LGL::GetAnimationTimeTicks(double currentTime, LGLStructs::ModelInfo::AnimInfo& currentAnimInfo)
-{
-	double timeInTicks = currentTime * currentAnimInfo.ticksPerSecond;
-
-	return std::fmod(timeInTicks, currentAnimInfo.animDuration);
-}
-
-void LGL::InterpolateImpl(const glm::vec3& vec1, const glm::vec3& vec2, glm::vec3& resVec, float factor)
-{
-	resVec = glm::mix(vec1, vec2, factor);
-}
-
-void LGL::InterpolateImpl(const glm::quat& quat1, const glm::quat& quat2, glm::quat& resQuat, float factor)
-{
-	resQuat = glm::slerp(quat1, quat2, factor);
-}
-
-template<typename GLMType>
-void LGL::InterpolateKey(std::vector<std::pair<double, GLMType>>& keys, GLMType& res, double animTime)
-{	
-	if (keys.size() == 1)
-	{
-		res = keys.front().second;
-		return;
-	}
-
-	if (keys.size() == 2 && keys[0].second == keys[1].second)
-	{
-		res = keys.back().second;
-		return;
-	}
-
-	for (size_t i = 0; i < keys.size() - 1; ++i)
-	{
-		if (animTime < keys[i + 1].first)
-		{
-			double t1 = keys[i].first;
-			double t2 = keys[i + 1].first;
-			float factor = static_cast<float>((animTime - t1) / (t2 - t1));
-			
-			InterpolateImpl(keys[i].second, keys[i + 1].second, res, factor);
-
-			return;
-		}
-	}
-
-
-	res = keys.back().second;
-}
-
-void LGL::ParseBoneTree(
-	LGLStructs::ModelInfo::BoneTree::TreeManagerNode* currentBoneNode,
-	double animationTimeTicks,
-	size_t animIndex,
-	glm::mat4& globalInverseTransform,
-	LGLStructs::ModelInfo::AnimKeyMap& animKeyMap
-)
-{
-	LGLStructs::ModelInfo::BoneInfo& currentBone = currentBoneNode->GetValue();
-	auto& nameKeyPair = animKeyMap[currentBoneNode->GetKey()];
-
-	glm::mat4 nodeTransformation = currentBone.localTransform;
-
-	if (!nameKeyPair.empty() && nameKeyPair[animIndex].KeysExist())
-	{
-		glm::vec3 interpolPos;
-		glm::quat interpolRot;
-		glm::vec3 interpolSca;
-
-		/*
-		bool applyPos = true;
-		bool applyRot = true;
-		bool applySca = true;
-
-		applyPos = InterpolateKey(nameKeyPair[animIndex].positionKeys, interpolPos, animationTimeTicks);
-		applyRot = InterpolateKey(nameKeyPair[animIndex].rotationKeys, interpolRot, animationTimeTicks);
-		applySca = InterpolateKey(nameKeyPair[animIndex].scalingKeys, interpolSca, animationTimeTicks);
-
-		glm::mat4 translation = applyPos ? glm::translate(glm::mat4(1.0f), interpolPos) : glm::mat4(1.0f);f
-		glm::mat4 rotation = applyRot ? glm::mat4_cast(interpolRot) : glm::mat4(1.0f);
-		glm::mat4 scaling = applySca ? glm::scale(glm::mat4(1.0f), interpolSca) : glm::mat4(1.0f);
-		*/
-
-		InterpolateKey(nameKeyPair[animIndex].positionKeys, interpolPos, animationTimeTicks);
-		InterpolateKey(nameKeyPair[animIndex].rotationKeys, interpolRot, animationTimeTicks);
-		InterpolateKey(nameKeyPair[animIndex].scalingKeys, interpolSca, animationTimeTicks);
-
-		glm::mat4 translation = glm::translate(glm::mat4(1.0f), interpolPos);
-		glm::mat4 rotation = glm::mat4_cast(interpolRot);
-		glm::mat4 scaling = glm::scale(glm::mat4(1.0f), interpolSca);
-
-		nodeTransformation = translation * rotation * scaling;
-	}
-
-	LGLStructs::ModelInfo::BoneTree::TreeManagerNode* parentBoneNode = currentBoneNode->GetParentNode();
-	glm::mat4 parentTransformMatrix = parentBoneNode ? parentBoneNode->GetValue().globalTransform : glm::mat4(1.0f);
-
-	currentBone.globalTransform = parentTransformMatrix * nodeTransformation;
-	
-	if (currentBone.id != -1)
-	{
-		currentBone.finalTransform = globalInverseTransform * currentBone.globalTransform * currentBone.offsetMatrix;
-	}
-	
-	for (auto& childNodes : currentBoneNode->GetChildNodes())
-	{
-		ParseBoneTree(childNodes.second, animationTimeTicks, animIndex, globalInverseTransform, animKeyMap);
-	}
-}
-
-void LGL::CollectAllFinalTransforms(
-	LGLStructs::ModelInfo::BoneTree::TreeManagerNode* boneTreeNode,
-	std::vector<glm::mat4>& finalTransforms
-)
-{
-	int currentID = boneTreeNode->GetValue().id;
-
-	if (currentID != -1)
-	{
-		finalTransforms[currentID] = boneTreeNode->GetValue().finalTransform;
-	}
-
-	for (auto& childNodes : boneTreeNode->GetChildNodes())
-	{
-		CollectAllFinalTransforms(childNodes.second, finalTransforms);
-	}
-}
-
-void LGL::PassFinalTransformsToShader(std::vector<glm::mat4>& finalTransorms)
-{
-	int uniformValueLocation = CheckUniformValueLocation("Bones", "");
-
-	if (uniformValueLocation != -1)
-	{
-	   GLSafeExecute(glUniformMatrix4fv, uniformValueLocation, 1000, GL_FALSE, glm::value_ptr(finalTransorms[0]));
-	}
-}
-
-
-void LGL::ProcessAnimations(double currentTime)
-{
-	constexpr int animTest = 0;
-
-	std::vector<glm::mat4> finalTransforms;
-	finalTransforms.resize(1000); // redo later
-	std::fill(finalTransforms.begin(), finalTransforms.end(), glm::mat4(1.0f));
-
-	for (auto& anim : animCollection)
-	{
-		if (!anim.animInfoVect->empty())
-		{
-			double animationTimeTicks = GetAnimationTimeTicks(currentTime, anim.animInfoVect->operator[](animTest));
-
-			for (auto& childNodes : anim.boneTree->GetChildNodes())
-			{
-				ParseBoneTree(childNodes.second, animationTimeTicks, animTest, *anim.globalInverseTransform, *anim.animKeyMap);
-			}
-
-			for (auto& childNodes : anim.boneTree->GetChildNodes())
-			{
-				CollectAllFinalTransforms(childNodes.second, finalTransforms);
-			}
-		}
-	}
-
-	PassFinalTransformsToShader(finalTransforms);
-}
-
 void LGL::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
@@ -438,10 +270,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 	{
 		ContextLock
 
-		double currentTime = glfwGetTime();
-
 		ProcessInput();
-		ProcessAnimations(currentTime - startTime);
 
 		GLSafeExecute(glClearColor, background.r, background.g, background.b, background.a);
 		GLSafeExecute(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -629,8 +458,6 @@ void LGL::CreateModel(LGLStructs::ModelInfo& model)
 	{
 		CreateMesh(mesh);
 	}
-
-	animCollection.push_back({ &model.boneTree, &model.animKeyMap, &model.animInfoVect, &model.globalInverseTransform });
 }
 
 #ifdef ENABLE_OLD_MODEL_IMPORT
@@ -1078,26 +905,85 @@ void LGL::SetAssetOnOpenGLFailure(bool value)
 
 const std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators
 {
-	{ typeid(int), [](int uniformValueLocation, void* value) { glUniform1i(uniformValueLocation, *reinterpret_cast<int*>(value)); } },
-	{ typeid(float), [](int uniformValueLocation, void* value) { glUniform1f(uniformValueLocation, *reinterpret_cast<float*>(value)); } },
+	{ typeid(int), [](int uniformValueLocation, void* value) 
+	{ 
+		GLSafeExecute(glUniform1i, uniformValueLocation, *reinterpret_cast<int*>(value));
+	} },
+
+	{ typeid(unsigned int), [](int uniformValueLocation, void* value) 
+	{
+		GLSafeExecute(glUniform1ui, uniformValueLocation, *reinterpret_cast<unsigned int*>(value)); 
+	} },
+
+	{ typeid(float), [](int uniformValueLocation, void* value) 
+	{ 
+		GLSafeExecute(glUniform1f, uniformValueLocation, *reinterpret_cast<float*>(value)); 
+	} },
+
+	{ typeid(glm::vec2), [](int uniformValueLocation, void* value)
+	{
+		glm::vec2& coords = *reinterpret_cast<glm::vec2*>(value);
+		GLSafeExecute(glUniform2f, uniformValueLocation, coords.x, coords.y);
+	} },
 
 	{ typeid(glm::vec3), [](int uniformValueLocation, void* value)
 	{
-		glm::vec3* coords = reinterpret_cast<glm::vec3*>(value);
-		glUniform3f(uniformValueLocation, coords->x, coords->y, coords->z);
+		glm::vec3& coords = *reinterpret_cast<glm::vec3*>(value);
+		GLSafeExecute(glUniform3f, uniformValueLocation, coords.x, coords.y, coords.z);
 	} },
 
 	{ typeid(glm::vec4), [](int uniformValueLocation, void* value)
 	{
-		glm::vec4* coords = reinterpret_cast<glm::vec4*>(value);
-		glUniform4f(uniformValueLocation, coords->x, coords->y, coords->z, coords->w);
+		glm::vec4& coords = *reinterpret_cast<glm::vec4*>(value);
+		GLSafeExecute(glUniform4f, uniformValueLocation, coords.x, coords.y, coords.z, coords.w);
 	} },
 
 	{ typeid(glm::mat4), [](int uniformValueLocation, void* value)
 	{
-		glUniformMatrix4fv(uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<glm::mat4*>(value)));
-	} }
+		GLSafeExecute(glUniformMatrix4fv, uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<glm::mat4*>(value)));
+	} },
 
+	{ typeid(std::vector<int>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<int>& vals = *reinterpret_cast<std::vector<int>*>(value);
+		GLSafeExecute(glUniform1iv, uniformValueLocation, vals.size(), &vals[0]);
+	} },
+
+	{ typeid(std::vector<unsigned int>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<unsigned int>& vals = *reinterpret_cast<std::vector<unsigned int>*>(value);
+		GLSafeExecute(glUniform1uiv, uniformValueLocation, vals.size(), &vals[0]);
+	} },
+
+	{ typeid(std::vector<float>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<float>& vals = *reinterpret_cast<std::vector<float>*>(value);
+		GLSafeExecute(glUniform1fv, uniformValueLocation, vals.size(), &vals[0]);
+	} },
+
+	{ typeid(std::vector<glm::vec2>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::vec2>& vals = *reinterpret_cast<std::vector<glm::vec2>*>(value);
+		GLSafeExecute(glUniform2fv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::vec3>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::vec3>& vals = *reinterpret_cast<std::vector<glm::vec3>*>(value);
+		GLSafeExecute(glUniform3fv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::vec4>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::vec4>& vals = *reinterpret_cast<std::vector<glm::vec4>*>(value);
+		GLSafeExecute(glUniform4fv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::mat4>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::mat4>& vals = *reinterpret_cast<std::vector<glm::mat4>*>(value);
+		GLSafeExecute(glUniformMatrix4fv, uniformValueLocation, vals.size(), GL_FALSE, glm::value_ptr(vals[0]));
+	} }
 };
 
 
@@ -1150,9 +1036,19 @@ template LGL_API bool LGL::SetShaderUniformValue<Type>(const std::string& valueN
 template LGL_API bool LGL::SetShaderUniformValue<Type&>(const std::string& valueName, Type& value, const std::string& shaderProgramName);
 
 ShaderUniformValueExplicit(int)
+ShaderUniformValueExplicit(unsigned int)
 ShaderUniformValueExplicit(float)
+ShaderUniformValueExplicit(glm::vec2)
 ShaderUniformValueExplicit(glm::vec3)
 ShaderUniformValueExplicit(glm::vec4)
 ShaderUniformValueExplicit(glm::mat4)
+
+ShaderUniformValueExplicit(std::vector<int>)
+ShaderUniformValueExplicit(std::vector<unsigned int>)
+ShaderUniformValueExplicit(std::vector<float>)
+ShaderUniformValueExplicit(std::vector<glm::vec2>)
+ShaderUniformValueExplicit(std::vector<glm::vec3>)
+ShaderUniformValueExplicit(std::vector<glm::vec4>)
+ShaderUniformValueExplicit(std::vector<glm::mat4>)
 
 #undef ShaderUniformValueExplicit
