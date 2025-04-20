@@ -903,6 +903,8 @@ void LGL::SetAssetOnOpenGLFailure(bool value)
 	std::cout << "AssertOnFailure has been set to " << value << '\n';
 }
 
+#define UniformAdapterSection
+
 const std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators
 {
 	{ typeid(int), [](int uniformValueLocation, void* value) 
@@ -918,6 +920,42 @@ const std::unordered_map<std::type_index, std::function<void(int, void*)>> unifo
 	{ typeid(float), [](int uniformValueLocation, void* value) 
 	{ 
 		GLSafeExecute(glUniform1f, uniformValueLocation, *reinterpret_cast<float*>(value)); 
+	} },
+
+	{ typeid(glm::ivec2), [](int uniformValueLocation, void* value)
+	{
+		glm::ivec2& coords = *reinterpret_cast<glm::ivec2*>(value);
+		GLSafeExecute(glUniform2i, uniformValueLocation, coords.x, coords.y);
+	} },
+
+	{ typeid(glm::ivec3), [](int uniformValueLocation, void* value)
+	{
+		glm::ivec3& coords = *reinterpret_cast<glm::ivec3*>(value);
+		GLSafeExecute(glUniform3i, uniformValueLocation, coords.x, coords.y, coords.z);
+	} },
+
+	{ typeid(glm::ivec4), [](int uniformValueLocation, void* value)
+	{
+		glm::ivec4& coords = *reinterpret_cast<glm::ivec4*>(value);
+		GLSafeExecute(glUniform4i, uniformValueLocation, coords.x, coords.y, coords.z, coords.w);
+	} },
+
+	{ typeid(glm::uvec2), [](int uniformValueLocation, void* value)
+	{
+		glm::uvec2& coords = *reinterpret_cast<glm::uvec2*>(value);
+		GLSafeExecute(glUniform2ui, uniformValueLocation, coords.x, coords.y);
+	} },
+
+	{ typeid(glm::uvec3), [](int uniformValueLocation, void* value)
+	{
+		glm::uvec3& coords = *reinterpret_cast<glm::uvec3*>(value);
+		GLSafeExecute(glUniform3ui, uniformValueLocation, coords.x, coords.y, coords.z);
+	} },
+
+	{ typeid(glm::uvec4), [](int uniformValueLocation, void* value)
+	{
+		glm::uvec4& coords = *reinterpret_cast<glm::uvec4*>(value);
+		GLSafeExecute(glUniform4ui, uniformValueLocation, coords.x, coords.y, coords.z, coords.w);
 	} },
 
 	{ typeid(glm::vec2), [](int uniformValueLocation, void* value)
@@ -936,6 +974,16 @@ const std::unordered_map<std::type_index, std::function<void(int, void*)>> unifo
 	{
 		glm::vec4& coords = *reinterpret_cast<glm::vec4*>(value);
 		GLSafeExecute(glUniform4f, uniformValueLocation, coords.x, coords.y, coords.z, coords.w);
+	} },
+
+	{ typeid(glm::mat2), [](int uniformValueLocation, void* value)
+	{
+		GLSafeExecute(glUniformMatrix2fv, uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<glm::mat4*>(value)));
+	} },
+
+	{ typeid(glm::mat3), [](int uniformValueLocation, void* value)
+	{
+		GLSafeExecute(glUniformMatrix3fv, uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<glm::mat4*>(value)));
 	} },
 
 	{ typeid(glm::mat4), [](int uniformValueLocation, void* value)
@@ -961,6 +1009,42 @@ const std::unordered_map<std::type_index, std::function<void(int, void*)>> unifo
 		GLSafeExecute(glUniform1fv, uniformValueLocation, vals.size(), &vals[0]);
 	} },
 
+	{ typeid(std::vector<glm::ivec2>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::ivec2>& vals = *reinterpret_cast<std::vector<glm::ivec2>*>(value);
+		GLSafeExecute(glUniform2iv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::ivec3>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::ivec3>& vals = *reinterpret_cast<std::vector<glm::ivec3>*>(value);
+		GLSafeExecute(glUniform3iv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::ivec4>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::ivec4>& vals = *reinterpret_cast<std::vector<glm::ivec4>*>(value);
+		GLSafeExecute(glUniform4iv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::uvec2>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::uvec2>& vals = *reinterpret_cast<std::vector<glm::uvec2>*>(value);
+		GLSafeExecute(glUniform2uiv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::uvec3>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::uvec3>& vals = *reinterpret_cast<std::vector<glm::uvec3>*>(value);
+		GLSafeExecute(glUniform3uiv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::uvec4>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::uvec4>& vals = *reinterpret_cast<std::vector<glm::uvec4>*>(value);
+		GLSafeExecute(glUniform4uiv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
 	{ typeid(std::vector<glm::vec2>), [](int uniformValueLocation, void* value)
 	{
 		std::vector<glm::vec2>& vals = *reinterpret_cast<std::vector<glm::vec2>*>(value);
@@ -977,6 +1061,18 @@ const std::unordered_map<std::type_index, std::function<void(int, void*)>> unifo
 	{
 		std::vector<glm::vec4>& vals = *reinterpret_cast<std::vector<glm::vec4>*>(value);
 		GLSafeExecute(glUniform4fv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::mat2>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::mat2>& vals = *reinterpret_cast<std::vector<glm::mat2>*>(value);
+		GLSafeExecute(glUniformMatrix2fv, uniformValueLocation, vals.size(), GL_FALSE, glm::value_ptr(vals[0]));
+	} },
+
+	{ typeid(std::vector<glm::mat3>), [](int uniformValueLocation, void* value)
+	{
+		std::vector<glm::mat3>& vals = *reinterpret_cast<std::vector<glm::mat3>*>(value);
+		GLSafeExecute(glUniformMatrix3fv, uniformValueLocation, vals.size(), GL_FALSE, glm::value_ptr(vals[0]));
 	} },
 
 	{ typeid(std::vector<glm::mat4>), [](int uniformValueLocation, void* value)
@@ -1031,24 +1127,29 @@ bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, cons
 	return true;
 }
 
+// Produces explicit instantiation of type and vector of type
 #define ShaderUniformValueExplicit(Type) \
-template LGL_API bool LGL::SetShaderUniformValue<Type>(const std::string& valueName, Type&& value, const std::string& shaderProgramName); \
-template LGL_API bool LGL::SetShaderUniformValue<Type&>(const std::string& valueName, Type& value, const std::string& shaderProgramName);
+template LGL_API bool LGL::SetShaderUniformValue<Type>(const std::string& valueName, Type&& value, const std::string& shaderProgramName);                           \
+template LGL_API bool LGL::SetShaderUniformValue<Type&>(const std::string& valueName, Type& value, const std::string& shaderProgramName);                           \
+template LGL_API bool LGL::SetShaderUniformValue<std::vector<Type>>(const std::string& valueName, std::vector<Type>&& value, const std::string& shaderProgramName); \
+template LGL_API bool LGL::SetShaderUniformValue<std::vector<Type>&>(const std::string& valueName, std::vector<Type>& value, const std::string& shaderProgramName); 
 
 ShaderUniformValueExplicit(int)
 ShaderUniformValueExplicit(unsigned int)
 ShaderUniformValueExplicit(float)
+ShaderUniformValueExplicit(glm::ivec2)
+ShaderUniformValueExplicit(glm::ivec3)
+ShaderUniformValueExplicit(glm::ivec4)
+ShaderUniformValueExplicit(glm::uvec2)
+ShaderUniformValueExplicit(glm::uvec3)
+ShaderUniformValueExplicit(glm::uvec4)
 ShaderUniformValueExplicit(glm::vec2)
 ShaderUniformValueExplicit(glm::vec3)
 ShaderUniformValueExplicit(glm::vec4)
+ShaderUniformValueExplicit(glm::mat2)
+ShaderUniformValueExplicit(glm::mat3)
 ShaderUniformValueExplicit(glm::mat4)
 
-ShaderUniformValueExplicit(std::vector<int>)
-ShaderUniformValueExplicit(std::vector<unsigned int>)
-ShaderUniformValueExplicit(std::vector<float>)
-ShaderUniformValueExplicit(std::vector<glm::vec2>)
-ShaderUniformValueExplicit(std::vector<glm::vec3>)
-ShaderUniformValueExplicit(std::vector<glm::vec4>)
-ShaderUniformValueExplicit(std::vector<glm::mat4>)
-
 #undef ShaderUniformValueExplicit
+
+#undef UniformAdapterSection
