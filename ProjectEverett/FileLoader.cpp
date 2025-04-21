@@ -493,6 +493,7 @@ bool FileLoader::LoadModel(
 	BoneMap boneMap;
 
 	ProcessNodeForModelInfo(modelHandle->mRootNode, model, boneMap);
+	model.RecheckIfTextureless();
 	model.NormalizeAllEmptyWeights();
 
 	glm::mat4 globalTransform = glm::mat4(1.0f);

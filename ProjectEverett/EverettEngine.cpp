@@ -223,29 +223,31 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 	newModel.render = false;
 	newModel.behaviour = [this, name]()
 	{
+		// Existence of the lambda implies existence of the model
+		auto& model = MSM[name];
+
+		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(model.model.isTextureless));
+
 		LightUpdater();
 
-		if(MSM.find(name) != MSM.end())
+		for (auto& solid : model.solids)
 		{
-			for (auto& solid : MSM.at(name).solids)
+			LGLUtils::SetShaderUniformStruct(
+				*mainLGL, 
+				lightShaderValueNames[0].first, 
+				lightShaderValueNames[0].second, 
+				0, 
+				1, 
+				0.5f
+			);
+
+			glm::mat4& modelMatrix = solid.second.GetModelMatrixAddr();
+			mainLGL->SetShaderUniformValue("model", modelMatrix);
+			mainLGL->SetShaderUniformValue("inv", glm::inverse(modelMatrix));
+
+			if (SolidSim::CheckForCollision(*camera, solid.second))
 			{
-				LGLUtils::SetShaderUniformStruct(
-					*mainLGL, 
-					lightShaderValueNames[0].first, 
-					lightShaderValueNames[0].second, 
-					0, 
-					1, 
-					0.5f
-				);
-
-				glm::mat4& modelMatrix = solid.second.GetModelMatrixAddr();
-				mainLGL->SetShaderUniformValue("model", modelMatrix);
-				mainLGL->SetShaderUniformValue("inv", glm::inverse(modelMatrix));
-
-				if (SolidSim::CheckForCollision(*camera, solid.second))
-				{
-					camera->SetLastPosition();
-				}
+				camera->SetLastPosition();
 			}
 		}
 	};

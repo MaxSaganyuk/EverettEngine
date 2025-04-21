@@ -214,6 +214,8 @@ namespace LGLStructs
 		std::string shaderProgram = "0";
 		std::function<void()> behaviour = nullptr;
 
+		bool isTextureless = true;
+
 		void AddMesh(const Mesh& mesh)
 		{
 			meshes.emplace_back(MeshInfo(mesh, render, isDynamic, shaderProgram, behaviour));
@@ -241,6 +243,18 @@ namespace LGLStructs
 			}
 		}
 
+		void RecheckIfTextureless()
+		{
+			for (auto& mesh : meshes)
+			{
+				if (!mesh.mesh.textures.empty())
+				{
+					isTextureless = false;
+					break;
+				}
+			}
+		}
+
 		ModelInfo& operator=(const ModelInfo& modelInfo)
 		{
 			meshes = modelInfo.meshes;
@@ -248,6 +262,7 @@ namespace LGLStructs
 			isDynamic = modelInfo.isDynamic;
 			shaderProgram = modelInfo.shaderProgram;
 			behaviour = modelInfo.behaviour;
+			isTextureless = modelInfo.isTextureless;
 
 			ResetDefaults();
 

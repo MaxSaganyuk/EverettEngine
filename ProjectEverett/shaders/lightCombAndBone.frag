@@ -68,6 +68,8 @@ uniform PointLight pointLights[LIGHT_MAX_AMOUNT];
 uniform int spotLightAmount;
 uniform SpotLight spotLights[LIGHT_MAX_AMOUNT];
 
+uniform int textureless;
+
 vec3 AmbientLight(vec3 normal)
 {
     vec3 amb = (ambient * vec3(texture(material.diffuse, TexCoords)));
@@ -141,6 +143,12 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 
 void main()
 {
+    if(textureless == 1)
+    {
+        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        return;
+    }
+
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
@@ -161,8 +169,5 @@ void main()
         res += CalcSpotLight(spotLights[i], norm, FragPos, viewDir);
     }
 
-    // For textureless model testing
-    // FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-    
     FragColor = vec4(res, 1.0);
 }
