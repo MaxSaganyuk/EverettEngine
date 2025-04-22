@@ -128,7 +128,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	auto additionalFuncs = [this]() {
 		constexpr static size_t maxAmountOfBones = 1000;
 
-		static std::vector<glm::mat4> finalTransforms(1000, glm::mat4());
+		static std::vector<glm::mat4> finalTransforms(maxAmountOfBones, glm::mat4());
 		std::fill(finalTransforms.begin(), finalTransforms.end(), glm::mat4(1.0f));
 
 		animSystem->ProcessAnimations(
@@ -139,6 +139,17 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 
 		camera->SetPosition(CameraSim::Direction::Nowhere);
 		camera->ExecuteAllScriptFuncs();
+
+		LightUpdater();
+
+		LGLUtils::SetShaderUniformStruct(
+			*mainLGL,
+			lightShaderValueNames[0].first,
+			lightShaderValueNames[0].second,
+			0,
+			1,
+			0.5f
+		);
 	};
 
 #ifdef BONE_TEST
@@ -221,38 +232,29 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 	newModel.shaderProgram = defaultShaderProgram;
 	newModel.render = false;
-	newModel.behaviour = [this, name]()
+
+	newModel.modelBehaviour = [this, name]()
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
 
 		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(model.model.isTextureless));
+	};
 
-		LightUpdater();
+	newModel.generalMeshBehaviour = [this, name]()
+	{
+		// Existence of the lambda implies existence of the model
+		auto& model = MSM[name];
 
 		for (auto& solid : model.solids)
 		{
-			LGLUtils::SetShaderUniformStruct(
-				*mainLGL, 
-				lightShaderValueNames[0].first, 
-				lightShaderValueNames[0].second, 
-				0, 
-				1, 
-				0.5f
-			);
-
 			glm::mat4& modelMatrix = solid.second.GetModelMatrixAddr();
 			mainLGL->SetShaderUniformValue("model", modelMatrix);
 			mainLGL->SetShaderUniformValue("inv", glm::inverse(modelMatrix));
-
-			if (SolidSim::CheckForCollision(*camera, solid.second))
-			{
-				camera->SetLastPosition();
-			}
 		}
 	};
 
-	mainLGL->CreateModel(newModel);
+	mainLGL->CreateModel(name, newModel);
 
 	fileLoader->FreeTextureData();
 

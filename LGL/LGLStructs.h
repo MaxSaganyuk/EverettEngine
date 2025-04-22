@@ -209,16 +209,26 @@ namespace LGLStructs
 	struct ModelInfo
 	{
 		std::vector<MeshInfo> meshes;
-		bool render = true;
-		bool isDynamic = false;
-		std::string shaderProgram = "0";
-		std::function<void()> behaviour = nullptr;
+		bool render;
+		bool isDynamic;
+		std::string shaderProgram;
+		std::function<void()> modelBehaviour;
+ 		std::function<void()> generalMeshBehaviour;
 
 		bool isTextureless = true;
 
+		ModelInfo()
+		{
+			render = true;
+			isDynamic = false;
+			shaderProgram = "0";
+			modelBehaviour = nullptr;
+			generalMeshBehaviour = nullptr;
+		}
+
 		void AddMesh(const Mesh& mesh)
 		{
-			meshes.emplace_back(MeshInfo(mesh, render, isDynamic, shaderProgram, behaviour));
+			meshes.emplace_back(MeshInfo(mesh, render, isDynamic, shaderProgram, generalMeshBehaviour));
 		}
 
 		void ResetDefaults()
@@ -228,7 +238,7 @@ namespace LGLStructs
 				mesh.render.ResetBackup(&render);
 				mesh.isDynamic.ResetBackup(&isDynamic);
 				mesh.shaderProgram.ResetBackup(&shaderProgram);
-				mesh.behaviour.ResetBackup(&behaviour);
+				mesh.behaviour.ResetBackup(&generalMeshBehaviour);
 			}
 		}
 
@@ -261,7 +271,8 @@ namespace LGLStructs
 			render = modelInfo.render;
 			isDynamic = modelInfo.isDynamic;
 			shaderProgram = modelInfo.shaderProgram;
-			behaviour = modelInfo.behaviour;
+			modelBehaviour = modelInfo.modelBehaviour;
+			generalMeshBehaviour = modelInfo.generalMeshBehaviour;
 			isTextureless = modelInfo.isTextureless;
 
 			ResetDefaults();

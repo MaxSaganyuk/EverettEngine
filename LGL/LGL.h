@@ -48,13 +48,25 @@ private:
 	using OnPressFunction = std::function<void()>;
 	using OnReleaseFunction = std::function<void()>;
 
+	struct VAOInfo;
+	using ModelAndVAOCollection = std::pair<LGLStructs::ModelInfo*, std::vector<VAOInfo>>;
+	using ModelToVAOMap = std::map<std::string, ModelAndVAOCollection>;
+
 	// Structs for internal use
 	struct VAOInfo
 	{
-		VAO vboId = 0;
+		VAO vboId;
 		size_t pointAmount;
 		bool useIndices;
-		LGLStructs::MeshInfo* meshInfo = nullptr;
+		LGLStructs::MeshInfo* meshInfo;
+
+		VAOInfo()
+		{
+			vboId = 0;
+			pointAmount = 0;
+			useIndices = false;
+			meshInfo = nullptr;
+		}
 	};
 
 	struct ShaderInfo
@@ -108,8 +120,8 @@ public:
 #ifdef ENABLE_OLD_MODEL_IMPORT
 	LGL_API void GetMeshFromFile(const std::string& file, std::vector<LGLStructs::Vertex>& vertexes, std::vector<unsigned int>& indeces);
 #else	
-	LGL_API void CreateMesh(LGLStructs::MeshInfo& meshInfo);
-	LGL_API void CreateModel(LGLStructs::ModelInfo& model);
+	LGL_API void CreateMesh(const std::string& modelName, LGLStructs::MeshInfo& meshInfo);
+	LGL_API void CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model);
 #endif
 	LGL_API bool ConfigureTexture(const LGLStructs::Texture& texture);
 
@@ -182,7 +194,7 @@ private:
 
 	VAOInfo currentVAOToRender;
 	std::vector<VBO> VBOCollection;
-	std::vector<VAOInfo> VAOCollection;
+	ModelToVAOMap modelToVAOMap;
 	std::vector<EBO> EBOCollection;
 
 	// Shader

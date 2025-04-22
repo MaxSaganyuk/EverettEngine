@@ -55,9 +55,12 @@ LGL::LGL()
 
 LGL::~LGL()
 {
-	for (auto& VAO : VAOCollection)
+	for (auto& model : modelToVAOMap)
 	{
-		GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
+		for (auto& VAO : model.second.second)
+		{
+			GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
+		}
 	}
 	for (auto& VBO : VBOCollection)
 	{
@@ -280,60 +283,68 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			additionalSteps();
 		}
 
-		for (auto& currentVAO : VAOCollection)
+		for (auto& currentModeToProcess : modelToVAOMap)
 		{
-			if (currentVAO.meshInfo->render)
+			std::function<void()>& modelBeh = currentModeToProcess.second.first->modelBehaviour;
+			if (modelBeh)
 			{
-				currentVAOToRender = currentVAO;
+				modelBeh();
+			}
 
-				std::string shaderProgramToCheck = currentVAO.meshInfo->shaderProgram;
-				if (lastProgram != shaderProgramToCheck)
+			for (auto& currentVAO : currentModeToProcess.second.second)
+			{
+				if (currentVAO.meshInfo->render)
 				{
-					lastProgram = shaderProgramToCheck;
-					GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
-				}
+					currentVAOToRender = currentVAO;
 
-				GLSafeExecute(glBindVertexArray, currentVAO.vboId);
-
-				for (auto& texture : currentVAO.meshInfo->mesh.textures)
-				{
-					auto currentTextureIter = textureCollection.find(texture.name);
-					if (currentTextureIter != textureCollection.end())
+					std::string shaderProgramToCheck = currentVAO.meshInfo->shaderProgram;
+					if (lastProgram != shaderProgramToCheck)
 					{
-						TextureID textureID = (*currentTextureIter).second;
-						int convertedTextureType = static_cast<int>(texture.type);
-						GLSafeExecute(glActiveTexture, GL_TEXTURE0 + convertedTextureType);
-						GLSafeExecute(glBindTexture, GL_TEXTURE_2D, textureID);
-
-						textureTypesToUnbind[convertedTextureType] = true;
+						lastProgram = shaderProgramToCheck;
+						GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
 					}
-				}
 
-				std::function<void()> behaviourToCheck = currentVAO.meshInfo->behaviour;
-				if (behaviourToCheck)
-				{
-					behaviourToCheck();
-				}
+					GLSafeExecute(glBindVertexArray, currentVAO.vboId);
 
-				Render();
-
-				for (auto& textureTypeToUnbind : textureTypesToUnbind)
-				{
-					if (textureTypeToUnbind)
+					for (auto& texture : currentVAO.meshInfo->mesh.textures)
 					{
-						GLSafeExecute(glActiveTexture, GL_TEXTURE0 + textureTypeToUnbind);
-						GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
-						textureTypeToUnbind = false;
+						auto currentTextureIter = textureCollection.find(texture.name);
+						if (currentTextureIter != textureCollection.end())
+						{
+							TextureID textureID = (*currentTextureIter).second;
+							int convertedTextureType = static_cast<int>(texture.type);
+							GLSafeExecute(glActiveTexture, GL_TEXTURE0 + convertedTextureType);
+							GLSafeExecute(glBindTexture, GL_TEXTURE_2D, textureID);
+
+							textureTypesToUnbind[convertedTextureType] = true;
+						}
+					}
+
+					std::function<void()> behaviourToCheck = currentVAO.meshInfo->behaviour;
+					if (behaviourToCheck)
+					{
+						behaviourToCheck();
+					}
+
+					Render();
+
+					for (auto& textureTypeToUnbind : textureTypesToUnbind)
+					{
+						if (textureTypeToUnbind)
+						{
+							GLSafeExecute(glActiveTexture, GL_TEXTURE0 + textureTypeToUnbind);
+							GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
+							textureTypeToUnbind = false;
+						}
 					}
 				}
 			}
+
+			currentVAOToRender = {};
 		}
-		currentVAOToRender = {};
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
-		
 	}
 }
 
@@ -342,7 +353,7 @@ void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
 	background = rgba;
 }
 
-void LGL::CreateMesh(MeshInfo& meshInfo)
+void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 {
 	ContextLock
 
@@ -362,10 +373,18 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 		return steps;
 	};
 
+	if (modelToVAOMap.find(modelName) == modelToVAOMap.end())
+	{
+		assert(false && "Trying to add mesh to non existent model");
+		return;
+	}
+
+	auto& newVAOInfo = modelToVAOMap[modelName];
+
 	std::vector<size_t> steps = CollectSteps();
 
-	VAOCollection.push_back({0, false});
-	VAO* newVAO = &VAOCollection.back().vboId;
+	newVAOInfo.second.push_back({});
+	VAO* newVAO = &newVAOInfo.second.back().vboId;
 	GLSafeExecute(glGenVertexArrays, 1, newVAO);
 	GLSafeExecute(glBindVertexArray, *newVAO);
 
@@ -396,15 +415,15 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 			&meshInfo.mesh.indices[0],
 			meshInfo.isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
 		);
-		VAOCollection.back().useIndices = true;
-		VAOCollection.back().pointAmount = meshInfo.mesh.indices.size();
+		newVAOInfo.second.back().useIndices = true;
+		newVAOInfo.second.back().pointAmount = meshInfo.mesh.indices.size();
 	}
 	else
 	{
-		VAOCollection.back().pointAmount = meshInfo.mesh.vert.size();
+		newVAOInfo.second.back().pointAmount = meshInfo.mesh.vert.size();
 	}
 
-	VAOCollection.back().meshInfo = &meshInfo;
+	newVAOInfo.second.back().meshInfo = &meshInfo;
 
 
 	// The whole secton needs to be generalized more
@@ -442,8 +461,8 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//glBindVertexArray(0);
 
-	int polygons = VAOCollection.back().pointAmount / 3;
-	std::cout << "Mesh with " << VAOCollection.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
+	int polygons = newVAOInfo.second.back().pointAmount / 3;
+	std::cout << "Mesh with " << newVAOInfo.second.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
 
 	LoadAndCompileShader(meshInfo.shaderProgram);
 	for (auto& texture : meshInfo.mesh.textures)
@@ -452,11 +471,16 @@ void LGL::CreateMesh(MeshInfo& meshInfo)
 	}
 }
 
-void LGL::CreateModel(LGLStructs::ModelInfo& model)
+void LGL::CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model)
 {
+	if (modelToVAOMap.find(modelName) == modelToVAOMap.end())
+	{
+		modelToVAOMap.emplace(modelName, ModelAndVAOCollection{ &model, {} });
+	}
+
 	for (auto& mesh : model.meshes)
 	{
-		CreateMesh(mesh);
+		CreateMesh(modelName, mesh);
 	}
 }
 
