@@ -16,7 +16,7 @@
 
 static std::map<
 	std::string, 
-	std::pair<HMODULE, std::vector<std::shared_ptr<std::function<void(ISolidSim&)>>>>
+	std::pair<HMODULE, std::vector<std::shared_ptr<std::function<void(IObjectSim&)>>>>
 > dllHandleMap;
 
 void ConvertFromAssimpToGLM(const aiMatrix4x4& assimpMatrix, glm::mat4& glmMatrix)
@@ -560,7 +560,7 @@ bool FileLoader::GetScriptFuncFromDLLImpl(
 
 	if (scriptWrapperFunc)
 	{
-		auto scriptFunc = [this, scriptWrapperFunc](ISolidSim* solid)
+		auto scriptFunc = [this, scriptWrapperFunc](IObjectSim* solid)
 		{
 			std::lock_guard<std::recursive_mutex> lock(scriptWrapperLock);
 			scriptWrapperFunc(reinterpret_cast<void*>(solid));

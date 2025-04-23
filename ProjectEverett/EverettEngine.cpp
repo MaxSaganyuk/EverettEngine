@@ -387,7 +387,7 @@ void EverettEngine::SetScriptToObject(
 			scriptFuncWeakPtr
 		);
 
-		SolidSim* object = GetObjectFromMap(objectType, subtypeName, objectName);
+		ObjectSim* object = GetObjectFromMap(objectType, subtypeName, objectName);
 
 		if (object && scriptFuncWeakPtr.lock())
 		{
@@ -494,7 +494,7 @@ std::vector<glm::vec3> EverettEngine::GetObjectParamsByName(
 	const std::string& objectName
 )
 {
-	SolidSim* solid = GetObjectFromMap(objectType, subtypeName, objectName);
+	ObjectSim* solid = GetObjectFromMap(objectType, subtypeName, objectName);
 
 	if (solid)
 	{
@@ -513,7 +513,7 @@ void EverettEngine::SetObjectParamsByName(
 	const std::vector<glm::vec3>& params
 )
 {
-	SolidSim* solid = GetObjectFromMap(objectType, modelName, objectName);
+	ObjectSim* solid = GetObjectFromMap(objectType, modelName, objectName);
 
 	if (solid)
 	{
@@ -521,7 +521,10 @@ void EverettEngine::SetObjectParamsByName(
 		solid->GetScaleVectorAddr()    = params[1];
 		solid->GetFrontVectorAddr()    = params[2];
 
-		solid->ForceModelUpdate();
+		if (objectType == ObjectTypes::Solid)
+		{
+			dynamic_cast<SolidSim*>(solid)->ForceModelUpdate();
+		}
 	}
 }
 
@@ -566,29 +569,29 @@ std::vector<std::string> EverettEngine::GetSoundInDirList(const std::string& pat
 	return GetObjectsInDirList(path, {".wav"});
 }
 
-SolidSim* EverettEngine::GetObjectFromMap(
+ObjectSim* EverettEngine::GetObjectFromMap(
 	EverettEngine::ObjectTypes objectType, 
 	const std::string& subtypeName, 
 	const std::string& objectName
 )
 {
-	SolidSim* object = nullptr;
+	ObjectSim* object = nullptr;
 
 	switch (objectType)
 	{
 	case EverettEngine::ObjectTypes::Camera:
-		object = dynamic_cast<SolidSim*>(camera.get());
+		object = dynamic_cast<ObjectSim*>(camera.get());
 		break;
 	case EverettEngine::ObjectTypes::Solid:
-		object = &MSM[subtypeName].solids[objectName];
+		object = dynamic_cast<ObjectSim*>(&MSM[subtypeName].solids[objectName]);
 		break;
 	case EverettEngine::ObjectTypes::Light:
-		object = dynamic_cast<SolidSim*>(
+		object = dynamic_cast<ObjectSim*>(
 			&lights[static_cast<EverettEngine::LightTypes>(LightSim::GetTypeToName(subtypeName))][objectName]
 		);
 		break;
 	case EverettEngine::ObjectTypes::Sound:
-		object = dynamic_cast<SolidSim*>(&sounds[objectName]);
+		object = dynamic_cast<ObjectSim*>(&sounds[objectName]);
 		break;
 	default:
 		break;

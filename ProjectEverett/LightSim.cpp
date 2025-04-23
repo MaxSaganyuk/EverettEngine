@@ -30,7 +30,7 @@ LightSim::LightSim(
 	const glm::vec3& front,
 	const float speed,
 	const float range
-) : SolidSim(pos, scale, front, speed)
+) : ObjectSim(pos, scale, front, speed)
 {
 	this->lightType = lightType;
 	this->lightRange = range;

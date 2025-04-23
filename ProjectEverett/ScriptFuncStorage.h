@@ -10,7 +10,7 @@
 class ScriptFuncStorage
 {
 public:
-	using InterfaceScriptFunc = std::function<void(ISolidSim*)>;
+	using InterfaceScriptFunc = std::function<void(IObjectSim*)>;
 	using ScriptFuncSharedPtr = std::shared_ptr<InterfaceScriptFunc>;
 	using ScriptFuncWeakPtr = std::weak_ptr<InterfaceScriptFunc>;
 	using ScriptFuncMainMap = std::map<std::string, ScriptFuncSharedPtr>;
@@ -19,8 +19,8 @@ public:
 	ScriptFuncStorage();
 
 	void AddScriptFunc(const std::string& dllName, ScriptFuncWeakPtr scriptFunc);
-	void ExecuteScriptFunc(ISolidSim* object, const std::string& dllName = "");
-	void ExecuteAllScriptFuncs(ISolidSim* object);
+	void ExecuteScriptFunc(IObjectSim* object, const std::string& dllName = "");
+	void ExecuteAllScriptFuncs(IObjectSim* object);
 	bool IsScriptFuncAdded(const std::string& dllName = "");
 	bool IsScriptFuncRunnable(const std::string& dllName = "");
 

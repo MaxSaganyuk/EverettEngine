@@ -26,6 +26,7 @@
 #include "UnorderedPtrMap.h"
 
 class FileLoader;
+class ObjectSim;
 class CameraSim;
 class SolidSim;
 class LightSim;
@@ -156,7 +157,7 @@ private:
 
 	void LightUpdater();
 
-	SolidSim* GetObjectFromMap(
+	ObjectSim* GetObjectFromMap(
 		ObjectTypes objectType,
 		const std::string& subtypeName,
 		const std::string& objectName

@@ -11,7 +11,7 @@ void ScriptFuncStorage::AddScriptFunc(const std::string& dllName, ScriptFuncWeak
 	lastExecutedScriptDll = dllName;
 }
 
-void ScriptFuncStorage::ExecuteScriptFunc(ISolidSim* object, const std::string& dllName)
+void ScriptFuncStorage::ExecuteScriptFunc(IObjectSim* object, const std::string& dllName)
 {
 	if (!scriptFuncMap.empty())
 	{
@@ -24,7 +24,7 @@ void ScriptFuncStorage::ExecuteScriptFunc(ISolidSim* object, const std::string& 
 	}
 }
 
-void ScriptFuncStorage::ExecuteAllScriptFuncs(ISolidSim* object)
+void ScriptFuncStorage::ExecuteAllScriptFuncs(IObjectSim* object)
 {
 	for (auto& scriptFuncPair : scriptFuncMap)
 	{

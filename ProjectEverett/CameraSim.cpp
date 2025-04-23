@@ -9,7 +9,7 @@ CameraSim::CameraSim(
 	const float fov,
 	const float speed
 )
-	: SolidSim(pos, scale, front, speed), 
+	: SolidSim(pos, scale, front, speed),
 	  windowHeight(windowHeight), 
 	  windowWidth(windowWidth), 
 	  fov(fov)
@@ -44,8 +44,8 @@ glm::mat4& CameraSim::GetProjectionMatrixAddr()
 
 void CameraSim::SetPosition(Direction dir)
 {
-	glm::vec3& pos = SolidSim::GetPositionVectorAddr();
-	glm::vec3& front = SolidSim::GetFrontVectorAddr();
+	glm::vec3& pos = ObjectSim::GetPositionVectorAddr();
+	glm::vec3& front = ObjectSim::GetFrontVectorAddr();
 
 	SolidSim::SetPosition(dir, { 1.0f, static_cast<float>(mode == Mode::Fly), 1.0f });
 

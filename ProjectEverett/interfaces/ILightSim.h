@@ -3,7 +3,7 @@
 #include "ISolidSim.h"
 #include "ILightSim.h"
 
-class ILightSim : virtual public ISolidSim
+class ILightSim : virtual public IObjectSim
 {
 public:
 	enum LightTypes

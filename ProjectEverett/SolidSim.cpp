@@ -1,34 +1,5 @@
 #include "SolidSim.h"
 
-void SolidSim::CheckRotationLimits()
-{
-	auto CheckRotation = [](float& toCheck, float min, float max)
-	{
-		if (toCheck > fullRotation)
-		{
-			toCheck = 0.0f;
-		}
-		if (toCheck < -fullRotation)
-		{
-			toCheck = 0.0f;
-		}
-
-		if (toCheck > max)
-		{
-			toCheck = max;
-		}
-		else if (toCheck < min)
-		{
-			toCheck = min;
-		}
-	};
-
-	for (int i = 0; i <3; ++i)
-	{
-		CheckRotation(rotate[i], rotationLimits.first[i], rotationLimits.second[i]);
-	}
-}
-
 void SolidSim::ForceModelUpdate()
 {
 	ResetModelMatrix();
@@ -54,55 +25,10 @@ SolidSim::SolidSim(
 	const glm::vec3& front,
 	const float speed
 )
-	: front(front), pos(pos), scale(scale), speed(speed)
+	: ObjectSim(pos, scale, front, speed)
 {
 	ResetModelMatrix();
-
-	rotate = { 0.0f, 0.0f, 0.0f };
-
-	rotationLimits = {
-		{0.0f, 0.0f, 0.0f},
-		{fullRotation, fullRotation, fullRotation}
-	};
-
-	up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	lastPos = pos;
-
-	lastBlocker = false;
-	ghostMode = false;
-
-	for (size_t i = 0; i < realDirectionAmount; ++i)
-	{
-		disabledDirs[static_cast<Direction>(i)] = false;
-	}
-
 	type = SolidType::Static;
-}
-
-void SolidSim::SetGhostMode(bool val)
-{
-	ghostMode = val;
-}
-
-bool SolidSim::IsGhostMode() const
-{
-	return ghostMode;
-}
-
-void SolidSim::SetType(SolidType type)
-{
-	this->type = type;
-}
-
-void SolidSim::InvertMovement()
-{
-	speed = (-1) * speed;
-}
-
-bool SolidSim::IsMovementInverted()
-{
-	return speed < 0.0f;
 }
 
 glm::mat4& SolidSim::GetModelMatrixAddr()
@@ -110,110 +36,14 @@ glm::mat4& SolidSim::GetModelMatrixAddr()
 	return model;
 }
 
-glm::vec3& SolidSim::GetFrontVectorAddr()
+void SolidSim::SetType(SolidType type)
 {
-	return front;
+	this->type = type;
 }
 
-glm::vec3& SolidSim::GetPositionVectorAddr()
+void SolidSim::SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis)
 {
-	return pos;
-}
-
-glm::vec3& SolidSim::GetUpVectorAddr()
-{
-	return up;
-}
-
-glm::vec3& SolidSim::GetScaleVectorAddr()
-{
-	return scale;
-}
-
-void SolidSim::DisableDirection(Direction dir)
-{
-	disabledDirs[dir] = true;
-}
-
-void SolidSim::EnableDirection(Direction dir)
-{
-	disabledDirs[dir] = false;
-}
-
-void SolidSim::EnableAllDirections()
-{
-	for (size_t i = 0; i < realDirectionAmount; ++i)
-	{
-		disabledDirs[static_cast<Direction>(i)] = false;
-	}
-}
-
-size_t SolidSim::GetAmountOfDisabledDirs()
-{
-	size_t amount = 0;
-
-	for (size_t i = 0; i < realDirectionAmount; ++i)
-	{
-		amount += disabledDirs[static_cast<Direction>(i)];
-	}
-
-	return amount;
-}
-
-SolidSim::Direction SolidSim::GetLastDirection()
-{
-	return lastDir;
-}
-
-void SolidSim::SetLastPosition()
-{
-	pos = lastPos;
-}
-
-void SolidSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
-{
-	if (disabledDirs[dir])
-	{
-		return;
-	}
-
-	if (!lastBlocker && dir != Direction::Nowhere)
-	{
-		lastBlocker = true;
-		lastDir = dir;
-		lastPos = pos;
-	}
-	else
-	{
-		lastBlocker = false;
-	}
-
-	switch (dir)
-	{
-	case Direction::Forward:
-		pos += speed * front * limitAxis;
-		break;
-	case Direction::Backward:
-		pos -= speed * front * limitAxis;
-		break;
-	case Direction::Left:
-		pos -= speed * glm::normalize(glm::cross(front, up));
-		break;
-	case Direction::Right:
-		pos += speed * glm::normalize(glm::cross(front, up));
-		break;
-	case Direction::Up:
-		pos += glm::abs(speed * glm::normalize(front * up));
-		break;
-	case Direction::Down:
-		pos -= glm::abs(speed * glm::normalize(front * up));
-		break;
-	case Direction::Nowhere:
-		return;
-	default:
-		assert(false && "Undefined direction");
-		return;
-	}
+	ObjectSim::SetPosition(dir, limitAxis);
 
 	if (type == SolidType::Static && lastBlocker)
 	{
@@ -225,11 +55,6 @@ void SolidSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		model[3].y = pos.y;
 		model[3].z = pos.z;
 	}
-}
-
-void SolidSim::LimitRotations(const Rotation& min, const Rotation& max)
-{
-	rotationLimits = { min, max };
 }
 
 void SolidSim::Rotate(const Rotation& toRotate)
@@ -250,13 +75,7 @@ void SolidSim::Rotate(const Rotation& toRotate)
 		}
 	}
 
-	CheckRotationLimits();
-
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(rotate.GetPitch())) * cos(glm::radians(rotate.GetYaw()));
-	direction.y = sin(glm::radians(rotate.GetYaw()));
-	direction.z = sin(glm::radians(rotate.GetPitch())) * cos(glm::radians(rotate.GetYaw()));
-	front = glm::normalize(direction);
+	ObjectSim::Rotate(toRotate);
 }
 
 bool SolidSim::CheckForCollision(const SolidSim& solid1, const SolidSim& solid2)
@@ -282,29 +101,4 @@ bool SolidSim::CheckForCollision(const SolidSim& solid1, const SolidSim& solid2)
 bool SolidSim::CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2)
 {
 	return CheckForCollision(solid1, solid2);
-}
-
-void SolidSim::AddScriptFunc(const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc)
-{
-	scriptFuncStorage.AddScriptFunc(dllName, scriptFunc);
-}
-
-void SolidSim::ExecuteScriptFunc(const std::string& dllName)
-{
-	scriptFuncStorage.ExecuteScriptFunc(this, dllName);
-}
-
-void SolidSim::ExecuteAllScriptFuncs()
-{
-	scriptFuncStorage.ExecuteAllScriptFuncs(this);
-}
-
-bool SolidSim::IsScriptFuncAdded(const std::string& dllName)
-{
-	return scriptFuncStorage.IsScriptFuncAdded(dllName);
-}
-
-bool SolidSim::IsScriptFuncRunnable(const std::string& dllName)
-{
-	return scriptFuncStorage.IsScriptFuncRunnable(dllName);
 }

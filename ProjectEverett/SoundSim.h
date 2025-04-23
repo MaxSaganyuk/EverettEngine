@@ -14,7 +14,7 @@
 #include "interfaces/ISoundSim.h"
 #include "CameraSim.h"
 
-class SoundSim : public SolidSim, public ISoundSim
+class SoundSim : public ObjectSim, public ISoundSim
 {
 	static ALCdevice* device;
 	static CameraSim* camera;

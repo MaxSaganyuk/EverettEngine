@@ -2,7 +2,7 @@
 
 #include "ISolidSim.h"
 
-class ISoundSim : virtual public ISolidSim
+class ISoundSim : virtual public IObjectSim
 {
 	virtual void Play() = 0;
 	virtual bool IsPlaying() = 0;
