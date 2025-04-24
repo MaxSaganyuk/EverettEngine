@@ -929,181 +929,84 @@ void LGL::SetAssetOnOpenGLFailure(bool value)
 
 #define UniformAdapterSection
 
+#define ShaderCallTypeAndVector(type, glFunc)                                                        \
+{ typeid(type), [](int uniformValueLocation, void* value)                                            \
+{                                                                                                    \
+	GLSafeExecute(glFunc, uniformValueLocation, *reinterpret_cast<type*>(value));                    \
+}                                                                                                    \
+},                                                                                                   \
+{ typeid(std::vector<type>), [](int uniformValueLocation, void* value)								 \
+{																									 \
+	std::vector<type>& vals = *reinterpret_cast<std::vector<type>*>(value);							 \
+	GLSafeExecute(##glFunc##v, uniformValueLocation, vals.size(), &vals[0]);						 \
+}																									 \
+}                                                                                                    
+
+#define ShaderCallVectVector(type, glFunc)                                                           \
+{ typeid(std::vector<type>), [](int uniformValueLocation, void* value)                               \
+{                                                                                                    \
+	std::vector<type>& vals = *reinterpret_cast<std::vector<type>*>(value);                          \
+	GLSafeExecute(##glFunc##v, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));          \
+}                                                                                                    \
+}
+
+#define ShaderCallVect2AndVector(type, glFunc)                                                       \
+{ typeid(type), [](int uniformValueLocation, void* value)                                            \
+{                                                                                                    \
+	type& coords = *reinterpret_cast<type*>(value);                                                  \
+	GLSafeExecute(glFunc, uniformValueLocation, coords.x, coords.y);                                 \
+}                                                                                                    \
+},                                                                                                   \
+ShaderCallVectVector(type, glFunc)                                                                   \
+
+#define ShaderCallVect3AndVector(type, glFunc)                                                       \
+{ typeid(type), [](int uniformValueLocation, void* value)                                            \
+{                                                                                                    \
+	type& coords = *reinterpret_cast<type*>(value);                                                  \
+	GLSafeExecute(glFunc, uniformValueLocation, coords.x, coords.y, coords.z);                       \
+}                                                                                                    \
+},                                                                                                   \
+ShaderCallVectVector(type, glFunc)
+
+#define ShaderCallVect4AndVector(type, glFunc)                                                       \
+{ typeid(type), [](int uniformValueLocation, void* value)                                            \
+{                                                                                                    \
+	type& coords = *reinterpret_cast<type*>(value);                                                  \
+	GLSafeExecute(glFunc, uniformValueLocation, coords.x, coords.y, coords.z, coords.w);             \
+}                                                                                                    \
+},                                                                                                   \
+ShaderCallVectVector(type, glFunc)
+
+#define ShaderCallMatrixAndVector(type, glFunc)                                                                 \
+{ typeid(type), [](int uniformValueLocation, void* value)                                                       \
+{                                                                                                               \
+	GLSafeExecute(glFunc, uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<type*>(value)));  \
+}                                                                                                               \
+},                                                                                                              \
+{ typeid(std::vector<type>), [](int uniformValueLocation, void* value)                                          \
+{                                                                                                               \
+	std::vector<type>& vals = *reinterpret_cast<std::vector<type>*>(value);                                     \
+	GLSafeExecute(##glFunc, uniformValueLocation, vals.size(), GL_FALSE, glm::value_ptr(vals[0]));              \
+}                                                                                                               \
+}
+
 const std::unordered_map<std::type_index, std::function<void(int, void*)>> uniformValueLocators
 {
-	{ typeid(int), [](int uniformValueLocation, void* value) 
-	{ 
-		GLSafeExecute(glUniform1i, uniformValueLocation, *reinterpret_cast<int*>(value));
-	} },
-
-	{ typeid(unsigned int), [](int uniformValueLocation, void* value) 
-	{
-		GLSafeExecute(glUniform1ui, uniformValueLocation, *reinterpret_cast<unsigned int*>(value)); 
-	} },
-
-	{ typeid(float), [](int uniformValueLocation, void* value) 
-	{ 
-		GLSafeExecute(glUniform1f, uniformValueLocation, *reinterpret_cast<float*>(value)); 
-	} },
-
-	{ typeid(glm::ivec2), [](int uniformValueLocation, void* value)
-	{
-		glm::ivec2& coords = *reinterpret_cast<glm::ivec2*>(value);
-		GLSafeExecute(glUniform2i, uniformValueLocation, coords.x, coords.y);
-	} },
-
-	{ typeid(glm::ivec3), [](int uniformValueLocation, void* value)
-	{
-		glm::ivec3& coords = *reinterpret_cast<glm::ivec3*>(value);
-		GLSafeExecute(glUniform3i, uniformValueLocation, coords.x, coords.y, coords.z);
-	} },
-
-	{ typeid(glm::ivec4), [](int uniformValueLocation, void* value)
-	{
-		glm::ivec4& coords = *reinterpret_cast<glm::ivec4*>(value);
-		GLSafeExecute(glUniform4i, uniformValueLocation, coords.x, coords.y, coords.z, coords.w);
-	} },
-
-	{ typeid(glm::uvec2), [](int uniformValueLocation, void* value)
-	{
-		glm::uvec2& coords = *reinterpret_cast<glm::uvec2*>(value);
-		GLSafeExecute(glUniform2ui, uniformValueLocation, coords.x, coords.y);
-	} },
-
-	{ typeid(glm::uvec3), [](int uniformValueLocation, void* value)
-	{
-		glm::uvec3& coords = *reinterpret_cast<glm::uvec3*>(value);
-		GLSafeExecute(glUniform3ui, uniformValueLocation, coords.x, coords.y, coords.z);
-	} },
-
-	{ typeid(glm::uvec4), [](int uniformValueLocation, void* value)
-	{
-		glm::uvec4& coords = *reinterpret_cast<glm::uvec4*>(value);
-		GLSafeExecute(glUniform4ui, uniformValueLocation, coords.x, coords.y, coords.z, coords.w);
-	} },
-
-	{ typeid(glm::vec2), [](int uniformValueLocation, void* value)
-	{
-		glm::vec2& coords = *reinterpret_cast<glm::vec2*>(value);
-		GLSafeExecute(glUniform2f, uniformValueLocation, coords.x, coords.y);
-	} },
-
-	{ typeid(glm::vec3), [](int uniformValueLocation, void* value)
-	{
-		glm::vec3& coords = *reinterpret_cast<glm::vec3*>(value);
-		GLSafeExecute(glUniform3f, uniformValueLocation, coords.x, coords.y, coords.z);
-	} },
-
-	{ typeid(glm::vec4), [](int uniformValueLocation, void* value)
-	{
-		glm::vec4& coords = *reinterpret_cast<glm::vec4*>(value);
-		GLSafeExecute(glUniform4f, uniformValueLocation, coords.x, coords.y, coords.z, coords.w);
-	} },
-
-	{ typeid(glm::mat2), [](int uniformValueLocation, void* value)
-	{
-		GLSafeExecute(glUniformMatrix2fv, uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<glm::mat4*>(value)));
-	} },
-
-	{ typeid(glm::mat3), [](int uniformValueLocation, void* value)
-	{
-		GLSafeExecute(glUniformMatrix3fv, uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<glm::mat4*>(value)));
-	} },
-
-	{ typeid(glm::mat4), [](int uniformValueLocation, void* value)
-	{
-		GLSafeExecute(glUniformMatrix4fv, uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<glm::mat4*>(value)));
-	} },
-
-	{ typeid(std::vector<int>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<int>& vals = *reinterpret_cast<std::vector<int>*>(value);
-		GLSafeExecute(glUniform1iv, uniformValueLocation, vals.size(), &vals[0]);
-	} },
-
-	{ typeid(std::vector<unsigned int>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<unsigned int>& vals = *reinterpret_cast<std::vector<unsigned int>*>(value);
-		GLSafeExecute(glUniform1uiv, uniformValueLocation, vals.size(), &vals[0]);
-	} },
-
-	{ typeid(std::vector<float>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<float>& vals = *reinterpret_cast<std::vector<float>*>(value);
-		GLSafeExecute(glUniform1fv, uniformValueLocation, vals.size(), &vals[0]);
-	} },
-
-	{ typeid(std::vector<glm::ivec2>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::ivec2>& vals = *reinterpret_cast<std::vector<glm::ivec2>*>(value);
-		GLSafeExecute(glUniform2iv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::ivec3>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::ivec3>& vals = *reinterpret_cast<std::vector<glm::ivec3>*>(value);
-		GLSafeExecute(glUniform3iv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::ivec4>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::ivec4>& vals = *reinterpret_cast<std::vector<glm::ivec4>*>(value);
-		GLSafeExecute(glUniform4iv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::uvec2>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::uvec2>& vals = *reinterpret_cast<std::vector<glm::uvec2>*>(value);
-		GLSafeExecute(glUniform2uiv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::uvec3>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::uvec3>& vals = *reinterpret_cast<std::vector<glm::uvec3>*>(value);
-		GLSafeExecute(glUniform3uiv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::uvec4>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::uvec4>& vals = *reinterpret_cast<std::vector<glm::uvec4>*>(value);
-		GLSafeExecute(glUniform4uiv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::vec2>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::vec2>& vals = *reinterpret_cast<std::vector<glm::vec2>*>(value);
-		GLSafeExecute(glUniform2fv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::vec3>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::vec3>& vals = *reinterpret_cast<std::vector<glm::vec3>*>(value);
-		GLSafeExecute(glUniform3fv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::vec4>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::vec4>& vals = *reinterpret_cast<std::vector<glm::vec4>*>(value);
-		GLSafeExecute(glUniform4fv, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::mat2>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::mat2>& vals = *reinterpret_cast<std::vector<glm::mat2>*>(value);
-		GLSafeExecute(glUniformMatrix2fv, uniformValueLocation, vals.size(), GL_FALSE, glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::mat3>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::mat3>& vals = *reinterpret_cast<std::vector<glm::mat3>*>(value);
-		GLSafeExecute(glUniformMatrix3fv, uniformValueLocation, vals.size(), GL_FALSE, glm::value_ptr(vals[0]));
-	} },
-
-	{ typeid(std::vector<glm::mat4>), [](int uniformValueLocation, void* value)
-	{
-		std::vector<glm::mat4>& vals = *reinterpret_cast<std::vector<glm::mat4>*>(value);
-		GLSafeExecute(glUniformMatrix4fv, uniformValueLocation, vals.size(), GL_FALSE, glm::value_ptr(vals[0]));
-	} }
+	ShaderCallTypeAndVector  (int,          glUniform1i),
+	ShaderCallTypeAndVector  (unsigned int, glUniform1ui),
+	ShaderCallTypeAndVector  (float,        glUniform1f),
+	ShaderCallVect2AndVector (glm::ivec2,   glUniform2i),
+	ShaderCallVect3AndVector (glm::ivec3,   glUniform3i),
+	ShaderCallVect4AndVector (glm::ivec4,   glUniform4i),
+	ShaderCallVect2AndVector (glm::uvec2,   glUniform2ui),
+	ShaderCallVect3AndVector (glm::uvec3,   glUniform3ui),
+	ShaderCallVect4AndVector (glm::uvec4,   glUniform4ui),
+	ShaderCallVect2AndVector (glm::vec2,    glUniform2f),
+	ShaderCallVect3AndVector (glm::vec3,    glUniform3f),
+	ShaderCallVect4AndVector (glm::vec4,    glUniform4f),
+	ShaderCallMatrixAndVector(glm::mat2,    glUniformMatrix2fv),
+	ShaderCallMatrixAndVector(glm::mat3,    glUniformMatrix3fv),
+	ShaderCallMatrixAndVector(glm::mat4,    glUniformMatrix4fv),
 };
 
 
@@ -1173,6 +1076,13 @@ ShaderUniformValueExplicit(glm::vec4)
 ShaderUniformValueExplicit(glm::mat2)
 ShaderUniformValueExplicit(glm::mat3)
 ShaderUniformValueExplicit(glm::mat4)
+
+#undef ShaderCallTypeAndVector
+#undef ShaderCallVectVector
+#undef ShaderCallVect2AndVector
+#undef ShaderCallVect3AndVector
+#undef ShaderCallVect4AndVector
+#undef ShaderCallMatrixAndVector
 
 #undef ShaderUniformValueExplicit
 
