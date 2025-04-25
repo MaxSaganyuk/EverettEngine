@@ -30,18 +30,20 @@
 #define EVERETT_EXPORT
 #include "EverettEngine.h"
 
+#include "SolidToModelManager.h"
+
 //#define BONE_TEST
 
 struct EverettEngine::ModelSolidInfo
 {
-	LGLStructs::ModelInfo model;
-	AnimSystem::ModelAnim modelAnim;
+	SolidToModelManager::FullModelInfo model;
 	std::map<std::string, SolidSim> solids;
 };
 
 EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 {
 	{"material", { "diffuse", "specular", "shininess" }},
+
 	{"pointLights",
 		{
 			"position", "diffuse",
@@ -218,8 +220,8 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 {
 	auto resPair = MSM.emplace(name, std::move(ModelSolidInfo{}));
 	
-	LGLStructs::ModelInfo& newModel = MSM[name].model;
-	AnimSystem::ModelAnim& newModelAnim = MSM[name].modelAnim;
+	LGLStructs::ModelInfo& newModel = MSM[name].model.first;
+	AnimSystem::ModelAnim& newModelAnim = MSM[name].model.second;
 
 	if (!fileLoader->LoadModel(path, name, newModel, newModelAnim))
 	{
@@ -238,17 +240,21 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
 
-		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(model.model.isTextureless));
+		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(model.model.first.isTextureless));
 	};
 
-	newModel.generalMeshBehaviour = [this, name]()
+	newModel.generalMeshBehaviour = [this, name](int meshIndex)
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
 
+		glm::mat4 emptyMatrix = glm::mat4();
+
 		for (auto& solid : model.solids)
 		{
-			glm::mat4& modelMatrix = solid.second.GetModelMatrixAddr();
+			glm::mat4& modelMatrix = solid.second.GetModelMeshVisibility(meshIndex)
+				? solid.second.GetModelMatrixAddr() : emptyMatrix;
+
 			mainLGL->SetShaderUniformValue("model", modelMatrix);
 			mainLGL->SetShaderUniformValue("inv", glm::inverse(modelMatrix));
 		}
@@ -269,9 +275,11 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 	);
 	if (resPair.second)
 	{
-		MSM[modelName].model.render = true;
+		MSM[modelName].model.first.render = true;
 
 		CheckAndAddToNameTracker((*resPair.first).first);
+
+		MSM[modelName].solids[solidName].SetBackwardsModelAccess(MSM[modelName].model);
 
 		return true;
 	}

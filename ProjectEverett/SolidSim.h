@@ -9,6 +9,8 @@
 #include <string>
 #include <functional>
 
+#include "SolidToModelManager.h"
+
 #include "interfaces/ISolidSim.h"
 
 class SolidSim : public ObjectSim, public ISolidSim
@@ -16,6 +18,7 @@ class SolidSim : public ObjectSim, public ISolidSim
 private:
 	glm::mat4 model;
 	SolidType type;
+	SolidToModelManager STMM;
 
 	void ResetModelMatrix(const Rotation& toRotate = {});
 public:
@@ -31,6 +34,16 @@ public:
 	void SetType(SolidType type) override;
 	void SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis) override;
 	void Rotate(const Rotation& toRotate) override;
+	
+	// Solid to model access section
+	void SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model);
+	std::vector<std::string> GetModelMeshNames() override;
+	size_t GetMeshAmount() override;
+	void SetAllMeshVisibility(bool value) override;
+	void SetModelMeshVisibility(const std::string name, bool value) override;
+	void SetModelMeshVisibility(size_t index, bool value) override;
+	bool GetModelMeshVisibility(const std::string name) override;
+	bool GetModelMeshVisibility(size_t index) override;
 	
 	static bool CheckForCollision(const SolidSim& solid1, const SolidSim& solid2);
 	bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) override;

@@ -102,3 +102,42 @@ bool SolidSim::CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid
 {
 	return CheckForCollision(solid1, solid2);
 }
+
+size_t SolidSim::GetMeshAmount()
+{
+	return STMM.GetMeshAmount();
+}
+void SolidSim::SetAllMeshVisibility(bool value)
+{
+	STMM.SetAllMeshVisibility(value);
+}
+
+void SolidSim::SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model)
+{
+	STMM.InitializeSTMM(model);
+}
+
+std::vector<std::string> SolidSim::GetModelMeshNames()
+{
+	return STMM.GetMeshNames();
+}
+
+void SolidSim::SetModelMeshVisibility(const std::string name, bool value)
+{
+	STMM.SetMeshVisibility(name, value);
+}
+
+void SolidSim::SetModelMeshVisibility(size_t index, bool value)
+{
+	STMM.SetMeshVisibility(index, value);
+}
+
+bool SolidSim::GetModelMeshVisibility(const std::string name)
+{
+	return STMM.GetMeshVisibility(name);
+}
+
+bool SolidSim::GetModelMeshVisibility(size_t index)
+{
+	return STMM.GetMeshVisibility(index);
+}

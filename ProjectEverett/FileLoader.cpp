@@ -348,7 +348,7 @@ void FileLoader::ProcessNodeForModelInfo(
 	for (size_t i = 0; i < nodeHandle->mNumMeshes; ++i)
 	{
 		aiMesh* meshHandle = modelHandle->mMeshes[nodeHandle->mMeshes[i]];
-		model.AddMesh(ProcessMesh(meshHandle, boneMap));
+		model.AddMesh(ProcessMesh(meshHandle, boneMap), meshHandle->mName.C_Str());
 	}
 
 	for (size_t i = 0; i < nodeHandle->mNumChildren; ++i)

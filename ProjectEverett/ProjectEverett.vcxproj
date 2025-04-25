@@ -164,7 +164,7 @@
     <ClInclude Include="interfaces\ISolidSim.h" />
     <ClInclude Include="interfaces\ISoundSim.h" />
     <ClInclude Include="MazeGen.h" />
-    <ClInclude Include="ModelSim.h" />
+    <ClInclude Include="SolidToModelManager.h" />
     <ClInclude Include="ObjectSim.h" />
     <ClInclude Include="ScriptFuncStorage.h" />
     <ClInclude Include="SolidSim.h" />
@@ -187,6 +187,7 @@
     <ClCompile Include="ObjectSim.cpp" />
     <ClCompile Include="ScriptFuncStorage.cpp" />
     <ClCompile Include="SolidSim.cpp" />
+    <ClCompile Include="SolidToModelManager.cpp" />
     <ClCompile Include="SoundSim.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="stb_image.cpp" />

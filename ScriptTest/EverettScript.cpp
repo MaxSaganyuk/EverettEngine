@@ -21,6 +21,12 @@ CameraScriptLoop()
 ScriptObjectInit(Rise1, ISolidSim)
 {
 	interState.charInter = &objectRise1;
+	interState.charInter->SetAllMeshVisibility(true);
+
+	for (size_t i = 20; i < 30; ++i)
+	{
+		interState.charInter->SetModelMeshVisibility(i, false);
+	}
 }
 
 ScriptObjectInit(Spot0, ILightSim)

@@ -283,16 +283,18 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			additionalSteps();
 		}
 
-		for (auto& currentModeToProcess : modelToVAOMap)
+		for (auto& currentModelToProcess : modelToVAOMap)
 		{
-			std::function<void()>& modelBeh = currentModeToProcess.second.first->modelBehaviour;
+			std::function<void()>& modelBeh = currentModelToProcess.second.first->modelBehaviour;
 			if (modelBeh)
 			{
 				modelBeh();
 			}
 
-			for (auto& currentVAO : currentModeToProcess.second.second)
+			for (size_t meshIndex = 0; meshIndex < currentModelToProcess.second.second.size(); ++meshIndex)
 			{
+				auto& currentVAO = currentModelToProcess.second.second[meshIndex];
+
 				if (currentVAO.meshInfo->render)
 				{
 					currentVAOToRender = currentVAO;
@@ -320,10 +322,10 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 						}
 					}
 
-					std::function<void()> behaviourToCheck = currentVAO.meshInfo->behaviour;
+					std::function<void(int)> behaviourToCheck = currentVAO.meshInfo->behaviour;
 					if (behaviourToCheck)
 					{
-						behaviourToCheck();
+						behaviourToCheck(meshIndex);
 					}
 
 					Render();
