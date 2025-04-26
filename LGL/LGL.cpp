@@ -231,13 +231,23 @@ void LGL::ProcessInput()
 	{
 		int retCode = glfwGetKey(window, interact.first);
 
-		if (retCode == GLFW_PRESS && interact.second.first)
+		if (retCode == GLFW_PRESS)
 		{
-			interact.second.first();
+			interact.second.pressed = true;
+
+			if (interact.second.pressedFunc)
+			{
+				interact.second.pressedFunc();
+			}
 		}
-		else if (retCode == GLFW_RELEASE && interact.second.second)
+		else if (retCode == GLFW_RELEASE && interact.second.pressed)
 		{
-			interact.second.second();
+			interact.second.pressed = false;
+
+			if (interact.second.releasedFunc)
+			{
+				interact.second.releasedFunc();
+			}
 		}
 	}
 }
@@ -873,9 +883,13 @@ bool LGL::LoadAndCompileShader(const std::string& name)
 	return shaderInfoCollection[name].size() && CreateShaderProgram(name);
 }
 
-void LGL::SetInteractable(int keyID, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc)
+void LGL::SetInteractable(
+	int keyID,
+	const std::function<void()>& pressedFunc,
+	const std::function<void()>& releasedFunc
+)
 {
-	interactCollection[keyID] = {preFunc, relFunc};
+	interactCollection[keyID] = { false, pressedFunc, releasedFunc };
 	
 	std::cout << "Interactable for keyId " << keyID << " set\n";
 }

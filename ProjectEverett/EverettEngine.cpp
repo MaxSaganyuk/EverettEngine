@@ -530,7 +530,9 @@ bool EverettEngine::IsKeyScriptSet(
 	const std::string& dllName
 )
 {
-	return keyScriptFuncMap[keyName].first.IsScriptFuncRunnable(dllName);
+	auto& currentKeyPair = keyScriptFuncMap[keyName];
+
+	return currentKeyPair.first.IsScriptFuncRunnable(dllName) || currentKeyPair.second.IsScriptFuncRunnable(dllName);
 }
 
 std::vector<std::string> EverettEngine::GetObjectsInDirList(

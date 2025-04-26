@@ -45,9 +45,6 @@ private:
 	using TextureID = unsigned int;
 	using TextureData = unsigned char*;
 
-	using OnPressFunction = std::function<void()>;
-	using OnReleaseFunction = std::function<void()>;
-
 	struct VAOInfo;
 	using ModelAndVAOCollection = std::pair<LGLStructs::ModelInfo*, std::vector<VAOInfo>>;
 	using ModelToVAOMap = std::map<std::string, ModelAndVAOCollection>;
@@ -73,6 +70,13 @@ private:
 	{
 		Shader shaderId;
 		ShaderCode shaderCode;
+	};
+
+	struct InteractableInfo
+	{
+		bool pressed;
+		std::function<void()> pressedFunc;
+		std::function<void()> releasedFunc;
 	};
 
 	class LGLEnumInterpreter
@@ -135,7 +139,11 @@ public:
 
 	LGL_API void CaptureMouse(bool value);
 
-	LGL_API void SetInteractable(int key, const OnPressFunction& preFunc, const OnReleaseFunction& relFunc = nullptr);
+	LGL_API void SetInteractable(
+		int keyID, 
+		const std::function<void()>& pressedFunc, 
+		const std::function<void()>& releasedFunc = nullptr
+	);
 	
 	LGL_API static std::string ConvertKeyTo(int keyId);
 	LGL_API static int         ConvertKeyTo(const std::string& keyName);
@@ -211,7 +219,7 @@ private:
 
 	std::vector<std::string> uniformErrorAntispam;
 
-	std::map<size_t, std::pair<OnPressFunction, OnReleaseFunction>> interactCollection;
+	std::map<size_t, InteractableInfo> interactCollection;
 
 	std::unordered_set<size_t> uniformLocationTracker;
 };
