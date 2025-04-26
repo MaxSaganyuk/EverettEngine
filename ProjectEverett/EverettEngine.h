@@ -25,6 +25,12 @@
 #include "WindowHandleHolder.h"
 #include "UnorderedPtrMap.h"
 
+#include "interfaces/IObjectSim.h"
+#include "interfaces/ISolidSim.h"
+#include "interfaces/ILightSim.h"
+#include "interfaces/ISoundSim.h"
+#include "interfaces/ICameraSim.h"
+
 class FileLoader;
 class ObjectSim;
 class CameraSim;
@@ -80,6 +86,25 @@ public:
 	EVERETT_API bool CreateSolid(const std::string& modelName, const std::string& solidName);
 	EVERETT_API bool CreateLight(const std::string& lightName, LightTypes lightType);
 	EVERETT_API bool CreateSound(const std::string& path, const std::string& soundName);
+
+	EVERETT_API IObjectSim& GetObjectInterface(
+		ObjectTypes objectType,
+		const std::string& subtypeName,
+		const std::string& objectName
+	);
+	EVERETT_API ISolidSim& GetSolidInterface(
+		const std::string& modelName,
+		const std::string& solidName
+	);
+	EVERETT_API ILightSim& GetLightInterface(
+		const std::string& lightTypeName,
+		const std::string& lightName
+	);
+	EVERETT_API ISoundSim& GetSoundInterface(
+		const std::string& soundName
+	);
+	EVERETT_API ICameraSim& GetCameraInterface();
+
 
 	EVERETT_API std::vector<glm::vec3> GetObjectParamsByName(
 		ObjectTypes objectType,

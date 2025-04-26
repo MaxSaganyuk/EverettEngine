@@ -269,17 +269,16 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 bool EverettEngine::CreateSolid(const std::string& modelName, const std::string& solidName)
 {
-	auto resPair = MSM[modelName].solids.emplace(
-		solidName, camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr()
+	SolidSim newSolid(camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
+	newSolid.SetBackwardsModelAccess(MSM[modelName].model);
 
-	);
+	auto resPair = MSM[modelName].solids.emplace(solidName, std::move(newSolid));
+
 	if (resPair.second)
 	{
 		MSM[modelName].model.first.render = true;
 
 		CheckAndAddToNameTracker((*resPair.first).first);
-
-		MSM[modelName].solids[solidName].SetBackwardsModelAccess(MSM[modelName].model);
 
 		return true;
 	}
@@ -329,6 +328,44 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 
 	return false;
 }
+
+EVERETT_API IObjectSim& EverettEngine::GetObjectInterface(
+	ObjectTypes objectType,
+	const std::string& subtypeName,
+	const std::string& objectName
+)
+{
+	return *dynamic_cast<IObjectSim*>(GetObjectFromMap(objectType, subtypeName, objectName));
+}
+
+EVERETT_API ISolidSim& EverettEngine::GetSolidInterface(
+	const std::string& modelName,
+	const std::string& solidName
+)
+{
+	return *dynamic_cast<ISolidSim*>(GetObjectFromMap(ObjectTypes::Solid, modelName, solidName));
+}
+
+EVERETT_API ILightSim& EverettEngine::GetLightInterface(
+	const std::string& lightTypeName,
+	const std::string& lightName
+)
+{
+	return *dynamic_cast<ILightSim*>(GetObjectFromMap(ObjectTypes::Light, lightTypeName, lightName));
+}
+
+EVERETT_API ISoundSim& EverettEngine::GetSoundInterface(
+	const std::string& soundName
+)
+{
+	return *dynamic_cast<ISoundSim*>(GetObjectFromMap(ObjectTypes::Sound, "", soundName));
+}
+
+EVERETT_API ICameraSim& EverettEngine::GetCameraInterface()
+{
+	return *dynamic_cast<ICameraSim*>(GetObjectFromMap(ObjectTypes::Camera, "", ""));
+}
+
 
 void EverettEngine::LightUpdater()
 {

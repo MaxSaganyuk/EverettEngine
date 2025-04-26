@@ -35,7 +35,8 @@ CObjectEditDialog::CObjectEditDialog(
 	engineRef(engine), 
 	objectType(objectTypeP),
 	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : ""),
-	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : "")
+	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
+	currentSolidInterface(nullptr)
 {
 }
 
@@ -56,6 +57,10 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT8, objectInfoEdits[2][1]);
 	DDX_Control(pDX, IDC_EDIT9, objectInfoEdits[2][2]);
 
+	DDX_Control(pDX, IDC_COMBO2, meshComboBox);
+	DDX_Control(pDX, IDC_CHECK3, meshVisCheck);
+	DDX_Control(pDX, IDC_MESH_TEXT, meshText);
+	DDX_Control(pDX, IDC_MODEL_PROP_TEXT, modelPropText);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -69,6 +74,26 @@ CString CObjectEditDialog::GenerateTitle()
 	return titleRes;
 }
 
+void CObjectEditDialog::SetupModelParams()
+{
+	bool modelParamsShow = objectType == EverettEngine::ObjectTypes::Solid;
+
+	meshComboBox.ShowWindow(modelParamsShow);
+	meshVisCheck.ShowWindow(modelParamsShow);
+	meshText.ShowWindow(modelParamsShow);
+	modelPropText.ShowWindow(modelParamsShow);
+
+	if (modelParamsShow)
+	{
+		currentSolidInterface = &engineRef.GetSolidInterface(subtypeName, objectName);
+
+		std::vector<std::string> meshNames = currentSolidInterface->GetModelMeshNames();
+		for (auto& meshName : meshNames)
+		{
+			meshComboBox.AddString(CA2T(meshName.c_str()));
+		}
+	}
+}
 
 BOOL CObjectEditDialog::OnInitDialog()
 {
@@ -78,11 +103,15 @@ BOOL CObjectEditDialog::OnInitDialog()
 
 	SetObjectParams(engineRef.GetObjectParamsByName(objectType, subtypeName, objectName));
 
+	SetupModelParams();
+
 	return true;
 }
 
 BEGIN_MESSAGE_MAP(CObjectEditDialog, DLLLoaderCommon)
 	ON_BN_CLICKED(IDC_BUTTON1, &CObjectEditDialog::OnUpdateParamsButtonClick)
+	ON_BN_CLICKED(IDC_CHECK3, &CObjectEditDialog::OnBnClickedCheck3)
+	ON_CBN_SELCHANGE(IDC_COMBO2, &CObjectEditDialog::OnMeshCBSelChange)
 END_MESSAGE_MAP()
 
 
@@ -123,4 +152,14 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 		objectName, 
 		valuesToSet
 	);
+}
+
+void CObjectEditDialog::OnBnClickedCheck3()
+{
+	currentSolidInterface->SetModelMeshVisibility(meshComboBox.GetCurSel(), meshVisCheck.GetCheck());
+}
+
+void CObjectEditDialog::OnMeshCBSelChange()
+{
+	meshVisCheck.SetCheck(currentSolidInterface->GetModelMeshVisibility(meshComboBox.GetCurSel()));
 }

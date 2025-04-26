@@ -34,6 +34,7 @@ private:
 
 	void SetObjectParams(const std::vector<glm::vec3>& params);
 	CString GenerateTitle();
+	void SetupModelParams();
 
 	EverettEngine& engineRef;
 
@@ -45,10 +46,19 @@ private:
 
 	std::string chosenObjectName;
 
+	// Model property objects
+	CStatic meshText;
+	CStatic modelPropText;
+	CComboBox meshComboBox;
+	CButton meshVisCheck;
+	ISolidSim* currentSolidInterface;
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnUpdateParamsButtonClick();
+	afx_msg void OnBnClickedCheck3();
+	afx_msg void OnMeshCBSelChange();
 };
