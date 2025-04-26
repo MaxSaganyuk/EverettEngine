@@ -36,7 +36,7 @@ CObjectEditDialog::CObjectEditDialog(
 	objectType(objectTypeP),
 	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : ""),
 	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
-	currentSolidInterface(nullptr)
+	currentObjectInterface(*engineRef.GetObjectInterface(objectType, subtypeName, objectName))
 {
 }
 
@@ -85,9 +85,8 @@ void CObjectEditDialog::SetupModelParams()
 
 	if (modelParamsShow)
 	{
-		currentSolidInterface = &engineRef.GetSolidInterface(subtypeName, objectName);
 
-		std::vector<std::string> meshNames = currentSolidInterface->GetModelMeshNames();
+		std::vector<std::string> meshNames = dynamic_cast<ISolidSim&>(currentObjectInterface).GetModelMeshNames();
 		for (auto& meshName : meshNames)
 		{
 			meshComboBox.AddString(CA2T(meshName.c_str()));
@@ -101,7 +100,11 @@ BOOL CObjectEditDialog::OnInitDialog()
 
 	SetWindowText(GenerateTitle());
 
-	SetObjectParams(engineRef.GetObjectParamsByName(objectType, subtypeName, objectName));
+	SetObjectParams({
+		currentObjectInterface.GetPositionVectorAddr(),
+		currentObjectInterface.GetScaleVectorAddr(),
+		currentObjectInterface.GetFrontVectorAddr()
+	});
 
 	SetupModelParams();
 
@@ -146,20 +149,26 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 		}
 	}
 
-	engineRef.SetObjectParamsByName(
-		objectType, 
-		subtypeName, 
-		objectName, 
-		valuesToSet
-	);
+	currentObjectInterface.GetPositionVectorAddr() = valuesToSet[0];
+	currentObjectInterface.GetScaleVectorAddr()    = valuesToSet[1];
+	currentObjectInterface.GetFrontVectorAddr()    = valuesToSet[2];
+
+	if (objectType == EverettEngine::ObjectTypes::Solid)
+	{
+		dynamic_cast<ISolidSim&>(currentObjectInterface).ForceModelUpdate();
+	}
 }
 
 void CObjectEditDialog::OnBnClickedCheck3()
 {
-	currentSolidInterface->SetModelMeshVisibility(meshComboBox.GetCurSel(), meshVisCheck.GetCheck());
+	dynamic_cast<ISolidSim&>(currentObjectInterface).SetModelMeshVisibility(
+		meshComboBox.GetCurSel(), meshVisCheck.GetCheck()
+	);
 }
 
 void CObjectEditDialog::OnMeshCBSelChange()
 {
-	meshVisCheck.SetCheck(currentSolidInterface->GetModelMeshVisibility(meshComboBox.GetCurSel()));
+	meshVisCheck.SetCheck(
+		dynamic_cast<ISolidSim&>(currentObjectInterface).GetModelMeshVisibility(meshComboBox.GetCurSel())
+	);
 }

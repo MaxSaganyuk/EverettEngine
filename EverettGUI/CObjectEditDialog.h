@@ -51,7 +51,7 @@ private:
 	CStatic modelPropText;
 	CComboBox meshComboBox;
 	CButton meshVisCheck;
-	ISolidSim* currentSolidInterface;
+	IObjectSim& currentObjectInterface;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support

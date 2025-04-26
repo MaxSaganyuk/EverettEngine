@@ -329,41 +329,41 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 	return false;
 }
 
-EVERETT_API IObjectSim& EverettEngine::GetObjectInterface(
+EVERETT_API IObjectSim* EverettEngine::GetObjectInterface(
 	ObjectTypes objectType,
 	const std::string& subtypeName,
 	const std::string& objectName
 )
 {
-	return *dynamic_cast<IObjectSim*>(GetObjectFromMap(objectType, subtypeName, objectName));
+	return dynamic_cast<IObjectSim*>(GetObjectFromMap(objectType, subtypeName, objectName));
 }
 
-EVERETT_API ISolidSim& EverettEngine::GetSolidInterface(
+EVERETT_API ISolidSim* EverettEngine::GetSolidInterface(
 	const std::string& modelName,
 	const std::string& solidName
 )
 {
-	return *dynamic_cast<ISolidSim*>(GetObjectFromMap(ObjectTypes::Solid, modelName, solidName));
+	return dynamic_cast<ISolidSim*>(GetObjectFromMap(ObjectTypes::Solid, modelName, solidName));
 }
 
-EVERETT_API ILightSim& EverettEngine::GetLightInterface(
+EVERETT_API ILightSim* EverettEngine::GetLightInterface(
 	const std::string& lightTypeName,
 	const std::string& lightName
 )
 {
-	return *dynamic_cast<ILightSim*>(GetObjectFromMap(ObjectTypes::Light, lightTypeName, lightName));
+	return dynamic_cast<ILightSim*>(GetObjectFromMap(ObjectTypes::Light, lightTypeName, lightName));
 }
 
-EVERETT_API ISoundSim& EverettEngine::GetSoundInterface(
+EVERETT_API ISoundSim* EverettEngine::GetSoundInterface(
 	const std::string& soundName
 )
 {
-	return *dynamic_cast<ISoundSim*>(GetObjectFromMap(ObjectTypes::Sound, "", soundName));
+	return dynamic_cast<ISoundSim*>(GetObjectFromMap(ObjectTypes::Sound, "", soundName));
 }
 
-EVERETT_API ICameraSim& EverettEngine::GetCameraInterface()
+EVERETT_API ICameraSim* EverettEngine::GetCameraInterface()
 {
-	return *dynamic_cast<ICameraSim*>(GetObjectFromMap(ObjectTypes::Camera, "", ""));
+	return dynamic_cast<ICameraSim*>(GetObjectFromMap(ObjectTypes::Camera, "", ""));
 }
 
 
@@ -531,46 +531,6 @@ bool EverettEngine::IsKeyScriptSet(
 )
 {
 	return keyScriptFuncMap[keyName].first.IsScriptFuncRunnable(dllName);
-}
-
-std::vector<glm::vec3> EverettEngine::GetObjectParamsByName(
-	EverettEngine::ObjectTypes objectType,
-	const std::string& subtypeName, 
-	const std::string& objectName
-)
-{
-	ObjectSim* solid = GetObjectFromMap(objectType, subtypeName, objectName);
-
-	if (solid)
-	{
-		return { solid->GetPositionVectorAddr(), solid->GetScaleVectorAddr(), solid->GetFrontVectorAddr() };
-	}
-	else
-	{
-		return { {} };
-	}
-}
-
-void EverettEngine::SetObjectParamsByName(
-	EverettEngine::ObjectTypes objectType,
-	const std::string& modelName,
-	const std::string& objectName,
-	const std::vector<glm::vec3>& params
-)
-{
-	ObjectSim* solid = GetObjectFromMap(objectType, modelName, objectName);
-
-	if (solid)
-	{
-		solid->GetPositionVectorAddr() = params[0];
-		solid->GetScaleVectorAddr()    = params[1];
-		solid->GetFrontVectorAddr()    = params[2];
-
-		if (objectType == ObjectTypes::Solid)
-		{
-			dynamic_cast<SolidSim*>(solid)->ForceModelUpdate();
-		}
-	}
 }
 
 std::vector<std::string> EverettEngine::GetObjectsInDirList(
