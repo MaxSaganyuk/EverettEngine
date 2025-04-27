@@ -32,6 +32,8 @@
 
 #include "SolidToModelManager.h"
 
+#include "ShaderGenerator.h"
+
 //#define BONE_TEST
 
 struct EverettEngine::ModelSolidInfo
@@ -95,7 +97,6 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 
 	mainLGL->SetAssetOnOpenGLFailure(true);
 #if _DEBUG
-	std::string debugShaderPath = "\\..\\ProjectEverett\\shaders";
 	mainLGL->SetShaderFolder(fileLoader->GetCurrentDir() + debugShaderPath);
 #endif
 	camera = std::make_unique<CameraSim>(windowHeight, windowWidth);;
@@ -128,9 +129,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->CaptureMouse(true);
 
 	auto additionalFuncs = [this]() {
-		constexpr static size_t maxAmountOfBones = 1000;
-
-		static std::vector<glm::mat4> finalTransforms(maxAmountOfBones, glm::mat4());
+		std::vector<glm::mat4> finalTransforms(animSystem->GetTotalBoneAmount(), glm::mat4());
 		std::fill(finalTransforms.begin(), finalTransforms.end(), glm::mat4(1.0f));
 
 		animSystem->ProcessAnimations(
@@ -234,6 +233,24 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 	newModel.shaderProgram = defaultShaderProgram;
 	newModel.render = false;
+
+	static bool generatedShader = false; // Temporary, needs to be removed after shader program reloading implemented
+	if (!generatedShader)
+	{
+		ShaderGenerator shaderGen;
+#ifdef _DEBUG
+		std::string filePath = fileLoader->GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
+
+		shaderGen.LoadPreSources(filePath);
+		shaderGen.SetValueToDefine("BONE_AMOUNT", newModelAnim.boneAmount);
+		shaderGen.GenerateShaderFiles(filePath);
+
+		generatedShader = true;
+#else
+#error Shader file generation is not implemented fo release configuration
+#endif
+	}
+
 
 	newModel.modelBehaviour = [this, name]()
 	{

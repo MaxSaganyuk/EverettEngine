@@ -164,6 +164,7 @@
     <ClInclude Include="interfaces\ISolidSim.h" />
     <ClInclude Include="interfaces\ISoundSim.h" />
     <ClInclude Include="MazeGen.h" />
+    <ClInclude Include="ShaderGenerator.h" />
     <ClInclude Include="SolidToModelManager.h" />
     <ClInclude Include="ObjectSim.h" />
     <ClInclude Include="ScriptFuncStorage.h" />
@@ -186,6 +187,7 @@
     <ClCompile Include="MazeGen.cpp" />
     <ClCompile Include="ObjectSim.cpp" />
     <ClCompile Include="ScriptFuncStorage.cpp" />
+    <ClCompile Include="ShaderGenerator.cpp" />
     <ClCompile Include="SolidSim.cpp" />
     <ClCompile Include="SolidToModelManager.cpp" />
     <ClCompile Include="SoundSim.cpp" />
@@ -207,8 +209,8 @@
     <None Include="shaders\lightArea.vert" />
     <None Include="shaders\lightComb.frag" />
     <None Include="shaders\lightComb.vert" />
-    <None Include="shaders\lightCombAndBone.frag" />
-    <None Include="shaders\lightCombAndBone.vert" />
+    <None Include="shaders\lightCombAndBone.efrag" />
+    <None Include="shaders\lightCombAndBone.evert" />
     <None Include="shaders\lightDir.frag" />
     <None Include="shaders\lightDir.vert" />
     <None Include="shaders\lightPoint.frag" />

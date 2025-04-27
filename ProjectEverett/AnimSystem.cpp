@@ -141,4 +141,10 @@ void AnimSystem::ProcessAnimations(double currentTime, std::vector<glm::mat4>& f
 void AnimSystem::AddModelAnim(ModelAnim& modelAnim)
 {
 	animCollection.push_back(&modelAnim);
+	totalBoneAmount += modelAnim.boneAmount;
+}
+
+size_t AnimSystem::GetTotalBoneAmount()
+{
+	return totalBoneAmount;
 }

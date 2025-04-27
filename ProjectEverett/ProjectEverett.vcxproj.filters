@@ -90,6 +90,9 @@
     <ClInclude Include="ObjectSim.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderGenerator.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
@@ -135,6 +138,9 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="SolidToModelManager.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderGenerator.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
@@ -202,10 +208,10 @@
     <None Include="shaders\threeColor.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\lightCombAndBone.vert">
+    <None Include="shaders\lightCombAndBone.evert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\lightCombAndBone.frag">
+    <None Include="shaders\lightCombAndBone.efrag">
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\boneTest.frag">

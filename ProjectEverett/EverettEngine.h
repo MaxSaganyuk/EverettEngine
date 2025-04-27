@@ -154,6 +154,9 @@ public:
 
 	EVERETT_API std::string GetAvailableObjectName(const std::string& name);
 private:
+#ifdef _DEBUG
+	std::string debugShaderPath = "\\..\\ProjectEverett\\shaders";
+#endif
 	std::string defaultShaderProgram;
 	std::chrono::system_clock::time_point startTime;
 

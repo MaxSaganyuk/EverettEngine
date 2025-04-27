@@ -54,6 +54,7 @@ public:
 
 	struct ModelAnim
 	{
+		size_t boneAmount;
 		BoneTree boneTree;
 		AnimKeyMap animKeyMap;
 		AnimInfoVect animInfoVect;
@@ -62,6 +63,7 @@ public:
 
 	void ProcessAnimations(double currentTime, std::vector<glm::mat4>& finalTransforms);
 	void AddModelAnim(ModelAnim& modelAnim);
+	size_t GetTotalBoneAmount();
 private:
 	double GetAnimationTimeTicks(double currentTime, AnimInfo& currentAnimInfo);
 
@@ -82,4 +84,5 @@ private:
 	);
 
 	std::vector<ModelAnim*> animCollection;
+	size_t totalBoneAmount = 0;
 };

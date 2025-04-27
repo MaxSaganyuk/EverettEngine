@@ -18,7 +18,7 @@ uniform mat4 view;
 uniform mat4 proj;
 uniform mat4 inv;
 
-#define BONE_AMOUNT 25
+#genDefine BONE_AMOUNT
 uniform mat4 Bones[BONE_AMOUNT];
 
 void main()

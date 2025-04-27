@@ -496,6 +496,8 @@ bool FileLoader::LoadModel(
 	model.RecheckIfTextureless();
 	model.NormalizeAllEmptyWeights();
 
+	modelAnim.boneAmount = boneMap.size();
+
 	glm::mat4 globalTransform = glm::mat4(1.0f);
 	std::string rootNodeName = modelHandle->mRootNode->mName.C_Str();
 	modelAnim.boneTree.AddRootNode(rootNodeName, {});
