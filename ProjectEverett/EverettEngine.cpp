@@ -129,9 +129,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->CaptureMouse(true);
 
 	auto additionalFuncs = [this]() {
-		std::vector<glm::mat4> finalTransforms(animSystem->GetTotalBoneAmount(), glm::mat4());
-		std::fill(finalTransforms.begin(), finalTransforms.end(), glm::mat4(1.0f));
-
+		std::vector<glm::mat4> finalTransforms(animSystem->GetTotalBoneAmount(), glm::mat4(1.0f));
 		animSystem->ProcessAnimations(
 			std::chrono::duration<double>(std::chrono::system_clock::now() - startTime).count(), finalTransforms
 		);
@@ -234,23 +232,16 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 	newModel.shaderProgram = defaultShaderProgram;
 	newModel.render = false;
 
-	static bool generatedShader = false; // Temporary, needs to be removed after shader program reloading implemented
-	if (!generatedShader)
-	{
-		ShaderGenerator shaderGen;
+	ShaderGenerator shaderGen;
 #ifdef _DEBUG
-		std::string filePath = fileLoader->GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
+	std::string filePath = fileLoader->GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
 
-		shaderGen.LoadPreSources(filePath);
-		shaderGen.SetValueToDefine("BONE_AMOUNT", newModelAnim.boneAmount);
-		shaderGen.GenerateShaderFiles(filePath);
-
-		generatedShader = true;
+	shaderGen.LoadPreSources(filePath);
+	shaderGen.SetValueToDefine("BONE_AMOUNT", animSystem->GetTotalBoneAmount());
+	shaderGen.GenerateShaderFiles(filePath);
 #else
 #error Shader file generation is not implemented fo release configuration
 #endif
-	}
-
 
 	newModel.modelBehaviour = [this, name]()
 	{
@@ -258,6 +249,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 		auto& model = MSM[name];
 
 		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(model.model.first.isTextureless));
+		mainLGL->SetShaderUniformValue("startingBoneIndex", static_cast<int>(model.model.second.startingBoneIndex));
 	};
 
 	newModel.generalMeshBehaviour = [this, name](int meshIndex)
@@ -278,6 +270,10 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 	};
 
 	mainLGL->CreateModel(name, newModel);
+	if (MSM.size() > 1)
+	{
+		mainLGL->RecompileShader(defaultShaderProgram);
+	}
 
 	fileLoader->FreeTextureData();
 

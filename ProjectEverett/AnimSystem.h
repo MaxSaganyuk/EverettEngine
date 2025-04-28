@@ -55,6 +55,7 @@ public:
 	struct ModelAnim
 	{
 		size_t boneAmount;
+		size_t startingBoneIndex;
 		BoneTree boneTree;
 		AnimKeyMap animKeyMap;
 		AnimInfoVect animInfoVect;
@@ -80,6 +81,7 @@ private:
 	);
 	void CollectAllFinalTransforms(
 		BoneTree::TreeManagerNode* boneTreeNode,
+		size_t startingBoneIndex,
 		std::vector<glm::mat4>& finalTransforms
 	);
 

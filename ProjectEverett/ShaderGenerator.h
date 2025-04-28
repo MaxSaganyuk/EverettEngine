@@ -15,7 +15,7 @@ public:
 	std::vector<std::string> GetValuesToDefine();
 
 	template<typename Type>
-	void SetValueToDefine(const std::string& valueName, Type& value);
+	void SetValueToDefine(const std::string& valueName, Type&& value);
 
 	void GenerateShaderFiles(const std::string& path);
 private:
@@ -40,7 +40,7 @@ private:
 };
 
 template<typename Type>
-void ShaderGenerator::SetValueToDefine(const std::string& valueName, Type& value)
+void ShaderGenerator::SetValueToDefine(const std::string& valueName, Type&& value)
 {
 	for (auto& collectionOfNames : lineToSubstMap)
 	{

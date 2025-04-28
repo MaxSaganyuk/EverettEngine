@@ -862,6 +862,31 @@ void LGL::SetShaderFolder(const std::string& path)
 	shaderPath = path;
 }
 
+void LGL::RecompileShader(const std::string& shaderName)
+{
+	ContextLock
+
+	DeleteShader(shaderName);
+
+	shaderInfoCollection.erase(shaderName);
+	shaderProgramCollection.erase(shaderName);
+
+	LoadAndCompileShader(shaderName);
+}
+
+void LGL::DeleteShader(const std::string& shaderName)
+{
+	lastProgram.clear();
+	GLSafeExecute(glUseProgram, 0);
+
+	for (auto& shaderInfo : shaderInfoCollection[shaderName])
+	{
+		GLSafeExecute(glDeleteShader, shaderInfo.shaderId);
+	}
+
+	GLSafeExecute(glDeleteProgram, shaderProgramCollection[shaderName]);
+}
+
 bool LGL::LoadAndCompileShader(const std::string& name)
 {
 	if (shaderProgramCollection.find(name) != shaderProgramCollection.end())
@@ -1055,7 +1080,8 @@ template<typename Type>
 bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, const std::string& shaderProgramName)
 {
 	int uniformValueLocation = CheckUniformValueLocation(valueName, shaderProgramName);
-	if (uniformValueLocation == -1)
+
+	if (uniformValueLocation == -1 || lastProgram.empty())
 	{
 		return false;
 	}

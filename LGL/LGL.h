@@ -151,6 +151,7 @@ public:
 	LGL_API void SetAssetOnOpenGLFailure(bool value);
 
 	LGL_API void SetShaderFolder(const std::string& path);
+	LGL_API void RecompileShader(const std::string& shaderName);
 
 	//Callback setters - Pass nothing to make callback self-contained
 	LGL_API void SetCursorPositionCallback(std::function<void(double, double)> callbackFunc);
@@ -164,6 +165,8 @@ public:
 private:
 	bool InitGLAD();
 	void InitCallbacks();
+	;
+	void DeleteShader(const std::string& shaderName);
 
 	int CheckUniformValueLocation(const std::string& valueName, const std::string& shaderProgramName);
 
