@@ -342,7 +342,7 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 	return false;
 }
 
-EVERETT_API IObjectSim* EverettEngine::GetObjectInterface(
+IObjectSim* EverettEngine::GetObjectInterface(
 	ObjectTypes objectType,
 	const std::string& subtypeName,
 	const std::string& objectName
@@ -351,7 +351,7 @@ EVERETT_API IObjectSim* EverettEngine::GetObjectInterface(
 	return dynamic_cast<IObjectSim*>(GetObjectFromMap(objectType, subtypeName, objectName));
 }
 
-EVERETT_API ISolidSim* EverettEngine::GetSolidInterface(
+ISolidSim* EverettEngine::GetSolidInterface(
 	const std::string& modelName,
 	const std::string& solidName
 )
@@ -359,7 +359,7 @@ EVERETT_API ISolidSim* EverettEngine::GetSolidInterface(
 	return dynamic_cast<ISolidSim*>(GetObjectFromMap(ObjectTypes::Solid, modelName, solidName));
 }
 
-EVERETT_API ILightSim* EverettEngine::GetLightInterface(
+ILightSim* EverettEngine::GetLightInterface(
 	const std::string& lightTypeName,
 	const std::string& lightName
 )
@@ -367,14 +367,14 @@ EVERETT_API ILightSim* EverettEngine::GetLightInterface(
 	return dynamic_cast<ILightSim*>(GetObjectFromMap(ObjectTypes::Light, lightTypeName, lightName));
 }
 
-EVERETT_API ISoundSim* EverettEngine::GetSoundInterface(
+ISoundSim* EverettEngine::GetSoundInterface(
 	const std::string& soundName
 )
 {
 	return dynamic_cast<ISoundSim*>(GetObjectFromMap(ObjectTypes::Sound, "", soundName));
 }
 
-EVERETT_API ICameraSim* EverettEngine::GetCameraInterface()
+ICameraSim* EverettEngine::GetCameraInterface()
 {
 	return dynamic_cast<ICameraSim*>(GetObjectFromMap(ObjectTypes::Camera, "", ""));
 }
