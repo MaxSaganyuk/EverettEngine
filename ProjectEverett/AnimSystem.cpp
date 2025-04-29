@@ -118,22 +118,23 @@ void AnimSystem::CollectAllFinalTransforms(
 
 void AnimSystem::ProcessAnimations(double currentTime, std::vector<glm::mat4>& finalTransforms)
 {
-	constexpr int animTest = 0;
-
-	for (auto& anim : animCollection)
+	for (auto& model : modelAnimCollection)
 	{
-		if (!anim->animInfoVect.empty())
+		if (!model->animInfoVect.empty())
 		{
-			double animationTimeTicks = GetAnimationTimeTicks(currentTime, anim->animInfoVect[animTest]);
-
-			for (auto& childNodes : anim->boneTree.GetChildNodes())
+			for (size_t animIndex = 0; animIndex < model->animInfoVect.size(); ++animIndex)
 			{
-				ParseBoneTree(childNodes.second, animationTimeTicks, animTest, anim->globalInverseTransform, anim->animKeyMap);
-			}
+				double animationTimeTicks = GetAnimationTimeTicks(currentTime, model->animInfoVect[animIndex]);
 
-			for (auto& childNodes : anim->boneTree.GetChildNodes())
-			{
-				CollectAllFinalTransforms(childNodes.second, anim->startingBoneIndex, finalTransforms);
+				for (auto& childNodes : model->boneTree.GetChildNodes())
+				{
+					ParseBoneTree(childNodes.second, animationTimeTicks, animIndex, model->globalInverseTransform, model->animKeyMap);
+				}
+
+				for (auto& childNodes : model->boneTree.GetChildNodes())
+				{
+					CollectAllFinalTransforms(childNodes.second, model->animInfoVect[animIndex].startingBoneIndex, finalTransforms);
+				}
 			}
 		}
 	}
@@ -141,9 +142,13 @@ void AnimSystem::ProcessAnimations(double currentTime, std::vector<glm::mat4>& f
 
 void AnimSystem::AddModelAnim(ModelAnim& modelAnim)
 {
-	animCollection.push_back(&modelAnim);
-	modelAnim.startingBoneIndex = totalBoneAmount;
-	totalBoneAmount += modelAnim.boneAmount;
+	modelAnimCollection.push_back(&modelAnim);
+
+	for (auto& animInfo : modelAnim.animInfoVect)
+	{
+		animInfo.startingBoneIndex = totalBoneAmount;
+		totalBoneAmount += modelAnim.boneAmount;
+	}
 }
 
 size_t AnimSystem::GetTotalBoneAmount()

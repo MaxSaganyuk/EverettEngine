@@ -435,7 +435,7 @@ void FileLoader::LoadAnimations(
 
 		if (animHandle)
 		{
-			animInfoVect.push_back({ animHandle->mDuration , animHandle->mTicksPerSecond });
+			animInfoVect.push_back({ animHandle->mName.C_Str(), animHandle->mDuration , animHandle->mTicksPerSecond });
 
 			for (size_t channelIndex = 0; channelIndex < animHandle->mNumChannels; ++channelIndex)
 			{

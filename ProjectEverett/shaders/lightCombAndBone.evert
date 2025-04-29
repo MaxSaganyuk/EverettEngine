@@ -20,17 +20,27 @@ uniform mat4 inv;
 
 #genDefine BONE_AMOUNT
 uniform mat4 Bones[BONE_AMOUNT];
+uniform int animationless;
 uniform int startingBoneIndex;
 
 void main()
 {
-    // Bone skinning
-    mat4 BoneTransform = Bones[startingBoneIndex + aBoneIDs[0]] * aWeights[0];
-    BoneTransform     += Bones[startingBoneIndex + aBoneIDs[1]] * aWeights[1];
-    BoneTransform     += Bones[startingBoneIndex + aBoneIDs[2]] * aWeights[2];
-    BoneTransform     += Bones[startingBoneIndex + aBoneIDs[3]] * aWeights[3];
+    vec4 skinnedPos;
 
-    vec4 skinnedPos = BoneTransform * vec4(aPos, 1.0);
+    // Bone skinning
+    if(animationless == 0)
+    {
+        mat4 BoneTransform = Bones[startingBoneIndex + aBoneIDs[0]] * aWeights[0];
+        BoneTransform     += Bones[startingBoneIndex + aBoneIDs[1]] * aWeights[1];
+        BoneTransform     += Bones[startingBoneIndex + aBoneIDs[2]] * aWeights[2];
+        BoneTransform     += Bones[startingBoneIndex + aBoneIDs[3]] * aWeights[3];
+
+        skinnedPos = BoneTransform * vec4(aPos, 1.0);
+    }
+    else
+    {
+        skinnedPos = vec4(aPos, 1.0);
+    }
 
     // Final transforms
     vec4 worldPos = model * skinnedPos;

@@ -29,6 +29,16 @@ ScriptObjectInit(Rise1, ISolidSim)
 	}
 }
 
+ScriptObjectInit(stickAnimTest, ISolidSim)
+{
+	objectstickAnimTest.SetModelAnimation(0);
+}
+
+ScriptObjectInit(stickAnimTest1, ISolidSim)
+{
+	objectstickAnimTest1.SetModelAnimation(1);
+}
+
 ScriptObjectInit(Spot0, ILightSim)
 {
 	interState.lightInter = &objectSpot0;

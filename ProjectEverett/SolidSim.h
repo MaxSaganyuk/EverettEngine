@@ -44,6 +44,12 @@ public:
 	void SetModelMeshVisibility(size_t index, bool value) override;
 	bool GetModelMeshVisibility(const std::string name) override;
 	bool GetModelMeshVisibility(size_t index) override;
+
+	std::vector<std::string> GetModelAnimationNames() override;
+	size_t GetModelAnimationAmount() override;
+	void SetModelAnimation(size_t index) override;
+	void SetModelAnimation(const std::string& name) override;
+	size_t GetModelAnimation() override;
 	
 	static bool CheckForCollision(const SolidSim& solid1, const SolidSim& solid2);
 	bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) override;

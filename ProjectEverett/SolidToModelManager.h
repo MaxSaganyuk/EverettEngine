@@ -23,6 +23,12 @@ public:
 	bool GetMeshVisibility(size_t intex);
 	bool GetMeshVisibility(const std::string& name);
 
+	std::vector<std::string> GetAnimationNames();
+	size_t GetAnimationAmount();
+	void SetAnimation(size_t index);
+	void SetAnimation(const std::string& name);
+	size_t GetAnimation();
+
 private:
 	void CheckIfInitialized();
 
@@ -31,6 +37,7 @@ private:
 
 	bool initialized;
 
+	size_t currentAnimationIndex;
 	std::vector<bool> meshVisibility;
 	FullModelInfo* fullModelInfoP;
 };

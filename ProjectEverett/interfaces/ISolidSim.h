@@ -28,5 +28,11 @@ public:
 	virtual bool GetModelMeshVisibility(const std::string name) = 0;
 	virtual bool GetModelMeshVisibility(size_t index) = 0;
 
+	virtual std::vector<std::string> GetModelAnimationNames() = 0;
+	virtual size_t GetModelAnimationAmount() = 0;
+	virtual void SetModelAnimation(size_t index) = 0;
+	virtual void SetModelAnimation(const std::string& name) = 0;
+	virtual size_t GetModelAnimation() = 0;
+
 	virtual bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) = 0;
 };

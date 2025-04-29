@@ -8,6 +8,7 @@ void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
 	fullModelInfoP = &fullModelInfoRef;
 	meshVisibility.resize(fullModelInfoP->first.meshes.size());
 	std::fill(meshVisibility.begin(), meshVisibility.end(), true);
+	currentAnimationIndex = 0;
 
 	initialized = true;
 }
@@ -83,6 +84,40 @@ bool SolidToModelManager::GetMeshVisibility(const std::string& name)
 	CheckIfInitialized();
 
 	return meshVisibility[GetIndexByName(name, GetMeshNames())];
+}
+
+std::vector<std::string> SolidToModelManager::GetAnimationNames()
+{
+	CheckIfInitialized();
+
+	std::vector<std::string> res;
+
+	for (auto& animInfo : fullModelInfoP->second.animInfoVect)
+	{
+		res.push_back(animInfo.animName);
+	}
+
+	return res;
+}
+
+size_t SolidToModelManager::GetAnimationAmount()
+{
+	return fullModelInfoP->second.animInfoVect.size();
+}
+
+void SolidToModelManager::SetAnimation(size_t index)
+{
+	currentAnimationIndex = index;
+}
+
+void SolidToModelManager::SetAnimation(const std::string& name)
+{
+	currentAnimationIndex = GetIndexByName(name, GetAnimationNames());
+}
+
+size_t SolidToModelManager::GetAnimation()
+{
+	return currentAnimationIndex;
 }
 
 void SolidToModelManager::CheckIfInitialized()

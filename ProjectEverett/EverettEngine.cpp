@@ -130,11 +130,15 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 
 	auto additionalFuncs = [this]() {
 		std::vector<glm::mat4> finalTransforms(animSystem->GetTotalBoneAmount(), glm::mat4(1.0f));
-		animSystem->ProcessAnimations(
-			std::chrono::duration<double>(std::chrono::system_clock::now() - startTime).count(), finalTransforms
-		);
 
-		mainLGL->SetShaderUniformValue("Bones", finalTransforms);
+		if (!finalTransforms.empty())
+		{
+			animSystem->ProcessAnimations(
+				std::chrono::duration<double>(std::chrono::system_clock::now() - startTime).count(), finalTransforms
+			);
+
+			mainLGL->SetShaderUniformValue("Bones", finalTransforms);
+		}
 
 		camera->SetPosition(CameraSim::Direction::Nowhere);
 		camera->ExecuteAllScriptFuncs();
@@ -237,7 +241,9 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 	std::string filePath = fileLoader->GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
 
 	shaderGen.LoadPreSources(filePath);
-	shaderGen.SetValueToDefine("BONE_AMOUNT", animSystem->GetTotalBoneAmount());
+	size_t realBoneAmount = animSystem->GetTotalBoneAmount();
+	size_t boneAmountToSet = !realBoneAmount ? 1 : realBoneAmount;
+	shaderGen.SetValueToDefine("BONE_AMOUNT", boneAmountToSet);
 	shaderGen.GenerateShaderFiles(filePath);
 #else
 #error Shader file generation is not implemented fo release configuration
@@ -249,7 +255,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 		auto& model = MSM[name];
 
 		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(model.model.first.isTextureless));
-		mainLGL->SetShaderUniformValue("startingBoneIndex", static_cast<int>(model.model.second.startingBoneIndex));
+		mainLGL->SetShaderUniformValue("animationless", static_cast<int>(model.model.second.animInfoVect.empty()));
 	};
 
 	newModel.generalMeshBehaviour = [this, name](int meshIndex)
@@ -266,6 +272,14 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 			mainLGL->SetShaderUniformValue("model", modelMatrix);
 			mainLGL->SetShaderUniformValue("inv", glm::inverse(modelMatrix));
+
+			if (!model.model.second.animInfoVect.empty())
+			{
+				mainLGL->SetShaderUniformValue("startingBoneIndex", static_cast<int>(
+					model.model.second.animInfoVect[solid.second.GetModelAnimation()].startingBoneIndex
+					)
+				);
+			}
 		}
 	};
 

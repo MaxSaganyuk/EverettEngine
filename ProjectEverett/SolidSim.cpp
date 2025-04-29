@@ -141,3 +141,28 @@ bool SolidSim::GetModelMeshVisibility(size_t index)
 {
 	return STMM.GetMeshVisibility(index);
 }
+
+std::vector<std::string> SolidSim::GetModelAnimationNames()
+{
+	return STMM.GetAnimationNames();
+}
+
+size_t SolidSim::GetModelAnimationAmount()
+{
+	return STMM.GetAnimationAmount();
+}
+
+void SolidSim::SetModelAnimation(size_t index)
+{
+	STMM.SetAnimation(index);
+}
+
+void SolidSim::SetModelAnimation(const std::string& name)
+{
+	STMM.SetAnimation(name);
+}
+
+size_t SolidSim::GetModelAnimation()
+{
+	return STMM.GetAnimation();
+}

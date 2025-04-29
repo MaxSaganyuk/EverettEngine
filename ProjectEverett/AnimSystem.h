@@ -27,13 +27,17 @@ public:
 	{
 		constexpr static double defaultTicksPerSecond = 25;
 
+		std::string animName;
 		double animDuration;
 		double ticksPerSecond;
+		size_t startingBoneIndex;
 
-		AnimInfo(double animDuration, double ticksPerSecond)
+		AnimInfo(const std::string& animName, double animDuration, double ticksPerSecond)
 			:
+			animName(animName),
 			animDuration(animDuration),
-			ticksPerSecond(!ticksPerSecond ? defaultTicksPerSecond : ticksPerSecond) {}
+			ticksPerSecond(!ticksPerSecond ? defaultTicksPerSecond : ticksPerSecond),
+		    startingBoneIndex(0) {}
 	};
 
 	struct AnimKeys
@@ -55,7 +59,6 @@ public:
 	struct ModelAnim
 	{
 		size_t boneAmount;
-		size_t startingBoneIndex;
 		BoneTree boneTree;
 		AnimKeyMap animKeyMap;
 		AnimInfoVect animInfoVect;
@@ -85,6 +88,6 @@ private:
 		std::vector<glm::mat4>& finalTransforms
 	);
 
-	std::vector<ModelAnim*> animCollection;
+	std::vector<ModelAnim*> modelAnimCollection;
 	size_t totalBoneAmount = 0;
 };
