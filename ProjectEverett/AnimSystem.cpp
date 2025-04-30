@@ -1,13 +1,6 @@
 #include "AnimSystem.h"
 #include "LGL.h"
 
-double AnimSystem::GetAnimationTimeTicks(double currentTime, AnimInfo& currentAnimInfo)
-{
-	double timeInTicks = currentTime * currentAnimInfo.ticksPerSecond;
-
-	return std::fmod(timeInTicks, currentAnimInfo.animDuration);
-}
-
 void AnimSystem::InterpolateImpl(const glm::vec3& vec1, const glm::vec3& vec2, glm::vec3& resVec, float factor)
 {
 	resVec = glm::mix(vec1, vec2, factor);
@@ -116,39 +109,35 @@ void AnimSystem::CollectAllFinalTransforms(
 	}
 }
 
-void AnimSystem::ProcessAnimations(double currentTime, std::vector<glm::mat4>& finalTransforms)
+void AnimSystem::ProcessAnimations(ModelAnim& modelAnim, double animationTimeTicks, size_t animIndex, size_t startingBoneIndex)
 {
-	for (auto& model : modelAnimCollection)
+	if (!modelAnim.animInfoVect.empty())
 	{
-		if (!model->animInfoVect.empty())
+		for (auto& childNodes : modelAnim.boneTree.GetChildNodes())
 		{
-			for (size_t animIndex = 0; animIndex < model->animInfoVect.size(); ++animIndex)
-			{
-				double animationTimeTicks = GetAnimationTimeTicks(currentTime, model->animInfoVect[animIndex]);
+			ParseBoneTree(childNodes.second, animationTimeTicks, animIndex, modelAnim.globalInverseTransform, modelAnim.animKeyMap);
+		}
 
-				for (auto& childNodes : model->boneTree.GetChildNodes())
-				{
-					ParseBoneTree(childNodes.second, animationTimeTicks, animIndex, model->globalInverseTransform, model->animKeyMap);
-				}
-
-				for (auto& childNodes : model->boneTree.GetChildNodes())
-				{
-					CollectAllFinalTransforms(childNodes.second, model->animInfoVect[animIndex].startingBoneIndex, finalTransforms);
-				}
-			}
+		for (auto& childNodes : modelAnim.boneTree.GetChildNodes())
+		{
+			CollectAllFinalTransforms(childNodes.second, startingBoneIndex, finalTransforms);
 		}
 	}
 }
 
-void AnimSystem::AddModelAnim(ModelAnim& modelAnim)
+std::vector<glm::mat4>& AnimSystem::GetFinalTransforms()
 {
-	modelAnimCollection.push_back(&modelAnim);
+	return finalTransforms;
+}
 
-	for (auto& animInfo : modelAnim.animInfoVect)
-	{
-		animInfo.startingBoneIndex = totalBoneAmount;
-		totalBoneAmount += modelAnim.boneAmount;
-	}
+void AnimSystem::ResetFinalTransforms()
+{
+	finalTransforms = std::vector<glm::mat4>(GetTotalBoneAmount(), glm::mat4(1.0f));
+}
+
+void AnimSystem::IncrementTotalBoneAmount(ModelAnim& modelAnim)
+{
+	totalBoneAmount += modelAnim.boneAmount;
 }
 
 size_t AnimSystem::GetTotalBoneAmount()

@@ -33,6 +33,11 @@ public:
 	virtual void SetModelAnimation(size_t index) = 0;
 	virtual void SetModelAnimation(const std::string& name) = 0;
 	virtual size_t GetModelAnimation() = 0;
+	virtual void PlayModelAnimation(bool loop = false) = 0;
+	virtual void PauseModelAnimation() = 0;
+	virtual void StopModelAnimation() = 0;
+	virtual bool IsModelAnimationPlaying() = 0;
+	virtual bool IsModelAnimationPaused() = 0;
 
 	virtual bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) = 0;
 };

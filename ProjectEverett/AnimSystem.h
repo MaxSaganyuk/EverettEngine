@@ -30,14 +30,12 @@ public:
 		std::string animName;
 		double animDuration;
 		double ticksPerSecond;
-		size_t startingBoneIndex;
 
 		AnimInfo(const std::string& animName, double animDuration, double ticksPerSecond)
 			:
 			animName(animName),
 			animDuration(animDuration),
-			ticksPerSecond(!ticksPerSecond ? defaultTicksPerSecond : ticksPerSecond),
-		    startingBoneIndex(0) {}
+			ticksPerSecond(!ticksPerSecond ? defaultTicksPerSecond : ticksPerSecond) {}
 	};
 
 	struct AnimKeys
@@ -65,12 +63,12 @@ public:
 		glm::mat4 globalInverseTransform = glm::mat4(1.0f);
 	};
 
-	void ProcessAnimations(double currentTime, std::vector<glm::mat4>& finalTransforms);
-	void AddModelAnim(ModelAnim& modelAnim);
+	void ProcessAnimations(ModelAnim& modelAnim, double currentTime, size_t animIndex, size_t startingBoneIndex);
+	std::vector<glm::mat4>& GetFinalTransforms();
+	void ResetFinalTransforms();
+	void IncrementTotalBoneAmount(ModelAnim& modelAnim);
 	size_t GetTotalBoneAmount();
 private:
-	double GetAnimationTimeTicks(double currentTime, AnimInfo& currentAnimInfo);
-
 	template<typename GLMType>
 	void InterpolateKey(std::vector<std::pair<double, GLMType>>& keys, GLMType& res, double animTime);
 	void InterpolateImpl(const glm::vec3& vec1, const glm::vec3& vec2, glm::vec3& resVec, float factor);
@@ -88,6 +86,7 @@ private:
 		std::vector<glm::mat4>& finalTransforms
 	);
 
-	std::vector<ModelAnim*> modelAnimCollection;
+	std::vector<glm::mat4> finalTransforms;
+
 	size_t totalBoneAmount = 0;
 };

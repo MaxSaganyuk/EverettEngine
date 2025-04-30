@@ -9,8 +9,15 @@ void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
 	meshVisibility.resize(fullModelInfoP->first.meshes.size());
 	std::fill(meshVisibility.begin(), meshVisibility.end(), true);
 	currentAnimationIndex = 0;
+	lastTimeInTicks = 0.0;
 
 	initialized = true;
+}
+
+void SolidToModelManager::ResetAnimationTime()
+{
+	startAnimationTime = std::chrono::system_clock::now();
+	currentAnimationTime = startAnimationTime;
 }
 
 std::vector<std::string> SolidToModelManager::GetMeshNames()
@@ -102,25 +109,127 @@ std::vector<std::string> SolidToModelManager::GetAnimationNames()
 
 size_t SolidToModelManager::GetAnimationAmount()
 {
+	CheckIfInitialized();
+
 	return fullModelInfoP->second.animInfoVect.size();
 }
 
 void SolidToModelManager::SetAnimation(size_t index)
 {
+	CheckIfInitialized();
+
 	currentAnimationIndex = index;
 }
 
 void SolidToModelManager::SetAnimation(const std::string& name)
 {
+	CheckIfInitialized();
+
 	currentAnimationIndex = GetIndexByName(name, GetAnimationNames());
 }
 
 size_t SolidToModelManager::GetAnimation()
 {
+	CheckIfInitialized();
+
 	return currentAnimationIndex;
+}
+
+void SolidToModelManager::PlayAnimation(bool loop)
+{
+	CheckIfInitialized();
+
+	if (!animStates.playing)
+	{
+		startAnimationTime = std::chrono::system_clock::now();
+	}
+	else if (animStates.paused)
+	{
+		auto requiredDiff = currentAnimationTime - startAnimationTime;
+		currentAnimationTime = std::chrono::system_clock::now();
+		startAnimationTime = currentAnimationTime - requiredDiff;
+	}
+
+	animStates.playing = true;
+	animStates.paused = false;
+	animStates.looped = loop;
+}
+
+void SolidToModelManager::PauseAnimation()
+{
+	CheckIfInitialized();
+
+	animStates.paused = true;
+}
+
+void SolidToModelManager::StopAnimation()
+{
+	CheckIfInitialized();
+
+	animStates.ResetValues();
+	ResetAnimationTime();
+}
+
+bool SolidToModelManager::IsAnimationPlaying()
+{
+	CheckIfInitialized();
+
+	return animStates.playing;
+}
+
+bool SolidToModelManager::IsAnimationPaused()
+{
+	CheckIfInitialized();
+
+	return animStates.paused;
+}
+
+double SolidToModelManager::GetAnimationTimeTicks(double currentTime)
+{
+	double animDuration = fullModelInfoP->second.animInfoVect[currentAnimationIndex].animDuration;
+
+	double timeInTicks = currentTime * fullModelInfoP->second.animInfoVect[currentAnimationIndex].ticksPerSecond;
+
+	if (!animStates.looped && timeInTicks < lastTimeInTicks)
+	{
+		timeInTicks = 0.0;
+		animStates.ResetValues();
+		ResetAnimationTime();
+	}
+
+	lastTimeInTicks = timeInTicks;
+
+	return std::fmod(timeInTicks, animDuration);
+}
+
+double SolidToModelManager::GetCurrentAnimationTime()
+{
+	CheckIfInitialized();
+
+	if (!animStates.paused)
+	{
+		currentAnimationTime = std::chrono::system_clock::now();
+	}
+
+	return GetAnimationTimeTicks(std::chrono::duration<double>(currentAnimationTime - startAnimationTime).count());
+}
+
+void SolidToModelManager::AppendStartingBoneIndex(size_t staringBoneIndex)
+{
+	CheckIfInitialized();
+
+	startingBoneIndexes.push_back(staringBoneIndex);
+}
+
+size_t SolidToModelManager::GetCurrentStartingBoneIndex()
+{
+	CheckIfInitialized();
+
+	return startingBoneIndexes[currentAnimationIndex];
 }
 
 void SolidToModelManager::CheckIfInitialized()
 {
 	assert(initialized && "SolidToModelManager is uninitialized");
 }
+

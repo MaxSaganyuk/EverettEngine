@@ -166,3 +166,43 @@ size_t SolidSim::GetModelAnimation()
 {
 	return STMM.GetAnimation();
 }
+
+void SolidSim::PlayModelAnimation(bool loop)
+{
+	STMM.PlayAnimation(loop);
+}
+
+void SolidSim::PauseModelAnimation()
+{
+	STMM.PauseAnimation();
+}
+
+void SolidSim::StopModelAnimation()
+{
+	STMM.StopAnimation();
+}
+
+bool SolidSim::IsModelAnimationPlaying()
+{
+	return STMM.IsAnimationPlaying();
+}
+
+bool SolidSim::IsModelAnimationPaused()
+{
+	return STMM.IsAnimationPaused();
+}
+
+double SolidSim::GetModelCurrentAnimationTime()
+{
+	return STMM.GetCurrentAnimationTime();
+}
+
+void SolidSim::AppendModelStartingBoneIndex(size_t startingBoneIndex)
+{
+	STMM.AppendStartingBoneIndex(startingBoneIndex);
+}
+
+size_t SolidSim::GetModelCurrentStartingBoneIndex()
+{
+	return STMM.GetCurrentStartingBoneIndex();
+}

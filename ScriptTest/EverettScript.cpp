@@ -6,6 +6,7 @@ public:
 	bool charInterRunning = false;
 	ISolidSim* charInter = nullptr;
 	ILightSim* lightInter = nullptr;
+	ISolidSim* animCharInter = nullptr;
 };
 
 InternalState interState;
@@ -31,12 +32,15 @@ ScriptObjectInit(Rise1, ISolidSim)
 
 ScriptObjectInit(stickAnimTest, ISolidSim)
 {
-	objectstickAnimTest.SetModelAnimation(0);
+	interState.animCharInter = &objectstickAnimTest;
+	interState.animCharInter->SetModelAnimation(0);
+	interState.animCharInter->PlayModelAnimation();
 }
 
 ScriptObjectInit(stickAnimTest1, ISolidSim)
 {
-	objectstickAnimTest1.SetModelAnimation(1);
+	objectstickAnimTest1.SetModelAnimation(0);
+	objectstickAnimTest1.PlayModelAnimation();
 }
 
 ScriptObjectInit(Spot0, ILightSim)
@@ -49,5 +53,14 @@ ScriptKeybindReleased(T)
 	if (interState.charInter)
 	{
 		interState.charInter->SetPosition(ISolidSim::Direction::Forward);
+	}
+}
+
+ScriptKeybindPressed(P)
+{
+	if (interState.animCharInter)
+	{
+		interState.animCharInter->IsModelAnimationPaused() ?
+			interState.animCharInter->PlayModelAnimation(true) : interState.animCharInter->PauseModelAnimation();
 	}
 }

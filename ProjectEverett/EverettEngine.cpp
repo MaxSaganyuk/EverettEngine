@@ -129,16 +129,13 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->CaptureMouse(true);
 
 	auto additionalFuncs = [this]() {
-		std::vector<glm::mat4> finalTransforms(animSystem->GetTotalBoneAmount(), glm::mat4(1.0f));
+		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();
 
 		if (!finalTransforms.empty())
 		{
-			animSystem->ProcessAnimations(
-				std::chrono::duration<double>(std::chrono::system_clock::now() - startTime).count(), finalTransforms
-			);
-
 			mainLGL->SetShaderUniformValue("Bones", finalTransforms);
 		}
+		animSystem->ResetFinalTransforms();
 
 		camera->SetPosition(CameraSim::Direction::Nowhere);
 		camera->ExecuteAllScriptFuncs();
@@ -231,31 +228,35 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 	}
 
 	CheckAndAddToNameTracker((*resPair.first).first);
-	animSystem->AddModelAnim(newModelAnim);
 
 	newModel.shaderProgram = defaultShaderProgram;
 	newModel.render = false;
-
-	ShaderGenerator shaderGen;
-#ifdef _DEBUG
-	std::string filePath = fileLoader->GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
-
-	shaderGen.LoadPreSources(filePath);
-	size_t realBoneAmount = animSystem->GetTotalBoneAmount();
-	size_t boneAmountToSet = !realBoneAmount ? 1 : realBoneAmount;
-	shaderGen.SetValueToDefine("BONE_AMOUNT", boneAmountToSet);
-	shaderGen.GenerateShaderFiles(filePath);
-#else
-#error Shader file generation is not implemented fo release configuration
-#endif
 
 	newModel.modelBehaviour = [this, name]()
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
 
+		bool animationless = model.model.second.animInfoVect.empty();
 		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(model.model.first.isTextureless));
-		mainLGL->SetShaderUniformValue("animationless", static_cast<int>(model.model.second.animInfoVect.empty()));
+		mainLGL->SetShaderUniformValue("animationless", static_cast<int>(animationless));
+
+		if (!animationless)
+		{
+			for (auto& solid : MSM[name].solids)
+			{
+				if (solid.second.IsModelAnimationPlaying())
+				{
+					animSystem->ProcessAnimations(
+						MSM[name].model.second,
+						solid.second.GetModelCurrentAnimationTime(),
+						solid.second.GetModelAnimation(),
+						solid.second.GetModelCurrentStartingBoneIndex()
+					);
+				}
+			}
+		}
+		
 	};
 
 	newModel.generalMeshBehaviour = [this, name](int meshIndex)
@@ -276,7 +277,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 			if (!model.model.second.animInfoVect.empty())
 			{
 				mainLGL->SetShaderUniformValue("startingBoneIndex", static_cast<int>(
-					model.model.second.animInfoVect[solid.second.GetModelAnimation()].startingBoneIndex
+					solid.second.GetModelCurrentStartingBoneIndex()
 					)
 				);
 			}
@@ -284,10 +285,6 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 	};
 
 	mainLGL->CreateModel(name, newModel);
-	if (MSM.size() > 1)
-	{
-		mainLGL->RecompileShader(defaultShaderProgram);
-	}
 
 	fileLoader->FreeTextureData();
 
@@ -298,6 +295,26 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 {
 	SolidSim newSolid(camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
 	newSolid.SetBackwardsModelAccess(MSM[modelName].model);
+
+	for (auto& animInfo : MSM[modelName].model.second.animInfoVect)
+	{
+		newSolid.AppendModelStartingBoneIndex(animSystem->GetTotalBoneAmount());
+		animSystem->IncrementTotalBoneAmount(MSM[modelName].model.second);
+	}
+
+	ShaderGenerator shaderGen;
+#ifdef _DEBUG
+	std::string filePath = fileLoader->GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
+
+	shaderGen.LoadPreSources(filePath);
+	size_t realBoneAmount = animSystem->GetTotalBoneAmount();
+	size_t boneAmountToSet = !realBoneAmount ? 1 : realBoneAmount;
+	shaderGen.SetValueToDefine("BONE_AMOUNT", boneAmountToSet);
+	shaderGen.GenerateShaderFiles(filePath);
+#else
+#error Shader file generation is not implemented fo release configuration
+#endif
+	mainLGL->RecompileShader(defaultShaderProgram);
 
 	auto resPair = MSM[modelName].solids.emplace(solidName, std::move(newSolid));
 

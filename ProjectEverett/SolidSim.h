@@ -36,6 +36,7 @@ public:
 	void Rotate(const Rotation& toRotate) override;
 	
 	// Solid to model access section
+	// Mesh access; avalible through interface
 	void SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model);
 	std::vector<std::string> GetModelMeshNames() override;
 	size_t GetMeshAmount() override;
@@ -45,11 +46,22 @@ public:
 	bool GetModelMeshVisibility(const std::string name) override;
 	bool GetModelMeshVisibility(size_t index) override;
 
+	// Animation access; avalible through interface
 	std::vector<std::string> GetModelAnimationNames() override;
 	size_t GetModelAnimationAmount() override;
 	void SetModelAnimation(size_t index) override;
 	void SetModelAnimation(const std::string& name) override;
 	size_t GetModelAnimation() override;
+	void PlayModelAnimation(bool loop = false) override;
+	void PauseModelAnimation() override;
+	void StopModelAnimation() override;
+	bool IsModelAnimationPlaying() override;
+	bool IsModelAnimationPaused() override;
+
+	// Animation access; engine only
+	double GetModelCurrentAnimationTime();
+	void AppendModelStartingBoneIndex(size_t startingBoneIndex);
+	size_t GetModelCurrentStartingBoneIndex();
 	
 	static bool CheckForCollision(const SolidSim& solid1, const SolidSim& solid2);
 	bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) override;
