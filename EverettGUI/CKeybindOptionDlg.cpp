@@ -23,7 +23,7 @@ CKeybindOptionDlg::CKeybindOptionDlg(
 		selectedScriptDllInfo,
 		[this](const std::string& dllName) { return engineRef.IsKeyScriptSet(keyName, dllName); },
 		[this](const std::string& dllName, const std::string& dllPath) { 
-			engineRef.SetScriptToKey(keyName, dllName, dllPath); 
+			engineRef.SetScriptToKey(keyName, holdableCheck.GetCheck(), dllName, dllPath); 
 		},
 		[this](const std::string& dllPath) { engineRef.UnsetScript(dllPath); },
 		pParent
@@ -61,6 +61,7 @@ void CKeybindOptionDlg::DoDataExchange(CDataExchange* pDX)
 	DLLLoaderCommon::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_BUTTON1, keybindInterButton);
 	DDX_Control(pDX, IDC_EDIT1, keyNameEdit);
+	DDX_Control(pDX, IDC_CHECK1, holdableCheck);
 }
 
 

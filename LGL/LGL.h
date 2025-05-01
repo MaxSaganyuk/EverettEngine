@@ -75,6 +75,7 @@ private:
 	struct InteractableInfo
 	{
 		bool pressed;
+		bool holdable;
 		std::function<void()> pressedFunc;
 		std::function<void()> releasedFunc;
 	};
@@ -141,6 +142,7 @@ public:
 
 	LGL_API void SetInteractable(
 		int keyID, 
+		bool holdable,
 		const std::function<void()>& pressedFunc, 
 		const std::function<void()>& releasedFunc = nullptr
 	);

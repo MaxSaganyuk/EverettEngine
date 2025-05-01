@@ -121,6 +121,7 @@ public:
 
 	EVERETT_API void SetScriptToKey(
 		const std::string& keyName,
+		bool holdable,
 		const std::string& dllPath,
 		const std::string& dllName
 	);

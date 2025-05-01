@@ -120,10 +120,11 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	{
 		mainLGL->SetInteractable(
 			walkingDirections[i],
+			true,
 			[this, i]() { camera->SetPosition(static_cast<CameraSim::Direction>(i)); }
 		);
 	}
-	mainLGL->SetInteractable('R', [this]() { camera->SetPosition(CameraSim::Direction::Up); });
+	mainLGL->SetInteractable('R', true, [this]() { camera->SetPosition(CameraSim::Direction::Up); });
 
 	mainLGL->GetMaxAmountOfVertexAttr();
 	mainLGL->CaptureMouse(true);
@@ -510,6 +511,7 @@ bool EverettEngine::IsObjectScriptSet(
 
 void EverettEngine::SetScriptToKey(
 	const std::string& keyName,
+	bool holdable,
 	const std::string& dllPath,
 	const std::string& dllName
 )
@@ -561,6 +563,7 @@ void EverettEngine::SetScriptToKey(
 
 				mainLGL->SetInteractable(
 					LGL::ConvertKeyTo(keyName),
+					holdable,
 					scriptFuncPressWrapper,
 					scriptFuncReleaseWrapper
 				);

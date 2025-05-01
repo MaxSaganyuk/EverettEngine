@@ -41,6 +41,7 @@ private:
 	EverettEngine& engineRef;
 	CEdit keyNameEdit;
 	CButton keybindInterButton;
+	CButton holdableCheck;
 	std::unique_ptr<std::thread> pollForKeyPressThread;
 
 	std::string keyName;

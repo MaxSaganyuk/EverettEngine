@@ -233,12 +233,12 @@ void LGL::ProcessInput()
 
 		if (retCode == GLFW_PRESS)
 		{
-			interact.second.pressed = true;
-
-			if (interact.second.pressedFunc)
+			if (interact.second.pressedFunc && (interact.second.holdable || !interact.second.pressed))
 			{
 				interact.second.pressedFunc();
 			}
+
+			interact.second.pressed = true;
 		}
 		else if (retCode == GLFW_RELEASE && interact.second.pressed)
 		{
@@ -910,11 +910,12 @@ bool LGL::LoadAndCompileShader(const std::string& name)
 
 void LGL::SetInteractable(
 	int keyID,
+	bool holdable,
 	const std::function<void()>& pressedFunc,
 	const std::function<void()>& releasedFunc
 )
 {
-	interactCollection[keyID] = { false, pressedFunc, releasedFunc };
+	interactCollection[keyID] = { false, holdable, pressedFunc, releasedFunc };
 	
 	std::cout << "Interactable for keyId " << keyID << " set\n";
 }
