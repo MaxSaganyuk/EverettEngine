@@ -4,7 +4,6 @@
 
 #include "LGL.h"
 #include "LGLUtils.h"
-#include "Verts.h"
 
 #include "MaterialSim.h"
 #include "LightSim.h"
