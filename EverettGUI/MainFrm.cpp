@@ -91,6 +91,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	mainWindow->SetEverettEngineRef(engine);
 
 	mainWindow->ShowWindow(SW_SHOW);
+	SetWindowPos(nullptr, 0, 0, 400, 600, 0);
+
 	SetActiveView(mainWindow.get());
 	BringWindowToTop();
 	engine.AddCurrentWindowHandler("EverettGUI");

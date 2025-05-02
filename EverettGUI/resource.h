@@ -2,7 +2,6 @@
 // Microsoft Visual C++ generated include file.
 // Used by EverettGUI.rc
 //
-#define IDD_ABOUTBOX                    100
 #define IDP_OLE_INIT_FAILED             100
 #define IDD_FORMVIEW                    101
 #define IDR_MAINFRAME                   128
