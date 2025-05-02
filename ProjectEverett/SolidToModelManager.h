@@ -59,7 +59,7 @@ private:
 		void ResetValues()
 		{
 			playing = false;
-			paused = false;
+			paused = true;
 			looped = false;
 		}
 
@@ -69,7 +69,7 @@ private:
 		}
 	};
 
-	double lastTimeInTicks;
+	double lastAnimationTime;
 	size_t currentAnimationIndex;
 	std::vector<size_t> startingBoneIndexes;
 	AnimationStates animStates;
