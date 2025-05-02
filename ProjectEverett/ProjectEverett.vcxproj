@@ -174,7 +174,6 @@
     <ClInclude Include="MaterialSim.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="UnorderedPtrMap.h" />
-    <ClInclude Include="Verts.h" />
     <ClInclude Include="WindowHandleHolder.h" />
   </ItemGroup>
   <ItemGroup>
@@ -191,7 +190,6 @@
     <ClCompile Include="SolidSim.cpp" />
     <ClCompile Include="SolidToModelManager.cpp" />
     <ClCompile Include="SoundSim.cpp" />
-    <ClCompile Include="Source.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="WindowHandleHolder.cpp" />
   </ItemGroup>

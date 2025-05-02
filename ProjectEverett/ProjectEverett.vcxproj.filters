@@ -51,9 +51,6 @@
     <ClInclude Include="stb_image.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Verts.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="EverettEngine.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
@@ -95,9 +92,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="MazeGen.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
