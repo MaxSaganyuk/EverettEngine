@@ -167,6 +167,16 @@ size_t SolidSim::GetModelAnimation()
 	return STMM.GetAnimation();
 }
 
+double SolidSim::GetModelAnimationSpeed()
+{
+	return STMM.GetAnimationSpeed();
+}
+
+void SolidSim::SetModelAnimationSpeed(double speed)
+{
+	STMM.SetAnimationSpeed(speed);
+}
+
 void SolidSim::PlayModelAnimation(bool loop)
 {
 	STMM.PlayAnimation(loop);

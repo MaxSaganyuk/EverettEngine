@@ -44,6 +44,8 @@
 #define IDC_BUTTON7                     1033
 #define IDC_ANIM_TEXT                   1034
 #define IDC_CHECK4                      1035
+#define IDC_EDIT11                      1036
+#define IDC_SPEED_TEXT                  1037
 #define ID_BUTTON32771                  32771
 #define ID_BUTTON32772                  32772
 #define ID_BUTTON32773                  32773
@@ -56,7 +58,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        323
 #define _APS_NEXT_COMMAND_VALUE         32776
-#define _APS_NEXT_CONTROL_VALUE         1036
+#define _APS_NEXT_CONTROL_VALUE         1038
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

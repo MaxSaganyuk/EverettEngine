@@ -29,6 +29,8 @@ public:
 	void SetAnimation(size_t index);
 	void SetAnimation(const std::string& name);
 	size_t GetAnimation();
+	double GetAnimationSpeed();
+	void SetAnimationSpeed(double speed);
 	void PlayAnimation(bool loop = false);
 	void PauseAnimation();
 	void StopAnimation();
@@ -69,6 +71,7 @@ private:
 		}
 	};
 
+	double animationSpeed;
 	double lastAnimationTime;
 	size_t currentAnimationIndex;
 	std::vector<size_t> startingBoneIndexes;

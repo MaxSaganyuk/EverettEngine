@@ -10,6 +10,7 @@ void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
 	std::fill(meshVisibility.begin(), meshVisibility.end(), true);
 	currentAnimationIndex = 0;
 	lastAnimationTime = 0.0;
+	animationSpeed = 1.0;
 
 	initialized = true;
 }
@@ -136,6 +137,21 @@ size_t SolidToModelManager::GetAnimation()
 	return currentAnimationIndex;
 }
 
+double SolidToModelManager::GetAnimationSpeed()
+{
+	return animationSpeed;
+}
+
+void SolidToModelManager::SetAnimationSpeed(double speed)
+{
+	animationSpeed = speed;
+
+	//auto requiredDiff = currentAnimationTime - startAnimationTime;
+	//requiredDiff /= animationSpeed;
+	//currentAnimationTime = std::chrono::system_clock::now();
+	//startAnimationTime = currentAnimationTime - requiredDiff;
+}
+
 void SolidToModelManager::PlayAnimation(bool loop)
 {
 	CheckIfInitialized();
@@ -190,7 +206,8 @@ double SolidToModelManager::GetAnimationTimeTicks(double currentTime)
 {
 	double animDuration = fullModelInfoP->second.animInfoVect[currentAnimationIndex].animDuration;
 
-	double timeInTicks = currentTime * fullModelInfoP->second.animInfoVect[currentAnimationIndex].ticksPerSecond;
+	double timeInTicks = 
+		currentTime * animationSpeed * fullModelInfoP->second.animInfoVect[currentAnimationIndex].ticksPerSecond;
 
 	double animationTime = std::fmod(timeInTicks, animDuration);
 

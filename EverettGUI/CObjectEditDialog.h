@@ -61,6 +61,8 @@ private:
 	CButton animPauseButton;
 	CButton animStopButton;
 	CButton animLoopCheck;
+	CStatic animSpeedText;
+	CEdit animSpeedEdit;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support

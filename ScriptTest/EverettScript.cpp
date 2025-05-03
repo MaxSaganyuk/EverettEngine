@@ -50,10 +50,7 @@ ScriptObjectInit(Spot0, ILightSim)
 
 ScriptKeybindReleased(T)
 {
-	if (interState.charInter)
-	{
-		interState.charInter->SetPosition(ISolidSim::Direction::Forward);
-	}
+	interState.animCharInter->SetModelAnimationSpeed(interState.animCharInter->GetModelAnimationSpeed() + 0.1);
 }
 
 ScriptKeybindPressed(P)

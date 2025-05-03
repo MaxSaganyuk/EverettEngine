@@ -68,6 +68,8 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON6, animPauseButton);
 	DDX_Control(pDX, IDC_BUTTON7, animStopButton);
 	DDX_Control(pDX, IDC_CHECK4, animLoopCheck);
+	DDX_Control(pDX, IDC_SPEED_TEXT, animSpeedText);
+	DDX_Control(pDX, IDC_EDIT11, animSpeedEdit);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -99,10 +101,17 @@ void CObjectEditDialog::SetupModelParams()
 	animStopButton.ShowWindow(modelParamsShow);
 	animStopButton.EnableWindow(false);
 	animLoopCheck.ShowWindow(modelParamsShow);
+	animSpeedText.ShowWindow(modelParamsShow);
+	animSpeedEdit.ShowWindow(modelParamsShow);
 
 	if (modelParamsShow)
 	{
 		castedCurrentObject = dynamic_cast<ISolidSim*>(&currentObjectInterface);
+
+		CString speedValue;
+		speedValue.Format(_T("%.2f"), castedCurrentObject->GetModelAnimationSpeed());
+		animSpeedEdit.SetWindowTextW(speedValue);
+
 		std::vector<std::string> meshNames = castedCurrentObject->GetModelMeshNames();
 		for (auto& meshName : meshNames)
 		{
@@ -224,6 +233,10 @@ void CObjectEditDialog::SetAnimButtons(bool play, bool pause, bool stop)
 
 void CObjectEditDialog::OnPlayAnimButtonClick()
 {
+	CString animSpeed;
+	animSpeedEdit.GetWindowTextW(animSpeed);
+
+	castedCurrentObject->SetModelAnimationSpeed(_tstof(animSpeed));
 	castedCurrentObject->SetModelAnimation(animComboBox.GetCurSel());
 	castedCurrentObject->PlayModelAnimation(animLoopCheck.GetCheck());
 	SetAnimButtons(true, true, true);

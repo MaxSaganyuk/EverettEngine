@@ -52,6 +52,8 @@ public:
 	void SetModelAnimation(size_t index) override;
 	void SetModelAnimation(const std::string& name) override;
 	size_t GetModelAnimation() override;
+	double GetModelAnimationSpeed() override;
+	void SetModelAnimationSpeed(double speed) override;
 	void PlayModelAnimation(bool loop = false) override;
 	void PauseModelAnimation() override;
 	void StopModelAnimation() override;
