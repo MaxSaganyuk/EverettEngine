@@ -35,6 +35,7 @@ private:
 	void SetObjectParams(const std::vector<glm::vec3>& params);
 	CString GenerateTitle();
 	void SetupModelParams();
+	void SetAnimButtons(bool play, bool pause, bool stop);
 
 	EverettEngine& engineRef;
 
@@ -45,13 +46,21 @@ private:
 	std::string objectName;
 
 	std::string chosenObjectName;
+	IObjectSim& currentObjectInterface;
+	ISolidSim* castedCurrentObject;
 
 	// Model property objects
 	CStatic meshText;
 	CStatic modelPropText;
 	CComboBox meshComboBox;
 	CButton meshVisCheck;
-	IObjectSim& currentObjectInterface;
+
+	CStatic animText;
+	CComboBox animComboBox;
+	CButton animPlayButton;
+	CButton animPauseButton;
+	CButton animStopButton;
+	CButton animLoopCheck;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
@@ -61,4 +70,8 @@ public:
 	afx_msg void OnUpdateParamsButtonClick();
 	afx_msg void OnBnClickedCheck3();
 	afx_msg void OnMeshCBSelChange();
+	afx_msg void OnPlayAnimButtonClick();
+	afx_msg void OnPauseAnimButtonClick();
+	afx_msg void OnStopAnimButtonClick();
+	afx_msg void OnAnimCBSelChange();
 };

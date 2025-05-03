@@ -36,7 +36,8 @@ CObjectEditDialog::CObjectEditDialog(
 	objectType(objectTypeP),
 	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : ""),
 	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
-	currentObjectInterface(*engineRef.GetObjectInterface(objectType, subtypeName, objectName))
+	currentObjectInterface(*engineRef.GetObjectInterface(objectType, subtypeName, objectName)),
+	castedCurrentObject(nullptr)
 {
 }
 
@@ -61,6 +62,12 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK3, meshVisCheck);
 	DDX_Control(pDX, IDC_MESH_TEXT, meshText);
 	DDX_Control(pDX, IDC_MODEL_PROP_TEXT, modelPropText);
+	DDX_Control(pDX, IDC_ANIM_TEXT, animText);
+	DDX_Control(pDX, IDC_COMBO3, animComboBox);
+	DDX_Control(pDX, IDC_BUTTON5, animPlayButton);
+	DDX_Control(pDX, IDC_BUTTON6, animPauseButton);
+	DDX_Control(pDX, IDC_BUTTON7, animStopButton);
+	DDX_Control(pDX, IDC_CHECK4, animLoopCheck);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -83,13 +90,29 @@ void CObjectEditDialog::SetupModelParams()
 	meshText.ShowWindow(modelParamsShow);
 	modelPropText.ShowWindow(modelParamsShow);
 
+	animText.ShowWindow(modelParamsShow);
+	animComboBox.ShowWindow(modelParamsShow);
+	animPlayButton.ShowWindow(modelParamsShow);
+	animPlayButton.EnableWindow(false);
+	animPauseButton.ShowWindow(modelParamsShow);
+	animPauseButton.EnableWindow(false);
+	animStopButton.ShowWindow(modelParamsShow);
+	animStopButton.EnableWindow(false);
+	animLoopCheck.ShowWindow(modelParamsShow);
+
 	if (modelParamsShow)
 	{
-
-		std::vector<std::string> meshNames = dynamic_cast<ISolidSim&>(currentObjectInterface).GetModelMeshNames();
+		castedCurrentObject = dynamic_cast<ISolidSim*>(&currentObjectInterface);
+		std::vector<std::string> meshNames = castedCurrentObject->GetModelMeshNames();
 		for (auto& meshName : meshNames)
 		{
 			meshComboBox.AddString(CA2T(meshName.c_str()));
+		}
+
+		std::vector<std::string> animNames = castedCurrentObject->GetModelAnimationNames();
+		for (auto& animName : animNames)
+		{
+			animComboBox.AddString(CA2T(animName.c_str()));
 		}
 	}
 }
@@ -115,6 +138,10 @@ BEGIN_MESSAGE_MAP(CObjectEditDialog, DLLLoaderCommon)
 	ON_BN_CLICKED(IDC_BUTTON1, &CObjectEditDialog::OnUpdateParamsButtonClick)
 	ON_BN_CLICKED(IDC_CHECK3, &CObjectEditDialog::OnBnClickedCheck3)
 	ON_CBN_SELCHANGE(IDC_COMBO2, &CObjectEditDialog::OnMeshCBSelChange)
+	ON_BN_CLICKED(IDC_BUTTON5, &CObjectEditDialog::OnPlayAnimButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON6, &CObjectEditDialog::OnPauseAnimButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON7, &CObjectEditDialog::OnStopAnimButtonClick)
+	ON_CBN_SELCHANGE(IDC_COMBO3, &CObjectEditDialog::OnAnimCBSelChange)
 END_MESSAGE_MAP()
 
 
@@ -155,13 +182,13 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 
 	if (objectType == EverettEngine::ObjectTypes::Solid)
 	{
-		dynamic_cast<ISolidSim&>(currentObjectInterface).ForceModelUpdate();
+		castedCurrentObject->ForceModelUpdate();
 	}
 }
 
 void CObjectEditDialog::OnBnClickedCheck3()
 {
-	dynamic_cast<ISolidSim&>(currentObjectInterface).SetModelMeshVisibility(
+	castedCurrentObject->SetModelMeshVisibility(
 		meshComboBox.GetCurSel(), meshVisCheck.GetCheck()
 	);
 }
@@ -169,6 +196,43 @@ void CObjectEditDialog::OnBnClickedCheck3()
 void CObjectEditDialog::OnMeshCBSelChange()
 {
 	meshVisCheck.SetCheck(
-		dynamic_cast<ISolidSim&>(currentObjectInterface).GetModelMeshVisibility(meshComboBox.GetCurSel())
+		castedCurrentObject->GetModelMeshVisibility(meshComboBox.GetCurSel())
 	);
+}
+
+void CObjectEditDialog::SetAnimButtons(bool play, bool pause, bool stop)
+{
+	animPlayButton.EnableWindow(play);
+	animPauseButton.EnableWindow(pause);
+	animStopButton.EnableWindow(stop);
+}
+
+void CObjectEditDialog::OnPlayAnimButtonClick()
+{
+	castedCurrentObject->SetModelAnimation(animComboBox.GetCurSel());
+	castedCurrentObject->PlayModelAnimation(animLoopCheck.GetCheck());
+	SetAnimButtons(true, true, true);
+}
+
+
+void CObjectEditDialog::OnPauseAnimButtonClick()
+{
+	castedCurrentObject->PauseModelAnimation();
+	SetAnimButtons(true, false, true);
+}
+
+
+void CObjectEditDialog::OnStopAnimButtonClick()
+{
+	castedCurrentObject->StopModelAnimation();
+	SetAnimButtons(true, false, false);
+}
+
+
+void CObjectEditDialog::OnAnimCBSelChange()
+{
+	if (!castedCurrentObject->IsModelAnimationPlaying())
+	{
+		SetAnimButtons(true, false, false);
+	}
 }

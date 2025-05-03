@@ -38,6 +38,12 @@
 #define IDC_CHECK3                      1027
 #define IDC_MESH_TEXT                   1028
 #define IDC_MODEL_PROP_TEXT             1029
+#define IDC_COMBO3                      1030
+#define IDC_BUTTON5                     1031
+#define IDC_BUTTON6                     1032
+#define IDC_BUTTON7                     1033
+#define IDC_ANIM_TEXT                   1034
+#define IDC_CHECK4                      1035
 #define ID_BUTTON32771                  32771
 #define ID_BUTTON32772                  32772
 #define ID_BUTTON32773                  32773
@@ -50,7 +56,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        323
 #define _APS_NEXT_COMMAND_VALUE         32776
-#define _APS_NEXT_CONTROL_VALUE         1030
+#define _APS_NEXT_CONTROL_VALUE         1036
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

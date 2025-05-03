@@ -16,6 +16,7 @@ void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
 
 void SolidToModelManager::ResetAnimationTime()
 {
+	lastAnimationTime = 0.0;
 	startAnimationTime = std::chrono::system_clock::now();
 	currentAnimationTime = startAnimationTime;
 }
@@ -141,6 +142,7 @@ void SolidToModelManager::PlayAnimation(bool loop)
 
 	if (!animStates.playing)
 	{
+		lastAnimationTime = 0.0;
 		startAnimationTime = std::chrono::system_clock::now();
 	}
 	else if (animStates.paused)
