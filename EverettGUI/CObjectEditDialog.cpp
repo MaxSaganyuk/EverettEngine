@@ -109,10 +109,25 @@ void CObjectEditDialog::SetupModelParams()
 			meshComboBox.AddString(CA2T(meshName.c_str()));
 		}
 
+		if (!meshNames.empty())
+		{
+			meshComboBox.SetCurSel(0);
+		}
+
 		std::vector<std::string> animNames = castedCurrentObject->GetModelAnimationNames();
 		for (auto& animName : animNames)
 		{
 			animComboBox.AddString(CA2T(animName.c_str()));
+		}
+
+		if (!animNames.empty())
+		{
+			animComboBox.SetCurSel(castedCurrentObject->GetModelAnimation());
+			SetAnimButtons(
+				true, 
+				!castedCurrentObject->IsModelAnimationPaused(), 
+				castedCurrentObject->IsModelAnimationPlaying()
+			);
 		}
 	}
 }
@@ -231,8 +246,4 @@ void CObjectEditDialog::OnStopAnimButtonClick()
 
 void CObjectEditDialog::OnAnimCBSelChange()
 {
-	if (!castedCurrentObject->IsModelAnimationPlaying())
-	{
-		SetAnimButtons(true, false, false);
-	}
 }
