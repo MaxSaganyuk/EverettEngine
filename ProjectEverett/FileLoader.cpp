@@ -14,11 +14,6 @@
 
 #include "SolidSim.h"
 
-static std::map<
-	std::string, 
-	std::pair<HMODULE, std::vector<std::shared_ptr<std::function<void(IObjectSim&)>>>>
-> dllHandleMap;
-
 void ConvertFromAssimpToGLM(const aiMatrix4x4& assimpMatrix, glm::mat4& glmMatrix)
 {
 	glmMatrix = {
@@ -87,7 +82,7 @@ bool FileLoader::GetFilesInDir(std::vector<std::string>& files, const std::strin
 	return true;
 }
 
-bool FileLoader::LoadTexture(
+bool FileLoader::ModelLoader::LoadTexture(
 	const std::string& file, 
 	LGLStructs::Texture& texture, 
 	unsigned char* data, 
@@ -122,11 +117,11 @@ FileLoader::FileLoader() {}
 
 FileLoader::~FileLoader()
 {
-	FreeTextureData();
-	FreeDllData();
+	modelLoader.FreeTextureData();
+	dllloader.FreeDllData();
 }
 
-bool FileLoader::GetTextureFilenames(const std::string& path)
+bool FileLoader::ModelLoader::GetTextureFilenames(const std::string& path)
 {
 	auto GetTexturePath = [](const std::string& path)
 	{
@@ -136,7 +131,7 @@ bool FileLoader::GetTextureFilenames(const std::string& path)
 	return GetFilesInDir(extraTextureName, GetTexturePath(path));
 }
 
-LGLStructs::Mesh FileLoader::ProcessMesh(
+LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 	const aiMesh* meshHandle, 
 	BoneMap& boneMap
 )
@@ -339,7 +334,7 @@ LGLStructs::Mesh FileLoader::ProcessMesh(
 	return mesh;
 }
 
-void FileLoader::ProcessNodeForModelInfo(
+void FileLoader::ModelLoader::ProcessNodeForModelInfo(
 	const aiNode* nodeHandle,
 	LGLStructs::ModelInfo& model,
 	BoneMap& boneMap
@@ -357,7 +352,7 @@ void FileLoader::ProcessNodeForModelInfo(
 	}
 }
 
-void FileLoader::ProcessNodeForBoneTree(
+void FileLoader::ModelLoader::ProcessNodeForBoneTree(
 	const std::string& rootNodeName,
 	const aiNode* nodeHandle,
 	BoneMap& boneMap,
@@ -397,7 +392,7 @@ void FileLoader::ProcessNodeForBoneTree(
 }
 
 template<typename AssimpType, typename GLMCont>
-void FileLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmCont)
+void FileLoader::ModelLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmCont)
 {
 	if (keys && keyAmount)
 	{
@@ -422,7 +417,7 @@ void FileLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmC
 	}
 }
 
-void FileLoader::LoadAnimations(
+void FileLoader::ModelLoader::LoadAnimations(
 	AnimSystem::AnimKeyMap& animKeyMap,
 	AnimSystem::AnimInfoVect& animInfoVect
 )
@@ -460,7 +455,7 @@ void FileLoader::LoadAnimations(
 }
 
 
-void FileLoader::FreeTextureData()
+void FileLoader::ModelLoader::FreeTextureData()
 {
 	for (auto& texture : texturesLoaded)
 	{
@@ -471,7 +466,7 @@ void FileLoader::FreeTextureData()
 	texturesLoaded.clear();
 }
 
-bool FileLoader::LoadModel(
+bool FileLoader::ModelLoader::LoadModel(
 	const std::string& file,
 	const std::string& name,
 	LGLStructs::ModelInfo& model,
@@ -509,7 +504,7 @@ bool FileLoader::LoadModel(
 	return true;
 }
 
-bool FileLoader::GetScriptFuncFromDLL(
+bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 	const std::string& dllPath,
 	const std::string& funcName,
 	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
@@ -549,7 +544,7 @@ bool FileLoader::GetScriptFuncFromDLL(
 
 }
 
-bool FileLoader::GetScriptFuncFromDLLImpl(
+bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
 	const std::string& dllPath,
 	const std::string& funcName,
 	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
@@ -585,7 +580,7 @@ bool FileLoader::GetScriptFuncFromDLLImpl(
 	return false;
 }
 
-void FileLoader::UnloadScriptDLL(const std::string& dllPath)
+void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
 {
 	scriptWrapperLock.lock();
 	for (auto& scriptFunc : dllHandleMap[dllPath].second)
@@ -599,7 +594,7 @@ void FileLoader::UnloadScriptDLL(const std::string& dllPath)
 	dllHandleMap[dllPath].first = nullptr;
 }
 
-std::vector<std::string> FileLoader::GetLoadedScriptDlls()
+std::vector<std::string> FileLoader::DLLLoader::GetLoadedScriptDlls()
 {
 	std::vector<std::string> loadedDlls;
 	loadedDlls.reserve(dllHandleMap.size());
@@ -612,7 +607,7 @@ std::vector<std::string> FileLoader::GetLoadedScriptDlls()
 	return loadedDlls;
 }
 
-void FileLoader::FreeDllData()
+void FileLoader::DLLLoader::FreeDllData()
 {
 	for (auto& dllHandle : dllHandleMap)
 	{

@@ -221,7 +221,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 	LGLStructs::ModelInfo& newModel = MSM[name].model.first;
 	AnimSystem::ModelAnim& newModelAnim = MSM[name].model.second;
 
-	if (!fileLoader->LoadModel(path, name, newModel, newModelAnim))
+	if (!fileLoader->modelLoader.LoadModel(path, name, newModel, newModelAnim))
 	{
 		MSM.erase(name);
 		return false;
@@ -286,7 +286,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 	mainLGL->CreateModel(name, newModel);
 
-	fileLoader->FreeTextureData();
+	fileLoader->modelLoader.FreeTextureData();
 
 	return true;
 }
@@ -470,7 +470,7 @@ void EverettEngine::SetScriptToObject(
 	{
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncWeakPtr;
 
-		fileLoader->GetScriptFuncFromDLL(
+		fileLoader->dllloader.GetScriptFuncFromDLL(
 			dllPath,
 			objectType == ObjectTypes::Camera ? "Camera" : objectName,
 			scriptFuncWeakPtr
@@ -494,7 +494,7 @@ void EverettEngine::UnsetScript(const std::string& dllPath)
 {
 	if(fileLoader)
 	{ 
-		fileLoader->UnloadScriptDLL(dllPath);
+		fileLoader->dllloader.UnloadScriptDLL(dllPath);
 	}
 }
 
@@ -522,8 +522,8 @@ void EverettEngine::SetScriptToKey(
 
 		// Using bitwise or to avoid short-circuiting second call
 		bool anyFuncAdded = 
-			fileLoader->GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress) | 
-			fileLoader->GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease);
+			fileLoader->dllloader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress) | 
+			fileLoader->dllloader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease);
 
 		if (anyFuncAdded)
 		{
