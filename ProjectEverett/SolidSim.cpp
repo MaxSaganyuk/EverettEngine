@@ -31,6 +31,71 @@ SolidSim::SolidSim(
 	type = SolidType::Static;
 }
 
+std::string SolidSim::GetObjectTypeNameStr()
+{
+	return "Solid";
+}
+
+std::string SolidSim::CollectInfoToSaveFromSTMM()
+{
+	std::string res = "";
+
+	if (STMM.IsInitialized())
+	{
+		res += SimSerializer::GetValueToSaveFrom(STMM.animationSpeed);
+		res += SimSerializer::GetValueToSaveFrom(STMM.currentAnimationIndex);
+		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.playing);
+		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.paused);
+		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.looped);
+		res += SimSerializer::GetValueToSaveFrom(STMM.meshVisibility);
+	}
+
+	return res;
+}
+
+void SolidSim::CollectInfoToLoadToSTMM(std::string& line)
+{
+	if (STMM.IsInitialized())
+	{
+		SimSerializer::SetValueToLoadFrom(line, STMM.animationSpeed);
+		SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationIndex);
+		SimSerializer::SetValueToLoadFrom(line, STMM.animStates.playing);
+		SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused);
+		SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped);
+		SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility);
+	}
+}
+
+std::string SolidSim::GetSimInfoToSaveImpl()
+{
+	std::string res = ObjectSim::GetSimInfoToSaveImpl();
+
+	res += SimSerializer::GetValueToSaveFrom(model);
+	res += SimSerializer::GetValueToSaveFrom(type);
+
+	res += CollectInfoToSaveFromSTMM();
+
+	return res;
+}
+
+std::string SolidSim::GetSimInfoToSave(const std::string& modelSolidName)
+{
+	std::string info = GetObjectTypeNameStr() + '*' + modelSolidName + '*';
+
+	info += GetSimInfoToSaveImpl();
+
+	return info + '\n';
+}
+
+void SolidSim::SetSimInfoToLoad(std::string& line)
+{
+	ObjectSim::SetSimInfoToLoad(line);
+	SimSerializer::SetValueToLoadFrom(line, model);
+	SimSerializer::SetValueToLoadFrom(line, type);
+
+	CollectInfoToLoadToSTMM(line);
+}
+
 glm::mat4& SolidSim::GetModelMatrixAddr()
 {
 	return model;
@@ -200,6 +265,11 @@ bool SolidSim::IsModelAnimationPlaying()
 bool SolidSim::IsModelAnimationPaused()
 {
 	return STMM.IsAnimationPaused();
+}
+
+bool SolidSim::IsModelAnimationLooped()
+{
+	return STMM.IsAnimationLooped();
 }
 
 double SolidSim::GetModelCurrentAnimationTime()

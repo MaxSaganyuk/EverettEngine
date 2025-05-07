@@ -21,6 +21,10 @@ private:
 	SolidToModelManager STMM;
 
 	void ResetModelMatrix(const Rotation& toRotate = {});
+	std::string CollectInfoToSaveFromSTMM();
+	void CollectInfoToLoadToSTMM(std::string& line);
+protected:
+	std::string GetSimInfoToSaveImpl();
 public:
 	SolidSim(
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
@@ -28,6 +32,11 @@ public:
 		const glm::vec3& front = glm::vec3(0.0f, 0.0f, 1.0f),
 		const float speed = 0.006f
 	);
+
+	static std::string GetObjectTypeNameStr();
+
+	std::string GetSimInfoToSave(const std::string& modelSolidName);
+	void SetSimInfoToLoad(std::string& line);
 
 	glm::mat4& GetModelMatrixAddr() override;
 	void ForceModelUpdate() override;
@@ -59,6 +68,7 @@ public:
 	void StopModelAnimation() override;
 	bool IsModelAnimationPlaying() override;
 	bool IsModelAnimationPaused() override;
+	bool IsModelAnimationLooped() override;
 
 	// Animation access; engine only
 	double GetModelCurrentAnimationTime();

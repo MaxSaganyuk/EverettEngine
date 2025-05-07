@@ -22,9 +22,9 @@ bool CBrowseDialog::OpenAndGetFolderPath(CString& pathStr)
 	return success;
 }
 
-bool CBrowseDialog::OpenAndGetFilePath(CString& pathStr, CString& fileStr)
+bool CBrowseDialog::OpenAndGetFilePath(CString& pathStr, CString& fileStr, const CString& fileTypes)
 {
-	CFileDialog fileDlg(true, _T("dll"), nullptr, OFN_FILEMUSTEXIST, _T("DLL files (*.dll)|*.dll", this));
+	CFileDialog fileDlg(true, fileTypes, nullptr, OFN_FILEMUSTEXIST);
 
 	if (fileDlg.DoModal() == IDOK)
 	{

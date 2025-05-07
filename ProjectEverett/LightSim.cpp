@@ -36,6 +36,36 @@ LightSim::LightSim(
 	this->lightRange = range;
 }
 
+std::string LightSim::GetObjectTypeNameStr()
+{
+	return "Light";
+}
+
+std::string LightSim::GetSimInfoToSave(const std::string& lightName)
+{
+	std::string info = GetObjectTypeNameStr() + '*' + lightName + '*';
+
+	info += GetSimInfoToSaveImpl();
+
+	return info + '\n';
+}
+
+std::string LightSim::GetSimInfoToSaveImpl()
+{
+	std::string res = ObjectSim::GetSimInfoToSaveImpl();
+
+	res += SimSerializer::GetValueToSaveFrom(lightRange);
+
+	return res;
+}
+
+void LightSim::SetSimInfoToLoad(std::string& line)
+{
+	ObjectSim::SetSimInfoToLoad(line);
+	SimSerializer::SetValueToLoadFrom(line, lightRange);
+}
+
+
 LightSim::Attenuation LightSim::GetAttenuation(int range)
 {
 	for (const auto& attenuationVal : attenuationVals)

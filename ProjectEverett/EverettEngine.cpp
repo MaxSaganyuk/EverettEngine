@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
+#include <algorithm>
 
 #include "LGL.h"
 #include "LGLUtils.h"
@@ -35,8 +36,11 @@
 
 //#define BONE_TEST
 
+using ObjectInfoNames = SimSerializer::ObjectInfoNames;
+
 struct EverettEngine::ModelSolidInfo
 {
+	std::string modelPath;
 	SolidToModelManager::FullModelInfo model;
 	std::map<std::string, SolidSim> solids;
 };
@@ -62,12 +66,21 @@ EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 	}
 };
 
-std::vector<std::pair<EverettEngine::ObjectTypes, std::string>> EverettEngine::objectTypes
+const std::string EverettEngine::saveFileType = ".esav";
+
+struct EverettEngine::ObjectTypeInfo
 {
-	{EverettEngine::ObjectTypes::Camera, "Camera"}, 
-	{EverettEngine::ObjectTypes::Solid,  "Solid" }, 
-	{EverettEngine::ObjectTypes::Light,  "Light" },
-	{EverettEngine::ObjectTypes::Sound,  "Sound" }
+	ObjectTypes nameEnum;
+	std::string nameStr;
+	std::type_index pureType;
+};
+
+std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
+{
+	{EverettEngine::ObjectTypes::Camera, CameraSim::GetObjectTypeNameStr(), typeid(CameraSim)},
+	{EverettEngine::ObjectTypes::Solid,  SolidSim::GetObjectTypeNameStr(),  typeid(SolidSim)},
+	{EverettEngine::ObjectTypes::Light,  LightSim::GetObjectTypeNameStr(),  typeid(LightSim)},
+	{EverettEngine::ObjectTypes::Sound,  SoundSim::GetObjectTypeNameStr(),  typeid(SoundSim)}
 };
 
 EverettEngine::EverettEngine()
@@ -216,10 +229,16 @@ int EverettEngine::ConvertKeyTo(const std::string& keyName)
 
 bool EverettEngine::CreateModel(const std::string& path, const std::string& name)
 {
+	if (MSM.find(name) != MSM.end())
+	{
+		return true;
+	}
+
 	auto resPair = MSM.emplace(name, std::move(ModelSolidInfo{}));
 	
 	LGLStructs::ModelInfo& newModel = MSM[name].model.first;
 	AnimSystem::ModelAnim& newModelAnim = MSM[name].model.second;
+	MSM[name].modelPath = path;
 
 	if (!fileLoader->modelLoader.LoadModel(path, name, newModel, newModelAnim))
 	{
@@ -293,6 +312,11 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 bool EverettEngine::CreateSolid(const std::string& modelName, const std::string& solidName)
 {
+	if (MSM[modelName].solids.find(solidName) != MSM[modelName].solids.end())
+	{
+		return true;
+	}
+
 	SolidSim newSolid(camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
 	newSolid.SetBackwardsModelAccess(MSM[modelName].model);
 
@@ -332,6 +356,11 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 
 bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightType)
 {
+	if (lights[lightType].find(lightName) != lights[lightType].end())
+	{
+		return true;
+	}
+
 	auto resPair = lights[lightType].emplace(
 		lightName,
 		LightSim{
@@ -354,6 +383,11 @@ bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 
 bool EverettEngine::CreateSound(const std::string& path, const std::string& soundName)
 {
+	if (sounds.find(soundName) != sounds.end())
+	{
+		return true;
+	}
+
 	auto resPair = sounds.emplace(
 		soundName,
 		SoundSim{
@@ -622,6 +656,11 @@ std::vector<std::string> EverettEngine::GetSoundInDirList(const std::string& pat
 	return GetObjectsInDirList(path, {".wav"});
 }
 
+std::string EverettEngine::GetSaveFileType()
+{
+	return saveFileType;
+}
+
 ObjectSim* EverettEngine::GetObjectFromMap(
 	EverettEngine::ObjectTypes objectType, 
 	const std::string& subtypeName, 
@@ -651,6 +690,188 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 	}
 
 	return object;
+}
+
+std::vector<std::pair<std::string, ObjectSim*>> EverettEngine::GetAllObjectsByType(ObjectTypes objectType)
+{
+	std::vector<std::pair<std::string, ObjectSim*>> res;
+
+	switch (objectType)
+	{
+	case EverettEngine::ObjectTypes::Camera:
+		res.push_back({ "", camera.get() });
+		break;
+	case EverettEngine::ObjectTypes::Solid:
+		for (auto& model : MSM)
+		{
+			for (auto& solid : model.second.solids)
+			{
+				res.push_back({ model.first + '*' + solid.first + '*' + model.second.modelPath, &solid.second});
+			}
+		}
+		break;
+	case EverettEngine::ObjectTypes::Light:
+		for (auto& lightType : lights)
+		{
+			for (auto& light : lightType.second)
+			{
+				res.push_back({ light.second.GetCurrentLightType() + '*' + light.first, &light.second });
+			}
+		}
+		break;
+	case EverettEngine::ObjectTypes::Sound:
+		for (auto& sound : sounds)
+		{
+			res.push_back({sound.first, &sound.second});
+		}
+		break;
+	default:
+		assert(false && "unreachable");
+	}
+
+	return res;
+}
+
+bool EverettEngine::SaveDataToFile(const std::string& filePath)
+{
+	std::string realFilePath = filePath + saveFileType;
+	std::fstream file(realFilePath, std::ios::out);
+
+	for (size_t i = 0; i < static_cast<int>(ObjectTypes::_SIZE); ++i)
+	{
+		auto allObjectsByType = GetAllObjectsByType(static_cast<ObjectTypes>(i));
+
+		for (auto& nameAndObject : allObjectsByType)
+		{
+			switch (static_cast<ObjectTypes>(i))
+			{
+			case EverettEngine::ObjectTypes::Camera:
+				file << dynamic_cast<CameraSim*>(nameAndObject.second)->GetSimInfoToSave(nameAndObject.first);
+				break;
+			case EverettEngine::ObjectTypes::Solid:
+				file << dynamic_cast<SolidSim*>(nameAndObject.second)->GetSimInfoToSave(nameAndObject.first);
+				break;
+			case EverettEngine::ObjectTypes::Light:
+				file << dynamic_cast<LightSim*>(nameAndObject.second)->GetSimInfoToSave(nameAndObject.first);
+				break;
+			case EverettEngine::ObjectTypes::Sound:
+				file << dynamic_cast<SoundSim*>(nameAndObject.second)->GetSimInfoToSave(nameAndObject.first);
+				break;
+			default:
+				assert(false && "unreachable");
+			}
+		}
+	}
+
+	file.close();
+
+	return true;
+}
+
+void EverettEngine::LoadCameraFromLine(std::string& line)
+{
+	camera->SetSimInfoToLoad(line);
+	camera->ForceModelUpdate();
+}
+
+template<typename Sim>
+void EverettEngine::ApplySimInfoFromLine(std::string& line, const std::array<std::string, 4>& objectInfo, bool& res)
+{
+	Sim* createdObject = dynamic_cast<Sim*>(GetObjectFromMap(
+		GetObjectPureTypeToName(typeid(Sim)),
+		objectInfo[ObjectInfoNames::SubtypeName],
+		objectInfo[ObjectInfoNames::ObjectName])
+		);
+
+	if (createdObject)
+	{
+		createdObject->SetSimInfoToLoad(line);
+
+		if (typeid(Sim) == typeid(SolidSim)) // In C++20 if constexpr can be used
+		{
+			dynamic_cast<SolidSim*>(createdObject)->ForceModelUpdate();
+		}
+
+		res = true;
+	}
+}
+
+void EverettEngine::LoadSolidFromLine(std::string& line, const std::array<std::string, 4>& objectInfo)
+{
+	bool res = false;
+
+	if (CreateModel(objectInfo[ObjectInfoNames::Path], objectInfo[ObjectInfoNames::SubtypeName]) &&
+		CreateSolid(objectInfo[ObjectInfoNames::SubtypeName], objectInfo[ObjectInfoNames::ObjectName]))
+	{
+		ApplySimInfoFromLine<SolidSim>(line, objectInfo, res);
+	}
+
+	assert(res && "Solid creation from file failed");
+}
+
+void EverettEngine::LoadLightFromLine(std::string& line, const std::array<std::string, 4>& objectInfo)
+{
+	bool res = false;
+
+	if (CreateLight(
+		objectInfo[ObjectInfoNames::ObjectName],
+		static_cast<LightTypes>(LightSim::GetTypeToName(objectInfo[ObjectInfoNames::SubtypeName])))
+		)
+	{
+		ApplySimInfoFromLine<LightSim>(line, objectInfo, res);
+	}
+
+	assert(res && "Light creation from file failed");
+}
+
+void EverettEngine::LoadSoundFromLine(std::string& line, const std::array<std::string, 4>& objectInfo)
+{
+	bool res = false;
+
+	if (CreateSound(objectInfo[ObjectInfoNames::Path], objectInfo[ObjectInfoNames::ObjectName]))
+	{
+		ApplySimInfoFromLine<SoundSim>(line, objectInfo, res);
+	}
+
+	assert(res && "Sound creation from file failed");
+}
+
+bool EverettEngine::LoadDataFromFile(const std::string& filePath)
+{
+	std::fstream file(filePath, std::ios::in);
+	std::string line = "";
+	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
+
+	while (!file.eof())
+	{
+		std::getline(file, line);
+		if (!line.empty())
+		{
+			SimSerializer::GetObjectInfo(line, objectInfo);
+
+			switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]))
+			{
+			case EverettEngine::ObjectTypes::Camera:
+				LoadCameraFromLine(line);
+				break;
+			case EverettEngine::ObjectTypes::Solid:
+				LoadSolidFromLine(line, objectInfo);
+				break;
+			case EverettEngine::ObjectTypes::Light:
+				LoadLightFromLine(line, objectInfo);
+				break;
+			case EverettEngine::ObjectTypes::Sound:
+				LoadSoundFromLine(line, objectInfo);
+				break;
+			default:
+				assert(false && "unreachable");
+			}
+		}
+
+
+	}
+
+	return true;
 }
 
 template<typename Sim>
@@ -685,7 +906,7 @@ std::vector<std::string> EverettEngine::GetAllObjectTypeNames()
 
 	for (auto& objectNamePair : objectTypes)
 	{
-		objectNames.push_back(objectNamePair.second);
+		objectNames.push_back(objectNamePair.nameStr);
 	}
 
 	return objectNames;
@@ -695,9 +916,9 @@ std::string EverettEngine::GetObjectTypeToName(ObjectTypes objectType)
 {
 	for (auto& objectNamePair : objectTypes)
 	{
-		if (objectNamePair.first == objectType)
+		if (objectNamePair.nameEnum == objectType)
 		{
-			return objectNamePair.second;
+			return objectNamePair.nameStr;
 		}
 	}
 
@@ -708,9 +929,48 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectTypeToName(const std::string&
 {
 	for (auto& objectNamePair : objectTypes)
 	{
-		if (objectNamePair.second == objectName)
+		if (objectNamePair.nameStr == objectName)
 		{
-			return objectNamePair.first;
+			return objectNamePair.nameEnum;
+		}
+	}
+
+	assert(false && "Nonexistent name");
+}
+
+std::type_index EverettEngine::GetObjectPureTypeToName(ObjectTypes objectType)
+{
+	for (auto& objectNamePair : objectTypes)
+	{
+		if (objectNamePair.nameEnum == objectType)
+		{
+			return objectNamePair.pureType;
+		}
+	}
+
+	assert(false && "Nonexistent name");
+}
+
+std::type_index EverettEngine::GetObjectPureTypeToName(const std::string& objectName)
+{
+	for (auto& objectNamePair : objectTypes)
+	{
+		if (objectNamePair.nameStr == objectName)
+		{
+			return objectNamePair.pureType;
+		}
+	}
+
+	assert(false && "Nonexistent name");
+}
+
+EverettEngine::ObjectTypes EverettEngine::GetObjectPureTypeToName(std::type_index pureType)
+{
+	for (auto& objectNamePair : objectTypes)
+	{
+		if (objectNamePair.pureType == pureType)
+		{
+			return objectNamePair.nameEnum;
 		}
 	}
 

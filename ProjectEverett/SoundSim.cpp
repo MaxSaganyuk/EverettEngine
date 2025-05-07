@@ -16,6 +16,30 @@ size_t ContextManager<ALCcontext>::counter = 0;
 
 CameraSim* SoundSim::camera = nullptr;
 
+std::string SoundSim::GetSimInfoForSaveImpl()
+{
+	std::string res = ObjectSim::GetSimInfoToSaveImpl();
+
+	res += SimSerializer::GetValueToSaveFrom(sound.fileName);
+
+	return res;
+}
+
+std::string SoundSim::GetSimInfoToSave(const std::string& soundName)
+{
+	std::string info = GetObjectTypeNameStr() + '*' + soundName + '*';
+
+	info += GetSimInfoForSaveImpl();
+
+	return info + '\n';
+}
+
+void SoundSim::SetSimInfoToLoad(std::string& line)
+{
+	ObjectSim::SetSimInfoToLoad(line);
+	SimSerializer::SetValueToLoadFrom(line, sound.fileName);
+}
+
 void SoundSim::InitOpenAL()
 {
 	device = alcOpenDevice(nullptr);
@@ -34,6 +58,7 @@ void SoundSim::SetCamera(CameraSim& camera)
 
 bool SoundSim::LoadFile(const std::string& file)
 {
+	sound.fileName = file;
 	sound.data = drwav_open_file_and_read_pcm_frames_f32
 		(file.c_str(), &sound.channels, &sound.sampleRate, &sound.totalPCMFrameCount, nullptr);
 
@@ -143,6 +168,11 @@ SoundSim::SoundSim(const std::string& file, glm::vec3&& pos)
 {
 	sound.pos = std::move(pos);
 	SetupSound(file);
+}
+
+std::string SoundSim::GetObjectTypeNameStr()
+{
+	return "Sound";
 }
 
 SoundSim::~SoundSim()

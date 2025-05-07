@@ -22,6 +22,11 @@ void SolidToModelManager::ResetAnimationTime()
 	currentAnimationTime = startAnimationTime;
 }
 
+bool SolidToModelManager::IsInitialized()
+{
+	return initialized;
+}
+
 std::vector<std::string> SolidToModelManager::GetMeshNames()
 {
 	CheckIfInitialized();
@@ -200,6 +205,13 @@ bool SolidToModelManager::IsAnimationPaused()
 	CheckIfInitialized();
 
 	return animStates.paused;
+}
+
+bool SolidToModelManager::IsAnimationLooped()
+{
+	CheckIfInitialized();
+
+	return animStates.looped;
 }
 
 double SolidToModelManager::GetAnimationTimeTicks(double currentTime)

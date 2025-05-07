@@ -48,6 +48,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 private:
+	void OnLoadSave(bool load, std::function<bool(const std::string&)> loadSaveFunc);
+	void OnLoad();
+	void OnSave();
+
 	void OnLoadModel();
 	void OnPlaceSolid();
 	void OnPlaceLight();

@@ -22,6 +22,11 @@ public:
 		const float range = 60.0f
 	);
 
+	static std::string GetObjectTypeNameStr();
+
+	std::string GetSimInfoToSave(const std::string& lightName);
+	void SetSimInfoToLoad(std::string& line);
+
 	static std::vector<std::string> GetLightTypeNames();
 	std::string GetCurrentLightType() override;
 
@@ -33,6 +38,8 @@ public:
 	static Attenuation GetAttenuation(int range);
 	Attenuation GetAttenuation() override;
 private:
+	std::string GetSimInfoToSaveImpl();
+
 	static std::map<int, Attenuation> attenuationVals;
 
 	static std::vector<std::pair<LightTypes, std::string>> lightTypeToName;

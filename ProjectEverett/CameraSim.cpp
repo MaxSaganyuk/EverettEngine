@@ -32,6 +32,43 @@ CameraSim::CameraSim(
 	SolidSim::SetType(SolidType::Dynamic);
 }
 
+std::string CameraSim::GetObjectTypeNameStr()
+{
+	return "Camera";
+}
+
+std::string CameraSim::GetSimInfoToSaveImpl()
+{
+	std::string res = SolidSim::GetSimInfoToSaveImpl();
+
+	res += SimSerializer::GetValueToSaveFrom(view);
+	res += SimSerializer::GetValueToSaveFrom(projection);
+	res += SimSerializer::GetValueToSaveFrom(fov);
+	res += SimSerializer::GetValueToSaveFrom(sensitivity);
+	res += SimSerializer::GetValueToSaveFrom(mode);
+
+	return res;
+}
+
+std::string CameraSim::GetSimInfoToSave(const std::string&)
+{
+	std::string info = GetObjectTypeNameStr() + '*';
+
+	info += GetSimInfoToSaveImpl();
+
+	return info + '\n';
+}
+
+void CameraSim::SetSimInfoToLoad(std::string& line)
+{
+	SolidSim::SetSimInfoToLoad(line);
+	SimSerializer::SetValueToLoadFrom(line, view);
+	SimSerializer::SetValueToLoadFrom(line, projection);
+	SimSerializer::SetValueToLoadFrom(line, fov);
+	SimSerializer::SetValueToLoadFrom(line, sensitivity);
+	SimSerializer::SetValueToLoadFrom(line, mode);
+}
+
 glm::mat4& CameraSim::GetViewMatrixAddr()
 {
 	return view;

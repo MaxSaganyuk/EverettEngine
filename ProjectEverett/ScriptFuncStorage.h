@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <vector>
 
 #include "interfaces/ISolidSim.h"
 
@@ -23,6 +24,7 @@ public:
 	void ExecuteAllScriptFuncs(IObjectSim* object);
 	bool IsScriptFuncAdded(const std::string& dllName = "");
 	bool IsScriptFuncRunnable(const std::string& dllName = "");
+	std::vector<std::string> GetAddedScriptDLLs() const;
 
 private:
 	std::string lastExecutedScriptDll;

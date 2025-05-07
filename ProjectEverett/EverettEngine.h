@@ -21,6 +21,7 @@
 #include <condition_variable>
 #include <unordered_set>
 #include <chrono>
+#include <typeindex>
 
 #include "WindowHandleHolder.h"
 #include "UnorderedPtrMap.h"
@@ -76,7 +77,8 @@ public:
 		Camera,
 		Solid,
 		Light,
-		Sound
+		Sound,
+		_SIZE
 	};
 
 	EVERETT_API EverettEngine();
@@ -154,10 +156,16 @@ public:
 	EVERETT_API void AddCurrentWindowHandler(const std::string& name);
 
 	EVERETT_API std::string GetAvailableObjectName(const std::string& name);
+
+	EVERETT_API std::string GetSaveFileType();
+
+	EVERETT_API bool SaveDataToFile(const std::string& filePath);
+	EVERETT_API bool LoadDataFromFile(const std::string& filePath);
 private:
 #ifdef _DEBUG
 	std::string debugShaderPath = "\\..\\ProjectEverett\\shaders";
 #endif
+	static const std::string saveFileType;
 	std::string defaultShaderProgram;
 	std::chrono::system_clock::time_point startTime;
 
@@ -184,11 +192,27 @@ private:
 
 	std::vector<std::string> GetObjectsInDirList(const std::string& path, const std::vector<std::string>& fileTypes);
 
+	struct ObjectTypeInfo;
+
 	void CheckAndAddToNameTracker(const std::string& name);
+
+	static std::type_index GetObjectPureTypeToName(ObjectTypes objectType);
+	static std::type_index GetObjectPureTypeToName(const std::string& objectName);
+	static ObjectTypes GetObjectPureTypeToName(std::type_index objectType);
 
 	std::vector<std::string> GetSolidList();
 	std::vector<std::string> GetLightList();
 	std::vector<std::string> GetSoundList();
+
+	std::vector<std::pair<std::string, ObjectSim*>> GetAllObjectsByType(ObjectTypes objectType);
+
+	template<typename Sim>
+	void ApplySimInfoFromLine(std::string& line, const std::array<std::string, 4>& objectInfo, bool& res);
+
+	void LoadCameraFromLine(std::string& line);
+	void LoadSolidFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
+	void LoadLightFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
+	void LoadSoundFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
 
 	std::unique_ptr<LGL> mainLGL;
 	std::unique_ptr<std::thread> mainLGLRenderThread;
@@ -203,7 +227,7 @@ private:
 	SoundCollection sounds;
 
 	static LightShaderValueNames lightShaderValueNames;
-	static std::vector<std::pair<ObjectTypes, std::string>> objectTypes;
+	static std::vector<ObjectTypeInfo> objectTypes;
 
 	std::unique_ptr<CameraSim> camera;
 
