@@ -40,6 +40,7 @@ public:
 	virtual void StopModelAnimation() = 0;
 	virtual bool IsModelAnimationPlaying() = 0;
 	virtual bool IsModelAnimationPaused() = 0;
+	virtual bool IsModelAnimationLooped() = 0;
 
 	virtual bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) = 0;
 };

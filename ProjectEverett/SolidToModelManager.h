@@ -14,6 +14,8 @@ public:
 
 	SolidToModelManager();
 
+	bool IsInitialized();
+
 	void InitializeSTMM(FullModelInfo& fullModelInfoRef);
 
 	std::vector<std::string> GetMeshNames();
@@ -36,12 +38,14 @@ public:
 	void StopAnimation();
 	bool IsAnimationPlaying();
 	bool IsAnimationPaused();
+	bool IsAnimationLooped();
 
 	double GetCurrentAnimationTime();
 	void AppendStartingBoneIndex(size_t startingBoneIndex);
 	size_t GetCurrentStartingBoneIndex();
-
 private:
+	friend class SolidSim;
+
 	void CheckIfInitialized();
 
 	double GetAnimationTimeTicks(double currentTime);

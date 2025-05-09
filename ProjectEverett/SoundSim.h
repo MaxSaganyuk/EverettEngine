@@ -25,6 +25,7 @@ class SoundSim : public ObjectSim, public ISoundSim
 	{
 		stdEx::ValWithBackup<glm::vec3> pos;
 
+		std::string fileName;
 		unsigned int channels;
 		unsigned int sampleRate;
 		unsigned long long totalPCMFrameCount;
@@ -45,12 +46,18 @@ class SoundSim : public ObjectSim, public ISoundSim
 	bool LoadFile(const std::string& file);
 	bool CreateContext();
 	bool CreateBufferAndSource();
+	std::string GetSimInfoForSaveImpl();
 public:
+	std::string GetSimInfoToSave(const std::string& soundName);
+	void SetSimInfoToLoad(std::string& line);
+
 	static void InitOpenAL();
 	static void SetCamera(CameraSim& camera);
 	SoundSim() = default;
 	SoundSim(const std::string& file, glm::vec3& pos);
 	SoundSim(const std::string& file, glm::vec3&& pos);
+
+	static std::string GetObjectTypeNameStr();
 
 	void Play() override;
 	bool IsPlaying() override;

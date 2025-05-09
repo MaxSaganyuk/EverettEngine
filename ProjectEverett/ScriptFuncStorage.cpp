@@ -44,3 +44,15 @@ bool ScriptFuncStorage::IsScriptFuncRunnable(const std::string& dllName)
 {
 	return IsScriptFuncAdded(dllName) && *scriptFuncMap[dllName].lock().get();
 }
+
+std::vector<std::string> ScriptFuncStorage::GetAddedScriptDLLs() const
+{
+	std::vector<std::string> res;
+
+	for (auto& scriptFuncPair : scriptFuncMap)
+	{
+		res.push_back(scriptFuncPair.first);
+	}
+
+	return res;
+}

@@ -8,6 +8,7 @@
 
 #include "MFCTreeManager.h"
 
+#include "CSaveLoadDlg.h"
 #include "CBrowseAndLoadDialog.h"
 #include "CPlaceObjectDialog.h"
 #include "CLoadingDialog.h"
@@ -27,6 +28,8 @@ IMPLEMENT_DYNAMIC(CMainFrame, CFrameWnd)
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_WM_CREATE()
 	ON_WM_SETFOCUS()
+	ON_COMMAND(ID_LOAD_FILE,   &CMainFrame::OnLoad)
+	ON_COMMAND(ID_SAVE_FILE,   &CMainFrame::OnSave)
 	ON_COMMAND(ID_APP_ABOUT,   &CMainFrame::OnLoadModel)
 	ON_COMMAND(ID_BUTTON32771, &CMainFrame::OnPlaceSolid)
 	ON_COMMAND(ID_BUTTON32772, &CMainFrame::OnPlaceLight)
@@ -150,6 +153,36 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 
 	// otherwise, do default handling
 	return CFrameWnd::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+}
+
+void CMainFrame::OnLoadSave(bool load, std::function<bool(const std::string&)> loadSaveFunc)
+{
+	CString saveFileType = CA2T(engine.GetSaveFileType().c_str());
+	CSaveLoadDlg saveLoadDlg(static_cast<CSaveLoadDlg::Mode>(load), saveFileType);
+
+	if (saveLoadDlg.DoModal() == IDOK)
+	{
+		CLoadingDialog loadingDlg(
+			{
+				[this, &saveLoadDlg, &loadSaveFunc]()
+				{
+					return loadSaveFunc(saveLoadDlg.GetFilePathAndName());
+				}
+			}
+		);
+
+		loadingDlg.DoModal();
+	}
+}
+
+void CMainFrame::OnLoad()
+{
+	OnLoadSave(true, [this](const std::string& path) { return engine.LoadDataFromFile(path); });
+}
+
+void CMainFrame::OnSave()
+{
+	OnLoadSave(false, [this](const std::string& path) { return engine.SaveDataToFile(path); });
 }
 
 void CMainFrame::OnLoadModel()

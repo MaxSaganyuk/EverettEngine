@@ -6,5 +6,5 @@ class CBrowseDialog
 {
 public:
 	static bool OpenAndGetFolderPath(CString& pathStr);
-	static bool OpenAndGetFilePath(CString& pathStr, CString& fileStr);
+	static bool OpenAndGetFilePath(CString& pathStr, CString& fileStr, const CString& fileTypes = _T(".dll"));
 };
