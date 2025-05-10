@@ -112,6 +112,7 @@ public:
 	// Additional steps to rendering can be passed as a function pointer or a lambda
 	// It is expected to get a lambda with a script for camera behaviour
 	LGL_API void RunRenderingCycle(std::function<void()> additionalSteps = nullptr);
+	LGL_API void PauseRendering(bool value = true);
 	LGL_API void SetStaticBackgroundColor(const glm::vec4& rgba);
 
 	// Creates a VAO, VBO and (if indices are given) EBO
@@ -199,7 +200,7 @@ private:
 	void ProcessInput();
 	void Render();
 
-	double startTime;
+	bool pauseRendering;
 
 	GLFWwindow* window;
 

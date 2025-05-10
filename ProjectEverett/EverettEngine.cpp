@@ -842,6 +842,7 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	std::string line = "";
 	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
 
+	mainLGL->PauseRendering();
 	while (!file.eof())
 	{
 		std::getline(file, line);
@@ -867,9 +868,8 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 				assert(false && "unreachable");
 			}
 		}
-
-
 	}
+	mainLGL->PauseRendering(false);
 
 	return true;
 }

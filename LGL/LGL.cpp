@@ -49,6 +49,7 @@ LGL::LGL()
 	background = { 0, 0, 0, 1 };
 	currentVAOToRender = {};
 	window = nullptr;
+	pauseRendering = false;
 
 	std::cout << "Created LambdaGL instance\n";
 }
@@ -117,8 +118,6 @@ bool LGL::CreateWindow(const int height, const int width, const std::string& tit
 
 	InitGLAD();
 	InitCallbacks();
-
-	startTime = glfwGetTime();
 
 	return true;
 }
@@ -283,6 +282,8 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 	{
 		ContextLock
 
+		if(pauseRendering) continue;
+
 		ProcessInput();
 
 		GLSafeExecute(glClearColor, background.r, background.g, background.b, background.a);
@@ -358,6 +359,11 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+}
+
+void LGL::PauseRendering(bool value)
+{
+	pauseRendering = value;
 }
 
 void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
