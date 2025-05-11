@@ -155,6 +155,48 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 	return CFrameWnd::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }
 
+bool CMainFrame::LoadObjectNamesToTree()
+{
+	using ObjectTypes = EverettEngine::ObjectTypes;
+
+	MFCTreeManager& mfcTree = mainWindow->GetObjectTree();
+	std::vector<std::string> objectNames;
+
+	for (size_t i = static_cast<size_t>(ObjectTypes::Solid); i < static_cast<size_t>(ObjectTypes::_SIZE); ++i)
+	{
+		ObjectTypes currentObjectType = static_cast<ObjectTypes>(i);
+		objectNames = engine.GetNamesByObject(currentObjectType);
+
+		std::string subTypeName = "";
+		for (auto& objectName : objectNames)
+		{
+			bool subType = objectName[0] == '.';
+			if (subType)
+			{
+				subTypeName = objectName.substr(1, std::string::npos);
+			}
+
+			switch (currentObjectType)
+			{
+			case ObjectTypes::Solid:
+				subType ? mfcTree.AddModelToTree(subTypeName) : mfcTree.AddSolidToTree(subTypeName, objectName);
+				break;
+			case ObjectTypes::Light:
+				if (!subType)
+				{
+					mfcTree.AddLightToTree(subTypeName, objectName);
+				}
+				break;
+			case ObjectTypes::Sound:
+				mfcTree.AddSoundToTree(objectName);
+				break;
+			}
+		}
+	}
+
+	return true;
+}
+
 void CMainFrame::OnLoadSave(bool load, std::function<bool(const std::string&)> loadSaveFunc)
 {
 	CString saveFileType = CA2T(engine.GetSaveFileType().c_str());
@@ -177,7 +219,7 @@ void CMainFrame::OnLoadSave(bool load, std::function<bool(const std::string&)> l
 
 void CMainFrame::OnLoad()
 {
-	OnLoadSave(true, [this](const std::string& path) { return engine.LoadDataFromFile(path); });
+	OnLoadSave(true, [this](const std::string& path){ return engine.LoadDataFromFile(path) && LoadObjectNamesToTree(); });
 }
 
 void CMainFrame::OnSave()

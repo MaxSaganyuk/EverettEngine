@@ -47,6 +47,8 @@ protected:
 	afx_msg void OnSetFocus(CWnd *pOldWnd);
 	DECLARE_MESSAGE_MAP()
 
+	bool LoadObjectNamesToTree();
+
 private:
 	void OnLoadSave(bool load, std::function<bool(const std::string&)> loadSaveFunc);
 	void OnLoad();
