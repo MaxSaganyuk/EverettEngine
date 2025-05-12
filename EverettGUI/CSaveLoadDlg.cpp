@@ -71,7 +71,8 @@ void CSaveLoadDlg::OnBrowseButtonClick()
 	CString fileStr = _T("");
 
 	chosenMode == Mode::Save ? 
-		CBrowseDialog::OpenAndGetFolderPath(pathStr) : CBrowseDialog::OpenAndGetFilePath(pathStr, fileStr, saveFileType);
+		CBrowseDialog::OpenAndGetFolderPath(pathStr) : 
+		CBrowseDialog::OpenAndGetFilePath(pathStr, fileStr, {{"esav files", "*.esav"}});
 
 	filePathEdit.SetWindowTextW(pathStr);
 	fileNameEdit.SetWindowTextW(fileStr);
