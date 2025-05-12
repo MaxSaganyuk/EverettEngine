@@ -155,6 +155,13 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 	return CFrameWnd::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }
 
+bool CMainFrame::ClearTree()
+{
+	mainWindow->GetObjectTree().ClearNonRootNodes();
+
+	return true;
+}
+
 bool CMainFrame::LoadObjectNamesToTree()
 {
 	using ObjectTypes = EverettEngine::ObjectTypes;
@@ -219,7 +226,9 @@ void CMainFrame::OnLoadSave(bool load, std::function<bool(const std::string&)> l
 
 void CMainFrame::OnLoad()
 {
-	OnLoadSave(true, [this](const std::string& path){ return engine.LoadDataFromFile(path) && LoadObjectNamesToTree(); });
+	OnLoadSave(true, [this](const std::string& path){ 
+		return ClearTree() && engine.LoadDataFromFile(path) && LoadObjectNamesToTree(); 
+	});
 }
 
 void CMainFrame::OnSave()

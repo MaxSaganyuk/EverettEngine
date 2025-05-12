@@ -156,6 +156,8 @@ public:
 	LGL_API void SetShaderFolder(const std::string& path);
 	LGL_API void RecompileShader(const std::string& shaderName);
 
+	LGL_API void ResetLGL();
+
 	//Callback setters - Pass nothing to make callback self-contained
 	LGL_API void SetCursorPositionCallback(std::function<void(double, double)> callbackFunc);
 	LGL_API void SetScrollCallback(std::function<void(double, double)> callbackFunc);
@@ -168,7 +170,8 @@ public:
 private:
 	bool InitGLAD();
 	void InitCallbacks();
-	;
+
+	void DeleteGLObjects();
 	void DeleteShader(const std::string& shaderName);
 
 	int CheckUniformValueLocation(const std::string& valueName, const std::string& shaderProgramName);

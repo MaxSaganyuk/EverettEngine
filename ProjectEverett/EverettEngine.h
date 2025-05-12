@@ -167,7 +167,6 @@ private:
 #endif
 	static const std::string saveFileType;
 	std::string defaultShaderProgram;
-	std::chrono::system_clock::time_point startTime;
 
 	std::function<void(double, double)> cursorCaptureCallback;
 
@@ -213,6 +212,8 @@ private:
 	void LoadSolidFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
 	void LoadLightFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
 	void LoadSoundFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
+
+	void ResetEngine();
 
 	std::unique_ptr<LGL> mainLGL;
 	std::unique_ptr<std::thread> mainLGLRenderThread;

@@ -47,6 +47,7 @@ protected:
 	afx_msg void OnSetFocus(CWnd *pOldWnd);
 	DECLARE_MESSAGE_MAP()
 
+	bool ClearTree();
 	bool LoadObjectNamesToTree();
 
 private:

@@ -46,6 +46,15 @@ MFCTreeManager::MFCTreeManagerNode* MFCTreeManager::MFCTreeManagerNode::FindNode
 	return nullptr;
 }
 
+void MFCTreeManager::MFCTreeManagerNode::ClearAllNextNodes()
+{
+	for (auto& node : nextNodes)
+	{
+		objectTree.DeleteItem(node.second->nodeInfo);
+	}
+	nextNodes.clear();
+}
+
 CTreeCtrl& MFCTreeManager::GetTreeCtrl()
 {
 	return objectTree;
@@ -127,4 +136,15 @@ std::vector<std::pair<std::string, std::string>> MFCTreeManager::GetAllOfRootsSe
 	}
 
 	return allDataRoots;
+}
+
+
+void MFCTreeManager::ClearNonRootNodes()
+{
+	rootNodes["Solid"]->ClearAllNextNodes();
+	for (auto& lightNodes : rootNodes["Light"]->nextNodes)
+	{
+		lightNodes.second->ClearAllNextNodes();
+	}
+	rootNodes["Sound"]->ClearAllNextNodes();
 }

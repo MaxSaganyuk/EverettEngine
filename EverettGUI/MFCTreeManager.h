@@ -29,6 +29,7 @@ class MFCTreeManager
 
 		void AddNode(const std::string& title, const std::string& data);
 		MFCTreeManagerNode* FindNodeBy(HTREEITEM item);
+		void ClearAllNextNodes();
 
 	private:
 		std::string title;
@@ -52,6 +53,8 @@ public:
 	std::vector<std::pair<std::string, std::string>> GetAllOfRootsSelectedNode();
 
 	CTreeCtrl& GetTreeCtrl();
+
+	void ClearNonRootNodes();
 private:
 
 	MFCTreeManagerNode* FindNodeByItem(HTREEITEM item);

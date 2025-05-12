@@ -192,8 +192,6 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 		[this, additionalFuncs]() { mainLGL->RunRenderingCycle(additionalFuncs); }
 	);
 
-	startTime = std::chrono::system_clock::now();
-
 	animSystem = std::make_unique<AnimSystem>();
 }
 
@@ -732,6 +730,17 @@ std::vector<std::pair<std::string, ObjectSim*>> EverettEngine::GetAllObjectsByTy
 	return res;
 }
 
+void EverettEngine::ResetEngine()
+{
+	MSM.clear();
+	lights.clear();
+	sounds.clear();
+	keyScriptFuncMap.clear();
+	allNameTracker.clear();
+
+	mainLGL->ResetLGL();
+}
+
 bool EverettEngine::SaveDataToFile(const std::string& filePath)
 {
 	std::string realFilePath = filePath + saveFileType;
@@ -843,6 +852,7 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
 
 	mainLGL->PauseRendering();
+	ResetEngine();
 	while (!file.eof())
 	{
 		std::getline(file, line);

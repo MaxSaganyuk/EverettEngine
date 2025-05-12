@@ -56,6 +56,21 @@ LGL::LGL()
 
 LGL::~LGL()
 {
+	DeleteGLObjects();
+
+	std::cout << "LambdaGL instance destroyed\n";
+}
+
+void LGL::DeleteGLObjects()
+{
+	ContextLock
+
+	GLSafeExecute(glBindVertexArray, 0);
+	GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, 0);
+	GLSafeExecute(glBindBuffer, GL_ELEMENT_ARRAY_BUFFER, 0);
+	GLSafeExecute(glUseProgram, 0);
+	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
+
 	for (auto& model : modelToVAOMap)
 	{
 		for (auto& VAO : model.second.second)
@@ -63,14 +78,20 @@ LGL::~LGL()
 			GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
 		}
 	}
+	modelToVAOMap.clear();
+
 	for (auto& VBO : VBOCollection)
 	{
 		GLSafeExecute(glDeleteBuffers, 1, &VBO);
 	}
+	VBOCollection.clear();
+
 	for (auto& EBO : EBOCollection)
 	{
 		GLSafeExecute(glDeleteBuffers, 1, &EBO);
 	}
+	EBOCollection.clear();
+
 	for (auto& shaderInfo : shaderInfoCollection)
 	{
 		for (auto& shader : shaderInfo.second)
@@ -78,16 +99,19 @@ LGL::~LGL()
 			GLSafeExecute(glDeleteShader, shader.shaderId);
 		}
 	}
+	shaderInfoCollection.clear();
+
 	for (auto& shaderProgram : shaderProgramCollection)
 	{
 		GLSafeExecute(glDeleteProgram, shaderProgram.second);
 	}
+	shaderProgramCollection.clear();
+
 	for (auto& texture : textureCollection)
 	{
 		GLSafeExecute(glDeleteTextures, 1, &texture.second);
 	}
-
-	std::cout << "LambdaGL instance destroyed\n";
+	textureCollection.clear();
 }
 
 bool LGL::CreateWindow(const int height, const int width, const std::string& title)
@@ -363,6 +387,8 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 void LGL::PauseRendering(bool value)
 {
+	ContextLock
+
 	pauseRendering = value;
 }
 
@@ -891,6 +917,11 @@ void LGL::DeleteShader(const std::string& shaderName)
 	}
 
 	GLSafeExecute(glDeleteProgram, shaderProgramCollection[shaderName]);
+}
+
+void LGL::ResetLGL()
+{
+	DeleteGLObjects();
 }
 
 bool LGL::LoadAndCompileShader(const std::string& name)
