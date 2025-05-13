@@ -18,16 +18,12 @@ CameraSim* SoundSim::camera = nullptr;
 
 std::string SoundSim::GetSimInfoForSaveImpl()
 {
-	std::string res = ObjectSim::GetSimInfoToSaveImpl();
-
-	res += SimSerializer::GetValueToSaveFrom(sound.fileName);
-
-	return res;
+	return ObjectSim::GetSimInfoToSaveImpl();
 }
 
 std::string SoundSim::GetSimInfoToSave(const std::string& soundName)
 {
-	std::string info = GetObjectTypeNameStr() + '*' + soundName + '*';
+	std::string info = GetObjectTypeNameStr() + "**" + soundName + '*' + sound.fileName + '*';
 
 	info += GetSimInfoForSaveImpl();
 
@@ -37,7 +33,6 @@ std::string SoundSim::GetSimInfoToSave(const std::string& soundName)
 void SoundSim::SetSimInfoToLoad(std::string& line)
 {
 	ObjectSim::SetSimInfoToLoad(line);
-	SimSerializer::SetValueToLoadFrom(line, sound.fileName);
 }
 
 void SoundSim::InitOpenAL()
