@@ -3,7 +3,7 @@
 
 CString CBrowseDialog::GetFileFilterString(const std::vector<std::pair<DescriptionString, FileTypeString>>& fileFilter)
 {
-	std::string fileFilterStr = "";
+	AdString fileFilterStr = "";
 
 	for (auto& currentFileFilter : fileFilter)
 	{
@@ -19,10 +19,10 @@ CString CBrowseDialog::GetFileFilterString(const std::vector<std::pair<Descripti
 
 	fileFilterStr += '|';
 
-	return CA2T(fileFilterStr.c_str());
+	return fileFilterStr;
 }
 
-bool CBrowseDialog::OpenAndGetFolderPath(CString& pathStr)
+bool CBrowseDialog::OpenAndGetFolderPath(AdString& pathStr)
 {
 	bool success = false;
 
@@ -34,7 +34,7 @@ bool CBrowseDialog::OpenAndGetFolderPath(CString& pathStr)
 		TCHAR path[MAX_PATH];
 		if (SHGetPathFromIDListW(pidl, path))
 		{
-			pathStr = path;
+			pathStr = CString(path);
 			success = true;
 		}
 		CoTaskMemFree(pidl);
@@ -44,8 +44,8 @@ bool CBrowseDialog::OpenAndGetFolderPath(CString& pathStr)
 }
 
 bool CBrowseDialog::OpenAndGetFilePath(
-	CString& pathStr,
-	CString& fileStr,
+	AdString& pathStr,
+	AdString& fileStr,
 	const std::vector<std::pair<DescriptionString, FileTypeString>>& fileFilter
 )
 {

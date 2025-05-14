@@ -2,17 +2,17 @@
 #include "MFCTreeManager.h"
 
 MFCTreeManager::MFCTreeManagerNode::MFCTreeManagerNode(
-	const std::string& title,
-	const std::string& data,
+	const AdString& title,
+	const AdString& data,
 	CTreeCtrl& objectTree,
 	HTREEITEM nodeInfo,
 	MFCTreeManagerNode* previousNode
 )
 	: title(title), data(data), objectTree(objectTree), nodeInfo(nodeInfo), previousNode(previousNode) {}
 
-void MFCTreeManager::MFCTreeManagerNode::AddNode(const std::string& title, const std::string& data)
+void MFCTreeManager::MFCTreeManagerNode::AddNode(const AdString& title, const AdString& data)
 {
-	HTREEITEM newNodeInfo = objectTree.InsertItem(CA2T((title + ": " + data).c_str()), nodeInfo);
+	HTREEITEM newNodeInfo = objectTree.InsertItem(title + L": " + data, nodeInfo);
 	nextNodes.emplace(
 		data,
 		std::make_unique<MFCTreeManagerNode>(
@@ -60,9 +60,9 @@ CTreeCtrl& MFCTreeManager::GetTreeCtrl()
 	return objectTree;
 }
 
-void MFCTreeManager::AddRootNode(const std::string& title, const std::string& data)
+void MFCTreeManager::AddRootNode(const AdString& title, const AdString& data)
 {
-	HTREEITEM newNodeInfo = objectTree.InsertItem(CA2T((title + ": " + data).c_str()));
+	HTREEITEM newNodeInfo = objectTree.InsertItem(title + L": " + data);
 	rootNodes.emplace(
 		data,
 		std::make_unique<MFCTreeManagerNode>(title, data, GetTreeCtrl(), newNodeInfo, nullptr)
@@ -70,7 +70,7 @@ void MFCTreeManager::AddRootNode(const std::string& title, const std::string& da
 }
 
 void MFCTreeManager::SetObjectTypes(
-	const std::vector<std::string>& objectTypes, 
+	const std::vector<std::string>& objectTypes,
 	const std::vector<std::string>& lightTypes
 )
 {
@@ -90,21 +90,21 @@ void MFCTreeManager::SetObjectTypes(
 	}
 }
 
-void MFCTreeManager::AddModelToTree(const std::string& modelName)
+void MFCTreeManager::AddModelToTree(const AdString& modelName)
 {
 	rootNodes["Solid"]->AddNode("Model", modelName);
 }
 
-void MFCTreeManager::AddSolidToTree(const std::string& modelName, const std::string& solidName)
+void MFCTreeManager::AddSolidToTree(const AdString& modelName, const AdString& solidName)
 {
 	rootNodes["Solid"]->nextNodes[modelName]->AddNode("Solid", solidName);
 }
-void MFCTreeManager::AddLightToTree(const std::string& lightType, const std::string& lightName)
+void MFCTreeManager::AddLightToTree(const AdString& lightType, const AdString& lightName)
 {
 	rootNodes["Light"]->nextNodes[lightType]->AddNode("Light", lightName);
 }
 
-void MFCTreeManager::AddSoundToTree(const std::string& soundName)
+void MFCTreeManager::AddSoundToTree(const AdString& soundName)
 {
 	rootNodes["Sound"]->AddNode("Sound", soundName);
 }
@@ -123,9 +123,9 @@ MFCTreeManager::MFCTreeManagerNode* MFCTreeManager::FindNodeByItem(HTREEITEM ite
 	return nullptr;
 }
 
-std::vector<std::pair<std::string, std::string>> MFCTreeManager::GetAllOfRootsSelectedNode()
+std::vector<std::pair<AdString, AdString>> MFCTreeManager::GetAllOfRootsSelectedNode()
 {
-	std::vector<std::pair<std::string, std::string>> allDataRoots;
+	std::vector<std::pair<AdString, AdString>> allDataRoots;
  	
 	MFCTreeManagerNode* currentNode = FindNodeByItem(objectTree.GetSelectedItem());
 	

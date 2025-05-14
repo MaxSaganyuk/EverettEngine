@@ -5,6 +5,8 @@
 #include <string>
 #include <functional>
 
+#include "AdString.h"
+
 // CPlaceObjectDialog dialog
 
 class CPlaceObjectDialog : public CDialogEx
@@ -14,8 +16,8 @@ class CPlaceObjectDialog : public CDialogEx
 
 public:
 	CPlaceObjectDialog(
-		const std::string& objectTypeName, 
-		const std::string& sourceObjectTypeName,
+		const AdString& objectTypeName, 
+		const AdString& sourceObjectTypeName,
 		NameCheckFunc nameCheckFunc,
 		const std::vector<std::string>& objectNameList = {},
 		CWnd* pParent = nullptr
@@ -34,11 +36,11 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	std::vector<std::string> objectNameList;
-	std::string objectTypeName;
-	std::string sourceObjectTypeName;
+	AdString objectTypeName;
+	AdString sourceObjectTypeName;
 	size_t chosenIndex;
-	std::string chosenObject;
-	std::string newName;
+	AdString chosenObject;
+	AdString newName;
 
 	NameCheckFunc nameCheckFunc;
 
@@ -50,9 +52,9 @@ public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnModelChoiceChange();
 
-	size_t      GetChosenIndex();
-	std::string GetChosenObject();
-	std::string GetNewObjectName();
+	size_t   GetChosenIndex();
+	AdString GetChosenObject();
+	AdString GetNewObjectName();
 private:
 	CEdit nameEdit;
 public:

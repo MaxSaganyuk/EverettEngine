@@ -16,7 +16,7 @@ END_MESSAGE_MAP()
 
 DLLLoaderCommon::DLLLoaderCommon(
 	int dialogID,
-	std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo,
+	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
 	IsScriptSetFunc isScriptSetFunc,
 	SetScriptFunc setScriptFunc,
 	UnsetScriptFunc unsetScriptFunc,
@@ -39,7 +39,7 @@ void DLLLoaderCommon::FillComboBoxWithScriptInfo()
 {
 	for (auto& scriptDllInfo : selectedScriptDllInfo)
 	{
-		dllComboBox.AddString(CA2T(scriptDllInfo.second.c_str()));
+		dllComboBox.AddString(scriptDllInfo.second);
 	}
 }
 
@@ -79,12 +79,12 @@ void DLLLoaderCommon::DoDataExchange(CDataExchange* pDX)
 
 void DLLLoaderCommon::OnBrowseScriptButton()
 {
-	CString pathStr;
-	CString fileStr;
+	AdString pathStr;
+	AdString fileStr;
 
 	if (CBrowseDialog::OpenAndGetFilePath(pathStr, fileStr, {{"DLL files", "*.dll"}}));
 	{
-		selectedScriptDllInfo.push_back(std::pair<std::string, std::string>{ CT2A(pathStr), CT2A(fileStr) });
+		selectedScriptDllInfo.push_back(std::pair<std::string, std::string>{ pathStr, fileStr });
 		dllComboBox.AddString(fileStr);
 		dllComboBox.SetCurSel(selectedScriptDllInfo.size() - 1);
 		loadScriptButton.EnableWindow(true);

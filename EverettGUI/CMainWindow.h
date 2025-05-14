@@ -6,6 +6,7 @@
 #include <map>
 #include "EverettEngine.h"
 #include "MFCTreeManager.h"
+#include "AdString.h"
 
 // CMainWindow form view
 
@@ -44,7 +45,7 @@ protected:
 public:
 	void SetEverettEngineRef(EverettEngine& engineRef);
 	MFCTreeManager& GetObjectTree();
-	std::vector<std::pair<std::string, std::string>>& GetSelectedScriptDllInfo();
+	std::vector<std::pair<AdString, AdString>>& GetSelectedScriptDllInfo();
 private:
 
 	void OnInitialUpdate() override;
@@ -52,7 +53,7 @@ private:
 	EverettEngine* engineP;
 	MFCTreeManager objectTree;
 
-	std::vector<std::pair<std::string, std::string>> selectedScriptDllInfo;
+	std::vector<std::pair<AdString, AdString>> selectedScriptDllInfo;
 public:
 	afx_msg void OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);

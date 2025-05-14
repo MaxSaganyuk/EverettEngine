@@ -189,6 +189,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AdString.h" />
     <ClInclude Include="CBrowseDialog.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="CKeybindOptionDlg.h" />
@@ -209,6 +210,7 @@
     <ClInclude Include="MFCTreeManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AdString.cpp" />
     <ClCompile Include="CBrowseDialog.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="CKeybindOptionDlg.cpp" />

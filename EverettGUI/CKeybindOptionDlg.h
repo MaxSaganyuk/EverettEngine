@@ -7,6 +7,8 @@
 
 #include "DLLLoaderCommon.h"
 
+#include "AdString.h"
+
 // CKeybindOptionDlg dialog
 
 class CKeybindOptionDlg : public DLLLoaderCommon
@@ -16,7 +18,7 @@ class CKeybindOptionDlg : public DLLLoaderCommon
 public:
 	CKeybindOptionDlg(
 		EverettEngine& engine, 
-		std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo, 
+		std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
 		CWnd* pParent = nullptr
 	);
 	virtual ~CKeybindOptionDlg();
@@ -44,7 +46,7 @@ private:
 	CButton holdableCheck;
 	std::unique_ptr<std::thread> pollForKeyPressThread;
 
-	std::string keyName;
+	AdString keyName;
 
 	afx_msg void OnKeybindInterClick();
 

@@ -14,8 +14,8 @@
 IMPLEMENT_DYNAMIC(CPlaceObjectDialog, CDialogEx)
 
 CPlaceObjectDialog::CPlaceObjectDialog(
-	const std::string& objectTypeName, 
-	const std::string& sourceObjectTypeName,
+	const AdString& objectTypeName, 
+	const AdString& sourceObjectTypeName,
 	NameCheckFunc nameCheckFunc,
 	const std::vector<std::string>& objectNameList, 
 	CWnd* pParent
@@ -37,13 +37,13 @@ BOOL CPlaceObjectDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	SetWindowText(CA2T(("Place " + objectTypeName).c_str()));
-	choiceLabel.SetWindowTextW(CA2T(("Choose " + sourceObjectTypeName + ':').c_str()));
-	nameLabel.SetWindowTextW(CA2T((objectTypeName + " name:").c_str()));
+	SetWindowText(L"Place " + objectTypeName);
+	choiceLabel.SetWindowTextW(L"Choose " + sourceObjectTypeName + L':');
+	nameLabel.SetWindowTextW(objectTypeName + L" name:");
 
 	for (auto& object : objectNameList)
 	{
-		objectChoice.AddString(CA2T(object.c_str()));
+		objectChoice.AddString(AdString(object));
 	}
 
 	return true;
@@ -72,12 +72,10 @@ END_MESSAGE_MAP()
 
 void CPlaceObjectDialog::OnBnClickedOk()
 {
-	CString nameStr;
-	nameEdit.GetWindowTextW(nameStr);
-	std::string nameStdStr = newName = CT2A(nameStr);
-	std::string pathStdStrNameChecked = nameCheckFunc(nameStdStr);
+	nameEdit.GetWindowTextW(newName);
+	std::string pathStdStrNameChecked = nameCheckFunc(newName);
 
-	if (pathStdStrNameChecked != nameStdStr)
+	if (pathStdStrNameChecked != newName)
 	{
 		newName = pathStdStrNameChecked;
 	}
@@ -91,12 +89,12 @@ size_t CPlaceObjectDialog::GetChosenIndex()
 	return chosenIndex;
 }
 
-std::string CPlaceObjectDialog::GetChosenObject()
+AdString CPlaceObjectDialog::GetChosenObject()
 {
 	return chosenObject;
 }
 
-std::string CPlaceObjectDialog::GetNewObjectName()
+AdString CPlaceObjectDialog::GetNewObjectName()
 {
 	return newName;
 }
@@ -105,15 +103,11 @@ void CPlaceObjectDialog::OnModelChoiceChange()
 {
 	chosenIndex = objectChoice.GetCurSel();
 
-	CString modelStr;
-	objectChoice.GetLBText(chosenIndex, modelStr);
+	objectChoice.GetLBText(chosenIndex, chosenObject);
 
-	chosenObject = CT2A(modelStr);
+	AdString modelStdStrChecked = nameCheckFunc(chosenObject);
 
-	std::string modelStdStr = CT2A(modelStr);
-	std::string modelStdStrChecked = nameCheckFunc(modelStdStr);
-
-	nameEdit.SetWindowTextW(CA2T(modelStdStrChecked.c_str()));
+	nameEdit.SetWindowTextW(modelStdStrChecked);
 }
 
 

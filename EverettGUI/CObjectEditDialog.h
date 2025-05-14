@@ -18,8 +18,8 @@ public:
 	CObjectEditDialog(
 		EverettEngine& engine, 
 		EverettEngine::ObjectTypes objectType,
-		std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo,
-		const std::vector<std::pair<std::string, std::string>>& selectedNodes = {},
+		std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
+		const std::vector<std::pair<AdString, AdString>>& selectedNodes = {},
 		CWnd* pParent = nullptr
 	);
 	virtual ~CObjectEditDialog();
@@ -42,10 +42,10 @@ private:
 	std::array<std::array<CEdit, 3>, 3> objectInfoEdits;
 
 	EverettEngine::ObjectTypes objectType;
-	std::string subtypeName;
-	std::string objectName;
+	AdString subtypeName;
+	AdString objectName;
 
-	std::string chosenObjectName;
+	AdString chosenObjectName;
 	IObjectSim& currentObjectInterface;
 	ISolidSim* castedCurrentObject;
 

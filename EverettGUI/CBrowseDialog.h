@@ -4,18 +4,20 @@
 #include <vector>
 #include <string>
 
+#include "AdString.h"
+
 class CBrowseDialog
 {
-	using DescriptionString = std::string;
-	using FileTypeString = std::string;
+	using DescriptionString = AdString;
+	using FileTypeString = AdString;
 
 	static CString GetFileFilterString(const std::vector<std::pair<DescriptionString, FileTypeString>>& fileFilter);
 
 public:
-	static bool OpenAndGetFolderPath(CString& pathStr);
+	static bool OpenAndGetFolderPath(AdString& pathStr);
 	static bool OpenAndGetFilePath(
-		CString& pathStr, 
-		CString& fileStr, 
+		AdString& pathStr, 
+		AdString& fileStr, 
 		const std::vector<std::pair<DescriptionString, FileTypeString>>& fileFilter
 	);
 };

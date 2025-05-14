@@ -26,15 +26,8 @@ std::string CSaveLoadDlg::GetFilePathAndName()
 
 void CSaveLoadDlg::OnBnClickedOk()
 {
-	CString filePath;
-	filePathEdit.GetWindowTextW(filePath);
-
-	filePathStr = CT2A(filePath);
-
-	CString fileName;
-	fileNameEdit.GetWindowTextW(fileName);
-
-	fileNameStr = CT2A(fileName);
+	filePathEdit.GetWindowTextW(filePathStr);
+	fileNameEdit.GetWindowTextW(fileNameStr);
 
 	CDialogEx::OnOK();
 }
@@ -67,8 +60,8 @@ END_MESSAGE_MAP()
 
 void CSaveLoadDlg::OnBrowseButtonClick()
 {
-	CString pathStr;
-	CString fileStr = _T("");
+	AdString pathStr;
+	AdString fileStr = _T("");
 
 	chosenMode == Mode::Save ? 
 		CBrowseDialog::OpenAndGetFolderPath(pathStr) : 

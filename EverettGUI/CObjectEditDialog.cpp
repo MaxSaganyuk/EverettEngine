@@ -15,8 +15,8 @@ IMPLEMENT_DYNAMIC(CObjectEditDialog, DLLLoaderCommon)
 CObjectEditDialog::CObjectEditDialog(
 	EverettEngine& engine, 
 	EverettEngine::ObjectTypes objectTypeP,
-	std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo,
-	const std::vector<std::pair<std::string, std::string>>& selectedNodes,
+	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
+	const std::vector<std::pair<AdString, AdString>>& selectedNodes,
 	CWnd* pParent 
 )
 	: 
@@ -34,8 +34,8 @@ CObjectEditDialog::CObjectEditDialog(
 	),
 	engineRef(engine), 
 	objectType(objectTypeP),
-	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : ""),
-	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
+	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : std::string("")),
+	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : std::string("")),
 	currentObjectInterface(*engineRef.GetObjectInterface(objectType, subtypeName, objectName)),
 	castedCurrentObject(nullptr)
 {
@@ -76,9 +76,9 @@ CString CObjectEditDialog::GenerateTitle()
 {
 	CString titleRes(_T("Edit "));
 
-	titleRes.Append(CA2T(EverettEngine::GetObjectTypeToName(objectType).c_str()));
-	titleRes.Append(CA2T((!subtypeName.empty() ? " : " + subtypeName : "").c_str()));
-	titleRes.Append(CA2T((!objectName.empty() ? " : " + objectName : "").c_str()));
+	titleRes.Append(AdString(EverettEngine::GetObjectTypeToName(objectType).c_str()));
+	titleRes.Append(!subtypeName.empty() ? L" : " + subtypeName : L"");
+	titleRes.Append(!objectName.empty() ? L" : " + objectName : L"");
 
 	return titleRes;
 }
@@ -115,7 +115,7 @@ void CObjectEditDialog::SetupModelParams()
 		std::vector<std::string> meshNames = castedCurrentObject->GetModelMeshNames();
 		for (auto& meshName : meshNames)
 		{
-			meshComboBox.AddString(CA2T(meshName.c_str()));
+			meshComboBox.AddString(AdString(meshName));
 		}
 
 		if (!meshNames.empty())
@@ -126,7 +126,7 @@ void CObjectEditDialog::SetupModelParams()
 		std::vector<std::string> animNames = castedCurrentObject->GetModelAnimationNames();
 		for (auto& animName : animNames)
 		{
-			animComboBox.AddString(CA2T(animName.c_str()));
+			animComboBox.AddString(AdString(animName));
 		}
 
 		if (!animNames.empty())

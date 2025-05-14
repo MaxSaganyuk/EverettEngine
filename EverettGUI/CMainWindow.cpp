@@ -114,7 +114,7 @@ void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
-std::vector<std::pair<std::string, std::string>>& CMainWindow::GetSelectedScriptDllInfo()
+std::vector<std::pair<AdString, AdString>>& CMainWindow::GetSelectedScriptDllInfo()
 {
 	return selectedScriptDllInfo;
 }

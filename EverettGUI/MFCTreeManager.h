@@ -7,6 +7,8 @@
 #include <memory>
 #include <tuple>
 
+#include "AdString.h"
+
 /*
 	This version of a TreeManager specific to handling MFC tree object
 	Might have way too many extra MFC stuff to just overload basic
@@ -20,37 +22,37 @@ class MFCTreeManager
 
 	public:
 		MFCTreeManagerNode(
-			const std::string& title,
-			const std::string& data,
+			const AdString& title,
+			const AdString& data,
 			CTreeCtrl& objectTree,
 			HTREEITEM nodeInfo,
 			MFCTreeManagerNode* previousNode
 		);
 
-		void AddNode(const std::string& title, const std::string& data);
+		void AddNode(const AdString& title, const AdString& data);
 		MFCTreeManagerNode* FindNodeBy(HTREEITEM item);
 		void ClearAllNextNodes();
 
 	private:
-		std::string title;
-		std::string data;
+		AdString title;
+		AdString data;
 		CTreeCtrl& objectTree;
 		HTREEITEM nodeInfo;
 		MFCTreeManagerNode* previousNode;
-		std::map<std::string, std::unique_ptr<MFCTreeManagerNode>> nextNodes;
+		std::map<AdString, std::unique_ptr<MFCTreeManagerNode>> nextNodes;
 	};
 
 public:
-	void AddModelToTree(const std::string& modelName);
-	void AddSolidToTree(const std::string& modelName, const std::string& solidName);
-	void AddLightToTree(const std::string& lightType, const std::string& lightName);
-	void AddSoundToTree(const std::string& soundName);
+	void AddModelToTree(const AdString& modelName);
+	void AddSolidToTree(const AdString& modelName, const AdString& solidName);
+	void AddLightToTree(const AdString& lightType, const AdString& lightName);
+	void AddSoundToTree(const AdString& soundName);
 
 	void SetObjectTypes(const std::vector<std::string>& objectTypes, const std::vector<std::string>& lightTypes);
 
-	void AddRootNode(const std::string& leftString, const std::string& rightString);
+	void AddRootNode(const AdString& leftString, const AdString& rightString);
 
-	std::vector<std::pair<std::string, std::string>> GetAllOfRootsSelectedNode();
+	std::vector<std::pair<AdString, AdString>> GetAllOfRootsSelectedNode();
 
 	CTreeCtrl& GetTreeCtrl();
 
@@ -61,7 +63,7 @@ private:
 
 	std::vector<std::string> objectTypes;
 
-	std::map<std::string, std::unique_ptr<MFCTreeManagerNode>> rootNodes;
+	std::map<AdString, std::unique_ptr<MFCTreeManagerNode>> rootNodes;
 	
 	CTreeCtrl objectTree;
 };

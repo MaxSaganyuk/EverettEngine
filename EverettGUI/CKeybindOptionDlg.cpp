@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(CKeybindOptionDlg, DLLLoaderCommon)
 
 CKeybindOptionDlg::CKeybindOptionDlg(
 	EverettEngine& engine,
-	std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo,
+	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
 	CWnd* pParent
 )
 	: 
@@ -84,9 +84,9 @@ void CKeybindOptionDlg::OnKeybindInterClick()
 
 void CKeybindOptionDlg::SetEditToKeyName()
 {
-	keyName = EverettEngine::ConvertKeyTo(engineRef.PollForLastKeyPressed());;
+	keyName = EverettEngine::ConvertKeyTo(engineRef.PollForLastKeyPressed());
 	SendMessage(BringEverettGuiBack);
-	keyNameEdit.SetWindowTextW(CA2T(keyName.c_str()));
+	keyNameEdit.SetWindowTextW(keyName);
 }
 
 LRESULT CKeybindOptionDlg::OnBringEverettGuiBack(WPARAM wParam, LPARAM lParam)

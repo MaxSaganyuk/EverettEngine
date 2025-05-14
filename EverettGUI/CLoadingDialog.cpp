@@ -6,6 +6,8 @@
 #include "afxdialogex.h"
 #include "CLoadingDialog.h"
 
+#include "AdString.h"
+
 #include <thread>
 
 // CLoadingDialog dialog
@@ -84,7 +86,7 @@ LRESULT CLoadingDialog::OnDialogShown(WPARAM wParam, LPARAM lParam)
 
 LRESULT CLoadingDialog::OnUpdateResult(WPARAM wParam, LPARAM lParam)
 {
-	static std::vector<CString> resTexts { CString("Loading"), CString("Success"), CString("Failure") };
+	static std::vector<AdString> resTexts { L"Loading", L"Success", L"Failure" };
 	
 	LoadingResult res = static_cast<LoadingResult>(wParam);
 	resultEdit.SetWindowTextW(resTexts[static_cast<int>(res)]);

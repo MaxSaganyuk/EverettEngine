@@ -1,22 +1,22 @@
 #include "pch.h"
 #include "NameEditChecker.h"
+#include "AdString.h"
 
 void NameEditChecker::CheckAndEditName(CEdit& nameEdit, CStatic& nameWarning)
 {
 	if (nameCheckFunc)
 	{
-		CString nameStr;
+		AdString nameStr;
 		nameEdit.GetWindowTextW(nameStr);
 
-		std::string nameStdStr = CT2A(nameStr);
-		std::string digitlessNameStdStr = CommonStrEdits::RemoveDigitsFromStringEnd(nameStdStr);
+		AdString digitlessNameStdStr = CommonStrEdits::RemoveDigitsFromStringEnd(nameStr);
 
-		if (nameStdStr != digitlessNameStdStr)
+		if (nameStr != digitlessNameStdStr)
 		{
-			nameEdit.SetWindowTextW(CA2T(digitlessNameStdStr.c_str()));
+			nameEdit.SetWindowTextW(digitlessNameStdStr);
 		}
 
-		std::string nameStdStrChecked = nameCheckFunc(digitlessNameStdStr);
+		AdString nameStdStrChecked = nameCheckFunc(digitlessNameStdStr);
 
 		nameWarning.ShowWindow(digitlessNameStdStr != nameStdStrChecked);
 	}

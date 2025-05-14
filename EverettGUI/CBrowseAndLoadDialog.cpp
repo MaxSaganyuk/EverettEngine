@@ -17,10 +17,10 @@
 IMPLEMENT_DYNAMIC(CBrowseAndLoadDialog, CDialogEx)
 
 CBrowseAndLoadDialog::CBrowseAndLoadDialog(
-	const std::string& objectName,
+	const AdString& objectName,
 	LoaderFunc modelLoader, 
 	NameCheckFunc nameCheckFunc,
-	const std::vector<std::string>& loadedModelList, 
+	const std::vector<std::string>& loadedModelList,
 	CWnd* pParent
 )
 	: 
@@ -42,9 +42,9 @@ BOOL CBrowseAndLoadDialog::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	SetWindowText(CA2T(("Load " + objectName).c_str()));
-	folderLabel.SetWindowTextW(CA2T((objectName + " folder:").c_str()));
-	choiceLabel.SetWindowTextW(CA2T((objectName + ':').c_str()));
+	SetWindowText(L"Load " + objectName);
+	folderLabel.SetWindowTextW(objectName + L" folder:");
+	choiceLabel.SetWindowTextW(objectName + L':');
 
 	TCHAR buffer[MAX_PATH];
 	std::ifstream file;
@@ -54,7 +54,8 @@ BOOL CBrowseAndLoadDialog::OnInitDialog()
 	{
 		std::string path;
 		file >> path;
-		UpdateObjectChoice(CA2T(path.c_str()));
+		AdString adPath(path);
+		UpdateObjectChoice(adPath);
 	}
 	else if (GetCurrentDirectory(MAX_PATH, buffer))
 	{
@@ -90,24 +91,23 @@ END_MESSAGE_MAP()
 
 // CLoadModelDialog message handlers
 
-void CBrowseAndLoadDialog::UpdateObjectChoice(const LPCTSTR filePath)
+void CBrowseAndLoadDialog::UpdateObjectChoice(const AdString& filePath)
 {
 	modelFolderEdit.SetWindowTextW(filePath);
 
-	std::string filePathSTD = CT2A(filePath);
-	std::vector<std::string> files = modelLoader(filePathSTD);
+	std::vector<std::string> files = modelLoader(filePath);
 
 	modelChoice.Clear();
 	for (auto& file : files)
 	{
-		modelChoice.AddString(CA2T(file.c_str()));
+		modelChoice.AddString(AdString(file));
 	}
 }
 
 void CBrowseAndLoadDialog::OnBnClickedButton1()
 {
-	CString pathStr;
-	
+	AdString pathStr;
+
 	if (CBrowseDialog::OpenAndGetFolderPath(pathStr))
 	{
 		UpdateObjectChoice(pathStr);
@@ -117,32 +117,24 @@ void CBrowseAndLoadDialog::OnBnClickedButton1()
 
 void CBrowseAndLoadDialog::OnBnClickedOk()
 {
-	CString pathStr;
-	modelFolderEdit.GetWindowTextW(pathStr);
-
-	CString filenameStr;
-	modelChoice.GetLBText(modelChoice.GetCurSel(), filenameStr);
-
-	filename = CT2A(filenameStr);
-	path = CT2A(pathStr);
+	modelFolderEdit.GetWindowTextW(path);
+	modelChoice.GetLBText(modelChoice.GetCurSel(), filename);
 
 	if (nameWarning.IsWindowVisible())
 	{
-		CString nameStr;
-		nameEdit.GetWindowTextW(nameStr);
-		std::string nameStdStr = CT2A(nameStr);
-		std::string pathStdStrNameChecked = nameCheckFunc(nameStdStr);
+		nameEdit.GetWindowTextW(name);
+		std::string pathStdStrNameChecked = nameCheckFunc(name);
 
-		name = nameStdStr;
-		if (pathStdStrNameChecked != nameStdStr)
+		if (pathStdStrNameChecked != name)
 		{
 			name = pathStdStrNameChecked;
 		}
 	}
 
 	std::fstream file(cacheFileName + objectName, std::ios::out, std::ios::trunc);
+	std::string& chosenPath = path;
 
-	file << GetChosenPath();
+	file << chosenPath;
 	
 	file.close();
 
@@ -153,32 +145,31 @@ void CBrowseAndLoadDialog::OnObjectSelection()
 {
 	bool curSelExists = modelChoice.GetCurSel() != -1;
 	
-	CString filenameStr;
-	modelChoice.GetLBText(modelChoice.GetCurSel(), filenameStr);
+	modelChoice.GetLBText(modelChoice.GetCurSel(), filename);
 
-	filename = CT2A(filenameStr);
-	name = filename.substr(0, filename.find('.'));
+	std::string& filenameRef = filename;
+	name = filenameRef.substr(0, filenameRef.find('.'));
 
-	nameEdit.SetWindowTextW(CA2T(GetChosenName().c_str()));
+	nameEdit.SetWindowTextW(GetChosenName());
 	loadModelButton.EnableWindow(curSelExists);
 }
 
-std::string CBrowseAndLoadDialog::GetChosenPath()
+AdString CBrowseAndLoadDialog::GetChosenPath()
 {
 	return path;
 }
 
-std::string CBrowseAndLoadDialog::GetChosenName()
+AdString CBrowseAndLoadDialog::GetChosenName()
 {
 	return name;
 }
 
-std::string CBrowseAndLoadDialog::GetChosenFilename()
+AdString CBrowseAndLoadDialog::GetChosenFilename()
 {
 	return filename;
 }
 
-std::string CBrowseAndLoadDialog::GetChosenPathAndFilename()
+AdString CBrowseAndLoadDialog::GetChosenPathAndFilename()
 {
 	return GetChosenPath() + '\\' + GetChosenFilename();
 }

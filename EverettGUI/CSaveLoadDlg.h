@@ -2,6 +2,8 @@
 #include "afxdialogex.h"
 #include <string>
 
+#include "AdString.h"
+
 // CSaveLoadDlg dialog
 
 class CSaveLoadDlg : public CDialogEx
@@ -38,10 +40,10 @@ private:
 	CButton browseButton;
 	CEdit fileNameEdit;
 
-	std::string filePathStr;
-	std::string fileNameStr;
+	AdString filePathStr;
+	AdString fileNameStr;
 
-	CString saveFileType;
+	AdString saveFileType;
 public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBrowseButtonClick();

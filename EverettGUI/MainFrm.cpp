@@ -16,6 +16,7 @@
 #include "CKeybindOptionDlg.h"
 
 #include "MainFrm.h"
+#include "AdString.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -174,7 +175,7 @@ bool CMainFrame::LoadObjectNamesToTree()
 		ObjectTypes currentObjectType = static_cast<ObjectTypes>(i);
 		objectNames = engine.GetNamesByObject(currentObjectType);
 
-		std::string subTypeName = "";
+		AdString subTypeName = "";
 		for (auto& objectName : objectNames)
 		{
 			bool subType = objectName[0] == '.';
@@ -206,7 +207,7 @@ bool CMainFrame::LoadObjectNamesToTree()
 
 void CMainFrame::OnLoadSave(bool load, std::function<bool(const std::string&)> loadSaveFunc)
 {
-	CString saveFileType = CA2T(engine.GetSaveFileType().c_str());
+	AdString saveFileType = engine.GetSaveFileType();
 	CSaveLoadDlg saveLoadDlg(static_cast<CSaveLoadDlg::Mode>(load), saveFileType);
 
 	if (saveLoadDlg.DoModal() == IDOK)
@@ -239,7 +240,7 @@ void CMainFrame::OnSave()
 void CMainFrame::OnLoadModel()
 {
 	CBrowseAndLoadDialog loadModelDlg(
-		"Model", 
+		"Model",
 		[this](const std::string& path) { return engine.GetModelInDirList(path); },
 		nameCheckFunc,
 		engine.GetCreatedModels()
@@ -267,8 +268,8 @@ void CMainFrame::OnLoadModel()
 void CMainFrame::OnPlaceSolid()
 {
 	CPlaceObjectDialog placeSolidDlg(
-		"Solid", 
-		"Model", 
+		L"Solid", 
+		L"Model", 
 		nameCheckFunc,
 		engine.GetCreatedModels()
 	);
@@ -283,8 +284,8 @@ void CMainFrame::OnPlaceSolid()
 void CMainFrame::OnPlaceLight()
 {
 	CPlaceObjectDialog placeLightDlg(
-		"Light", 
-		"Light type",
+		L"Light", 
+		L"Light type",
 		nameCheckFunc,
 		engine.GetLightTypeList()
 	);
@@ -302,7 +303,7 @@ void CMainFrame::OnPlaceLight()
 void CMainFrame::OnPlaceSound()
 {
 	CBrowseAndLoadDialog placeSoundDlg(
-		"Sound", 
+		L"Sound", 
 		[this](const std::string& path) { return engine.GetSoundInDirList(path); }, 
 		nameCheckFunc,
 		engine.GetNamesByObject(EverettEngine::ObjectTypes::Sound)

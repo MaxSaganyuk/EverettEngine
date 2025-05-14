@@ -7,6 +7,8 @@
 #include <vector>
 #include <string>
 
+#include "AdString.h"
+
 class DLLLoaderCommon : public CDialogEx
 {
 	DECLARE_DYNAMIC(DLLLoaderCommon)
@@ -25,7 +27,7 @@ public:
 
 	DLLLoaderCommon(
 		int dialogID,
-		std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo, 
+		std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
 		IsScriptSetFunc isScriptSetFunc,
 		SetScriptFunc setScriptFunc,
 		UnsetScriptFunc unsetScriptFunc,
@@ -39,7 +41,7 @@ public:
 protected:
 	DECLARE_MESSAGE_MAP()
 private:
-	std::vector<std::pair<std::string, std::string>>& selectedScriptDllInfo;
+	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo;
 
 	IsScriptSetFunc isScriptSetFunc;
 	SetScriptFunc setScriptFunc;

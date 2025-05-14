@@ -3,6 +3,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include "AdString.h"
 
 // CLoadModelDialog dialog
 
@@ -14,7 +15,7 @@ class CBrowseAndLoadDialog : public CDialogEx
 
 public:
 	CBrowseAndLoadDialog(
-		const std::string& objectName,
+		const AdString& objectName,
 		LoaderFunc loader,
 		NameCheckFunc nameCheckFunc,
 		const std::vector<std::string>& loadedObjectsList, 
@@ -33,7 +34,7 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 private:
-	void UpdateObjectChoice(const LPCTSTR filePath);
+	void UpdateObjectChoice(const AdString& filePath);
 
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedButton1();
@@ -49,10 +50,10 @@ private:
 	CEdit nameEdit;
 	CStatic nameWarning;
 
-	std::string objectName;
-	std::string path;
-	std::string filename;
-	std::string name;
+	AdString objectName;
+	AdString path;
+	AdString filename;
+	AdString name;
 
 	LoaderFunc modelLoader;
 	NameCheckFunc nameCheckFunc;
@@ -60,8 +61,8 @@ private:
 		
 	constexpr static const char cacheFileName[] = "loadCache";
 public:
-	std::string GetChosenPath();
-	std::string GetChosenFilename();
-	std::string GetChosenName();
-	std::string GetChosenPathAndFilename();
+	AdString GetChosenPath();
+	AdString GetChosenFilename();
+	AdString GetChosenName();
+	AdString GetChosenPathAndFilename();
 };
