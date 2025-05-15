@@ -38,6 +38,9 @@ private:
 	FundamentalConvertSet(double, stod)
 	FundamentalConvertSet(long double, stold)
 
+	static std::string PackValue(const std::string& value);
+	static void UnpackValue(std::string& line, std::string& value);
+
 public:
 	enum ObjectInfoNames
 	{
@@ -90,41 +93,41 @@ public:
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
 std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 {
-	return '{' + std::to_string(f) + '}';
+	return PackValue(std::to_string(f));
 }
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
 void SimSerializer::SetValueToLoadFrom(std::string& line, FundamentalType& f)
 {
-	std::string value = line.substr(line.find('{') + 1, line.find('}') - 1);
+	std::string value;
+
+	UnpackValue(line, value);
 
 	f = FundamentalConvert<FundamentalType>::Convert(value);
-
-	line.erase(line.find('{'), line.find('}') + 1);
 }
 
 template<typename EnumType, typename std::enable_if_t<std::is_enum_v<EnumType>, bool>>
 std::string SimSerializer::GetValueToSaveFrom(EnumType e)
 {
-	return '{' + std::to_string(static_cast<int>(e)) + '}';
+	return PackValue(std::to_string(static_cast<int>(e)));
 }
 
 template<typename EnumType, typename std::enable_if_t<std::is_enum_v<EnumType>, bool>>
 void SimSerializer::SetValueToLoadFrom(std::string& line, EnumType& e)
 {
 	int preEnumValue;
-	std::string value = line.substr(line.find('{') + 1, line.find('}') - 1);
+	std::string value;
+
+	UnpackValue(line, value);
 
 	preEnumValue = FundamentalConvert<int>::Convert(value);
 	e = static_cast<EnumType>(preEnumValue);
-
-	line.erase(line.find('{'), line.find('}') + 1);
 }
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
 std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>& vector)
 {
-	std::string res = "{";
+	std::string res = "";
 
 	for (const auto iter : vector)
 	{
@@ -135,15 +138,16 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>
 		res.pop_back();
 	}
 
-	res += '}';
-
-	return res;
+	return PackValue(res);
 }
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
 void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<FundamentalType>& vector)
 {
-	std::string values = line.substr(line.find('{') + 1, line.find('}') - 1);
+	std::string values;
+
+	UnpackValue(line, values);
+
 	std::string value = "";
 	size_t i = 0;
 
@@ -166,6 +170,4 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<Fundamenta
 
 		value += c;
 	}
-
-	line.erase(line.find('{'), line.find('}') + 1);
 }

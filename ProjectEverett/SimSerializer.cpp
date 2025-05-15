@@ -1,5 +1,22 @@
 #include "SimSerializer.h"
 
+std::string SimSerializer::PackValue(const std::string& value)
+{
+	return '{' + value + '}';
+}
+
+void SimSerializer::UnpackValue(std::string& line, std::string& value)
+{
+	value = line.substr(line.find('{') + 1, line.find('}') - 1);
+	
+	if (value.find(' ') != std::string::npos)
+	{
+		value += ' ';
+	}
+
+	line.erase(line.find('{'), line.find('}') + 1);
+}
+
 void SimSerializer::GetObjectInfo(std::string& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo)
 {
 	size_t objectInfoAmount = std::count(line.begin(), line.end(), '*');
@@ -14,18 +31,17 @@ void SimSerializer::GetObjectInfo(std::string& line, std::array<std::string, Obj
 
 std::string SimSerializer::GetValueToSaveFrom(const std::string& str)
 {
-	return '{' + str + '}';
+	return PackValue(str);
 }
 
 void SimSerializer::SetValueToLoadFrom(std::string& line, std::string& str)
 {
-	str = line.substr(line.find('{') + 1, line.find('}') - 1);
-	line.erase(line.find('{'), line.find('}') + 1);
+	UnpackValue(line, str);
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const glm::vec3& vec)
 {
-	std::string res = "{";
+	std::string res = "";
 
 	for (size_t i = 0; i < vec.length(); ++i)
 	{
@@ -33,14 +49,15 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::vec3& vec)
 	}
 	res.pop_back();
 
-	res += '}';
-
-	return res;
+	return PackValue(res);
 }
 
 void SimSerializer::SetValueToLoadFrom(std::string& line, glm::vec3& vec)
 {
-	std::string values = line.substr(line.find('{') + 1, line.find('}') - 1);
+	std::string values;
+
+	UnpackValue(line, values);
+
 	std::string value = "";
 	size_t i = 0;
 
@@ -55,13 +72,11 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, glm::vec3& vec)
 
 		value += c;
 	}
-
-	line.erase(line.find('{'), line.find('}') + 1);
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const glm::mat4& mat)
 {
-	std::string res = "{";
+	std::string res = "";
 
 	for (size_t i = 0; i < mat.length(); ++i)
 	{
@@ -72,14 +87,15 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::mat4& mat)
 	}
 	res.pop_back();
 
-	res += '}';
-
-	return res;
+	return PackValue(res);
 }
 
 void SimSerializer::SetValueToLoadFrom(std::string& line, glm::mat4& mat)
 {
-	std::string values = line.substr(line.find('{') + 1, line.find('}') - 1);
+	std::string values;
+
+	UnpackValue(line, values);
+
 	std::string value = "";
 	size_t i = 0;
 
@@ -95,13 +111,11 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, glm::mat4& mat)
 
 		value += c;
 	}
-
-	line.erase(line.find('{'), line.find('}') + 1);
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs)
 {
-	std::string res = "{";
+	std::string res = "";
 
 	for (auto& disabledDir : disabledDirs)
 	{
@@ -109,9 +123,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSi
 	}
 	res.pop_back();
 
-	res += '}';
-
-	return res;
+	return PackValue(res);
 }
 
 void SimSerializer::SetValueToLoadFrom(
@@ -119,7 +131,10 @@ void SimSerializer::SetValueToLoadFrom(
 	std::unordered_map<IObjectSim::Direction, bool>& disabledDirs
 )
 {
-	std::string values = line.substr(line.find('{') + 1, line.find('}') - 1);
+	std::string values;
+
+	UnpackValue(line, values);
+
 	std::string value = "";
 	IObjectSim::Direction currentDirection;
 	size_t i = 0;
@@ -144,13 +159,11 @@ void SimSerializer::SetValueToLoadFrom(
 
 		value += c;
 	}
-
-	line.erase(line.find('{'), line.find('}') + 1);
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits)
 {
-	std::string res = "{";
+	std::string res = "";
 
 	for (size_t i = 0; i < rotationLimits.first.length(); ++i)
 	{
@@ -162,9 +175,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotati
 	}
 	res.pop_back();
 
-	res += '}';
-
-	return res;
+	return PackValue(res);
 }
 
 void SimSerializer::SetValueToLoadFrom(
@@ -172,7 +183,10 @@ void SimSerializer::SetValueToLoadFrom(
 	std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits
 )
 {
-	std::string values = line.substr(line.find('{') + 1, line.find('}') - 1);
+	std::string values;
+
+	UnpackValue(line, values);
+
 	std::string value = "";
 	IObjectSim::Rotation currentRotation;
 	size_t i = 0;
@@ -202,13 +216,11 @@ void SimSerializer::SetValueToLoadFrom(
 
 		value += c;
 	}
-
-	line.erase(line.find('{'), line.find('}') + 1);
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::string>& vectorStr)
 {
-	std::string res = "{";
+	std::string res = "";
 
 	for (auto& str : vectorStr)
 	{
@@ -219,14 +231,15 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::string>& ve
 		res.pop_back();
 	}
 
-	res += '}';
-
-	return res;
+	return PackValue(res);
 }
 
 void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::string>& vectorStr)
 {
-	std::string values = line.substr(line.find('{') + 1, line.find('}') - 1);
+	std::string values;
+
+	UnpackValue(line, values);
+
 	std::string value = "";
 
 	for (auto c : values)
