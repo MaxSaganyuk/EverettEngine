@@ -50,7 +50,7 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	res += SimSerializer::GetValueToSaveFrom(lastDir);
 	res += SimSerializer::GetValueToSaveFrom(disabledDirs);
 	res += SimSerializer::GetValueToSaveFrom(rotationLimits);
-	//res += SimSerializer::GetValueToSaveFrom(scriptFuncStorage.GetAddedScriptDLLs());
+	res += SimSerializer::GetValueToSaveFrom(scriptFuncStorage.GetAddedScriptDLLs());
 
 	return res;
 }
@@ -69,7 +69,7 @@ void ObjectSim::SetSimInfoToLoad(std::string& line)
 	SimSerializer::SetValueToLoadFrom(line, lastDir);
 	SimSerializer::SetValueToLoadFrom(line, disabledDirs);
 	SimSerializer::SetValueToLoadFrom(line, rotationLimits);
-	// ScriptFuncStorage will be filled by DLLLoader
+	SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect);
 }
 
 void ObjectSim::CheckRotationLimits()
@@ -244,9 +244,18 @@ void ObjectSim::Rotate(const Rotation& toRotate)
 	front = glm::normalize(direction);
 }
 
-void ObjectSim::AddScriptFunc(const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc)
+void ObjectSim::AddScriptFunc(
+	const std::string& dllPath, 
+	const std::string& dllName, 
+	ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc
+)
 {
-	scriptFuncStorage.AddScriptFunc(dllName, scriptFunc);
+	scriptFuncStorage.AddScriptFunc(dllPath, dllName, scriptFunc);
+}
+
+std::vector<std::pair<std::string, std::string>> ObjectSim::GetTempScriptDLLInfo()
+{
+	return scriptFuncStorage.GetTempScriptDllNameVect();
 }
 
 void ObjectSim::ExecuteScriptFunc(const std::string& dllName)

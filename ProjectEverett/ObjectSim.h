@@ -68,7 +68,8 @@ public:
 	void LimitRotations(const Rotation& min, const Rotation& max) override;
 	void Rotate(const Rotation& toRotate) override;
 
-	void AddScriptFunc(const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc);
+	void AddScriptFunc(const std::string& dllPath, const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc);
+	std::vector<std::pair<std::string, std::string>> GetTempScriptDLLInfo();
 	void ExecuteScriptFunc(const std::string& dllName = "") override;
 	void ExecuteAllScriptFuncs() override;
 	bool IsScriptFuncAdded(const std::string& dllName = "") override;

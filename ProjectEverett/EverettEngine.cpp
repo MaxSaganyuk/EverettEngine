@@ -83,6 +83,13 @@ std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 	{EverettEngine::ObjectTypes::Sound,  SoundSim::GetObjectTypeNameStr(),  typeid(SoundSim)}
 };
 
+struct EverettEngine::KeyScriptFuncInfo
+{
+	bool holdable;
+	ScriptFuncStorage pressedFuncs;
+	ScriptFuncStorage releasedFuncs;
+};
+
 EverettEngine::EverettEngine()
 {
 	LGL::InitOpenGL(3, 3);
@@ -498,21 +505,34 @@ void EverettEngine::SetScriptToObject(
 	const std::string& dllName
 )
 {
-	if (fileLoader)
+	SetScriptToObjectImpl(
+		GetObjectFromMap(objectType, subtypeName, objectName), 
+		objectType == ObjectTypes::Camera ? "Camera" : objectName, 
+		dllPath, 
+		dllName
+	);
+}
+
+void EverettEngine::SetScriptToObjectImpl(
+	ObjectSim* object,
+	const std::string& objectName,
+	const std::string& dllPath,
+	const std::string& dllName
+)
+{
+	if (fileLoader && object)
 	{
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncWeakPtr;
 
 		fileLoader->dllloader.GetScriptFuncFromDLL(
 			dllPath,
-			objectType == ObjectTypes::Camera ? "Camera" : objectName,
+			objectName,
 			scriptFuncWeakPtr
 		);
 
-		ObjectSim* object = GetObjectFromMap(objectType, subtypeName, objectName);
-
-		if (object && scriptFuncWeakPtr.lock())
+		if (scriptFuncWeakPtr.lock())
 		{
-			object->AddScriptFunc(dllName, scriptFuncWeakPtr);
+			object->AddScriptFunc(dllPath, dllName, scriptFuncWeakPtr);
 		}
 
 		if (object->IsScriptFuncAdded(dllName))
@@ -549,6 +569,16 @@ void EverettEngine::SetScriptToKey(
 {
 	if (fileLoader && !keyName.empty())
 	{
+		bool isPressedExist = false;
+		bool isReleasedExist = false;
+		bool addNewKey = keyScriptFuncMap.find(keyName) == keyScriptFuncMap.end();
+
+		if (!addNewKey)
+		{
+			isPressedExist = keyScriptFuncMap[keyName].pressedFuncs.IsScriptFuncAdded(dllName);
+			isReleasedExist = keyScriptFuncMap[keyName].releasedFuncs.IsScriptFuncAdded(dllName);
+		}
+
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncPress;
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncRelease;
 
@@ -559,22 +589,19 @@ void EverettEngine::SetScriptToKey(
 
 		if (anyFuncAdded)
 		{
-			bool addNewKey = false;
-
-			if (keyScriptFuncMap.find(keyName) == keyScriptFuncMap.end())
+			if (addNewKey)
 			{
-				keyScriptFuncMap.emplace(keyName, std::pair<ScriptFuncStorage, ScriptFuncStorage>{});
-				addNewKey = true;
+				keyScriptFuncMap.emplace(keyName, KeyScriptFuncInfo{});
 			}
 
-			if (scriptFuncPress.lock() && !keyScriptFuncMap[keyName].first.IsScriptFuncAdded(dllName))
+			if (scriptFuncPress.lock() && !isPressedExist)
 			{
-				keyScriptFuncMap[keyName].first.AddScriptFunc(dllName, scriptFuncPress);
+				keyScriptFuncMap[keyName].pressedFuncs.AddScriptFunc(dllPath, dllName, scriptFuncPress);
 			}
 
-			if (scriptFuncRelease.lock() && !keyScriptFuncMap[keyName].second.IsScriptFuncAdded(dllName))
+			if (scriptFuncRelease.lock() && !isReleasedExist)
 			{
-				keyScriptFuncMap[keyName].second.AddScriptFunc(dllName, scriptFuncRelease);
+				keyScriptFuncMap[keyName].releasedFuncs.AddScriptFunc(dllPath, dllName, scriptFuncRelease);
 			}
 
 			if (addNewKey)
@@ -584,13 +611,15 @@ void EverettEngine::SetScriptToKey(
 
 				if (scriptFuncPress.lock())
 				{
-					scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].first.ExecuteAllScriptFuncs(nullptr); };
+					scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].pressedFuncs.ExecuteAllScriptFuncs(nullptr); };
 				}
 
 				if (scriptFuncRelease.lock())
 				{
-					scriptFuncReleaseWrapper = [this, keyName]() { keyScriptFuncMap[keyName].second.ExecuteAllScriptFuncs(nullptr); };
+					scriptFuncReleaseWrapper = [this, keyName]() { keyScriptFuncMap[keyName].releasedFuncs.ExecuteAllScriptFuncs(nullptr); };
 				}
+
+				keyScriptFuncMap[keyName].holdable = holdable;
 
 				mainLGL->SetInteractable(
 					LGL::ConvertKeyTo(keyName),
@@ -610,7 +639,7 @@ bool EverettEngine::IsKeyScriptSet(
 {
 	auto& currentKeyPair = keyScriptFuncMap[keyName];
 
-	return currentKeyPair.first.IsScriptFuncRunnable(dllName) || currentKeyPair.second.IsScriptFuncRunnable(dllName);
+	return currentKeyPair.pressedFuncs.IsScriptFuncRunnable(dllName) || currentKeyPair.releasedFuncs.IsScriptFuncRunnable(dllName);
 }
 
 std::vector<std::string> EverettEngine::GetObjectsInDirList(
@@ -738,6 +767,11 @@ void EverettEngine::ResetEngine()
 	keyScriptFuncMap.clear();
 	allNameTracker.clear();
 
+	if (fileLoader)
+	{
+		fileLoader->dllloader.FreeDllData();
+	}
+
 	mainLGL->ResetLGL();
 }
 
@@ -772,6 +806,23 @@ bool EverettEngine::SaveDataToFile(const std::string& filePath)
 		}
 	}
 
+	for (auto& keybindPair : keyScriptFuncMap)
+	{
+		std::string keybindBegin = "Keybind*" + keybindPair.first + '*' + std::to_string(keybindPair.second.holdable) + '*';
+
+		file <<
+			keybindBegin +
+			"Pressed*" +
+			SimSerializer::GetValueToSaveFrom(keybindPair.second.pressedFuncs.GetAddedScriptDLLs())
+			+ '\n';
+
+		file <<
+			keybindBegin +
+			"Released*" +
+			SimSerializer::GetValueToSaveFrom(keybindPair.second.releasedFuncs.GetAddedScriptDLLs())
+			+ '\n';
+	}
+
 	file.close();
 
 	return true;
@@ -799,6 +850,12 @@ void EverettEngine::ApplySimInfoFromLine(std::string& line, const std::array<std
 		if (typeid(Sim) == typeid(SolidSim)) // In C++20 if constexpr can be used
 		{
 			dynamic_cast<SolidSim*>(createdObject)->ForceModelUpdate();
+		}
+
+		std::vector<std::pair<std::string, std::string>> objectScriptDllInfo = createdObject->GetTempScriptDLLInfo();
+		for (auto& dllNamePair : objectScriptDllInfo)
+		{
+			SetScriptToObjectImpl(createdObject, objectInfo[ObjectInfoNames::ObjectName], dllNamePair.second, dllNamePair.first);
 		}
 
 		res = true;
@@ -845,6 +902,28 @@ void EverettEngine::LoadSoundFromLine(std::string& line, const std::array<std::s
 	assert(res && "Sound creation from file failed");
 }
 
+void EverettEngine::LoadKeybindsFromLine(std::string& line)
+{
+	size_t objectInfoAmount = std::count(line.begin(), line.end(), '*');
+	assert(objectInfoAmount == 4 && "Invalid keybind info amount during world load");
+
+	line.erase(0, line.find('*') + 1);
+	std::string keyname = line.substr(0, line.find('*'));
+	line.erase(0, line.find('*') + 1);
+
+	bool holdable = std::stoi(line.substr(0, line.find('*')));
+	line.erase(0, line.find('*') + 1);
+	line.erase(0, line.find('*') + 1);
+
+	std::vector<std::pair<std::string, std::string>> dllInfo;
+	SimSerializer::SetValueToLoadFrom(line, dllInfo);
+
+	for (auto& dllPair : dllInfo)
+	{
+		SetScriptToKey(keyname, holdable, dllPair.second, dllPair.first);
+	}
+}
+
 bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 {
 	std::fstream file(filePath, std::ios::in);
@@ -856,7 +935,12 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	while (!file.eof())
 	{
 		std::getline(file, line);
-		if (!line.empty())
+
+		if (line.substr(0, line.find('*')) == "Keybind")
+		{
+			LoadKeybindsFromLine(line);
+		}
+		else if (!line.empty())
 		{
 			SimSerializer::GetObjectInfo(line, objectInfo);
 

@@ -85,9 +85,11 @@ public:
 	static std::string GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
 	static std::string GetValueToSaveFrom(const std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits);
 	static std::string GetValueToSaveFrom(const std::vector<std::string>& vectorStr);
+	static std::string GetValueToSaveFrom(const std::vector<std::pair<std::string, std::string>>& vectorPairStr);
 	static void SetValueToLoadFrom(std::string& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
 	static void SetValueToLoadFrom(std::string& line, std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits);
 	static void SetValueToLoadFrom(std::string& line, std::vector<std::string>& vectorStr);
+	static void SetValueToLoadFrom(std::string& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr);
 };
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>

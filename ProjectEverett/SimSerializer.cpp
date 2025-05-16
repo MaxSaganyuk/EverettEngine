@@ -254,3 +254,51 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::strin
 		value += c;
 	}
 }
+
+std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::pair<std::string, std::string>>& vectorPairStr)
+{
+	std::string res = "";
+
+	for (auto& pair : vectorPairStr)
+	{
+		res += (pair.first + ' ' + pair.second + ' ');
+	}
+	if (res.size() > 1)
+	{
+		res.pop_back();
+	}
+
+	return PackValue(res);
+}
+
+void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr)
+{
+	std::string values;
+
+	UnpackValue(line, values);
+
+	std::string value = "";
+	std::string firstValue;
+	size_t i = 0;
+
+	for (auto c : values)
+	{
+		if (c == ' ')
+		{
+			if (i % 2 == 0)
+			{
+				firstValue = value;
+			}
+			else
+			{
+				vectorPairStr.push_back({ firstValue, value });
+			}
+
+			value = "";
+			++i;
+			continue;
+		}
+
+		value += c;
+	}
+}

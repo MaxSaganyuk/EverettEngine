@@ -186,6 +186,13 @@ private:
 		const std::string& objectName
 	);
 
+	void SetScriptToObjectImpl(
+		ObjectSim* object,
+		const std::string& objectName,
+		const std::string& dllPath,
+		const std::string& dllName
+	);
+
 	template<typename Sim>
 	std::vector<std::string> GetNameList(const std::map<std::string, Sim>& sims);
 
@@ -212,6 +219,7 @@ private:
 	void LoadSolidFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
 	void LoadLightFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
 	void LoadSoundFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
+	void LoadKeybindsFromLine(std::string& line);
 
 	void ResetEngine();
 
@@ -234,7 +242,9 @@ private:
 
 	std::unique_ptr<WindowHandleHolder> hwndHolder;
 
-	std::map<std::string, std::pair<ScriptFuncStorage, ScriptFuncStorage>> keyScriptFuncMap;
+	struct KeyScriptFuncInfo;
+
+	std::map<std::string, KeyScriptFuncInfo> keyScriptFuncMap;
 
 	UnorderedPtrMap<const std::string*, int> allNameTracker;
 
