@@ -24,23 +24,15 @@ CString CBrowseDialog::GetFileFilterString(const std::vector<std::pair<Descripti
 
 bool CBrowseDialog::OpenAndGetFolderPath(AdString& pathStr)
 {
-	bool success = false;
+	CFolderPickerDialog folderDlg(nullptr, OFN_PATHMUSTEXIST);
 
-	BROWSEINFO browseInfo{ 0 };
-	LPITEMIDLIST pidl = SHBrowseForFolderW(&browseInfo);
-
-	if (pidl)
+	if (folderDlg.DoModal() == IDOK)
 	{
-		TCHAR path[MAX_PATH];
-		if (SHGetPathFromIDListW(pidl, path))
-		{
-			pathStr = CString(path);
-			success = true;
-		}
-		CoTaskMemFree(pidl);
+		pathStr = folderDlg.GetPathName();
+		return true;
 	}
 
-	return success;
+	return false;
 }
 
 bool CBrowseDialog::OpenAndGetFilePath(

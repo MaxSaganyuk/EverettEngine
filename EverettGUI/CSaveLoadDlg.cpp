@@ -36,6 +36,10 @@ BOOL CSaveLoadDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
+	AdString chosenModeLabel = CString(chosenMode == Mode::Save ? L"Save" : L"Load") + L" the world";
+
+	SetWindowText(chosenModeLabel);
+
 	return true;
 }
 
