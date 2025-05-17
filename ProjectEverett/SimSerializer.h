@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <array>
+#include <chrono>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -86,10 +87,12 @@ public:
 	static std::string GetValueToSaveFrom(const std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits);
 	static std::string GetValueToSaveFrom(const std::vector<std::string>& vectorStr);
 	static std::string GetValueToSaveFrom(const std::vector<std::pair<std::string, std::string>>& vectorPairStr);
+	static std::string GetValueToSaveFrom(const std::chrono::system_clock::time_point timePoint);
 	static void SetValueToLoadFrom(std::string& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
 	static void SetValueToLoadFrom(std::string& line, std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits);
 	static void SetValueToLoadFrom(std::string& line, std::vector<std::string>& vectorStr);
 	static void SetValueToLoadFrom(std::string& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr);
+	static void SetValueToLoadFrom(std::string& line, std::chrono::system_clock::time_point& timePoint);
 };
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>

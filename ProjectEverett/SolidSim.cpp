@@ -44,6 +44,8 @@ std::string SolidSim::CollectInfoToSaveFromSTMM()
 	{
 		res += SimSerializer::GetValueToSaveFrom(STMM.animationSpeed);
 		res += SimSerializer::GetValueToSaveFrom(STMM.currentAnimationIndex);
+		res += SimSerializer::GetValueToSaveFrom(STMM.startAnimationTime);
+		res += SimSerializer::GetValueToSaveFrom(STMM.currentAnimationTime);
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.playing);
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.paused);
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.looped);
@@ -59,6 +61,8 @@ void SolidSim::CollectInfoToLoadToSTMM(std::string& line)
 	{
 		SimSerializer::SetValueToLoadFrom(line, STMM.animationSpeed);
 		SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationIndex);
+		SimSerializer::SetValueToLoadFrom(line, STMM.startAnimationTime);
+		SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationTime);
 		SimSerializer::SetValueToLoadFrom(line, STMM.animStates.playing);
 		SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused);
 		SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped);

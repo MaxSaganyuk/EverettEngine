@@ -1,5 +1,7 @@
 #include "SimSerializer.h"
 
+using namespace std::chrono;
+
 std::string SimSerializer::PackValue(const std::string& value)
 {
 	return '{' + value + '}';
@@ -301,4 +303,20 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::pair<
 
 		value += c;
 	}
+}
+
+std::string SimSerializer::GetValueToSaveFrom(const std::chrono::system_clock::time_point timePoint)
+{
+	long long timeCount = duration_cast<milliseconds>(timePoint.time_since_epoch()).count();
+	return PackValue(std::to_string(timeCount));
+}
+
+void SimSerializer::SetValueToLoadFrom(std::string& line, std::chrono::system_clock::time_point& timePoint)
+{
+	std::string value;
+
+	UnpackValue(line, value);
+
+	long long timeCount = FundamentalConvert<long long>::Convert(value);
+	timePoint = system_clock::time_point(milliseconds(timeCount));
 }

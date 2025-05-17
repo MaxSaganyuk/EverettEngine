@@ -33,8 +33,6 @@ ScriptObjectInit(Rise1, ISolidSim)
 ScriptObjectInit(stickAnimTest, ISolidSim)
 {
 	interState.animCharInter = &objectstickAnimTest;
-	interState.animCharInter->SetModelAnimation(0);
-	interState.animCharInter->PlayModelAnimation();
 }
 
 ScriptObjectInit(stickAnimTest1, ISolidSim)
