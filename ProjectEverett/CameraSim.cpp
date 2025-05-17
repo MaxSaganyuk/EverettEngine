@@ -59,14 +59,17 @@ std::string CameraSim::GetSimInfoToSave(const std::string&)
 	return info + '\n';
 }
 
-void CameraSim::SetSimInfoToLoad(std::string& line)
+bool CameraSim::SetSimInfoToLoad(std::string& line)
 {
-	SolidSim::SetSimInfoToLoad(line);
-	SimSerializer::SetValueToLoadFrom(line, view);
-	SimSerializer::SetValueToLoadFrom(line, projection);
-	SimSerializer::SetValueToLoadFrom(line, fov);
-	SimSerializer::SetValueToLoadFrom(line, sensitivity);
-	SimSerializer::SetValueToLoadFrom(line, mode);
+	bool res = SolidSim::SetSimInfoToLoad(line);
+	
+	res = res && SimSerializer::SetValueToLoadFrom(line, view);
+	res = res && SimSerializer::SetValueToLoadFrom(line, projection);
+	res = res && SimSerializer::SetValueToLoadFrom(line, fov);
+	res = res && SimSerializer::SetValueToLoadFrom(line, sensitivity);
+	res = res && SimSerializer::SetValueToLoadFrom(line, mode);
+
+	return res;
 }
 
 glm::mat4& CameraSim::GetViewMatrixAddr()

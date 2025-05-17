@@ -33,7 +33,7 @@ public:
 	static std::string GetObjectTypeNameStr();
 
 	std::string GetSimInfoToSave(const std::string&);
-	void SetSimInfoToLoad(std::string& line);
+	bool SetSimInfoToLoad(std::string& line);
 
 	glm::mat4& GetViewMatrixAddr() override;
 	glm::mat4& GetProjectionMatrixAddr() override;

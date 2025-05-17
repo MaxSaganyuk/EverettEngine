@@ -55,19 +55,23 @@ std::string SolidSim::CollectInfoToSaveFromSTMM()
 	return res;
 }
 
-void SolidSim::CollectInfoToLoadToSTMM(std::string& line)
+bool SolidSim::CollectInfoToLoadToSTMM(std::string& line)
 {
+	bool res = true;
+
 	if (STMM.IsInitialized())
 	{
-		SimSerializer::SetValueToLoadFrom(line, STMM.animationSpeed);
-		SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationIndex);
-		SimSerializer::SetValueToLoadFrom(line, STMM.startAnimationTime);
-		SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationTime);
-		SimSerializer::SetValueToLoadFrom(line, STMM.animStates.playing);
-		SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused);
-		SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped);
-		SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animationSpeed);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationIndex);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.startAnimationTime);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationTime);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.playing);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility);
 	}
+
+	return res;
 }
 
 std::string SolidSim::GetSimInfoToSaveImpl()
@@ -91,13 +95,16 @@ std::string SolidSim::GetSimInfoToSave(const std::string& modelSolidName)
 	return info + '\n';
 }
 
-void SolidSim::SetSimInfoToLoad(std::string& line)
+bool SolidSim::SetSimInfoToLoad(std::string& line)
 {
-	ObjectSim::SetSimInfoToLoad(line);
-	SimSerializer::SetValueToLoadFrom(line, model);
-	SimSerializer::SetValueToLoadFrom(line, type);
+	bool res = ObjectSim::SetSimInfoToLoad(line);
 
-	CollectInfoToLoadToSTMM(line);
+	res = res && SimSerializer::SetValueToLoadFrom(line, model);
+	res = res && SimSerializer::SetValueToLoadFrom(line, type);
+
+	res = res && CollectInfoToLoadToSTMM(line);
+
+	return res;
 }
 
 glm::mat4& SolidSim::GetModelMatrixAddr()

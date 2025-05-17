@@ -22,7 +22,7 @@ private:
 
 	void ResetModelMatrix(const Rotation& toRotate = {});
 	std::string CollectInfoToSaveFromSTMM();
-	void CollectInfoToLoadToSTMM(std::string& line);
+	bool CollectInfoToLoadToSTMM(std::string& line);
 protected:
 	std::string GetSimInfoToSaveImpl();
 public:
@@ -36,7 +36,7 @@ public:
 	static std::string GetObjectTypeNameStr();
 
 	std::string GetSimInfoToSave(const std::string& modelSolidName);
-	void SetSimInfoToLoad(std::string& line);
+	bool SetSimInfoToLoad(std::string& line);
 
 	glm::mat4& GetModelMatrixAddr() override;
 	void ForceModelUpdate() override;

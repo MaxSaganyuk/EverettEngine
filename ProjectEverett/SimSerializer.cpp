@@ -7,16 +7,32 @@ std::string SimSerializer::PackValue(const std::string& value)
 	return '{' + value + '}';
 }
 
-void SimSerializer::UnpackValue(std::string& line, std::string& value)
+void SimSerializer::UnpackValue(std::string& line, std::string& value, bool severalVals)
 {
 	value = line.substr(line.find('{') + 1, line.find('}') - 1);
 	
-	if (value.find(' ') != std::string::npos)
+	if (!value.empty() && severalVals)
 	{
 		value += ' ';
 	}
 
 	line.erase(line.find('{'), line.find('}') + 1);
+}
+
+bool SimSerializer::AssertAndReturn(bool evaluation)
+{
+	assert(evaluation && "SimSerializer failed to parse values");
+	return evaluation;
+}
+
+std::string SimSerializer::GetSerializerVersion()
+{
+	return serializerVersion;
+}
+
+bool SimSerializer::CheckSerializerVersion(const std::string& versionStr)
+{
+	return versionStr == serializerVersion;
 }
 
 void SimSerializer::GetObjectInfo(std::string& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo)
@@ -36,9 +52,11 @@ std::string SimSerializer::GetValueToSaveFrom(const std::string& str)
 	return PackValue(str);
 }
 
-void SimSerializer::SetValueToLoadFrom(std::string& line, std::string& str)
+bool SimSerializer::SetValueToLoadFrom(std::string& line, std::string& str)
 {
-	UnpackValue(line, str);
+	UnpackValue(line, str, false);
+
+	return true;
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const glm::vec3& vec)
@@ -54,7 +72,7 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::vec3& vec)
 	return PackValue(res);
 }
 
-void SimSerializer::SetValueToLoadFrom(std::string& line, glm::vec3& vec)
+bool SimSerializer::SetValueToLoadFrom(std::string& line, glm::vec3& vec)
 {
 	std::string values;
 
@@ -74,6 +92,8 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, glm::vec3& vec)
 
 		value += c;
 	}
+
+	return AssertAndReturn(i == vec.length());
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const glm::mat4& mat)
@@ -92,7 +112,7 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::mat4& mat)
 	return PackValue(res);
 }
 
-void SimSerializer::SetValueToLoadFrom(std::string& line, glm::mat4& mat)
+bool SimSerializer::SetValueToLoadFrom(std::string& line, glm::mat4& mat)
 {
 	std::string values;
 
@@ -113,6 +133,8 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, glm::mat4& mat)
 
 		value += c;
 	}
+
+	return AssertAndReturn(i == (mat.length() * mat[0].length()));
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs)
@@ -128,7 +150,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSi
 	return PackValue(res);
 }
 
-void SimSerializer::SetValueToLoadFrom(
+bool SimSerializer::SetValueToLoadFrom(
 	std::string& line, 
 	std::unordered_map<IObjectSim::Direction, bool>& disabledDirs
 )
@@ -161,6 +183,8 @@ void SimSerializer::SetValueToLoadFrom(
 
 		value += c;
 	}
+
+	return AssertAndReturn(!(i % 2));
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits)
@@ -180,7 +204,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotati
 	return PackValue(res);
 }
 
-void SimSerializer::SetValueToLoadFrom(
+bool SimSerializer::SetValueToLoadFrom(
 	std::string& line, 
 	std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits
 )
@@ -218,6 +242,8 @@ void SimSerializer::SetValueToLoadFrom(
 
 		value += c;
 	}
+
+	return AssertAndReturn(i == 6);
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::string>& vectorStr)
@@ -236,25 +262,36 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::string>& ve
 	return PackValue(res);
 }
 
-void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::string>& vectorStr)
+bool SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::string>& vectorStr)
 {
 	std::string values;
 
 	UnpackValue(line, values);
 
 	std::string value = "";
+	size_t i = 0;
 
 	for (auto c : values)
 	{
 		if (c == ' ')
 		{
-			vectorStr.push_back(value);
+			if (i >= vectorStr.size())
+			{
+				vectorStr.push_back(value);
+			}
+			else
+			{
+				vectorStr[i] = value;
+			}
+			++i;
 			value = "";
 			continue;
 		}
 
 		value += c;
 	}
+
+	return AssertAndReturn(i == vectorStr.size());
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::pair<std::string, std::string>>& vectorPairStr)
@@ -273,7 +310,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::pair<std::s
 	return PackValue(res);
 }
 
-void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr)
+bool SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr)
 {
 	std::string values;
 
@@ -303,6 +340,8 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::pair<
 
 		value += c;
 	}
+
+	return AssertAndReturn(!(i % 2));
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const std::chrono::system_clock::time_point timePoint)
@@ -311,7 +350,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::chrono::system_clock::t
 	return PackValue(std::to_string(timeCount));
 }
 
-void SimSerializer::SetValueToLoadFrom(std::string& line, std::chrono::system_clock::time_point& timePoint)
+bool SimSerializer::SetValueToLoadFrom(std::string& line, std::chrono::system_clock::time_point& timePoint)
 {
 	std::string value;
 
@@ -319,4 +358,6 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, std::chrono::system_cl
 
 	long long timeCount = FundamentalConvert<long long>::Convert(value);
 	timePoint = system_clock::time_point(milliseconds(timeCount));
+
+	return true;
 }

@@ -39,9 +39,12 @@ private:
 	FundamentalConvertSet(double, stod)
 	FundamentalConvertSet(long double, stold)
 
-	static std::string PackValue(const std::string& value);
-	static void UnpackValue(std::string& line, std::string& value);
+	constexpr static char serializerVersion[] = "1.1";
 
+	static std::string PackValue(const std::string& value);
+	static void UnpackValue(std::string& line, std::string& value, bool severalVals = true);
+
+	static bool AssertAndReturn(bool evaluation);
 public:
 	enum ObjectInfoNames
 	{
@@ -52,35 +55,37 @@ public:
 		_SIZE
 	};
 
+	static std::string GetSerializerVersion();
+	static bool CheckSerializerVersion(const std::string& versionStr);
 	static void GetObjectInfo(std::string& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo);
 
 	template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool> = false>
 	static std::string GetValueToSaveFrom(FundamentalType f);
 
 	template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool> = false>
-	static void SetValueToLoadFrom(std::string& line, FundamentalType& f);
+	static bool SetValueToLoadFrom(std::string& line, FundamentalType& f);
 
 	template<typename EnumType, typename std::enable_if_t<std::is_enum_v<EnumType>, bool> = false>
 	static std::string GetValueToSaveFrom(EnumType e);
 
 	template<typename EnumType, typename std::enable_if_t<std::is_enum_v<EnumType>, bool> = false>
-	static void SetValueToLoadFrom(std::string& line, EnumType& e);
+	static bool SetValueToLoadFrom(std::string& line, EnumType& e);
 
 	template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool> = false>
 	static std::string GetValueToSaveFrom(const std::vector<FundamentalType>& vector);
 
 	template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool> = false>
-	static void SetValueToLoadFrom(std::string& line, std::vector<FundamentalType>& vector);
+	static bool SetValueToLoadFrom(std::string& line, std::vector<FundamentalType>& vector);
 
 	// String
 	static std::string GetValueToSaveFrom(const std::string& str);
-	static void SetValueToLoadFrom(std::string& line, std::string& str);
+	static bool SetValueToLoadFrom(std::string& line, std::string& str);
 
 	// GLM
 	static std::string GetValueToSaveFrom(const glm::vec3& vec);
-	static void SetValueToLoadFrom(std::string& line, glm::vec3& vec);
 	static std::string GetValueToSaveFrom(const glm::mat4& mat);
-	static void SetValueToLoadFrom(std::string& line, glm::mat4& mat);
+	static bool SetValueToLoadFrom(std::string& line, glm::vec3& vec);
+	static bool SetValueToLoadFrom(std::string& line, glm::mat4& mat);
 
 	// Special cases
 	static std::string GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
@@ -88,11 +93,11 @@ public:
 	static std::string GetValueToSaveFrom(const std::vector<std::string>& vectorStr);
 	static std::string GetValueToSaveFrom(const std::vector<std::pair<std::string, std::string>>& vectorPairStr);
 	static std::string GetValueToSaveFrom(const std::chrono::system_clock::time_point timePoint);
-	static void SetValueToLoadFrom(std::string& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
-	static void SetValueToLoadFrom(std::string& line, std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits);
-	static void SetValueToLoadFrom(std::string& line, std::vector<std::string>& vectorStr);
-	static void SetValueToLoadFrom(std::string& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr);
-	static void SetValueToLoadFrom(std::string& line, std::chrono::system_clock::time_point& timePoint);
+	static bool SetValueToLoadFrom(std::string& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
+	static bool SetValueToLoadFrom(std::string& line, std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits);
+	static bool SetValueToLoadFrom(std::string& line, std::vector<std::string>& vectorStr);
+	static bool SetValueToLoadFrom(std::string& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr);
+	static bool SetValueToLoadFrom(std::string& line, std::chrono::system_clock::time_point& timePoint);
 };
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
@@ -102,13 +107,15 @@ std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 }
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
-void SimSerializer::SetValueToLoadFrom(std::string& line, FundamentalType& f)
+bool SimSerializer::SetValueToLoadFrom(std::string& line, FundamentalType& f)
 {
 	std::string value;
 
-	UnpackValue(line, value);
+	UnpackValue(line, value, false);
 
 	f = FundamentalConvert<FundamentalType>::Convert(value);
+
+	return true;
 }
 
 template<typename EnumType, typename std::enable_if_t<std::is_enum_v<EnumType>, bool>>
@@ -118,15 +125,17 @@ std::string SimSerializer::GetValueToSaveFrom(EnumType e)
 }
 
 template<typename EnumType, typename std::enable_if_t<std::is_enum_v<EnumType>, bool>>
-void SimSerializer::SetValueToLoadFrom(std::string& line, EnumType& e)
+bool SimSerializer::SetValueToLoadFrom(std::string& line, EnumType& e)
 {
 	int preEnumValue;
 	std::string value;
 
-	UnpackValue(line, value);
+	UnpackValue(line, value, false);
 
 	preEnumValue = FundamentalConvert<int>::Convert(value);
 	e = static_cast<EnumType>(preEnumValue);
+
+	return true;
 }
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
@@ -147,7 +156,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>
 }
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
-void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<FundamentalType>& vector)
+bool SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<FundamentalType>& vector)
 {
 	std::string values;
 
@@ -175,4 +184,6 @@ void SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<Fundamenta
 
 		value += c;
 	}
+
+	return AssertAndReturn(i == vector.size());
 }

@@ -59,10 +59,13 @@ std::string LightSim::GetSimInfoToSaveImpl()
 	return res;
 }
 
-void LightSim::SetSimInfoToLoad(std::string& line)
+bool LightSim::SetSimInfoToLoad(std::string& line)
 {
-	ObjectSim::SetSimInfoToLoad(line);
-	SimSerializer::SetValueToLoadFrom(line, lightRange);
+	bool res = ObjectSim::SetSimInfoToLoad(line);
+	
+	res = res && SimSerializer::SetValueToLoadFrom(line, lightRange);
+
+	return res;
 }
 
 

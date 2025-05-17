@@ -780,6 +780,8 @@ bool EverettEngine::SaveDataToFile(const std::string& filePath)
 	std::string realFilePath = filePath + saveFileType;
 	std::fstream file(realFilePath, std::ios::out);
 
+	file << SimSerializer::GetSerializerVersion() + '\n';
+
 	for (size_t i = 0; i < static_cast<int>(ObjectTypes::_SIZE); ++i)
 	{
 		auto allObjectsByType = GetAllObjectsByType(static_cast<ObjectTypes>(i));
@@ -845,7 +847,9 @@ void EverettEngine::ApplySimInfoFromLine(std::string& line, const std::array<std
 
 	if (createdObject)
 	{
-		createdObject->SetSimInfoToLoad(line);
+		res = createdObject->SetSimInfoToLoad(line);
+
+		if (!res) return;
 
 		if (typeid(Sim) == typeid(SolidSim)) // In C++20 if constexpr can be used
 		{
@@ -929,6 +933,13 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	std::fstream file(filePath, std::ios::in);
 	std::string line = "";
 	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
+
+	std::getline(file, line);
+	if (!SimSerializer::CheckSerializerVersion(line))
+	{
+		assert(false && "Invalid savefile version");
+		return false;
+	}
 
 	mainLGL->PauseRendering();
 	ResetEngine();

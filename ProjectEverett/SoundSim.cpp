@@ -30,9 +30,9 @@ std::string SoundSim::GetSimInfoToSave(const std::string& soundName)
 	return info + '\n';
 }
 
-void SoundSim::SetSimInfoToLoad(std::string& line)
+bool SoundSim::SetSimInfoToLoad(std::string& line)
 {
-	ObjectSim::SetSimInfoToLoad(line);
+	return ObjectSim::SetSimInfoToLoad(line);
 }
 
 void SoundSim::InitOpenAL()

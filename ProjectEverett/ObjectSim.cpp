@@ -55,21 +55,25 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	return res;
 }
 
-void ObjectSim::SetSimInfoToLoad(std::string& line)
+bool ObjectSim::SetSimInfoToLoad(std::string& line)
 {
-	SimSerializer::SetValueToLoadFrom(line, scale);
-	SimSerializer::SetValueToLoadFrom(line, front);
-	SimSerializer::SetValueToLoadFrom(line, up);
-	SimSerializer::SetValueToLoadFrom(line, pos);
-	SimSerializer::SetValueToLoadFrom(line, lastPos);
-	SimSerializer::SetValueToLoadFrom(line, rotate);
-	SimSerializer::SetValueToLoadFrom(line, lastBlocker);
-	SimSerializer::SetValueToLoadFrom(line, speed);
-	SimSerializer::SetValueToLoadFrom(line, ghostMode);
-	SimSerializer::SetValueToLoadFrom(line, lastDir);
-	SimSerializer::SetValueToLoadFrom(line, disabledDirs);
-	SimSerializer::SetValueToLoadFrom(line, rotationLimits);
-	SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect);
+	bool res = true;
+
+	res = res && SimSerializer::SetValueToLoadFrom(line, scale);
+	res = res && SimSerializer::SetValueToLoadFrom(line, front);
+	res = res && SimSerializer::SetValueToLoadFrom(line, up);
+	res = res && SimSerializer::SetValueToLoadFrom(line, pos);
+	res = res && SimSerializer::SetValueToLoadFrom(line, lastPos);
+	res = res && SimSerializer::SetValueToLoadFrom(line, rotate);
+	res = res && SimSerializer::SetValueToLoadFrom(line, lastBlocker);
+	res = res && SimSerializer::SetValueToLoadFrom(line, speed);
+	res = res && SimSerializer::SetValueToLoadFrom(line, ghostMode);
+	res = res && SimSerializer::SetValueToLoadFrom(line, lastDir);
+	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs);
+	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits);
+	res = res && SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect);
+
+	return res;
 }
 
 void ObjectSim::CheckRotationLimits()

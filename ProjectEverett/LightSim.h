@@ -25,7 +25,7 @@ public:
 	static std::string GetObjectTypeNameStr();
 
 	std::string GetSimInfoToSave(const std::string& lightName);
-	void SetSimInfoToLoad(std::string& line);
+	bool SetSimInfoToLoad(std::string& line);
 
 	static std::vector<std::string> GetLightTypeNames();
 	std::string GetCurrentLightType() override;

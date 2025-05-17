@@ -49,7 +49,7 @@ class SoundSim : public ObjectSim, public ISoundSim
 	std::string GetSimInfoForSaveImpl();
 public:
 	std::string GetSimInfoToSave(const std::string& soundName);
-	void SetSimInfoToLoad(std::string& line);
+	bool SetSimInfoToLoad(std::string& line);
 
 	static void InitOpenAL();
 	static void SetCamera(CameraSim& camera);
