@@ -13,7 +13,7 @@
 
 #include "interfaces/ISolidSim.h"
 
-class SolidSim : public ObjectSim, public ISolidSim
+class SolidSim : public ObjectSim, virtual public ISolidSim
 {
 private:
 	glm::mat4 model;

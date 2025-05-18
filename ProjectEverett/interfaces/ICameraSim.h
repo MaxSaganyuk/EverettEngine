@@ -2,7 +2,7 @@
 
 #include "ISolidSim.h"
 
-class ICameraSim : virtual public IObjectSim
+class ICameraSim : virtual public ISolidSim
 {
 public:
 	enum class Mode
