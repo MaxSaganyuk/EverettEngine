@@ -36,6 +36,7 @@ BOOL CSaveLoadDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
+	fileNameEdit.EnableWindow(chosenMode == Mode::Save);
 	AdString chosenModeLabel = CString(chosenMode == Mode::Save ? L"Save" : L"Load") + L" the world";
 
 	SetWindowText(chosenModeLabel);
