@@ -3,7 +3,10 @@
 #include <type_traits>
 #include <unordered_map>
 
-template<typename Type, typename std::enable_if_t<std::is_pointer_v<Type>, bool> = false>
+template<typename Type>
+concept OnlyPointers = std::is_pointer_v<Type>;
+
+template<OnlyPointers Type>
 class PtrHasher
 {
 public:
@@ -13,7 +16,7 @@ public:
 	}
 };
 
-template<typename Type, typename std::enable_if_t<std::is_pointer_v<Type>, bool> = false>
+template<OnlyPointers Type>
 class PtrComparator
 {
 public:

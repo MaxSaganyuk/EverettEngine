@@ -32,7 +32,7 @@ void CMainWindow::OnInitialUpdate()
 {
 	CFormView::OnInitialUpdate();
 
-	objectTree.SetObjectTypes(EverettEngine::GetAllObjectTypeNames(), engineP->GetLightTypeList());
+	objectTree.SetObjectTypes();
 	objectTree.GetTreeCtrl().ModifyStyle(0, TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS);
 }
 

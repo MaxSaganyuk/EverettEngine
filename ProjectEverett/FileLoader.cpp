@@ -3,6 +3,10 @@
 #include <functional>
 #include <Windows.h>
 
+#ifdef _HAS_CXX17
+#include <filesystem>
+#endif
+
 #include <assimp/Importer.hpp>
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
@@ -42,14 +46,27 @@ void ConvertFromAssimpToGLM(const aiQuaternion& assimpQuat, glm::quat& glmQuat)
 
 std::string FileLoader::GetCurrentDir()
 {
+#ifdef _HAS_CXX17
+	return std::filesystem::current_path().string();
+#else
 	char path[MAX_PATH];
 	GetCurrentDirectoryA(MAX_PATH, path);
 
 	return path;
+#endif
 }
 
 bool FileLoader::GetFilesInDir(std::vector<std::string>& files, const std::string& dir)
 {
+#ifdef _HAS_CXX17
+	for (auto& entry : std::filesystem::directory_iterator(dir))
+	{
+		if (entry.is_regular_file())
+		{
+			files.push_back(entry.path().filename().string());
+		}
+	}
+#else
 	HANDLE dirHandle;
 	WIN32_FIND_DATAA fileData;
 
@@ -78,6 +95,7 @@ bool FileLoader::GetFilesInDir(std::vector<std::string>& files, const std::strin
 	} while (FindNextFileA(dirHandle, &fileData));
 
 	FindClose(dirHandle);
+#endif
 
 	return true;
 }
@@ -457,10 +475,10 @@ void FileLoader::ModelLoader::LoadAnimations(
 
 void FileLoader::ModelLoader::FreeTextureData()
 {
-	for (auto& texture : texturesLoaded)
+	for (auto& [textureName, texture] : texturesLoaded)
 	{
-		stbi_image_free(texture.second.data);
-		texture.second.data = nullptr;
+		stbi_image_free(texture.data);
+		texture.data = nullptr;
 	}
 
 	texturesLoaded.clear();
@@ -522,11 +540,11 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 			{
 				dllHandleMap[dllPath].first = dllHandle;
 
-				for (auto& currentScriptFuncPair : dllHandleMap[dllPath].second)
+				for (auto& [currentFuncName, func] : dllHandleMap[dllPath].second)
 				{
-					if (funcName != currentScriptFuncPair.first)
+					if (funcName != currentFuncName)
 					{
-						success &= GetScriptFuncFromDLLImpl(dllPath, currentScriptFuncPair.first, scriptFuncWeakPtr);
+						success &= GetScriptFuncFromDLLImpl(dllPath, currentFuncName, scriptFuncWeakPtr);
 					}
 				}
 
@@ -583,9 +601,9 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
 void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
 {
 	scriptWrapperLock.lock();
-	for (auto& scriptFunc : dllHandleMap[dllPath].second)
+	for (auto& [funcName, func] : dllHandleMap[dllPath].second)
 	{
-		ScriptFuncStorage::InterfaceScriptFunc* scriptFuncWrapper = scriptFunc.second.get();
+		ScriptFuncStorage::InterfaceScriptFunc* scriptFuncWrapper = func.get();
 		*scriptFuncWrapper = nullptr;
 	}
 	scriptWrapperLock.unlock();
@@ -599,9 +617,9 @@ std::vector<std::string> FileLoader::DLLLoader::GetLoadedScriptDlls()
 	std::vector<std::string> loadedDlls;
 	loadedDlls.reserve(dllHandleMap.size());
 
-	for (auto& dllHandle : dllHandleMap)
+	for (auto& [dllName, dllInfo] : dllHandleMap)
 	{
-		loadedDlls.push_back(dllHandle.first);
+		loadedDlls.push_back(dllName);
 	}
 
 	return loadedDlls;
@@ -609,11 +627,12 @@ std::vector<std::string> FileLoader::DLLLoader::GetLoadedScriptDlls()
 
 void FileLoader::DLLLoader::FreeDllData()
 {
-	for (auto& dllHandle : dllHandleMap)
+	for (auto& [dllName, dllInfo] : dllHandleMap)
 	{
-		if (dllHandle.second.first)
+		auto& [dllHandle, funcMap] = dllInfo;
+		if (dllHandle)
 		{
-			FreeLibrary(dllHandle.second.first);
+			FreeLibrary(dllHandle);
 		}
 	}
 

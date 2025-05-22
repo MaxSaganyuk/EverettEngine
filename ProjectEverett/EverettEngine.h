@@ -139,7 +139,7 @@ public:
 
 	EVERETT_API std::vector<std::string> GetCreatedModels();
 	EVERETT_API std::vector<std::string> GetNamesByObject(ObjectTypes objType);
-	EVERETT_API std::vector<std::string> GetLightTypeList();
+	EVERETT_API static std::vector<std::string> GetLightTypeList();
 
 	EVERETT_API static std::vector<std::string> GetAllObjectTypeNames();
 	EVERETT_API static std::string GetObjectTypeToName(ObjectTypes objectType);
@@ -163,9 +163,11 @@ public:
 	EVERETT_API bool LoadDataFromFile(const std::string& filePath);
 private:
 #ifdef _DEBUG
-	std::string debugShaderPath = "\\..\\ProjectEverett\\shaders";
+	constexpr static inline char debugShaderPath[] = "\\..\\ProjectEverett\\shaders";
 #endif
-	static const std::string saveFileType;
+	struct ObjectTypeInfo;
+
+	static inline const std::string saveFileType = ".esav";
 	std::string defaultShaderProgram;
 
 	std::function<void(double, double)> cursorCaptureCallback;
@@ -210,16 +212,17 @@ private:
 	std::vector<std::string> GetLightList();
 	std::vector<std::string> GetSoundList();
 
-	std::vector<std::pair<std::string, ObjectSim*>> GetAllObjectsByType(ObjectTypes objectType);
+	template<typename Sim>
+	void SaveObjectsToFile(std::fstream& file);
 
 	template<typename Sim>
-	void ApplySimInfoFromLine(std::string& line, const std::array<std::string, 4>& objectInfo, bool& res);
+	void ApplySimInfoFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo, bool& res);
 
-	void LoadCameraFromLine(std::string& line);
-	void LoadSolidFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
-	void LoadLightFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
-	void LoadSoundFromLine(std::string& line, const std::array<std::string, 4>& objectInfo);
-	void LoadKeybindsFromLine(std::string& line);
+	void LoadCameraFromLine(std::string_view& line);
+	void LoadSolidFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
+	void LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
+	void LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
+	void LoadKeybindsFromLine(std::string_view& line);
 
 	void ResetEngine();
 
@@ -237,6 +240,7 @@ private:
 
 	static LightShaderValueNames lightShaderValueNames;
 	static std::vector<ObjectTypeInfo> objectTypes;
+	static std::vector<std::string> lightTypes;
 
 	std::unique_ptr<CameraSim> camera;
 
@@ -263,5 +267,4 @@ private:
 	    int lastKeyPressedID;
 		bool isValidKeyPress;
 	};
-
 };

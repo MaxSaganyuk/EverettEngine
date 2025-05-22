@@ -18,7 +18,6 @@ public:
 		const AdString& objectName,
 		LoaderFunc loader,
 		NameCheckFunc nameCheckFunc,
-		const std::vector<std::string>& loadedObjectsList, 
 		CWnd* pParent = nullptr
 	);   // standard constructor
 	virtual ~CBrowseAndLoadDialog();
@@ -57,7 +56,6 @@ private:
 
 	LoaderFunc modelLoader;
 	NameCheckFunc nameCheckFunc;
-	std::vector<std::string> loadedModelList;
 		
 	constexpr static const char cacheFileName[] = "loadCache";
 public:

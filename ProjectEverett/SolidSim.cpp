@@ -55,7 +55,7 @@ std::string SolidSim::CollectInfoToSaveFromSTMM()
 	return res;
 }
 
-bool SolidSim::CollectInfoToLoadToSTMM(std::string& line)
+bool SolidSim::CollectInfoToLoadToSTMM(std::string_view& line)
 {
 	bool res = true;
 
@@ -95,7 +95,7 @@ std::string SolidSim::GetSimInfoToSave(const std::string& modelSolidName)
 	return info + '\n';
 }
 
-bool SolidSim::SetSimInfoToLoad(std::string& line)
+bool SolidSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 

@@ -12,7 +12,7 @@ class ObjectSim : virtual public IObjectSim
 {
 protected:
 	std::string GetSimInfoToSaveImpl();
-	bool SetSimInfoToLoad(std::string& line);
+	bool SetSimInfoToLoad(std::string_view& line);
 	void CheckRotationLimits();
 	
 	constexpr static size_t realDirectionAmount = 6;

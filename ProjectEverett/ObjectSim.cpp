@@ -55,7 +55,7 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	return res;
 }
 
-bool ObjectSim::SetSimInfoToLoad(std::string& line)
+bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = true;
 

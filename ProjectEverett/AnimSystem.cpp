@@ -84,9 +84,9 @@ void AnimSystem::ParseBoneTree(
 		currentBone.finalTransform = globalInverseTransform * currentBone.globalTransform * currentBone.offsetMatrix;
 	}
 
-	for (auto& childNodes : currentBoneNode->GetChildNodes())
+	for (auto& [childNodeName, childNode] : currentBoneNode->GetChildNodes())
 	{
-		ParseBoneTree(childNodes.second, animationTimeTicks, animIndex, globalInverseTransform, animKeyMap);
+		ParseBoneTree(childNode, animationTimeTicks, animIndex, globalInverseTransform, animKeyMap);
 	}
 }
 
@@ -103,9 +103,9 @@ void AnimSystem::CollectAllFinalTransforms(
 		finalTransforms[startingBoneIndex + currentID] = boneTreeNode->GetValue().finalTransform;
 	}
 
-	for (auto& childNodes : boneTreeNode->GetChildNodes())
+	for (auto& [childNodeName, childNode] : boneTreeNode->GetChildNodes())
 	{
-		CollectAllFinalTransforms(childNodes.second, startingBoneIndex, finalTransforms);
+		CollectAllFinalTransforms(childNode, startingBoneIndex, finalTransforms);
 	}
 }
 
@@ -113,14 +113,14 @@ void AnimSystem::ProcessAnimations(ModelAnim& modelAnim, double animationTimeTic
 {
 	if (!modelAnim.animInfoVect.empty())
 	{
-		for (auto& childNodes : modelAnim.boneTree.GetChildNodes())
+		for (auto& [childNodeName, childNode] : modelAnim.boneTree.GetChildNodes())
 		{
-			ParseBoneTree(childNodes.second, animationTimeTicks, animIndex, modelAnim.globalInverseTransform, modelAnim.animKeyMap);
+			ParseBoneTree(childNode, animationTimeTicks, animIndex, modelAnim.globalInverseTransform, modelAnim.animKeyMap);
 		}
 
-		for (auto& childNodes : modelAnim.boneTree.GetChildNodes())
+		for (auto& [childNodeName, childNode] : modelAnim.boneTree.GetChildNodes())
 		{
-			CollectAllFinalTransforms(childNodes.second, startingBoneIndex, finalTransforms);
+			CollectAllFinalTransforms(childNode, startingBoneIndex, finalTransforms);
 		}
 	}
 }

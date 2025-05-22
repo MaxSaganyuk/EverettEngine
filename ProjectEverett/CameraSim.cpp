@@ -59,7 +59,7 @@ std::string CameraSim::GetSimInfoToSave(const std::string&)
 	return info + '\n';
 }
 
-bool CameraSim::SetSimInfoToLoad(std::string& line)
+bool CameraSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = SolidSim::SetSimInfoToLoad(line);
 	

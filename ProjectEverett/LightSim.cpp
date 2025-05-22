@@ -16,13 +16,6 @@ std::map<int, LightSim::Attenuation> LightSim::attenuationVals
 	{3250, {0.0014f, 0.000007f} }
 };
 
-std::vector<std::pair<LightSim::LightTypes, std::string>> LightSim::lightTypeToName
-{
-	{ LightSim::LightTypes::Direction, "Direction" },
-	{ LightSim::LightTypes::Point,     "Point"     },
-	{ LightSim::LightTypes::Spot,      "Spot"      }
-};
-
 LightSim::LightSim(
 	LightTypes lightType,
 	const glm::vec3& pos,
@@ -59,7 +52,7 @@ std::string LightSim::GetSimInfoToSaveImpl()
 	return res;
 }
 
-bool LightSim::SetSimInfoToLoad(std::string& line)
+bool LightSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 	

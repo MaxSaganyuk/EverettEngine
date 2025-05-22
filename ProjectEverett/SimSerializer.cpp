@@ -7,7 +7,7 @@ std::string SimSerializer::PackValue(const std::string& value)
 	return '{' + value + '}';
 }
 
-void SimSerializer::UnpackValue(std::string& line, std::string& value, bool severalVals)
+void SimSerializer::UnpackValue(std::string_view& line, std::string& value, bool severalVals)
 {
 	value = line.substr(line.find('{') + 1, line.find('}') - 1);
 	
@@ -16,7 +16,7 @@ void SimSerializer::UnpackValue(std::string& line, std::string& value, bool seve
 		value += ' ';
 	}
 
-	line.erase(line.find('{'), line.find('}') + 1);
+	line.remove_prefix(line.find('}') + 1);
 }
 
 bool SimSerializer::AssertAndReturn(bool evaluation)
@@ -30,12 +30,12 @@ std::string SimSerializer::GetSerializerVersion()
 	return serializerVersion;
 }
 
-bool SimSerializer::CheckSerializerVersion(const std::string& versionStr)
+bool SimSerializer::CheckSerializerVersion(const std::string_view& versionStr)
 {
 	return versionStr == serializerVersion;
 }
 
-void SimSerializer::GetObjectInfo(std::string& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo)
+void SimSerializer::GetObjectInfo(std::string_view& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo)
 {
 	size_t objectInfoAmount = std::count(line.begin(), line.end(), '*');
 	assert(objectInfoAmount <= ObjectInfoNames::_SIZE && "Invalid object info amount during world load");
@@ -43,7 +43,7 @@ void SimSerializer::GetObjectInfo(std::string& line, std::array<std::string, Obj
 	for (size_t i = 0; i < objectInfoAmount; ++i)
 	{
 		objectInfo[i] = line.substr(0, line.find('*'));
-		line.erase(0, line.find('*') + 1);
+		line.remove_prefix(line.find('*') + 1);
 	}
 }
 
@@ -52,7 +52,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::string& str)
 	return PackValue(str);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string& line, std::string& str)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::string& str)
 {
 	UnpackValue(line, str, false);
 
@@ -72,7 +72,7 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::vec3& vec)
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string& line, glm::vec3& vec)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::vec3& vec)
 {
 	std::string values;
 
@@ -112,7 +112,7 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::mat4& mat)
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string& line, glm::mat4& mat)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::mat4& mat)
 {
 	std::string values;
 
@@ -151,7 +151,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSi
 }
 
 bool SimSerializer::SetValueToLoadFrom(
-	std::string& line, 
+	std::string_view& line, 
 	std::unordered_map<IObjectSim::Direction, bool>& disabledDirs
 )
 {
@@ -205,7 +205,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotati
 }
 
 bool SimSerializer::SetValueToLoadFrom(
-	std::string& line, 
+	std::string_view& line, 
 	std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits
 )
 {
@@ -262,7 +262,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::string>& ve
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::string>& vectorStr)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<std::string>& vectorStr)
 {
 	std::string values;
 
@@ -310,7 +310,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::pair<std::s
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr)
 {
 	std::string values;
 
@@ -350,7 +350,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::chrono::system_clock::t
 	return PackValue(std::to_string(timeCount));
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string& line, std::chrono::system_clock::time_point& timePoint)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::chrono::system_clock::time_point& timePoint)
 {
 	std::string value;
 

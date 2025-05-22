@@ -20,7 +20,6 @@ CBrowseAndLoadDialog::CBrowseAndLoadDialog(
 	const AdString& objectName,
 	LoaderFunc modelLoader, 
 	NameCheckFunc nameCheckFunc,
-	const std::vector<std::string>& loadedModelList,
 	CWnd* pParent
 )
 	: 
@@ -28,7 +27,6 @@ CBrowseAndLoadDialog::CBrowseAndLoadDialog(
 	objectName(objectName),
 	modelLoader(modelLoader), 
 	nameCheckFunc(nameCheckFunc),
-	loadedModelList(loadedModelList), 
 	path(""), 
 	name("")
 {

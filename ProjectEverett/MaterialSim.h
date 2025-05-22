@@ -40,12 +40,7 @@ public:
 	}
 
 private:
-	static std::map<MaterialID, Material> materialMap;
-};
-
-
-std::map<MaterialSim::MaterialID, MaterialSim::Material> MaterialSim::materialMap
-{
+	static inline std::map<MaterialID, Material> materialMap {
 	{
 		MaterialID::EMERALD,
 		Material{
@@ -154,4 +149,5 @@ std::map<MaterialSim::MaterialID, MaterialSim::Material> MaterialSim::materialMa
 			0.4f * 128
 		}
 	}
+};
 };

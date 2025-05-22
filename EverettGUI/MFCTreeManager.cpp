@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "MFCTreeManager.h"
+#include "EverettEngine.h"
 
 MFCTreeManager::MFCTreeManagerNode::MFCTreeManagerNode(
 	const AdString& title,
@@ -69,14 +70,11 @@ void MFCTreeManager::AddRootNode(const AdString& title, const AdString& data)
 	);
 }
 
-void MFCTreeManager::SetObjectTypes(
-	const std::vector<std::string>& objectTypes,
-	const std::vector<std::string>& lightTypes
-)
+void MFCTreeManager::SetObjectTypes()
 {
 	this->objectTypes = objectTypes;
 
-	for (auto& type : objectTypes)
+	for (auto& type : EverettEngine::GetAllObjectTypeNames())
 	{
 		if (type != "Camera")
 		{
@@ -84,7 +82,7 @@ void MFCTreeManager::SetObjectTypes(
 		}
 	}
 
-	for (auto& lightType : lightTypes)
+	for (auto& lightType : EverettEngine::GetLightTypeList())
 	{
 		rootNodes["Light"]->AddNode("LightType", lightType);
 	}

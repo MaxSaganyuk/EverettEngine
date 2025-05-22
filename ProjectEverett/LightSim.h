@@ -3,6 +3,7 @@
 #include <cassert>
 #include <map>
 #include <string>
+#include <ranges>
 
 #include "interfaces/ILightSim.h"
 #include "SolidSim.h"
@@ -25,7 +26,7 @@ public:
 	static std::string GetObjectTypeNameStr();
 
 	std::string GetSimInfoToSave(const std::string& lightName);
-	bool SetSimInfoToLoad(std::string& line);
+	bool SetSimInfoToLoad(std::string_view& line);
 
 	static std::vector<std::string> GetLightTypeNames();
 	std::string GetCurrentLightType() override;
@@ -42,7 +43,12 @@ private:
 
 	static std::map<int, Attenuation> attenuationVals;
 
-	static std::vector<std::pair<LightTypes, std::string>> lightTypeToName;
+	static inline std::vector<std::pair<LightTypes, std::string>> lightTypeToName
+	{
+		{ LightSim::LightTypes::Direction, "Direction" },
+		{ LightSim::LightTypes::Point,     "Point"     },
+		{ LightSim::LightTypes::Spot,      "Spot"      }
+	};
 
 	LightTypes lightType;
 };

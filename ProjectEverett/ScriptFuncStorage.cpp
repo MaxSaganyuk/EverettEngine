@@ -24,6 +24,7 @@ void ScriptFuncStorage::ExecuteScriptFunc(IObjectSim* object, const std::string&
 		if (scriptFuncMap[dllToExecute].second.lock() && *scriptFuncMap[dllToExecute].second.lock().get())
 		{
 			((*scriptFuncMap[dllToExecute].second.lock())(object));
+			lastExecutedScriptDll = dllToExecute;
 		}
 	}
 }

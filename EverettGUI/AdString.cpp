@@ -118,31 +118,6 @@ bool AdString::operator==(const AdString& str) const
 	return str.currentType == StrType::Regular ? strPair.first == str.strPair.first : strPair.second == str.strPair.second;
 }
 
-bool AdString::operator!=(const std::string& str) const
-{
-	return !(*this == str);
-}
-
-bool AdString::operator!=(const char* cPtr) const
-{
-	return !(*this == cPtr);
-}
-
-bool AdString::operator!=(const CString& str) const
-{
-	return !(*this == str);
-}
-
-bool AdString::operator!=(LPCTSTR cPtr) const
-{
-	return !(*this == cPtr);
-}
-
-bool AdString::operator!=(const AdString& str) const
-{
-	return !(*this == str);
-}
-
 bool AdString::operator<(const AdString& str) const
 {
 	CheckAndReadapt(str.currentType);

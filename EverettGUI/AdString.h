@@ -56,16 +56,6 @@ public:
 	friend bool operator==(const std::string& str1, const AdString& str2);
 	friend bool operator==(const CString& str1, const AdString& str2);
 
-	// != section can be removed in C++20
-	bool operator!=(const std::string& str) const;
-	bool operator!=(const char* cPtr) const;
-	bool operator!=(const CString& str) const;
-	bool operator!=(LPCTSTR cPtr) const;
-	bool operator!=(const AdString& str) const;
-	friend bool operator!=(const std::string& str1, const AdString& str2);
-	friend bool operator!=(const CString& str1, const AdString& str2);
-	// --------------------------------------------
-
 	bool operator<(const AdString& str) const;
 
 	std::string operator+(char c) const;

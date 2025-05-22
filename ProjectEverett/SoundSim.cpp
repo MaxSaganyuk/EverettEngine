@@ -30,7 +30,7 @@ std::string SoundSim::GetSimInfoToSave(const std::string& soundName)
 	return info + '\n';
 }
 
-bool SoundSim::SetSimInfoToLoad(std::string& line)
+bool SoundSim::SetSimInfoToLoad(std::string_view& line)
 {
 	return ObjectSim::SetSimInfoToLoad(line);
 }

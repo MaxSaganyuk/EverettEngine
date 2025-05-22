@@ -38,6 +38,13 @@
 
 using ObjectInfoNames = SimSerializer::ObjectInfoNames;
 
+struct EverettEngine::ObjectTypeInfo
+{
+	ObjectTypes nameEnum;
+	std::string nameStr;
+	std::type_index pureType;
+};
+
 struct EverettEngine::ModelSolidInfo
 {
 	std::string modelPath;
@@ -66,15 +73,6 @@ EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 	}
 };
 
-const std::string EverettEngine::saveFileType = ".esav";
-
-struct EverettEngine::ObjectTypeInfo
-{
-	ObjectTypes nameEnum;
-	std::string nameStr;
-	std::type_index pureType;
-};
-
 std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 {
 	{EverettEngine::ObjectTypes::Camera, CameraSim::GetObjectTypeNameStr(), typeid(CameraSim)},
@@ -82,6 +80,8 @@ std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 	{EverettEngine::ObjectTypes::Light,  LightSim::GetObjectTypeNameStr(),  typeid(LightSim)},
 	{EverettEngine::ObjectTypes::Sound,  SoundSim::GetObjectTypeNameStr(),  typeid(SoundSim)}
 };
+
+std::vector<std::string> EverettEngine::lightTypes = LightSim::GetLightTypeNames();
 
 struct EverettEngine::KeyScriptFuncInfo
 {
@@ -116,7 +116,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 
 	mainLGL->SetAssetOnOpenGLFailure(true);
 #if _DEBUG
-	mainLGL->SetShaderFolder(fileLoader->GetCurrentDir() + debugShaderPath);
+	mainLGL->SetShaderFolder(FileLoader::GetCurrentDir() + debugShaderPath);
 #endif
 	camera = std::make_unique<CameraSim>(windowHeight, windowWidth);;
 	camera->SetMode(CameraSim::Mode::Fly);
@@ -260,22 +260,23 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
+		auto& [modelPath, modelInfo, solidInfo] = model;
 
 		bool animationless = model.model.second.animInfoVect.empty();
-		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(model.model.first.isTextureless));
+		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(modelInfo.first.isTextureless));
 		mainLGL->SetShaderUniformValue("animationless", static_cast<int>(animationless));
 
 		if (!animationless)
 		{
-			for (auto& solid : MSM[name].solids)
+			for (auto& [solidName, solid] : solidInfo)
 			{
-				if (solid.second.IsModelAnimationPlaying())
+				if (solid.IsModelAnimationPlaying())
 				{
 					animSystem->ProcessAnimations(
-						MSM[name].model.second,
-						solid.second.GetModelCurrentAnimationTime(),
-						solid.second.GetModelAnimation(),
-						solid.second.GetModelCurrentStartingBoneIndex()
+						modelInfo.second,
+						solid.GetModelCurrentAnimationTime(),
+						solid.GetModelAnimation(),
+						solid.GetModelCurrentStartingBoneIndex()
 					);
 				}
 			}
@@ -290,10 +291,10 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 		glm::mat4 emptyMatrix = glm::mat4();
 
-		for (auto& solid : model.solids)
+		for (auto& [solidName, solid] : model.solids)
 		{
-			glm::mat4& modelMatrix = solid.second.GetModelMeshVisibility(meshIndex)
-				? solid.second.GetModelMatrixAddr() : emptyMatrix;
+			glm::mat4& modelMatrix = solid.GetModelMeshVisibility(meshIndex)
+				? solid.GetModelMatrixAddr() : emptyMatrix;
 
 			mainLGL->SetShaderUniformValue("model", modelMatrix);
 			mainLGL->SetShaderUniformValue("inv", glm::inverse(modelMatrix));
@@ -301,7 +302,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 			if (!model.model.second.animInfoVect.empty())
 			{
 				mainLGL->SetShaderUniformValue("startingBoneIndex", static_cast<int>(
-					solid.second.GetModelCurrentStartingBoneIndex()
+					solid.GetModelCurrentStartingBoneIndex()
 					)
 				);
 			}
@@ -461,32 +462,32 @@ void EverettEngine::LightUpdater()
 	mainLGL->SetShaderUniformValue("ambient", glm::vec3(0.4f, 0.4f, 0.4f));
 	
 	int index = 0;
-	for (auto& light : lights[LightTypes::Point])
+	for (auto& [lightName, light] : lights[LightTypes::Point])
 	{
-		LightSim::Attenuation atten = light.second.GetAttenuation();
+		LightSim::Attenuation atten = light.GetAttenuation();
 
 		LGLUtils::SetShaderUniformArrayAt(
 			*mainLGL,
 			lightShaderValueNames[1].first,
 			index++,
 			lightShaderValueNames[1].second,
-			light.second.GetPositionVectorAddr(), glm::vec3(0.4f, 0.4f, 0.4f),
+			light.GetPositionVectorAddr(), glm::vec3(0.4f, 0.4f, 0.4f),
 			glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, atten.linear,
 			atten.quadratic
 		);
 	}
 
 	index = 0;
-	for (auto& light : lights[LightTypes::Spot])
+	for (auto& [lightName, light] : lights[LightTypes::Spot])
 	{
-		LightSim::Attenuation atten = light.second.GetAttenuation();
+		LightSim::Attenuation atten = light.GetAttenuation();
 
 		LGLUtils::SetShaderUniformArrayAt(
 			*mainLGL,
 			lightShaderValueNames[2].first,
 			index++,
 			lightShaderValueNames[2].second,
-			light.second.GetPositionVectorAddr(), light.second.GetFrontVectorAddr(),
+			light.GetPositionVectorAddr(), light.GetFrontVectorAddr(),
 			glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
 			atten.linear, atten.quadratic, glm::cos(glm::radians(12.5f)),
 			glm::cos(glm::radians(17.5f))
@@ -637,9 +638,9 @@ bool EverettEngine::IsKeyScriptSet(
 	const std::string& dllName
 )
 {
-	auto& currentKeyPair = keyScriptFuncMap[keyName];
+	auto& [holdable, pressedFunc, releasedFunc] = keyScriptFuncMap[keyName];
 
-	return currentKeyPair.pressedFuncs.IsScriptFuncRunnable(dllName) || currentKeyPair.releasedFuncs.IsScriptFuncRunnable(dllName);
+	return pressedFunc.IsScriptFuncRunnable(dllName) || releasedFunc.IsScriptFuncRunnable(dllName);
 }
 
 std::vector<std::string> EverettEngine::GetObjectsInDirList(
@@ -719,44 +720,45 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 	return object;
 }
 
-std::vector<std::pair<std::string, ObjectSim*>> EverettEngine::GetAllObjectsByType(ObjectTypes objectType)
+template<typename Sim>
+void EverettEngine::SaveObjectsToFile(std::fstream& file)
 {
-	std::vector<std::pair<std::string, ObjectSim*>> res;
-
-	switch (objectType)
+	// Shame there's no constexpr switch
+	if constexpr (std::is_same_v<Sim, CameraSim>)
 	{
-	case EverettEngine::ObjectTypes::Camera:
-		res.push_back({ "", camera.get() });
-		break;
-	case EverettEngine::ObjectTypes::Solid:
-		for (auto& model : MSM)
-		{
-			for (auto& solid : model.second.solids)
-			{
-				res.push_back({ model.first + '*' + solid.first + '*' + model.second.modelPath, &solid.second});
-			}
-		}
-		break;
-	case EverettEngine::ObjectTypes::Light:
-		for (auto& lightType : lights)
-		{
-			for (auto& light : lightType.second)
-			{
-				res.push_back({ light.second.GetCurrentLightType() + '*' + light.first, &light.second });
-			}
-		}
-		break;
-	case EverettEngine::ObjectTypes::Sound:
-		for (auto& sound : sounds)
-		{
-			res.push_back({sound.first, &sound.second});
-		}
-		break;
-	default:
-		assert(false && "unreachable");
+		file << camera->GetSimInfoToSave("");
 	}
-
-	return res;
+	else if constexpr (std::is_same_v<Sim, SolidSim>)
+	{
+		for (auto& [modelName, model] : MSM)
+		{
+			for (auto& [solidName, solid] : model.solids)
+			{
+				file << solid.GetSimInfoToSave(modelName + '*' + solidName + '*' + model.modelPath);
+			}
+		}
+	}
+	else if constexpr (std::is_same_v<Sim, LightSim>)
+	{
+		for (auto& [lightType, lightInfo] : lights)
+		{
+			for (auto& [lightName, light] : lightInfo)
+			{
+				file << light.GetSimInfoToSave(light.GetCurrentLightType() + '*' + lightName);
+			}
+		}
+	}
+	else if constexpr (std::is_same_v<Sim, SoundSim>)
+	{
+		for (auto& [soundName, sound] : sounds)
+		{
+			file << sound.GetSimInfoToSave(soundName);
+		}
+	}
+	else
+	{
+		static_assert(true && "Unacceptable type");
+	}
 }
 
 void EverettEngine::ResetEngine()
@@ -782,31 +784,10 @@ bool EverettEngine::SaveDataToFile(const std::string& filePath)
 
 	file << SimSerializer::GetSerializerVersion() + '\n';
 
-	for (size_t i = 0; i < static_cast<int>(ObjectTypes::_SIZE); ++i)
-	{
-		auto allObjectsByType = GetAllObjectsByType(static_cast<ObjectTypes>(i));
-
-		for (auto& nameAndObject : allObjectsByType)
-		{
-			switch (static_cast<ObjectTypes>(i))
-			{
-			case EverettEngine::ObjectTypes::Camera:
-				file << dynamic_cast<CameraSim*>(nameAndObject.second)->GetSimInfoToSave(nameAndObject.first);
-				break;
-			case EverettEngine::ObjectTypes::Solid:
-				file << dynamic_cast<SolidSim*>(nameAndObject.second)->GetSimInfoToSave(nameAndObject.first);
-				break;
-			case EverettEngine::ObjectTypes::Light:
-				file << dynamic_cast<LightSim*>(nameAndObject.second)->GetSimInfoToSave(nameAndObject.first);
-				break;
-			case EverettEngine::ObjectTypes::Sound:
-				file << dynamic_cast<SoundSim*>(nameAndObject.second)->GetSimInfoToSave(nameAndObject.first);
-				break;
-			default:
-				assert(false && "unreachable");
-			}
-		}
-	}
+	SaveObjectsToFile<CameraSim>(file);
+	SaveObjectsToFile<SolidSim>(file);
+	SaveObjectsToFile<LightSim>(file);
+	SaveObjectsToFile<SoundSim>(file);
 
 	for (auto& keybindPair : keyScriptFuncMap)
 	{
@@ -830,14 +811,14 @@ bool EverettEngine::SaveDataToFile(const std::string& filePath)
 	return true;
 }
 
-void EverettEngine::LoadCameraFromLine(std::string& line)
+void EverettEngine::LoadCameraFromLine(std::string_view& line)
 {
 	camera->SetSimInfoToLoad(line);
 	camera->ForceModelUpdate();
 }
 
 template<typename Sim>
-void EverettEngine::ApplySimInfoFromLine(std::string& line, const std::array<std::string, 4>& objectInfo, bool& res)
+void EverettEngine::ApplySimInfoFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo, bool& res)
 {
 	Sim* createdObject = dynamic_cast<Sim*>(GetObjectFromMap(
 		GetObjectPureTypeToName(typeid(Sim)),
@@ -851,9 +832,9 @@ void EverettEngine::ApplySimInfoFromLine(std::string& line, const std::array<std
 
 		if (!res) return;
 
-		if (typeid(Sim) == typeid(SolidSim)) // In C++20 if constexpr can be used
+		if constexpr (std::is_same_v<Sim, SolidSim>) 
 		{
-			dynamic_cast<SolidSim*>(createdObject)->ForceModelUpdate();
+			createdObject->ForceModelUpdate();
 		}
 
 		std::vector<std::pair<std::string, std::string>> objectScriptDllInfo = createdObject->GetTempScriptDLLInfo();
@@ -866,7 +847,7 @@ void EverettEngine::ApplySimInfoFromLine(std::string& line, const std::array<std
 	}
 }
 
-void EverettEngine::LoadSolidFromLine(std::string& line, const std::array<std::string, 4>& objectInfo)
+void EverettEngine::LoadSolidFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
 {
 	bool res = false;
 
@@ -879,7 +860,7 @@ void EverettEngine::LoadSolidFromLine(std::string& line, const std::array<std::s
 	assert(res && "Solid creation from file failed");
 }
 
-void EverettEngine::LoadLightFromLine(std::string& line, const std::array<std::string, 4>& objectInfo)
+void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
 {
 	bool res = false;
 
@@ -894,7 +875,7 @@ void EverettEngine::LoadLightFromLine(std::string& line, const std::array<std::s
 	assert(res && "Light creation from file failed");
 }
 
-void EverettEngine::LoadSoundFromLine(std::string& line, const std::array<std::string, 4>& objectInfo)
+void EverettEngine::LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
 {
 	bool res = false;
 
@@ -906,35 +887,37 @@ void EverettEngine::LoadSoundFromLine(std::string& line, const std::array<std::s
 	assert(res && "Sound creation from file failed");
 }
 
-void EverettEngine::LoadKeybindsFromLine(std::string& line)
+void EverettEngine::LoadKeybindsFromLine(std::string_view& line)
 {
 	size_t objectInfoAmount = std::count(line.begin(), line.end(), '*');
 	assert(objectInfoAmount == 4 && "Invalid keybind info amount during world load");
 
-	line.erase(0, line.find('*') + 1);
-	std::string keyname = line.substr(0, line.find('*'));
-	line.erase(0, line.find('*') + 1);
+	line.remove_prefix(line.find('*') + 1);
+	std::string_view keyname = line.substr(0, line.find('*'));
+	line.remove_prefix(line.find('*') + 1);
 
-	bool holdable = std::stoi(line.substr(0, line.find('*')));
-	line.erase(0, line.find('*') + 1);
-	line.erase(0, line.find('*') + 1);
+	bool holdable = std::stoi(std::string(line.substr(0, line.find('*'))));
+	line.remove_prefix(line.find('*') + 1);
+	line.remove_prefix(line.find('*') + 1);
 
 	std::vector<std::pair<std::string, std::string>> dllInfo;
 	SimSerializer::SetValueToLoadFrom(line, dllInfo);
 
 	for (auto& dllPair : dllInfo)
 	{
-		SetScriptToKey(keyname, holdable, dllPair.second, dllPair.first);
+		SetScriptToKey(std::string(keyname), holdable, dllPair.second, dllPair.first);
 	}
 }
 
 bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 {
 	std::fstream file(filePath, std::ios::in);
-	std::string line = "";
+	std::string lineLoader;
+	std::string_view line;
 	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
 
-	std::getline(file, line);
+	std::getline(file, lineLoader);
+	line = lineLoader;
 	if (!SimSerializer::CheckSerializerVersion(line))
 	{
 		assert(false && "Invalid savefile version");
@@ -945,7 +928,8 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	ResetEngine();
 	while (!file.eof())
 	{
-		std::getline(file, line);
+		std::getline(file, lineLoader);
+		line = lineLoader;
 
 		if (line.substr(0, line.find('*')) == "Keybind")
 		{
@@ -1016,7 +1000,6 @@ std::vector<std::string> EverettEngine::GetAllObjectTypeNames()
 
 	return objectNames;
 }
-
 std::string EverettEngine::GetObjectTypeToName(ObjectTypes objectType)
 {
 	for (auto& objectNamePair : objectTypes)

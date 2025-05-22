@@ -34,8 +34,8 @@ CObjectEditDialog::CObjectEditDialog(
 	),
 	engineRef(engine), 
 	objectType(objectTypeP),
-	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : std::string("")),
-	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : std::string("")),
+	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : ""),
+	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
 	currentObjectInterface(*engineRef.GetObjectInterface(objectType, subtypeName, objectName)),
 	castedCurrentObject(nullptr)
 {
@@ -76,9 +76,9 @@ CString CObjectEditDialog::GenerateTitle()
 {
 	CString titleRes(_T("Edit "));
 
-	titleRes.Append(AdString(EverettEngine::GetObjectTypeToName(objectType).c_str()));
-	titleRes.Append(!subtypeName.empty() ? L" : " + subtypeName : L"");
-	titleRes.Append(!objectName.empty() ? L" : " + objectName : L"");
+	titleRes.Append(CString(EverettEngine::GetObjectTypeToName(objectType).c_str()));
+	titleRes.Append(!subtypeName.empty() ? CString(L" : " + subtypeName) : CString());
+	titleRes.Append(!objectName.empty() ? CString(L" : " + objectName) : CString());
 
 	return titleRes;
 }

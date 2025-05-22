@@ -48,7 +48,7 @@ public:
 	void AddLightToTree(const AdString& lightType, const AdString& lightName);
 	void AddSoundToTree(const AdString& soundName);
 
-	void SetObjectTypes(const std::vector<std::string>& objectTypes, const std::vector<std::string>& lightTypes);
+	void SetObjectTypes();
 
 	void AddRootNode(const AdString& leftString, const AdString& rightString);
 

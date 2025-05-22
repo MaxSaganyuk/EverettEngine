@@ -242,8 +242,7 @@ void CMainFrame::OnLoadModel()
 	CBrowseAndLoadDialog loadModelDlg(
 		"Model",
 		[this](const std::string& path) { return engine.GetModelInDirList(path); },
-		nameCheckFunc,
-		engine.GetCreatedModels()
+		nameCheckFunc
 	);
 	
 	if (loadModelDlg.DoModal() == IDOK)
@@ -305,8 +304,7 @@ void CMainFrame::OnPlaceSound()
 	CBrowseAndLoadDialog placeSoundDlg(
 		L"Sound", 
 		[this](const std::string& path) { return engine.GetSoundInDirList(path); }, 
-		nameCheckFunc,
-		engine.GetNamesByObject(EverettEngine::ObjectTypes::Sound)
+		nameCheckFunc
 	);
 
 	if (placeSoundDlg.DoModal() == IDOK)
