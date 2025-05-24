@@ -1259,11 +1259,19 @@ void EverettEngine::AddCurrentWindowHandler(const std::string& name)
 
 void EverettEngine::CheckAndAddToNameTracker(const std::string& name)
 {
-	std::string namePure = CommonStrEdits::RemoveDigitsFromStringEnd(name);
+	int number;
+	std::string namePure = CommonStrEdits::RemoveDigitsFromStringEnd(name, number);
 
 	if (allNameTracker.find(&namePure) != allNameTracker.end())
 	{
-		++allNameTracker[&namePure];
+		int& currentNumber = allNameTracker[&namePure];
+
+		if (number > currentNumber)
+		{
+			currentNumber = number;
+		}
+
+		++currentNumber;
 	}
 	else
 	{
