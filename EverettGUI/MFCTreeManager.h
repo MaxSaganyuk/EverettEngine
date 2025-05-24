@@ -31,7 +31,7 @@ class MFCTreeManager
 
 		void AddNode(const AdString& title, const AdString& data);
 		MFCTreeManagerNode* FindNodeBy(HTREEITEM item);
-		void ClearAllNextNodes();
+		void ClearAllNextNodes(bool includeItself = false);
 
 	private:
 		AdString title;
@@ -57,6 +57,9 @@ public:
 	CTreeCtrl& GetTreeCtrl();
 
 	void ClearNonRootNodes();
+
+	void DeleteNodeByItem(HTREEITEM item, bool includeItself = false);
+
 private:
 
 	MFCTreeManagerNode* FindNodeByItem(HTREEITEM item);

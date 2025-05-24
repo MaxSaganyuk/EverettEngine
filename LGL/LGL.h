@@ -46,8 +46,8 @@ private:
 	using TextureData = unsigned char*;
 
 	struct VAOInfo;
-	using ModelAndVAOCollection = std::pair<LGLStructs::ModelInfo*, std::vector<VAOInfo>>;
-	using ModelToVAOMap = std::map<std::string, ModelAndVAOCollection>;
+	struct InternalModelInfo;
+	using InternalModelMap = std::map<std::string, InternalModelInfo>;
 
 	// Structs for internal use
 	struct VAOInfo
@@ -64,6 +64,13 @@ private:
 			useIndices = false;
 			meshInfo = nullptr;
 		}
+	};
+
+	struct InternalModelInfo
+	{
+		LGLStructs::ModelInfo* modelPtr;
+		std::vector<VAOInfo> VAOs;
+		std::map<std::string, TextureID> textureIDs;
 	};
 
 	struct ShaderInfo
@@ -128,8 +135,10 @@ public:
 #else	
 	LGL_API void CreateMesh(const std::string& modelName, LGLStructs::MeshInfo& meshInfo);
 	LGL_API void CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model);
+
+	LGL_API void DeleteModel(const std::string& modelName);
 #endif
-	LGL_API bool ConfigureTexture(const LGLStructs::Texture& texture);
+	LGL_API bool ConfigureTexture(const std::string& modelName, const LGLStructs::Texture& texture);
 
 	LGL_API static void InitOpenGL(int major, int minor);
 
@@ -211,7 +220,7 @@ private:
 
 	VAOInfo currentVAOToRender;
 	std::vector<VBO> VBOCollection;
-	ModelToVAOMap modelToVAOMap;
+	InternalModelMap internalModelMap;
 	std::vector<EBO> EBOCollection;
 
 	// Shader
@@ -222,9 +231,6 @@ private:
 	
 	std::string lastProgram;
 	std::map<std::string, ShaderProgram> shaderProgramCollection;
-
-	// Texture
-	std::map<std::string, TextureID> textureCollection;
 
 	std::vector<std::string> uniformErrorAntispam;
 

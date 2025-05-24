@@ -7,6 +7,7 @@
 #include "CBrowseDialog.h"
 #include "CObjectEditDialog.h"
 
+using ObjectTypes = EverettEngine::ObjectTypes;
 
 // CMainWindow
 
@@ -58,6 +59,7 @@ void CMainWindow::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
 	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE1, &CMainWindow::OnTreeSelectionChanged)
 	ON_NOTIFY(NM_DBLCLK, IDC_TREE1, &CMainWindow::OnNodeDoubleClick)
+	ON_NOTIFY(NM_RCLICK, IDC_TREE1, &CMainWindow::OnNodeRightClick)
 END_MESSAGE_MAP()
 
 // CMainWindow diagnostics
@@ -86,18 +88,31 @@ void CMainWindow::OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult)
 {
 }
 
+HTREEITEM CMainWindow::ForceNodeSelection()
+{
+	CPoint point;
+	GetCursorPos(&point);
+
+	CTreeCtrl& treeCtrl = objectTree.GetTreeCtrl();
+	treeCtrl.ScreenToClient(&point);
+
+	unsigned int flags;
+	HTREEITEM hItem = nullptr;
+	hItem = treeCtrl.HitTest(point, &flags);
+
+	if (hItem)
+	{
+		treeCtrl.SelectItem(hItem);
+	}
+
+	return hItem;
+}
+
 void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	static std::map<EverettEngine::ObjectTypes, int> validSubnodeAmount
-	{
-		{EverettEngine::ObjectTypes::Solid, 2 },
-		{EverettEngine::ObjectTypes::Light, 2 },
-		{EverettEngine::ObjectTypes::Sound, 1 }
-	};
-
 	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
 
-	EverettEngine::ObjectTypes currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
+	ObjectTypes currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
 	selectedNodes.pop_back();
 
 	if (selectedNodes.size() == validSubnodeAmount[currentType])
@@ -112,6 +127,57 @@ void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 
 	*pResult = 0;
+}
+
+void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
+{ 
+	HTREEITEM selectedNodeRaw = ForceNodeSelection();
+	if (!selectedNodeRaw)
+	{
+		return;
+	}
+
+	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
+
+	ObjectTypes currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
+	selectedNodes.pop_back();
+
+	std::function<bool(const std::string&)> deleterFunc = nullptr;
+
+	if (selectedNodes.size() == validSubnodeAmount[currentType])
+	{
+		switch (currentType)
+		{
+		case ObjectTypes::Solid:
+			deleterFunc = [this](const std::string& solidName) { return engineP->DeleteSolid(solidName); };
+			break;
+		case ObjectTypes::Light:
+			deleterFunc = [this](const std::string& lightName) { return engineP->DeleteLight(lightName); };
+			break;
+		case ObjectTypes::Sound:
+			deleterFunc = [this](const std::string& soundName) { return engineP->DeleteSound(soundName); };
+			break;
+		default:
+			assert(false && "unreachable");
+		}
+	}
+	else if (currentType == ObjectTypes::Solid && selectedNodes.size() == validSubnodeAmount[currentType] - 1)
+	{
+		deleterFunc = [this](const std::string& modelName) { return engineP->DeleteModel(modelName); };
+	}
+	
+	if (deleterFunc)
+	{
+		int res = AfxMessageBox(
+			L"Are you sure you want to delete " + selectedNodes.front().first + L" : " + selectedNodes.front().second + L'?',
+			MB_YESNO | MB_ICONQUESTION
+		);
+
+		if (res == IDYES && deleterFunc(selectedNodes.front().second))
+		{
+			objectTree.DeleteNodeByItem(selectedNodeRaw, true);
+		}
+	}
 }
 
 std::vector<std::pair<AdString, AdString>>& CMainWindow::GetSelectedScriptDllInfo()

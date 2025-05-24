@@ -49,14 +49,23 @@ public:
 private:
 
 	void OnInitialUpdate() override;
+	HTREEITEM ForceNodeSelection();
 
 	EverettEngine* engineP;
 	MFCTreeManager objectTree;
 
 	std::vector<std::pair<AdString, AdString>> selectedScriptDllInfo;
+
+	static inline std::map<EverettEngine::ObjectTypes, int> validSubnodeAmount
+	{
+		{EverettEngine::ObjectTypes::Solid, 2 },
+		{EverettEngine::ObjectTypes::Light, 2 },
+		{EverettEngine::ObjectTypes::Sound, 1 }
+	};
 public:
 	afx_msg void OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 

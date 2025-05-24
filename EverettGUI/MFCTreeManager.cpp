@@ -47,13 +47,18 @@ MFCTreeManager::MFCTreeManagerNode* MFCTreeManager::MFCTreeManagerNode::FindNode
 	return nullptr;
 }
 
-void MFCTreeManager::MFCTreeManagerNode::ClearAllNextNodes()
+void MFCTreeManager::MFCTreeManagerNode::ClearAllNextNodes(bool includeItself)
 {
 	for (auto& node : nextNodes)
 	{
 		objectTree.DeleteItem(node.second->nodeInfo);
 	}
 	nextNodes.clear();
+
+	if (includeItself)
+	{
+		objectTree.DeleteItem(nodeInfo);
+	}
 }
 
 CTreeCtrl& MFCTreeManager::GetTreeCtrl()
@@ -119,6 +124,21 @@ MFCTreeManager::MFCTreeManagerNode* MFCTreeManager::FindNodeByItem(HTREEITEM ite
 	}
 
 	return nullptr;
+}
+
+void MFCTreeManager::DeleteNodeByItem(HTREEITEM item, bool includeItself)
+{
+	MFCTreeManagerNode* node = FindNodeByItem(item);
+
+	if (node)
+	{
+		node->ClearAllNextNodes(includeItself);
+
+		if (includeItself)
+		{
+			node->previousNode->nextNodes.erase(node->data);
+		}
+	}
 }
 
 std::vector<std::pair<AdString, AdString>> MFCTreeManager::GetAllOfRootsSelectedNode()

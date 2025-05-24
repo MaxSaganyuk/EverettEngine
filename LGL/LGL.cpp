@@ -71,14 +71,18 @@ void LGL::DeleteGLObjects()
 	GLSafeExecute(glUseProgram, 0);
 	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
 
-	for (auto& model : modelToVAOMap)
+	for (auto& model : internalModelMap)
 	{
-		for (auto& VAO : model.second.second)
+		for (auto& VAO : model.second.VAOs)
 		{
 			GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
 		}
+		for (auto& texture : model.second.textureIDs)
+		{
+			GLSafeExecute(glDeleteTextures, 1, &texture.second);
+		}
 	}
-	modelToVAOMap.clear();
+	internalModelMap.clear();
 
 	for (auto& VBO : VBOCollection)
 	{
@@ -106,12 +110,6 @@ void LGL::DeleteGLObjects()
 		GLSafeExecute(glDeleteProgram, shaderProgram.second);
 	}
 	shaderProgramCollection.clear();
-
-	for (auto& texture : textureCollection)
-	{
-		GLSafeExecute(glDeleteTextures, 1, &texture.second);
-	}
-	textureCollection.clear();
 }
 
 bool LGL::CreateWindow(const int height, const int width, const std::string& title)
@@ -318,17 +316,17 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			additionalSteps();
 		}
 
-		for (auto& currentModelToProcess : modelToVAOMap)
+		for (auto& currentModelToProcess : internalModelMap)
 		{
-			std::function<void()>& modelBeh = currentModelToProcess.second.first->modelBehaviour;
+			std::function<void()>& modelBeh = currentModelToProcess.second.modelPtr->modelBehaviour;
 			if (modelBeh)
 			{
 				modelBeh();
 			}
 
-			for (size_t meshIndex = 0; meshIndex < currentModelToProcess.second.second.size(); ++meshIndex)
+			for (size_t meshIndex = 0; meshIndex < currentModelToProcess.second.VAOs.size(); ++meshIndex)
 			{
-				auto& currentVAO = currentModelToProcess.second.second[meshIndex];
+				auto& currentVAO = currentModelToProcess.second.VAOs[meshIndex];
 
 				if (currentVAO.meshInfo->render)
 				{
@@ -345,8 +343,8 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 					for (auto& texture : currentVAO.meshInfo->mesh.textures)
 					{
-						auto currentTextureIter = textureCollection.find(texture.name);
-						if (currentTextureIter != textureCollection.end())
+						auto currentTextureIter = currentModelToProcess.second.textureIDs.find(texture.name);
+						if (currentTextureIter != currentModelToProcess.second.textureIDs.end())
 						{
 							TextureID textureID = (*currentTextureIter).second;
 							int convertedTextureType = static_cast<int>(texture.type);
@@ -417,18 +415,18 @@ void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 		return steps;
 	};
 
-	if (modelToVAOMap.find(modelName) == modelToVAOMap.end())
+	if (internalModelMap.find(modelName) == internalModelMap.end())
 	{
 		assert(false && "Trying to add mesh to non existent model");
 		return;
 	}
 
-	auto& newVAOInfo = modelToVAOMap[modelName];
+	auto& newVAOInfo = internalModelMap[modelName];
 
 	std::vector<size_t> steps = CollectSteps();
 
-	newVAOInfo.second.push_back({});
-	VAO* newVAO = &newVAOInfo.second.back().vboId;
+	newVAOInfo.VAOs.push_back({});
+	VAO* newVAO = &newVAOInfo.VAOs.back().vboId;
 	GLSafeExecute(glGenVertexArrays, 1, newVAO);
 	GLSafeExecute(glBindVertexArray, *newVAO);
 
@@ -459,15 +457,15 @@ void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 			&meshInfo.mesh.indices[0],
 			meshInfo.isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW
 		);
-		newVAOInfo.second.back().useIndices = true;
-		newVAOInfo.second.back().pointAmount = meshInfo.mesh.indices.size();
+		newVAOInfo.VAOs.back().useIndices = true;
+		newVAOInfo.VAOs.back().pointAmount = meshInfo.mesh.indices.size();
 	}
 	else
 	{
-		newVAOInfo.second.back().pointAmount = meshInfo.mesh.vert.size();
+		newVAOInfo.VAOs.back().pointAmount = meshInfo.mesh.vert.size();
 	}
 
-	newVAOInfo.second.back().meshInfo = &meshInfo;
+	newVAOInfo.VAOs.back().meshInfo = &meshInfo;
 
 
 	// The whole secton needs to be generalized more
@@ -505,27 +503,45 @@ void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//glBindVertexArray(0);
 
-	int polygons = newVAOInfo.second.back().pointAmount / 3;
-	std::cout << "Mesh with " << newVAOInfo.second.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
+	int polygons = newVAOInfo.VAOs.back().pointAmount / 3;
+	std::cout << "Mesh with " << newVAOInfo.VAOs.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
 
 	LoadAndCompileShader(meshInfo.shaderProgram);
 	for (auto& texture : meshInfo.mesh.textures)
 	{
-		ConfigureTexture(texture);
+		ConfigureTexture(modelName, texture);
 	}
 }
 
 void LGL::CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model)
 {
-	if (modelToVAOMap.find(modelName) == modelToVAOMap.end())
+	if (internalModelMap.find(modelName) == internalModelMap.end())
 	{
-		modelToVAOMap.emplace(modelName, ModelAndVAOCollection{ &model, {} });
+		internalModelMap.emplace(modelName, InternalModelInfo{ &model, {}, {} });
 	}
 
 	for (auto& mesh : model.meshes)
 	{
 		CreateMesh(modelName, mesh);
 	}
+}
+
+void LGL::DeleteModel(const std::string& modelName)
+{
+	ContextLock
+
+	GLSafeExecute(glBindVertexArray, 0);
+
+	for (auto& VAO : internalModelMap[modelName].VAOs)
+	{
+		GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
+	}
+	for (auto& texture : internalModelMap[modelName].textureIDs)
+	{
+		GLSafeExecute(glDeleteTextures, 1, &texture.second);
+	}
+
+	internalModelMap.erase(modelName);
 }
 
 #ifdef ENABLE_OLD_MODEL_IMPORT
@@ -761,18 +777,18 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, c
 	return true;
 }
 
-bool LGL::ConfigureTexture(const Texture& texture)
+bool LGL::ConfigureTexture(const std::string& modelName, const Texture& texture)
 {
 	ContextLock
 
-	if (textureCollection.find(texture.name) != textureCollection.end())
+	if (internalModelMap[modelName].textureIDs.find(texture.name) != internalModelMap[modelName].textureIDs.end())
 	{
 		return true;
 	}
 
-	textureCollection[texture.name] = TextureID();
+	internalModelMap[modelName].textureIDs[texture.name] = TextureID();
 
-	TextureID& newTextureID = textureCollection[texture.name];
+	TextureID& newTextureID = internalModelMap[modelName].textureIDs[texture.name];
 	GLSafeExecute(glGenTextures, 1, &newTextureID);
 	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, newTextureID);
 

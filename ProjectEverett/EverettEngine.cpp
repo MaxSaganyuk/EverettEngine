@@ -149,6 +149,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->CaptureMouse(true);
 
 	auto additionalFuncs = [this]() {
+		std::lock_guard lock(lglMutex);
 		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();
 
 		if (!finalTransforms.empty())
@@ -251,7 +252,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 		return false;
 	}
 
-	CheckAndAddToNameTracker((*resPair.first).first);
+	CheckAndAddToNameTracker(resPair.first->first);
 
 	newModel.shaderProgram = defaultShaderProgram;
 	newModel.render = false;
@@ -281,31 +282,42 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 				}
 			}
 		}
-		
 	};
 
-	newModel.generalMeshBehaviour = [this, name](int meshIndex)
+	newModel.generalMeshBehaviour = [this, name, modelReset = false](int meshIndex) mutable
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
 
 		glm::mat4 emptyMatrix = glm::mat4();
 
-		for (auto& [solidName, solid] : model.solids)
+		if (!model.solids.empty())
 		{
-			glm::mat4& modelMatrix = solid.GetModelMeshVisibility(meshIndex)
-				? solid.GetModelMatrixAddr() : emptyMatrix;
+			modelReset = false;
 
-			mainLGL->SetShaderUniformValue("model", modelMatrix);
-			mainLGL->SetShaderUniformValue("inv", glm::inverse(modelMatrix));
-
-			if (!model.model.second.animInfoVect.empty())
+			for (auto& [solidName, solid] : model.solids)
 			{
-				mainLGL->SetShaderUniformValue("startingBoneIndex", static_cast<int>(
-					solid.GetModelCurrentStartingBoneIndex()
-					)
-				);
+				glm::mat4& modelMatrix = solid.GetModelMeshVisibility(meshIndex)
+					? solid.GetModelMatrixAddr() : emptyMatrix;
+
+				mainLGL->SetShaderUniformValue("model", modelMatrix);
+				mainLGL->SetShaderUniformValue("inv", glm::inverse(modelMatrix));
+
+				if (!model.model.second.animInfoVect.empty())
+				{
+					mainLGL->SetShaderUniformValue("startingBoneIndex", static_cast<int>(
+						solid.GetModelCurrentStartingBoneIndex()
+						)
+					);
+				}
 			}
+		}
+		else if (!modelReset)
+		{
+			modelReset = true;
+
+			mainLGL->SetShaderUniformValue("model", emptyMatrix);
+			mainLGL->SetShaderUniformValue("inv", emptyMatrix);
 		}
 	};
 
@@ -352,7 +364,7 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 	{
 		MSM[modelName].model.first.render = true;
 
-		CheckAndAddToNameTracker((*resPair.first).first);
+		CheckAndAddToNameTracker(resPair.first->first);
 
 		return true;
 	}
@@ -379,7 +391,7 @@ bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 
 	if (resPair.second)
 	{
-		CheckAndAddToNameTracker((*resPair.first).first);
+		CheckAndAddToNameTracker(resPair.first->first);
 
 		return true;
 	}
@@ -405,12 +417,112 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 	if (resPair.second)
 	{
 		sounds[soundName].Play();
-		CheckAndAddToNameTracker((*resPair.first).first);
+		CheckAndAddToNameTracker(resPair.first->first);
 
 		return true;
 	}
 
 	return false;
+}
+
+bool EverettEngine::DeleteModel(const std::string& modelName)
+{
+	bool res = false;
+
+	mainLGL->PauseRendering();
+
+	auto iter = MSM.find(modelName);
+
+	if (iter != MSM.end())
+	{
+		mainLGL->DeleteModel(modelName);
+		
+		for (auto currentSolidIter = iter->second.solids.begin(); 
+			 currentSolidIter != iter->second.solids.end(); 
+			 ++currentSolidIter
+		)
+		{
+			allNameTracker.erase(&currentSolidIter->first);
+		}
+
+		allNameTracker.erase(&iter->first);
+		MSM.erase(modelName);
+
+		res = true;
+	}
+	
+	mainLGL->PauseRendering(false);
+
+	return res;
+}
+
+bool EverettEngine::DeleteSolid(const std::string& solidName)
+{
+	bool res = false;
+
+	mainLGL->PauseRendering();
+
+	for (auto& [modelName, modelInfo] : MSM)
+	{
+		auto iter = modelInfo.solids.find(solidName);
+
+		if (iter != modelInfo.solids.end())
+		{
+			allNameTracker.erase(&iter->first);
+			modelInfo.solids.erase(solidName);
+
+			res = true;
+		}
+	}
+
+	mainLGL->PauseRendering(false);
+
+	return res;
+}
+
+bool EverettEngine::DeleteLight(const std::string& lightName)
+{
+	bool res = false;
+
+	mainLGL->PauseRendering();
+
+	for (auto& [lightType, lightCollection] : lights)
+	{
+		auto iter = lightCollection.find(lightName);
+
+		if (iter != lightCollection.end())
+		{
+			allNameTracker.erase(&(*iter).first);
+			lightCollection.erase(lightName);
+
+			res = true;
+		}
+	}
+
+	mainLGL->PauseRendering(false);
+
+	return res;
+}
+
+bool EverettEngine::DeleteSound(const std::string& soundName)
+{
+	bool res = false;
+
+	mainLGL->PauseRendering();
+
+	auto iter = sounds.find(soundName);
+
+	if (iter != sounds.end())
+	{
+		allNameTracker.erase(&(*iter).first);
+		sounds.erase(soundName);
+
+		res = true;
+	}
+
+	mainLGL->PauseRendering(false);
+
+	return res;
 }
 
 IObjectSim* EverettEngine::GetObjectInterface(

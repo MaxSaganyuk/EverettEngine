@@ -84,10 +84,16 @@ public:
 	EVERETT_API EverettEngine();
 	EVERETT_API ~EverettEngine();
 	EVERETT_API void CreateAndSetupMainWindow(int windowWidth, int windowHeight, const std::string& title);
+
 	EVERETT_API bool CreateModel(const std::string& path, const std::string& name);
 	EVERETT_API bool CreateSolid(const std::string& modelName, const std::string& solidName);
 	EVERETT_API bool CreateLight(const std::string& lightName, LightTypes lightType);
 	EVERETT_API bool CreateSound(const std::string& path, const std::string& soundName);
+
+	EVERETT_API bool DeleteModel(const std::string& modelName);
+	EVERETT_API bool DeleteSolid(const std::string& solidName);
+	EVERETT_API bool DeleteLight(const std::string& lightName);
+	EVERETT_API bool DeleteSound(const std::string& soundName);
 
 	EVERETT_API IObjectSim* GetObjectInterface(
 		ObjectTypes objectType,
@@ -251,6 +257,8 @@ private:
 	std::map<std::string, KeyScriptFuncInfo> keyScriptFuncMap;
 
 	UnorderedPtrMap<const std::string*, int> allNameTracker;
+
+	std::mutex lglMutex;
 
 	class LastKeyPressPoll
 	{
