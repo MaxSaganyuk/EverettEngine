@@ -50,8 +50,16 @@ void ShaderGenerator::ProcessPreSources()
 					if (pos != std::string::npos)
 					{
 						std::string valueName = buffer.substr(buffer.find(' ') + 1, std::string::npos);
+						std::string defaultSubstitute = "";
+
+						if (valueName.find(' ') != std::string::npos)
+						{
+							defaultSubstitute = valueName.substr(valueName.find(' ') + 1, std::string::npos);
+							valueName = valueName.substr(0, valueName.find(' '));
+						}
+
 						lineToSubstMap[fileIndex].emplace(
-							lineIndex, LineToSubstInfo{ customKeyWordIndex, valueName, "" }
+							lineIndex, LineToSubstInfo{ customKeyWordIndex, valueName, defaultSubstitute }
 						);
 					}
 				}

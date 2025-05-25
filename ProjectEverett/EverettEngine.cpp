@@ -345,18 +345,23 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 	}
 
 	ShaderGenerator shaderGen;
+	size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
+
 #ifdef _DEBUG
 	std::string filePath = fileLoader->GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
 
 	shaderGen.LoadPreSources(filePath);
-	size_t realBoneAmount = animSystem->GetTotalBoneAmount();
-	size_t boneAmountToSet = !realBoneAmount ? 1 : realBoneAmount;
-	shaderGen.SetValueToDefine("BONE_AMOUNT", boneAmountToSet);
+	if (totalBoneAmount)
+	{
+		shaderGen.SetValueToDefine("BONE_AMOUNT", totalBoneAmount);
+	}
 	shaderGen.GenerateShaderFiles(filePath);
+
+	mainLGL->RecompileShader(defaultShaderProgram);
 #else
 #error Shader file generation is not implemented fo release configuration
 #endif
-	mainLGL->RecompileShader(defaultShaderProgram);
+
 
 	auto resPair = MSM[modelName].solids.emplace(solidName, std::move(newSolid));
 
