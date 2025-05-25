@@ -528,12 +528,14 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
 )
 {
-	bool success = true;
+	bool success = false;
 
 	HMODULE dllHandle = LoadLibraryA(dllPath.c_str());
 
 	if (dllHandle)
 	{
+		success = true;
+
 		if (dllHandleMap.find(dllPath) != dllHandleMap.end())
 		{
 			if (dllHandle != dllHandleMap[dllPath].first)
