@@ -1,4 +1,7 @@
 #include "pch.h"
+
+#include <vector>
+
 #include "NameEditChecker.h"
 #include "AdString.h"
 
@@ -10,6 +13,7 @@ void NameEditChecker::CheckAndEditName(CEdit& nameEdit, CStatic& nameWarning)
 		nameEdit.GetWindowTextW(nameStr);
 
 		AdString digitlessNameStdStr = CommonStrEdits::RemoveDigitsFromStringEnd(nameStr);
+		RemoveRestrictedSymbs(digitlessNameStdStr);
 
 		if (nameStr != digitlessNameStdStr)
 		{
@@ -27,4 +31,12 @@ void NameEditChecker::SetNameCheckFunc(NameCheckFunc nameCheckFuncInp)
 	nameCheckFunc = nameCheckFuncInp;
 }
 
-NameEditChecker::NameCheckFunc NameEditChecker::nameCheckFunc = nullptr;
+void NameEditChecker::RemoveRestrictedSymbs(AdString& str)
+{
+	std::string& stdStr = str;
+
+	for (auto c : restrictedSymbs)
+	{
+		stdStr.erase(std::remove(stdStr.begin(), stdStr.end(), c), stdStr.end());
+	}
+}

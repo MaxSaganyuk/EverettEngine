@@ -8,6 +8,8 @@
 #include <mutex>
 #include <string>
 
+class AdString;
+
 class NameEditChecker
 {
 public:
@@ -16,5 +18,8 @@ public:
 	static void CheckAndEditName(CEdit& nameEdit, CStatic& nameWarning);
 	static void SetNameCheckFunc(NameCheckFunc nameCheckFuncInp);
 private:
-	static NameCheckFunc nameCheckFunc;
+	static void RemoveRestrictedSymbs(AdString& str);
+
+	static inline std::string restrictedSymbs = "{}* ";
+	static inline NameCheckFunc nameCheckFunc = nullptr;
 };
