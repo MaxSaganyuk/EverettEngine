@@ -51,7 +51,7 @@ SimSerializer::VersionValidationState SimSerializer::ValidateVersion(int require
 
 bool SimSerializer::SetUsedVersion(int usedVersionToSet)
 {
-	bool isValidVersion = latestSerializerVersion <= usedVersionToSet;
+	bool isValidVersion = usedVersionToSet <= latestSerializerVersion;
 
 	assert(isValidVersion && "Used version exceeds maximum supported one");
 	if(isValidVersion)
