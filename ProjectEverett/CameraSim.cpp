@@ -63,11 +63,11 @@ bool CameraSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = SolidSim::SetSimInfoToLoad(line);
 	
-	res = res && SimSerializer::SetValueToLoadFrom(line, view);
-	res = res && SimSerializer::SetValueToLoadFrom(line, projection);
-	res = res && SimSerializer::SetValueToLoadFrom(line, fov);
-	res = res && SimSerializer::SetValueToLoadFrom(line, sensitivity);
-	res = res && SimSerializer::SetValueToLoadFrom(line, mode);
+	res = res && SimSerializer::SetValueToLoadFrom(line, view,        1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, projection,  1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, fov,         1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, sensitivity, 1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, mode,        1);
 
 	return res;
 }

@@ -56,7 +56,7 @@ bool LightSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 	
-	res = res && SimSerializer::SetValueToLoadFrom(line, lightRange);
+	res = res && SimSerializer::SetValueToLoadFrom(line, lightRange, 1);
 
 	return res;
 }

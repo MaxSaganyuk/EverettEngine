@@ -46,7 +46,21 @@ private:
 	FundamentalConvertSet(double, stod)
 	FundamentalConvertSet(long double, stold)
 
-	constexpr static char serializerVersion[] = "1.1";
+
+	// OlderInvalid required version should skip serialization of current line
+    // Unset state should fail and stop serialization
+	enum class VersionValidationState
+	{
+		ExactValid,
+		NewerValid,
+		OlderInvalid,
+		UnsetCritical
+	};
+
+	constexpr static inline int latestSerializerVersion = 2;
+	static inline int usedVersion = -1;
+	static VersionValidationState ValidateVersion(int requiredVersion);
+	static bool SetUsedVersion(int usedVersionToSet);
 
 	static std::string PackValue(const std::string& value);
 	static void UnpackValue(std::string_view& line, std::string& value, bool severalVals = true);
@@ -62,8 +76,8 @@ public:
 		_SIZE
 	};
 
-	static std::string GetSerializerVersion();
-	static bool CheckSerializerVersion(const std::string_view& versionStr);
+	static bool GetVersionFromLine(std::string_view& line);
+	static std::string GetLatestVersionStr();
 
 	static void GetObjectInfo(std::string_view& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo);
 #ifdef _HAS_CXX20
@@ -71,19 +85,19 @@ public:
 	static std::string GetValueToSaveFrom(FundamentalType f);
 
 	template<OnlyFundamental FundamentalType>
-	static bool SetValueToLoadFrom(std::string_view& line, FundamentalType& f);
+	static bool SetValueToLoadFrom(std::string_view& line, FundamentalType& f, int requiredVersion);
 
 	template<OnlyEnums EnumType>
 	static std::string GetValueToSaveFrom(EnumType e);
 
 	template<OnlyEnums EnumType>
-	static bool SetValueToLoadFrom(std::string_view& line, EnumType& e);
+	static bool SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion);
 
 	template<OnlyFundamental FundamentalType>
 	static std::string GetValueToSaveFrom(const std::vector<FundamentalType>& vector);
 
 	template<OnlyFundamental FundamentalType>
-	static bool SetValueToLoadFrom(std::string_view& line, std::vector<FundamentalType>& vector);
+	static bool SetValueToLoadFrom(std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion);
 #else
 	template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool> = false>
 	static std::string GetValueToSaveFrom(FundamentalType f);
@@ -105,13 +119,13 @@ public:
 #endif
 	// String
 	static std::string GetValueToSaveFrom(const std::string& str);
-	static bool SetValueToLoadFrom(std::string_view& line, std::string& str);
+	static bool SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion);
 
 	// GLM
 	static std::string GetValueToSaveFrom(const glm::vec3& vec);
 	static std::string GetValueToSaveFrom(const glm::mat4& mat);
-	static bool SetValueToLoadFrom(std::string_view& line, glm::vec3& vec);
-	static bool SetValueToLoadFrom(std::string_view& line, glm::mat4& mat);
+	static bool SetValueToLoadFrom(std::string_view& line, glm::vec3& vec, int requiredVersion);
+	static bool SetValueToLoadFrom(std::string_view& line, glm::mat4& mat, int requiredVersion);
 
 	// Special cases
 	static std::string GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
@@ -119,11 +133,11 @@ public:
 	static std::string GetValueToSaveFrom(const std::vector<std::string>& vectorStr);
 	static std::string GetValueToSaveFrom(const std::vector<std::pair<std::string, std::string>>& vectorPairStr);
 	static std::string GetValueToSaveFrom(const std::chrono::system_clock::time_point timePoint);
-	static bool SetValueToLoadFrom(std::string_view& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
-	static bool SetValueToLoadFrom(std::string_view& line, std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits);
-	static bool SetValueToLoadFrom(std::string_view& line, std::vector<std::string>& vectorStr);
-	static bool SetValueToLoadFrom(std::string_view& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr);
-	static bool SetValueToLoadFrom(std::string_view& line, std::chrono::system_clock::time_point& timePoint);
+	static bool SetValueToLoadFrom(std::string_view& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs, int requiredVersion);
+	static bool SetValueToLoadFrom(std::string_view& line, std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits, int requiredVersion);
+	static bool SetValueToLoadFrom(std::string_view& line, std::vector<std::string>& vectorStr, int requiredVersion);
+	static bool SetValueToLoadFrom(std::string_view& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr, int requiredVersion);
+	static bool SetValueToLoadFrom(std::string_view& line, std::chrono::system_clock::time_point& timePoint, int requiredVersion);
 };
 
 #ifdef _HAS_CXX20
@@ -134,8 +148,14 @@ std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 }
 
 template<OnlyFundamental FundamentalType>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, FundamentalType& f)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, FundamentalType& f, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string value;
 
 	UnpackValue(line, value, false);
@@ -152,8 +172,14 @@ std::string SimSerializer::GetValueToSaveFrom(EnumType e)
 }
 
 template<OnlyEnums EnumType>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	int preEnumValue;
 	std::string value;
 
@@ -183,8 +209,14 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>
 }
 
 template<OnlyFundamental FundamentalType>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<FundamentalType>& vector)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string values;
 
 	UnpackValue(line, values);
@@ -223,8 +255,14 @@ std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 }
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, FundamentalType& f)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, FundamentalType& f, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string value;
 
 	UnpackValue(line, value, false);
@@ -241,8 +279,14 @@ std::string SimSerializer::GetValueToSaveFrom(EnumType e)
 }
 
 template<typename EnumType, typename std::enable_if_t<std::is_enum_v<EnumType>, bool>>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	int preEnumValue;
 	std::string value;
 
@@ -272,8 +316,14 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>
 }
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<FundamentalType>& vector)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string values;
 
 	UnpackValue(line, values);

@@ -59,19 +59,19 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = true;
 
-	res = res && SimSerializer::SetValueToLoadFrom(line, scale);
-	res = res && SimSerializer::SetValueToLoadFrom(line, front);
-	res = res && SimSerializer::SetValueToLoadFrom(line, up);
-	res = res && SimSerializer::SetValueToLoadFrom(line, pos);
-	res = res && SimSerializer::SetValueToLoadFrom(line, lastPos);
-	res = res && SimSerializer::SetValueToLoadFrom(line, rotate);
-	res = res && SimSerializer::SetValueToLoadFrom(line, lastBlocker);
-	res = res && SimSerializer::SetValueToLoadFrom(line, speed);
-	res = res && SimSerializer::SetValueToLoadFrom(line, ghostMode);
-	res = res && SimSerializer::SetValueToLoadFrom(line, lastDir);
-	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs);
-	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits);
-	res = res && SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect);
+	res = res && SimSerializer::SetValueToLoadFrom(line, scale,                                   1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, front,                                   1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, up,                                      1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, pos,                                     1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, lastPos,                                 1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, rotate,                                  1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, lastBlocker,                             1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, speed,                                   1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, ghostMode,                               1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, lastDir,                                 1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs,                            1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits,                          1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect, 2);
 
 	return res;
 }

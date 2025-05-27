@@ -899,7 +899,7 @@ bool EverettEngine::SaveDataToFile(const std::string& filePath)
 	std::string realFilePath = filePath + saveFileType;
 	std::fstream file(realFilePath, std::ios::out);
 
-	file << SimSerializer::GetSerializerVersion() + '\n';
+	file << SimSerializer::GetLatestVersionStr();
 
 	SaveObjectsToFile<CameraSim>(file);
 	SaveObjectsToFile<SolidSim>(file);
@@ -1018,7 +1018,7 @@ void EverettEngine::LoadKeybindsFromLine(std::string_view& line)
 	line.remove_prefix(line.find('*') + 1);
 
 	std::vector<std::pair<std::string, std::string>> dllInfo;
-	SimSerializer::SetValueToLoadFrom(line, dllInfo);
+	SimSerializer::SetValueToLoadFrom(line, dllInfo, 2);
 
 	for (auto& dllPair : dllInfo)
 	{
@@ -1035,11 +1035,7 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 
 	std::getline(file, lineLoader);
 	line = lineLoader;
-	if (!SimSerializer::CheckSerializerVersion(line))
-	{
-		assert(false && "Invalid savefile version");
-		return false;
-	}
+	SimSerializer::GetVersionFromLine(line);
 
 	mainLGL->PauseRendering();
 	ResetEngine();

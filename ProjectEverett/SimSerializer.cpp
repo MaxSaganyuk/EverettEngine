@@ -25,14 +25,52 @@ bool SimSerializer::AssertAndReturn(bool evaluation)
 	return evaluation;
 }
 
-std::string SimSerializer::GetSerializerVersion()
+SimSerializer::VersionValidationState SimSerializer::ValidateVersion(int requiredVersion)
 {
-	return serializerVersion;
+	if (usedVersion != -1)
+	{
+		if (usedVersion == requiredVersion)
+		{
+			return VersionValidationState::ExactValid;
+		}
+		else if (usedVersion > requiredVersion)
+		{
+			return VersionValidationState::NewerValid;
+		}
+		else
+		{
+			return VersionValidationState::OlderInvalid;
+		}
+	}
+	else
+	{
+		assert(false && "Used version was not set");
+		return VersionValidationState::UnsetCritical;
+	}
 }
 
-bool SimSerializer::CheckSerializerVersion(const std::string_view& versionStr)
+bool SimSerializer::SetUsedVersion(int usedVersionToSet)
 {
-	return versionStr == serializerVersion;
+	bool isValidVersion = latestSerializerVersion <= usedVersionToSet;
+
+	assert(isValidVersion && "Used version exceeds maximum supported one");
+	if(isValidVersion)
+	{
+		usedVersion = usedVersionToSet;
+	}
+
+	return isValidVersion;
+}
+
+bool SimSerializer::GetVersionFromLine(std::string_view& line)
+{
+	std::string numberStr = std::string(line.substr(line.find("*") + 1));
+	return SetUsedVersion(FundamentalConvert<int>::Convert(numberStr));
+}
+
+std::string SimSerializer::GetLatestVersionStr()
+{
+	return "Version*" + std::to_string(latestSerializerVersion) + '\n';
 }
 
 void SimSerializer::GetObjectInfo(std::string_view& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo)
@@ -52,8 +90,14 @@ std::string SimSerializer::GetValueToSaveFrom(const std::string& str)
 	return PackValue(str);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::string& str)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	UnpackValue(line, str, false);
 
 	return true;
@@ -72,8 +116,14 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::vec3& vec)
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::vec3& vec)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::vec3& vec, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string values;
 
 	UnpackValue(line, values);
@@ -112,8 +162,14 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::mat4& mat)
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::mat4& mat)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::mat4& mat, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string values;
 
 	UnpackValue(line, values);
@@ -152,9 +208,16 @@ std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSi
 
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
-	std::unordered_map<IObjectSim::Direction, bool>& disabledDirs
+	std::unordered_map<IObjectSim::Direction, bool>& disabledDirs,
+	int requiredVersion
 )
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string values;
 
 	UnpackValue(line, values);
@@ -206,9 +269,16 @@ std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotati
 
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
-	std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits
+	std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits,
+	int requiredVersion
 )
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string values;
 
 	UnpackValue(line, values);
@@ -262,8 +332,14 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::string>& ve
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<std::string>& vectorStr)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<std::string>& vectorStr, int requiredVersion)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string values;
 
 	UnpackValue(line, values);
@@ -310,8 +386,18 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::pair<std::s
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr)
+bool SimSerializer::SetValueToLoadFrom(
+	std::string_view& line, 
+	std::vector<std::pair<std::string, std::string>>& vectorPairStr, 
+	int requiredVersion
+)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string values;
 
 	UnpackValue(line, values);
@@ -350,8 +436,18 @@ std::string SimSerializer::GetValueToSaveFrom(const std::chrono::system_clock::t
 	return PackValue(std::to_string(timeCount));
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::chrono::system_clock::time_point& timePoint)
+bool SimSerializer::SetValueToLoadFrom(
+	std::string_view& line, 
+	std::chrono::system_clock::time_point& timePoint, 
+	int requiredVersion
+)
 {
+	auto versionValidation = ValidateVersion(requiredVersion);
+	if (versionValidation > VersionValidationState::NewerValid)
+	{
+		return versionValidation == VersionValidationState::OlderInvalid;
+	}
+
 	std::string value;
 
 	UnpackValue(line, value);
