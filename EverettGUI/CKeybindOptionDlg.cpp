@@ -9,6 +9,7 @@
 #include <thread>
 
 // CKeybindOptionDlg dialog
+/*
 
 IMPLEMENT_DYNAMIC(CKeybindOptionDlg, DLLLoaderCommon)
 
@@ -17,17 +18,6 @@ CKeybindOptionDlg::CKeybindOptionDlg(
 	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
 	CWnd* pParent
 )
-	: 
-	DLLLoaderCommon(
-		IDD_DIALOG5,
-		selectedScriptDllInfo,
-		[this](const std::string& dllName) { return engineRef.IsKeyScriptSet(keyName, dllName); },
-		[this](const std::string& dllName, const std::string& dllPath) { 
-			engineRef.SetScriptToKey(keyName, holdableCheck.GetCheck(), dllName, dllPath); 
-		},
-		[this](const std::string& dllPath) { engineRef.UnsetScript(dllPath); },
-		pParent
-	), 
 	engineRef(engine), keyName("")
 {
 
@@ -96,3 +86,4 @@ LRESULT CKeybindOptionDlg::OnBringEverettGuiBack(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+*/

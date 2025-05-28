@@ -316,14 +316,22 @@ void CMainFrame::OnPlaceSound()
 
 void CMainFrame::OnCameraOptions()
 {
-	CObjectEditDialog objectEditDlg(engine, EverettEngine::ObjectTypes::Camera, mainWindow->GetSelectedScriptDllInfo());
+	CObjectEditDialog<DLLLoaderCommon<>> objectEditDlg;
+	objectEditDlg.InitializeObjectEditDialog(engine, EverettEngine::ObjectTypes::Camera);
+	objectEditDlg.InitializeDLLLoaderCommon(
+		mainWindow->GetSelectedScriptDllInfo(), 
+		engine, 
+		EverettEngine::ObjectTypes::Camera, 
+		"", 
+		""
+	);
 
 	objectEditDlg.DoModal();
 }
 
 void CMainFrame::OnKeybindOptions()
 {
-	CKeybindOptionDlg keybindDlg(engine, mainWindow->GetSelectedScriptDllInfo());
+	//CKeybindOptionDlg keybindDlg(engine, mainWindow->GetSelectedScriptDllInfo());
 
-	keybindDlg.DoModal();
+	//keybindDlg.DoModal();
 }

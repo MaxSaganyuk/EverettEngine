@@ -117,12 +117,8 @@ void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if (selectedNodes.size() == validSubnodeAmount[currentType])
 	{
-		CObjectEditDialog objEditDlg(
-			*engineP,
-			currentType,
-			selectedScriptDllInfo,
-			selectedNodes
-		);
+		CObjectEditDialog<DLLLoaderCommon<>> objEditDlg;
+		objEditDlg.InitializeObjectEditDialog();
 		objEditDlg.DoModal();
 	}
 

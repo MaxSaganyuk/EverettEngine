@@ -10,8 +10,8 @@
 #include "AdString.h"
 
 // CKeybindOptionDlg dialog
-
-class CKeybindOptionDlg : public DLLLoaderCommon
+/*
+class CKeybindOptionDlg : public DLLLoaderCommon<>
 {
 	DECLARE_DYNAMIC(CKeybindOptionDlg)
 
@@ -52,3 +52,4 @@ private:
 
 	constexpr static int BringEverettGuiBack = WM_USER + 4;
 };
+*/

@@ -5,71 +5,56 @@
 #include "DLLLoaderCommon.h"
 #include "CBrowseDialog.h"
 
-IMPLEMENT_DYNAMIC(DLLLoaderCommon, CDialogEx)
-
-BEGIN_MESSAGE_MAP(DLLLoaderCommon, CDialogEx)
-	ON_BN_CLICKED(IDC_BUTTON2, &DLLLoaderCommon::OnBrowseScriptButton)
-	ON_BN_CLICKED(IDC_BUTTON3, &DLLLoaderCommon::OnLoadScriptButtonClick)
-	ON_BN_CLICKED(IDC_BUTTON4, &DLLLoaderCommon::OnUnloadDllButtonClick)
-	ON_CBN_SELENDOK(IDC_COMBO1, &DLLLoaderCommon::OnScriptSelectionChangeOk)
-END_MESSAGE_MAP()
-
-DLLLoaderCommon::DLLLoaderCommon(
-	int dialogID,
-	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
-	IsScriptSetFunc isScriptSetFunc,
-	SetScriptFunc setScriptFunc,
-	UnsetScriptFunc unsetScriptFunc,
-	CWnd* pParent
-) :
-	CDialogEx(dialogID, pParent), 
-	selectedScriptDllInfo(selectedScriptDllInfo), 
-	isScriptSetFunc(isScriptSetFunc), 
-	setScriptFunc(setScriptFunc), 
-	unsetScriptFunc(unsetScriptFunc)
+void DLLLoaderCommonCommon::InitializeDLLLoaderCommon(
+	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfoTS,
+	EverettEngine& engine,
+	EverettEngine::ObjectTypes objectType,
+	AdString subtypeName,
+	AdString objectName
+)
 {
+	selectedScriptDllInfo = &selectedScriptDllInfoTS;
 
+	isScriptSetFunc = [=, &engine](const std::string& dllName) 
+		{ return engine.IsObjectScriptSet(objectType, subtypeName, objectName, dllName); };
+	setScriptFunc = [=, &engine](const std::string& dllPath, const std::string& dllName)
+		{ return engine.SetScriptToObject(objectType, subtypeName, objectName, dllPath, dllName); };
+	unsetScriptFunc = [=, &engine](const std::string& dllName)
+		{ engine.UnsetScript(dllName); };
 }
 
-DLLLoaderCommon::~DLLLoaderCommon()
+void DLLLoaderCommonCommon::FillComboBoxWithScriptInfo()
 {
-}
-
-void DLLLoaderCommon::FillComboBoxWithScriptInfo()
-{
-	for (auto& scriptDllInfo : selectedScriptDllInfo)
+	for (auto& scriptDllInfo : *selectedScriptDllInfo)
 	{
 		dllComboBox.AddString(scriptDllInfo.second);
 	}
 }
 
-void DLLLoaderCommon::UpdateScriptButtons()
+void DLLLoaderCommonCommon::UpdateScriptButtons()
 {
-	bool isObjectScriptSet = isScriptSetFunc(selectedScriptDllInfo[dllComboBox.GetCurSel()].second);
+	bool isObjectScriptSet = isScriptSetFunc((*selectedScriptDllInfo)[dllComboBox.GetCurSel()].second);
 
 	scriptRunIndicator.SetCheck(isObjectScriptSet);
 	loadScriptButton.EnableWindow(!isObjectScriptSet);
 	unloadScriptButton.EnableWindow(isObjectScriptSet);
 }
 
-BOOL DLLLoaderCommon::OnInitDialog()
+BOOL DLLLoaderCommonCommon::OnInitDialog()
 {
-	CDialogEx::OnInitDialog();
-
-	if (selectedScriptDllInfo.size() > 0)
+	if (selectedScriptDllInfo->size() > 0)
 	{
 		FillComboBoxWithScriptInfo();
 		dllComboBox.SetCurSel(0);
 		loadScriptButton.EnableWindow(true);
-		scriptRunIndicator.SetCheck(isScriptSetFunc(selectedScriptDllInfo[0].second));
+		scriptRunIndicator.SetCheck(isScriptSetFunc((*selectedScriptDllInfo)[0].second));
 	}
 
 	return true;
 }
 
-void DLLLoaderCommon::DoDataExchange(CDataExchange* pDX)
+void DLLLoaderCommonCommon::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_BUTTON2, scriptBrowseButton);
 	DDX_Control(pDX, IDC_BUTTON3, loadScriptButton);
 	DDX_Control(pDX, IDC_BUTTON4, unloadScriptButton);
@@ -77,37 +62,37 @@ void DLLLoaderCommon::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK2, scriptRunIndicator);
 }
 
-void DLLLoaderCommon::OnBrowseScriptButton()
+void DLLLoaderCommonCommon::OnBrowseScriptButton()
 {
 	AdString pathStr;
 	AdString fileStr;
 
 	if (CBrowseDialog::OpenAndGetFilePath(pathStr, fileStr, {{"DLL files", "*.dll"}}));
 	{
-		selectedScriptDllInfo.push_back(std::pair<std::string, std::string>{ pathStr, fileStr });
+		selectedScriptDllInfo->push_back(std::pair<std::string, std::string>{ pathStr, fileStr });
 		dllComboBox.AddString(fileStr);
-		dllComboBox.SetCurSel(selectedScriptDllInfo.size() - 1);
+		dllComboBox.SetCurSel(selectedScriptDllInfo->size() - 1);
 		loadScriptButton.EnableWindow(true);
 	}
 }
 
-void DLLLoaderCommon::OnLoadScriptButtonClick()
+void DLLLoaderCommonCommon::OnLoadScriptButtonClick()
 {
 	int curSel = dllComboBox.GetCurSel();
 
-	setScriptFunc(selectedScriptDllInfo[curSel].first, selectedScriptDllInfo[curSel].second);
+	setScriptFunc((*selectedScriptDllInfo)[curSel].first, (*selectedScriptDllInfo)[curSel].second);
 
 	UpdateScriptButtons();
 }
 
-void DLLLoaderCommon::OnUnloadDllButtonClick()
+void DLLLoaderCommonCommon::OnUnloadDllButtonClick()
 {
-	unsetScriptFunc(selectedScriptDllInfo[dllComboBox.GetCurSel()].first);
+	unsetScriptFunc((*selectedScriptDllInfo)[dllComboBox.GetCurSel()].first);
 
 	UpdateScriptButtons();
 }
 
-void DLLLoaderCommon::OnScriptSelectionChangeOk()
+void DLLLoaderCommonCommon::OnScriptSelectionChangeOk()
 {
 	UpdateScriptButtons();
 }

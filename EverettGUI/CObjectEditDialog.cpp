@@ -7,47 +7,17 @@
 #include "CObjectEditDialog.h"
 #include "CBrowseDialog.h"
 
-
-// CObjectEditDialog dialog
-
-IMPLEMENT_DYNAMIC(CObjectEditDialog, DLLLoaderCommon)
-
-CObjectEditDialog::CObjectEditDialog(
-	EverettEngine& engine, 
-	EverettEngine::ObjectTypes objectTypeP,
-	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
-	const std::vector<std::pair<AdString, AdString>>& selectedNodes,
-	CWnd* pParent 
+void ObjectEditDialogCommon::InitializeObjectEditDialog(
+	EverettEngine& engineTS,
+	EverettEngine::ObjectTypes objectTypeTS
 )
-	: 
-	DLLLoaderCommon(
-		IDD_DIALOG4, 
-		selectedScriptDllInfo, 
-		[this](const std::string& dllName) { 
-			return engineRef.IsObjectScriptSet(objectType, subtypeName, objectName, dllName); 
-		},
-		[this](const std::string& dllName, const std::string& dllPath) { 
-			engineRef.SetScriptToObject(objectType, subtypeName, objectName, dllName, dllPath); 
-		},
-		[this](const std::string& dllPath) { engineRef.UnsetScript(dllPath); },
-		pParent
-	),
-	engineRef(engine), 
-	objectType(objectTypeP),
-	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : ""),
-	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
-	currentObjectInterface(*engineRef.GetObjectInterface(objectType, subtypeName, objectName)),
-	castedCurrentObject(nullptr)
 {
+	engineRef = &engineTS;
+	objectType = objectTypeTS;
 }
 
-CObjectEditDialog::~CObjectEditDialog()
+void ObjectEditDialogCommon::DoDataExchange(CDataExchange* pDX)
 {
-}
-
-void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
-{
-	DLLLoaderCommon::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT1, objectInfoEdits[0][0]);
 	DDX_Control(pDX, IDC_EDIT2, objectInfoEdits[0][1]);
 	DDX_Control(pDX, IDC_EDIT3, objectInfoEdits[0][2]);
@@ -72,7 +42,7 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT11, animSpeedEdit);
 }
 
-CString CObjectEditDialog::GenerateTitle()
+CString ObjectEditDialogCommon::GenerateTitle()
 {
 	CString titleRes(_T("Edit "));
 
@@ -83,7 +53,7 @@ CString CObjectEditDialog::GenerateTitle()
 	return titleRes;
 }
 
-void CObjectEditDialog::SetupModelParams()
+void ObjectEditDialogCommon::SetupModelParams()
 {
 	bool modelParamsShow = objectType == EverettEngine::ObjectTypes::Solid;
 
@@ -106,7 +76,7 @@ void CObjectEditDialog::SetupModelParams()
 
 	if (modelParamsShow)
 	{
-		castedCurrentObject = dynamic_cast<ISolidSim*>(&currentObjectInterface);
+		castedCurrentObject = dynamic_cast<ISolidSim*>(currentObjectInterface);
 
 		CString speedValue;
 		speedValue.Format(_T("%.2f"), castedCurrentObject->GetModelAnimationSpeed());
@@ -141,16 +111,12 @@ void CObjectEditDialog::SetupModelParams()
 	}
 }
 
-BOOL CObjectEditDialog::OnInitDialog()
+BOOL ObjectEditDialogCommon::OnInitDialog()
 {
-	DLLLoaderCommon::OnInitDialog();
-
-	SetWindowText(GenerateTitle());
-
 	SetObjectParams({
-		currentObjectInterface.GetPositionVectorAddr(),
-		currentObjectInterface.GetScaleVectorAddr(),
-		currentObjectInterface.GetFrontVectorAddr()
+		currentObjectInterface->GetPositionVectorAddr(),
+		currentObjectInterface->GetScaleVectorAddr(),
+		currentObjectInterface->GetFrontVectorAddr()
 	});
 
 	SetupModelParams();
@@ -158,18 +124,8 @@ BOOL CObjectEditDialog::OnInitDialog()
 	return true;
 }
 
-BEGIN_MESSAGE_MAP(CObjectEditDialog, DLLLoaderCommon)
-	ON_BN_CLICKED(IDC_BUTTON1, &CObjectEditDialog::OnUpdateParamsButtonClick)
-	ON_BN_CLICKED(IDC_CHECK3, &CObjectEditDialog::OnBnClickedCheck3)
-	ON_CBN_SELCHANGE(IDC_COMBO2, &CObjectEditDialog::OnMeshCBSelChange)
-	ON_BN_CLICKED(IDC_BUTTON5, &CObjectEditDialog::OnPlayAnimButtonClick)
-	ON_BN_CLICKED(IDC_BUTTON6, &CObjectEditDialog::OnPauseAnimButtonClick)
-	ON_BN_CLICKED(IDC_BUTTON7, &CObjectEditDialog::OnStopAnimButtonClick)
-	ON_CBN_SELCHANGE(IDC_COMBO3, &CObjectEditDialog::OnAnimCBSelChange)
-END_MESSAGE_MAP()
 
-
-void CObjectEditDialog::SetObjectParams(const std::vector<glm::vec3>& params)
+void ObjectEditDialogCommon::SetObjectParams(const std::vector<glm::vec3>& params)
 {
 	for (int i = 0; i < objectInfoEdits.size(); ++i)
 	{
@@ -185,7 +141,7 @@ void CObjectEditDialog::SetObjectParams(const std::vector<glm::vec3>& params)
 }
 
 
-void CObjectEditDialog::OnUpdateParamsButtonClick()
+void ObjectEditDialogCommon::OnUpdateParamsButtonClick()
 {
 	std::vector<glm::vec3> valuesToSet;
 
@@ -200,9 +156,9 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 		}
 	}
 
-	currentObjectInterface.GetPositionVectorAddr() = valuesToSet[0];
-	currentObjectInterface.GetScaleVectorAddr()    = valuesToSet[1];
-	currentObjectInterface.GetFrontVectorAddr()    = valuesToSet[2];
+	currentObjectInterface->GetPositionVectorAddr() = valuesToSet[0];
+	currentObjectInterface->GetScaleVectorAddr()    = valuesToSet[1];
+	currentObjectInterface->GetFrontVectorAddr()    = valuesToSet[2];
 
 	if (objectType == EverettEngine::ObjectTypes::Solid)
 	{
@@ -210,28 +166,28 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 	}
 }
 
-void CObjectEditDialog::OnBnClickedCheck3()
+void ObjectEditDialogCommon::OnBnClickedCheck3()
 {
 	castedCurrentObject->SetModelMeshVisibility(
 		meshComboBox.GetCurSel(), meshVisCheck.GetCheck()
 	);
 }
 
-void CObjectEditDialog::OnMeshCBSelChange()
+void ObjectEditDialogCommon::OnMeshCBSelChange()
 {
 	meshVisCheck.SetCheck(
 		castedCurrentObject->GetModelMeshVisibility(meshComboBox.GetCurSel())
 	);
 }
 
-void CObjectEditDialog::SetAnimButtons(bool play, bool pause, bool stop)
+void ObjectEditDialogCommon::SetAnimButtons(bool play, bool pause, bool stop)
 {
 	animPlayButton.EnableWindow(play);
 	animPauseButton.EnableWindow(pause);
 	animStopButton.EnableWindow(stop);
 }
 
-void CObjectEditDialog::OnPlayAnimButtonClick()
+void ObjectEditDialogCommon::OnPlayAnimButtonClick()
 {
 	CString animSpeed;
 	animSpeedEdit.GetWindowTextW(animSpeed);
@@ -243,20 +199,20 @@ void CObjectEditDialog::OnPlayAnimButtonClick()
 }
 
 
-void CObjectEditDialog::OnPauseAnimButtonClick()
+void ObjectEditDialogCommon::OnPauseAnimButtonClick()
 {
 	castedCurrentObject->PauseModelAnimation();
 	SetAnimButtons(true, false, true);
 }
 
 
-void CObjectEditDialog::OnStopAnimButtonClick()
+void ObjectEditDialogCommon::OnStopAnimButtonClick()
 {
 	castedCurrentObject->StopModelAnimation();
 	SetAnimButtons(true, false, false);
 }
 
 
-void CObjectEditDialog::OnAnimCBSelChange()
+void ObjectEditDialogCommon::OnAnimCBSelChange()
 {
 }
