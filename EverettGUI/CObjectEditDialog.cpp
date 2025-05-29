@@ -37,7 +37,8 @@ CObjectEditDialog::CObjectEditDialog(
 	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : ""),
 	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
 	currentObjectInterface(*engineRef.GetObjectInterface(objectType, subtypeName, objectName)),
-	castedCurrentObject(nullptr)
+	castedSolidInterface(nullptr),
+	castedSoundInterface(nullptr)
 {
 }
 
@@ -62,14 +63,14 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK3, meshVisCheck);
 	DDX_Control(pDX, IDC_MESH_TEXT, meshText);
 	DDX_Control(pDX, IDC_MODEL_PROP_TEXT, modelPropText);
-	DDX_Control(pDX, IDC_ANIM_TEXT, animText);
-	DDX_Control(pDX, IDC_COMBO3, animComboBox);
-	DDX_Control(pDX, IDC_BUTTON5, animPlayButton);
-	DDX_Control(pDX, IDC_BUTTON6, animPauseButton);
-	DDX_Control(pDX, IDC_BUTTON7, animStopButton);
-	DDX_Control(pDX, IDC_CHECK4, animLoopCheck);
-	DDX_Control(pDX, IDC_SPEED_TEXT, animSpeedText);
-	DDX_Control(pDX, IDC_EDIT11, animSpeedEdit);
+	DDX_Control(pDX, IDC_ANIM_TEXT, playerText);
+	DDX_Control(pDX, IDC_COMBO3, playerComboBox);
+	DDX_Control(pDX, IDC_BUTTON5, playerPlayButton);
+	DDX_Control(pDX, IDC_BUTTON6, playerPauseButton);
+	DDX_Control(pDX, IDC_BUTTON7, playerStopButton);
+	DDX_Control(pDX, IDC_CHECK4, playerLoopCheck);
+	DDX_Control(pDX, IDC_SPEED_TEXT, playerSpeedText);
+	DDX_Control(pDX, IDC_EDIT11, playerSpeedEdit);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -85,59 +86,74 @@ CString CObjectEditDialog::GenerateTitle()
 
 void CObjectEditDialog::SetupModelParams()
 {
-	bool modelParamsShow = objectType == EverettEngine::ObjectTypes::Solid;
+	bool isSolid = objectType == EverettEngine::ObjectTypes::Solid;
+	bool isSound = objectType == EverettEngine::ObjectTypes::Sound;
 
-	meshComboBox.ShowWindow(modelParamsShow);
-	meshVisCheck.ShowWindow(modelParamsShow);
-	meshText.ShowWindow(modelParamsShow);
-	modelPropText.ShowWindow(modelParamsShow);
+	meshComboBox.ShowWindow (isSolid);
+	meshVisCheck.ShowWindow (isSolid);
+	meshText.ShowWindow     (isSolid);
+	modelPropText.ShowWindow(isSolid);
 
-	animText.ShowWindow(modelParamsShow);
-	animComboBox.ShowWindow(modelParamsShow);
-	animPlayButton.ShowWindow(modelParamsShow);
-	animPlayButton.EnableWindow(false);
-	animPauseButton.ShowWindow(modelParamsShow);
-	animPauseButton.EnableWindow(false);
-	animStopButton.ShowWindow(modelParamsShow);
-	animStopButton.EnableWindow(false);
-	animLoopCheck.ShowWindow(modelParamsShow);
-	animSpeedText.ShowWindow(modelParamsShow);
-	animSpeedEdit.ShowWindow(modelParamsShow);
+	playerText.ShowWindow       (isSolid           );
+	playerComboBox.ShowWindow   (isSolid           );
+	playerPlayButton.ShowWindow (isSolid || isSound);
+	playerPauseButton.ShowWindow(isSolid || isSound);
+	playerStopButton.ShowWindow (isSolid || isSound);
+	playerLoopCheck.ShowWindow  (isSolid || isSound);
+	playerSpeedText.ShowWindow  (isSolid || isSound);
+	playerSpeedEdit.ShowWindow  (isSolid || isSound);
 
-	if (modelParamsShow)
+	playerPlayButton.EnableWindow(false);
+	playerPauseButton.EnableWindow(false);
+	playerStopButton.EnableWindow(false);
+
+	if (isSolid || isSound)
 	{
-		castedCurrentObject = dynamic_cast<ISolidSim*>(&currentObjectInterface);
+		if (isSolid)
+		{
+			castedSolidInterface = dynamic_cast<ISolidSim*>(&currentObjectInterface);
+		}
+		else
+		{
+			castedSoundInterface = dynamic_cast<ISoundSim*>(&currentObjectInterface);
+		}
 
 		CString speedValue;
-		speedValue.Format(_T("%.2f"), castedCurrentObject->GetModelAnimationSpeed());
-		animSpeedEdit.SetWindowTextW(speedValue);
+		speedValue.Format(_T("%.2f"), castedSolidInterface ? 
+			castedSolidInterface->GetModelAnimationSpeed() : castedSoundInterface->GetPlaybackSpeed()
+		);
+		playerSpeedEdit.SetWindowTextW(speedValue);
 
-		std::vector<std::string> meshNames = castedCurrentObject->GetModelMeshNames();
-		for (auto& meshName : meshNames)
+		if (castedSolidInterface)
 		{
-			meshComboBox.AddString(AdString(meshName));
+			std::vector<std::string> meshNames = castedSolidInterface->GetModelMeshNames();
+			for (auto& meshName : meshNames)
+			{
+				meshComboBox.AddString(AdString(meshName));
+			}
+
+			if (!meshNames.empty())
+			{
+				meshComboBox.SetCurSel(0);
+			}
+
+			std::vector<std::string> animNames = castedSolidInterface->GetModelAnimationNames();
+			for (auto& animName : animNames)
+			{
+				playerComboBox.AddString(AdString(animName));
+			}
+
+			if (!animNames.empty())
+			{
+				playerComboBox.SetCurSel(castedSolidInterface->GetModelAnimation());
+			}
 		}
 
-		if (!meshNames.empty())
-		{
-			meshComboBox.SetCurSel(0);
-		}
-
-		std::vector<std::string> animNames = castedCurrentObject->GetModelAnimationNames();
-		for (auto& animName : animNames)
-		{
-			animComboBox.AddString(AdString(animName));
-		}
-
-		if (!animNames.empty())
-		{
-			animComboBox.SetCurSel(castedCurrentObject->GetModelAnimation());
-			SetAnimButtons(
-				true, 
-				!castedCurrentObject->IsModelAnimationPaused(), 
-				castedCurrentObject->IsModelAnimationPlaying()
-			);
-		}
+		SetPlayerButtons(
+			castedSolidInterface ? castedSolidInterface->GetModelAnimationAmount() > 0 : true,
+			castedSolidInterface ? castedSolidInterface->IsModelAnimationPaused() : castedSoundInterface->IsPaused(),
+			castedSolidInterface ? castedSolidInterface->IsModelAnimationLooped() : castedSoundInterface->IsLooped()
+		);
 	}
 }
 
@@ -162,9 +178,9 @@ BEGIN_MESSAGE_MAP(CObjectEditDialog, DLLLoaderCommon)
 	ON_BN_CLICKED(IDC_BUTTON1, &CObjectEditDialog::OnUpdateParamsButtonClick)
 	ON_BN_CLICKED(IDC_CHECK3, &CObjectEditDialog::OnBnClickedCheck3)
 	ON_CBN_SELCHANGE(IDC_COMBO2, &CObjectEditDialog::OnMeshCBSelChange)
-	ON_BN_CLICKED(IDC_BUTTON5, &CObjectEditDialog::OnPlayAnimButtonClick)
-	ON_BN_CLICKED(IDC_BUTTON6, &CObjectEditDialog::OnPauseAnimButtonClick)
-	ON_BN_CLICKED(IDC_BUTTON7, &CObjectEditDialog::OnStopAnimButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON5, &CObjectEditDialog::OnPlayPlayerButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON6, &CObjectEditDialog::OnPausePlayerButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON7, &CObjectEditDialog::OnStopPlayerButtonClick)
 	ON_CBN_SELCHANGE(IDC_COMBO3, &CObjectEditDialog::OnAnimCBSelChange)
 END_MESSAGE_MAP()
 
@@ -204,15 +220,15 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 	currentObjectInterface.GetScaleVectorAddr()    = valuesToSet[1];
 	currentObjectInterface.GetFrontVectorAddr()    = valuesToSet[2];
 
-	if (objectType == EverettEngine::ObjectTypes::Solid)
+	if (castedSolidInterface)
 	{
-		castedCurrentObject->ForceModelUpdate();
+		castedSolidInterface->ForceModelUpdate();
 	}
 }
 
 void CObjectEditDialog::OnBnClickedCheck3()
 {
-	castedCurrentObject->SetModelMeshVisibility(
+	castedSolidInterface->SetModelMeshVisibility(
 		meshComboBox.GetCurSel(), meshVisCheck.GetCheck()
 	);
 }
@@ -220,40 +236,52 @@ void CObjectEditDialog::OnBnClickedCheck3()
 void CObjectEditDialog::OnMeshCBSelChange()
 {
 	meshVisCheck.SetCheck(
-		castedCurrentObject->GetModelMeshVisibility(meshComboBox.GetCurSel())
+		castedSolidInterface->GetModelMeshVisibility(meshComboBox.GetCurSel())
 	);
 }
 
-void CObjectEditDialog::SetAnimButtons(bool play, bool pause, bool stop)
+void CObjectEditDialog::SetPlayerButtons(bool play, bool pause, bool stop)
 {
-	animPlayButton.EnableWindow(play);
-	animPauseButton.EnableWindow(pause);
-	animStopButton.EnableWindow(stop);
+	playerPlayButton.EnableWindow(play);
+	playerPauseButton.EnableWindow(pause);
+	playerStopButton.EnableWindow(stop);
 }
 
-void CObjectEditDialog::OnPlayAnimButtonClick()
+void CObjectEditDialog::OnPlayPlayerButtonClick()
 {
-	CString animSpeed;
-	animSpeedEdit.GetWindowTextW(animSpeed);
+	AdString animSpeed;
+	playerSpeedEdit.GetWindowTextW(animSpeed);
 
-	castedCurrentObject->SetModelAnimationSpeed(_tstof(animSpeed));
-	castedCurrentObject->SetModelAnimation(animComboBox.GetCurSel());
-	castedCurrentObject->PlayModelAnimation(animLoopCheck.GetCheck());
-	SetAnimButtons(true, true, true);
+	double playbackSpeed = _tstof(animSpeed);
+
+	castedSolidInterface ? 
+		castedSolidInterface->SetModelAnimationSpeed(_tstof(animSpeed)) : 
+		castedSoundInterface->SetPlaybackSpeed(playbackSpeed);
+
+	if (castedSolidInterface)
+	{
+		castedSolidInterface->SetModelAnimation(playerComboBox.GetCurSel());
+	}
+
+	castedSolidInterface ? 
+		castedSolidInterface->PlayModelAnimation(playerLoopCheck.GetCheck()) : 
+		castedSoundInterface->Play(playerLoopCheck.GetCheck());
+
+	SetPlayerButtons(true, true, true);
 }
 
 
-void CObjectEditDialog::OnPauseAnimButtonClick()
+void CObjectEditDialog::OnPausePlayerButtonClick()
 {
-	castedCurrentObject->PauseModelAnimation();
-	SetAnimButtons(true, false, true);
+	castedSolidInterface ? castedSolidInterface->PauseModelAnimation() : castedSoundInterface->Pause();
+	SetPlayerButtons(true, false, true);
 }
 
 
-void CObjectEditDialog::OnStopAnimButtonClick()
+void CObjectEditDialog::OnStopPlayerButtonClick()
 {
-	castedCurrentObject->StopModelAnimation();
-	SetAnimButtons(true, false, false);
+	castedSolidInterface ? castedSolidInterface->StopModelAnimation() : castedSoundInterface->Stop();
+	SetPlayerButtons(true, false, false);
 }
 
 

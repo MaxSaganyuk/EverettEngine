@@ -156,6 +156,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AnimSystem.h" />
+    <ClInclude Include="CommonStructs.h" />
     <ClInclude Include="EverettEngine.h" />
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="CameraSim.h" />

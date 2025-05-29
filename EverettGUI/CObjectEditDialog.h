@@ -35,7 +35,7 @@ private:
 	void SetObjectParams(const std::vector<glm::vec3>& params);
 	CString GenerateTitle();
 	void SetupModelParams();
-	void SetAnimButtons(bool play, bool pause, bool stop);
+	void SetPlayerButtons(bool play, bool pause, bool stop);
 
 	EverettEngine& engineRef;
 
@@ -47,7 +47,8 @@ private:
 
 	AdString chosenObjectName;
 	IObjectSim& currentObjectInterface;
-	ISolidSim* castedCurrentObject;
+	ISolidSim* castedSolidInterface;
+	ISoundSim* castedSoundInterface;
 
 	// Model property objects
 	CStatic meshText;
@@ -55,14 +56,14 @@ private:
 	CComboBox meshComboBox;
 	CButton meshVisCheck;
 
-	CStatic animText;
-	CComboBox animComboBox;
-	CButton animPlayButton;
-	CButton animPauseButton;
-	CButton animStopButton;
-	CButton animLoopCheck;
-	CStatic animSpeedText;
-	CEdit animSpeedEdit;
+	CStatic playerText;
+	CComboBox playerComboBox;
+	CButton playerPlayButton;
+	CButton playerPauseButton;
+	CButton playerStopButton;
+	CButton playerLoopCheck;
+	CStatic playerSpeedText;
+	CEdit playerSpeedEdit;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
@@ -72,8 +73,8 @@ public:
 	afx_msg void OnUpdateParamsButtonClick();
 	afx_msg void OnBnClickedCheck3();
 	afx_msg void OnMeshCBSelChange();
-	afx_msg void OnPlayAnimButtonClick();
-	afx_msg void OnPauseAnimButtonClick();
-	afx_msg void OnStopAnimButtonClick();
+	afx_msg void OnPlayPlayerButtonClick();
+	afx_msg void OnPausePlayerButtonClick();
+	afx_msg void OnStopPlayerButtonClick();
 	afx_msg void OnAnimCBSelChange();
 };

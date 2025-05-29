@@ -91,7 +91,7 @@ bool SoundSim::CreateBufferAndSource()
 	return true;
 }
 
-void SoundSim::Play()
+void SoundSim::Play(bool loop)
 {
 	if (!SoundSim::camera)
 	{
@@ -101,20 +101,39 @@ void SoundSim::Play()
 	ContextLock
 
 	alSourcei(sound.source, AL_BUFFER, sound.buffer);
+	alSourcei(sound.source, AL_LOOPING, loop);
 
 	UpdatePositions();
 
 	alSourcePlay(sound.source);
+
+	sound.playStates.playing = true;
+	sound.playStates.paused = false;
+	sound.playStates.looped = loop;
 }
 
 bool SoundSim::IsPlaying()
 {
+	return sound.playStates.playing;
+}
+
+void SoundSim::Pause()
+{
 	ContextLock
 
-	ALint state;
-	alGetSourcei(sound.source, AL_SOURCE_STATE, &state);
+	alSourcePause(sound.source);
 
-	return state == AL_PLAYING;
+	sound.playStates.paused = true;
+}
+
+bool SoundSim::IsPaused()
+{
+	return sound.playStates.paused;
+}
+
+bool SoundSim::IsLooped()
+{
+	return sound.playStates.looped;
 }
 
 void SoundSim::Stop()
@@ -123,6 +142,8 @@ void SoundSim::Stop()
 
 	alSourcei(sound.source, AL_BUFFER, sound.buffer);
 	alSourceStop(sound.source);
+
+	sound.playStates.ResetValues();
 }
 
 void SoundSim::SetupSound(const std::string& file)
@@ -130,6 +151,19 @@ void SoundSim::SetupSound(const std::string& file)
 	CreateContext();
 	LoadFile(file);
 	CreateBufferAndSource();
+}
+
+void SoundSim::SetPlaybackSpeed(float speed)
+{
+	ContextLock
+
+	sound.playbackSpeed = speed;
+	alSourcef(sound.source, AL_PITCH, sound.playbackSpeed);
+}
+
+float SoundSim::GetPlaybackSpeed()
+{
+	return sound.playbackSpeed;
 }
 
 void SoundSim::UpdatePositions()

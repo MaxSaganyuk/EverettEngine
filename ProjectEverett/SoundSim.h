@@ -14,6 +14,8 @@
 #include "interfaces/ISoundSim.h"
 #include "CameraSim.h"
 
+#include "CommonStructs.h"
+
 class SoundSim : public ObjectSim, public ISoundSim
 {
 	static ALCdevice* device;
@@ -25,7 +27,10 @@ class SoundSim : public ObjectSim, public ISoundSim
 	{
 		stdEx::ValWithBackup<glm::vec3> pos;
 
+		PlayerStates playStates;
+
 		std::string fileName;
+		float playbackSpeed;
 		unsigned int channels;
 		unsigned int sampleRate;
 		unsigned long long totalPCMFrameCount;
@@ -36,6 +41,7 @@ class SoundSim : public ObjectSim, public ISoundSim
 
 		SoundInfo()
 		{
+			playbackSpeed = 1.0f;
 			pos.ResetBackup(&camera->GetPositionVectorAddr());
 		}
 	};
@@ -59,10 +65,18 @@ public:
 
 	static std::string GetObjectTypeNameStr();
 
-	void Play() override;
+	void Play(bool loop = false) override;
 	bool IsPlaying() override;
+
+	void Pause() override;
+	bool IsPaused() override;
+
+	bool IsLooped() override;
+
 	void Stop() override;
 	void UpdatePositions() override;
+	void SetPlaybackSpeed(float speed) override;
+	float GetPlaybackSpeed() override;
 	
 	~SoundSim();
 };

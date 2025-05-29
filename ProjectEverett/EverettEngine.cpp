@@ -421,7 +421,7 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 
 	if (resPair.second)
 	{
-		sounds[soundName].Play();
+		//sounds[soundName].Play();
 		CheckAndAddToNameTracker(resPair.first->first);
 
 		return true;

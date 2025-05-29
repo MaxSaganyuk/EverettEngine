@@ -7,6 +7,8 @@
 #include "LGLStructs.h"
 #include "AnimSystem.h"
 
+#include "CommonStructs.h"
+
 class SolidToModelManager
 {
 public:
@@ -56,30 +58,11 @@ private:
 
 	bool initialized;
 
-	struct AnimationStates
-	{
-		bool playing;
-		bool paused;
-		bool looped;
-
-		void ResetValues()
-		{
-			playing = false;
-			paused = true;
-			looped = false;
-		}
-
-		AnimationStates()
-		{
-			ResetValues();
-		}
-	};
-
 	double animationSpeed;
 	double lastAnimationTime;
 	size_t currentAnimationIndex;
 	std::vector<size_t> startingBoneIndexes;
-	AnimationStates animStates;
+	PlayerStates animStates;
 	std::chrono::system_clock::time_point startAnimationTime;
 	std::chrono::system_clock::time_point currentAnimationTime;
 
