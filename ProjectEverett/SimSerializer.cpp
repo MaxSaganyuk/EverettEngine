@@ -2,6 +2,13 @@
 
 using namespace std::chrono;
 
+#define ValidateVersionCheck(version) \
+auto versionValidation = ValidateVersion(requiredVersion);            \
+if (versionValidation > VersionValidationState::NewerValid)           \
+{                                                                     \
+	return versionValidation == VersionValidationState::OlderInvalid; \
+} 
+
 std::string SimSerializer::PackValue(const std::string& value)
 {
 	return '{' + value + '}';
@@ -92,11 +99,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::string& str)
 
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	UnpackValue(line, str, false);
 
@@ -118,11 +121,7 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::vec3& vec)
 
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::vec3& vec, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 
@@ -164,11 +163,7 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::mat4& mat)
 
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::mat4& mat, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 
@@ -212,11 +207,7 @@ bool SimSerializer::SetValueToLoadFrom(
 	int requiredVersion
 )
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 
@@ -273,11 +264,7 @@ bool SimSerializer::SetValueToLoadFrom(
 	int requiredVersion
 )
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 
@@ -334,11 +321,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::string>& ve
 
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<std::string>& vectorStr, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 
@@ -392,11 +375,7 @@ bool SimSerializer::SetValueToLoadFrom(
 	int requiredVersion
 )
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 
@@ -442,11 +421,7 @@ bool SimSerializer::SetValueToLoadFrom(
 	int requiredVersion
 )
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string value;
 

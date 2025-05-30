@@ -46,8 +46,14 @@ private:
 	FundamentalConvertSet(double, stod)
 	FundamentalConvertSet(long double, stold)
 
+	#define ValidateVersionCheck(version) \
+	auto versionValidation = ValidateVersion(requiredVersion);            \
+	if (versionValidation > VersionValidationState::NewerValid)           \
+	{                                                                     \
+		return versionValidation == VersionValidationState::OlderInvalid; \
+	} 
 
-	// OlderInvalid required version should skip serialization of current line
+	// OlderInvalid - required version should skip serialization of current line
     // Unset state should fail and stop serialization
 	enum class VersionValidationState
 	{
@@ -150,11 +156,7 @@ std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 template<OnlyFundamental FundamentalType>
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, FundamentalType& f, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string value;
 
@@ -174,11 +176,7 @@ std::string SimSerializer::GetValueToSaveFrom(EnumType e)
 template<OnlyEnums EnumType>
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	int preEnumValue;
 	std::string value;
@@ -211,11 +209,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>
 template<OnlyFundamental FundamentalType>
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 
@@ -257,11 +251,7 @@ std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, FundamentalType& f, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string value;
 
@@ -281,11 +271,7 @@ std::string SimSerializer::GetValueToSaveFrom(EnumType e)
 template<typename EnumType, typename std::enable_if_t<std::is_enum_v<EnumType>, bool>>
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	int preEnumValue;
 	std::string value;
@@ -318,11 +304,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion)
 {
-	auto versionValidation = ValidateVersion(requiredVersion);
-	if (versionValidation > VersionValidationState::NewerValid)
-	{
-		return versionValidation == VersionValidationState::OlderInvalid;
-	}
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 
@@ -354,3 +336,5 @@ bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<Funda
 	return AssertAndReturn(i == vector.size());
 }
 #endif
+
+#undef VersionValidateCheck
