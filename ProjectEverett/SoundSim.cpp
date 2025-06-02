@@ -1,7 +1,6 @@
 #include "SoundSim.h"
 
 #include <AL\alext.h>
-ALCdevice* SoundSim::device = nullptr;
 
 #define DR_WAV_IMPLEMENTATION
 #include <DrWav/dr_wav.h>
@@ -13,8 +12,6 @@ ALCdevice* SoundSim::device = nullptr;
 #define ContextLock ContextManager<ALCcontext> mux(context, [this](ALCcontext* context){ alcMakeContextCurrent(context); });
 std::recursive_mutex ContextManager<ALCcontext>::rMutex;
 size_t ContextManager<ALCcontext>::counter = 0;
-
-CameraSim* SoundSim::camera = nullptr;
 
 std::string SoundSim::GetSimInfoForSaveImpl()
 {
@@ -84,7 +81,7 @@ bool SoundSim::CreateBufferAndSource()
 		sound.buffer, 
 		(sound.channels == 1) ? AL_FORMAT_MONO_FLOAT32 : AL_FORMAT_STEREO_FLOAT32, 
 		sound.data, 
-		sound.totalPCMFrameCount * sizeof(float), 
+		static_cast<int>(sound.totalPCMFrameCount * sizeof(float)), 
 		sound.sampleRate
 	);
 

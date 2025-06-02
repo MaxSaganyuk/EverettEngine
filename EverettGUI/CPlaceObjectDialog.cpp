@@ -25,7 +25,8 @@ CPlaceObjectDialog::CPlaceObjectDialog(
 	objectTypeName(objectTypeName), 
 	sourceObjectTypeName(sourceObjectTypeName), 
 	nameCheckFunc(nameCheckFunc),
-	objectNameList(objectNameList)
+	objectNameList(objectNameList),
+	chosenIndex(0)
 {
 }
 
@@ -103,7 +104,7 @@ void CPlaceObjectDialog::OnModelChoiceChange()
 {
 	chosenIndex = objectChoice.GetCurSel();
 
-	objectChoice.GetLBText(chosenIndex, chosenObject);
+	objectChoice.GetLBText(static_cast<int>(chosenIndex), chosenObject);
 
 	AdString modelStdStrChecked = nameCheckFunc(chosenObject);
 

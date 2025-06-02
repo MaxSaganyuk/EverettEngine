@@ -85,7 +85,7 @@ std::vector<std::string> EverettEngine::lightTypes = LightSim::GetLightTypeNames
 
 struct EverettEngine::KeyScriptFuncInfo
 {
-	bool holdable;
+	bool holdable = false;
 	ScriptFuncStorage pressedFuncs;
 	ScriptFuncStorage releasedFuncs;
 };
@@ -149,7 +149,6 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->CaptureMouse(true);
 
 	auto additionalFuncs = [this]() {
-		std::lock_guard lock(lglMutex);
 		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();
 
 		if (!finalTransforms.empty())
@@ -348,7 +347,7 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 	size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
 
 #ifdef _DEBUG
-	std::string filePath = fileLoader->GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
+	std::string filePath = FileLoader::GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
 
 	shaderGen.LoadPreSources(filePath);
 	if (totalBoneAmount)
@@ -1124,6 +1123,7 @@ std::string EverettEngine::GetObjectTypeToName(ObjectTypes objectType)
 	}
 
 	assert(false && "Nonexistent type");
+	throw;
 }
 
 EverettEngine::ObjectTypes EverettEngine::GetObjectTypeToName(const std::string& objectName)
@@ -1137,6 +1137,7 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectTypeToName(const std::string&
 	}
 
 	assert(false && "Nonexistent name");
+	throw;
 }
 
 std::type_index EverettEngine::GetObjectPureTypeToName(ObjectTypes objectType)
@@ -1150,6 +1151,7 @@ std::type_index EverettEngine::GetObjectPureTypeToName(ObjectTypes objectType)
 	}
 
 	assert(false && "Nonexistent name");
+	throw;
 }
 
 std::type_index EverettEngine::GetObjectPureTypeToName(const std::string& objectName)
@@ -1163,6 +1165,7 @@ std::type_index EverettEngine::GetObjectPureTypeToName(const std::string& object
 	}
 
 	assert(false && "Nonexistent name");
+	throw;
 }
 
 EverettEngine::ObjectTypes EverettEngine::GetObjectPureTypeToName(std::type_index pureType)
@@ -1176,6 +1179,7 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectPureTypeToName(std::type_inde
 	}
 
 	assert(false && "Nonexistent name");
+	throw;
 }
 
 std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType)
@@ -1190,6 +1194,7 @@ std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType)
 		return GetSoundList();
 	default:
 		assert(false && "unreachable");
+		throw;
 	}
 }
 

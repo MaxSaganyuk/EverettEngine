@@ -145,7 +145,7 @@ void CObjectEditDialog::SetupModelParams()
 
 			if (!animNames.empty())
 			{
-				playerComboBox.SetCurSel(castedSolidInterface->GetModelAnimation());
+				playerComboBox.SetCurSel(static_cast<int>(castedSolidInterface->GetModelAnimation()));
 			}
 		}
 
@@ -212,7 +212,7 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 		{
 			CString value;
 			objectInfoEdits[i][j].GetWindowTextW(value);
-			valuesToSet[i][j] = _tstof(value);
+			valuesToSet[i][j] = static_cast<float>(_tstof(value));
 		}
 	}
 
@@ -256,7 +256,7 @@ void CObjectEditDialog::OnPlayPlayerButtonClick()
 
 	castedSolidInterface ? 
 		castedSolidInterface->SetModelAnimationSpeed(_tstof(animSpeed)) : 
-		castedSoundInterface->SetPlaybackSpeed(playbackSpeed);
+		castedSoundInterface->SetPlaybackSpeed(static_cast<float>(playbackSpeed));
 
 	if (castedSolidInterface)
 	{

@@ -33,7 +33,7 @@ private:
 
 	std::string preSourcePath;
 	std::vector<std::fstream> preSourceFiles;
-	std::vector<std::map<int, LineToSubstInfo>> lineToSubstMap;
+	std::vector<std::map<size_t, LineToSubstInfo>> lineToSubstMap;
 
 	static std::vector<std::string> fileTypes;
 	static std::vector<std::pair<std::string, std::string>> customKeywords;

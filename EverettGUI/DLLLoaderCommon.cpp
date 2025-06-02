@@ -82,11 +82,11 @@ void DLLLoaderCommon::OnBrowseScriptButton()
 	AdString pathStr;
 	AdString fileStr;
 
-	if (CBrowseDialog::OpenAndGetFilePath(pathStr, fileStr, {{"DLL files", "*.dll"}}));
+	if (CBrowseDialog::OpenAndGetFilePath(pathStr, fileStr, {{"DLL files", "*.dll"}}))
 	{
 		selectedScriptDllInfo.push_back(std::pair<std::string, std::string>{ pathStr, fileStr });
 		dllComboBox.AddString(fileStr);
-		dllComboBox.SetCurSel(selectedScriptDllInfo.size() - 1);
+		dllComboBox.SetCurSel(static_cast<int>(selectedScriptDllInfo.size() - 1));
 		loadScriptButton.EnableWindow(true);
 	}
 }

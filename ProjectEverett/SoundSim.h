@@ -18,10 +18,10 @@
 
 class SoundSim : public ObjectSim, public ISoundSim
 {
-	static ALCdevice* device;
-	static CameraSim* camera;
+	static inline ALCdevice* device = nullptr;
+	static inline CameraSim* camera = nullptr;
 	
-	ALCcontext* context;
+	ALCcontext* context = nullptr;
 
 	struct SoundInfo
 	{
@@ -30,14 +30,14 @@ class SoundSim : public ObjectSim, public ISoundSim
 		PlayerStates playStates;
 
 		std::string fileName;
-		float playbackSpeed;
-		unsigned int channels;
-		unsigned int sampleRate;
-		unsigned long long totalPCMFrameCount;
+		float playbackSpeed{};
+		unsigned int channels{};
+		unsigned int sampleRate{};
+		unsigned long long totalPCMFrameCount{};
 		float* data = nullptr;
 
-		ALuint buffer;
-		ALuint source;
+		ALuint buffer{};
+		ALuint source{};
 
 		SoundInfo()
 		{

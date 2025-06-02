@@ -34,7 +34,7 @@ public:
 	static LightTypes GetTypeToName(const std::string& name);
 	static std::string GetTypeToName(LightTypes lightType);
 
-	int lightRange;
+	int lightRange{};
 
 	static Attenuation GetAttenuation(int range);
 	Attenuation GetAttenuation() override;
@@ -50,5 +50,5 @@ private:
 		{ LightSim::LightTypes::Spot,      "Spot"      }
 	};
 
-	LightTypes lightType;
+	LightTypes lightType{};
 };

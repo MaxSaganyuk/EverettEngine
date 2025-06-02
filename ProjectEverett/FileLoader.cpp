@@ -32,7 +32,7 @@ void ConvertFromAssimpToGLM(const aiVector3D& assimpVect, glm::vec3& glmVect)
 {
 	for (size_t axis = 0; axis < 3; ++axis)
 	{
-		glmVect[axis] = assimpVect[axis];
+		glmVect[axis] = assimpVect[static_cast<unsigned int>(axis)];
 	}
 }
 
@@ -110,7 +110,7 @@ bool FileLoader::ModelLoader::LoadTexture(
 	stbi_set_flip_vertically_on_load(data == nullptr);
 
 	texture.data = data ? 
-		stbi_load_from_memory(data, dataSize, &texture.width, &texture.height, &texture.channelAmount, 0) :
+		stbi_load_from_memory(data, static_cast<int>(dataSize), &texture.width, &texture.height, &texture.channelAmount, 0) :
 		stbi_load(file.c_str(), &texture.width, &texture.height, &texture.channelAmount, 0);
 
 	if (texture.data)
@@ -216,7 +216,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 
 			if (boneMap.find(boneName) == boneMap.end())
 			{
-				boneMap[boneName].id = boneMap.size();
+				boneMap[boneName].id = static_cast<int>(boneMap.size());
 			}
 
 			bool bonesSet = true;
@@ -303,7 +303,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 			for (size_t i = 0; i < material->GetTextureCount(convertedType); ++i)
 			{
 				aiString str;
-				material->GetTexture(convertedType, i, &str);
+				material->GetTexture(convertedType, static_cast<unsigned int>(i), &str);
 				std::string strWithoutPrefix = str.C_Str();
 
 				LGLStructs::Texture newTexture;

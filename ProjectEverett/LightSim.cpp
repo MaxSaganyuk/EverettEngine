@@ -26,7 +26,7 @@ LightSim::LightSim(
 ) : ObjectSim(pos, scale, front, speed)
 {
 	this->lightType = lightType;
-	this->lightRange = range;
+	this->lightRange = static_cast<int>(range);
 }
 
 std::string LightSim::GetObjectTypeNameStr()
@@ -104,6 +104,7 @@ LightSim::LightTypes LightSim::GetTypeToName(const std::string& name)
 	}
 
 	assert(false && "Nonexistent type");
+	throw;
 }
 
 std::string LightSim::GetTypeToName(LightSim::LightTypes lightType)
@@ -117,6 +118,7 @@ std::string LightSim::GetTypeToName(LightSim::LightTypes lightType)
 	}
 
 	assert(false && "Nonexistent name");
+	throw;
 }
 
 std::string LightSim::GetCurrentLightType()

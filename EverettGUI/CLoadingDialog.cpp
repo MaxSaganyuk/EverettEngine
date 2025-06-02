@@ -36,7 +36,7 @@ BOOL CLoadingDialog::OnInitDialog()
 
 	okButton.EnableWindow(false);
 
-	loadingProgressBar.SetRange32(0, loadingFuncs.size());
+	loadingProgressBar.SetRange32(0, static_cast<int>(loadingFuncs.size()));
 	loadingProgressBar.SetStep(0);
 
 	PostMessage(DialogShown);

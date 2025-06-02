@@ -51,6 +51,7 @@ namespace LGLStructs
 				return Bitangent;
 			default:
 				assert(false && "Invaling index in VertexData");
+				throw;
 			}
 		}
 

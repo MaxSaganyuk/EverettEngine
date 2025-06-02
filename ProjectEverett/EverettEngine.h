@@ -46,7 +46,7 @@ class AnimSystem;
 
 namespace LGLStructs
 {
-	class ModelInfo;
+	struct ModelInfo;
 }
 
 enum class LightTypes;
@@ -257,8 +257,6 @@ private:
 	std::map<std::string, KeyScriptFuncInfo> keyScriptFuncMap;
 
 	UnorderedPtrMap<const std::string*, int> allNameTracker;
-
-	std::mutex lglMutex;
 
 	class LastKeyPressPoll
 	{

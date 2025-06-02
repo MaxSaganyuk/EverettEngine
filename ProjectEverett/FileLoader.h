@@ -12,12 +12,13 @@
 #include "ScriptFuncStorage.h"
 #include "AnimSystem.h"
 
-class aiScene;
-class aiMesh;
-class aiNode;
-class SolidSim;
-class HINSTANCE__;
+struct HINSTANCE__;
 using HMODULE = HINSTANCE__*;
+
+struct aiScene;
+struct aiMesh;
+struct aiNode;
+class SolidSim;
 
 class FileLoader
 {

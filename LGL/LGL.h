@@ -20,7 +20,7 @@
 
 #define CALLBACK static void
 
-class GLFWwindow;
+struct GLFWwindow;
 
 /*
 	Lambda (Open) GL
@@ -68,7 +68,7 @@ private:
 
 	struct InternalModelInfo
 	{
-		LGLStructs::ModelInfo* modelPtr;
+		LGLStructs::ModelInfo* modelPtr = nullptr;
 		std::vector<VAOInfo> VAOs;
 		std::map<std::string, TextureID> textureIDs;
 	};
@@ -81,8 +81,8 @@ private:
 
 	struct InteractableInfo
 	{
-		bool pressed;
-		bool holdable;
+		bool pressed = false;
+		bool holdable = false;
 		std::function<void()> pressedFunc;
 		std::function<void()> releasedFunc;
 	};

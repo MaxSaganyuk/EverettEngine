@@ -250,7 +250,7 @@ void LGL::ProcessInput()
 {
 	for (auto& interact : interactCollection)
 	{
-		int retCode = glfwGetKey(window, interact.first);
+		int retCode = glfwGetKey(window, static_cast<int>(interact.first));
 
 		if (retCode == GLFW_PRESS)
 		{
@@ -358,7 +358,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 					std::function<void(int)> behaviourToCheck = currentVAO.meshInfo->behaviour;
 					if (behaviourToCheck)
 					{
-						behaviourToCheck(meshIndex);
+						behaviourToCheck(static_cast<int>(meshIndex));
 					}
 
 					Render();
@@ -490,12 +490,14 @@ void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 
 		if (i == 5)
 		{
-			glVertexAttribIPointer(i, steps[i], GL_INT, stride, (void*)(byteOffset));
+			GLSafeExecute(glVertexAttribIPointer, i, static_cast<int>(steps[i]), GL_INT, stride, (void*)(byteOffset));
 			byteOffset += steps[i] * sizeof(int);
 		}
 		else
 		{
-			glVertexAttribPointer(i, steps[i], GL_FLOAT, GL_FALSE, stride, (void*)(byteOffset));
+			GLSafeExecute(
+				glVertexAttribPointer, i, static_cast<int>(steps[i]), GL_FLOAT, GL_FALSE, stride, (void*)(byteOffset)
+			);
 			byteOffset += steps[i] * sizeof(float);
 		}
 	}
@@ -503,7 +505,7 @@ void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//glBindVertexArray(0);
 
-	int polygons = newVAOInfo.VAOs.back().pointAmount / 3;
+	size_t polygons = newVAOInfo.VAOs.back().pointAmount / 3;
 	std::cout << "Mesh with " << newVAOInfo.VAOs.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
 
 	LoadAndCompileShader(meshInfo.shaderProgram);
