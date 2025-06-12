@@ -186,6 +186,8 @@ private:
 	using LightCollection = std::map<LightTypes, std::map<std::string, LightSim>>;
 	using SoundCollection = std::map<std::string, SoundSim>;
 
+	size_t GetCreatedSolidAmount();
+
 	void LightUpdater();
 
 	ObjectSim* GetObjectFromMap(

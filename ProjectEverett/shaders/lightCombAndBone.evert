@@ -13,10 +13,14 @@ out vec2 TexCoords;
 flat out ivec4 BoneIDs;
 out vec4 Weights;
 
-uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
-uniform mat4 inv;
+
+#genDefine SOLID_AMOUNT 0
+uniform mat4 models[SOLID_AMOUNT];
+uniform mat4 invs[SOLID_AMOUNT];
+uniform int solidIndex;
+uniform int meshVisibility;
 
 #genDefine BONE_AMOUNT 1
 uniform mat4 Bones[BONE_AMOUNT];
@@ -42,13 +46,26 @@ void main()
         skinnedPos = vec4(aPos, 1.0);
     }
 
+    mat4 currentModel;
+    mat4 currentInv;
+    if(meshVisibility == 1)
+    {
+        currentModel = models[solidIndex];
+        currentInv = invs[solidIndex];
+    }
+    else
+    {
+        currentModel = mat4(0.0);
+        currentInv = mat4(0.0);
+    }
+
     // Final transforms
-    vec4 worldPos = model * skinnedPos;
+    vec4 worldPos = currentModel * skinnedPos;
     FragPos = vec3(worldPos);
     gl_Position = proj * view * worldPos;
 
     // Outputs
-    Normal = mat3(transpose(inv)) * aNormal;
+    Normal = mat3(transpose(currentInv)) * aNormal;
 
     TexCoords = vec2(aTexCoords.x, aTexCoords.y);
     BoneIDs = aBoneIDs;

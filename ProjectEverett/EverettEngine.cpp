@@ -281,26 +281,16 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 				}
 			}
 		}
-	};
-
-	newModel.generalMeshBehaviour = [this, name, modelReset = false](int meshIndex) mutable
-	{
-		// Existence of the lambda implies existence of the model
-		auto& model = MSM[name];
-
-		glm::mat4 emptyMatrix = glm::mat4();
 
 		if (!model.solids.empty())
 		{
-			modelReset = false;
-
+			size_t index = 0;
 			for (auto& [solidName, solid] : model.solids)
 			{
-				glm::mat4& modelMatrix = solid.GetModelMeshVisibility(meshIndex)
-					? solid.GetModelMatrixAddr() : emptyMatrix;
+				glm::mat4& modelMatrix = solid.GetModelMatrixAddr();
 
-				mainLGL->SetShaderUniformValue("model", modelMatrix);
-				mainLGL->SetShaderUniformValue("inv", glm::inverse(modelMatrix));
+				LGLUtils::SetShaderUniformArrayAt(*mainLGL, "models", index, modelMatrix);
+				LGLUtils::SetShaderUniformArrayAt(*mainLGL, "invs", index, glm::inverse(modelMatrix));
 
 				if (!model.model.second.animInfoVect.empty())
 				{
@@ -309,14 +299,24 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 						)
 					);
 				}
+
+				++index;
 			}
 		}
-		else if (!modelReset)
-		{
-			modelReset = true;
+	};
 
-			mainLGL->SetShaderUniformValue("model", emptyMatrix);
-			mainLGL->SetShaderUniformValue("inv", emptyMatrix);
+	newModel.generalMeshBehaviour = [this, name](int meshIndex)
+	{
+		// Existence of the lambda implies existence of the model
+		auto& model = MSM[name];
+
+		size_t index = 0;
+		for (auto& [solidName, solid] : model.solids)
+		{
+			mainLGL->SetShaderUniformValue("meshVisibility", static_cast<int>(solid.GetModelMeshVisibility(meshIndex)));
+			mainLGL->SetShaderUniformValue("solidIndex", static_cast<int>(index));
+
+			++index;
 		}
 	};
 
@@ -343,25 +343,6 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 		animSystem->IncrementTotalBoneAmount(MSM[modelName].model.second);
 	}
 
-	ShaderGenerator shaderGen;
-	size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
-
-#ifdef _DEBUG
-	std::string filePath = FileLoader::GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
-
-	shaderGen.LoadPreSources(filePath);
-	if (totalBoneAmount)
-	{
-		shaderGen.SetValueToDefine("BONE_AMOUNT", totalBoneAmount);
-	}
-	shaderGen.GenerateShaderFiles(filePath);
-
-	mainLGL->RecompileShader(defaultShaderProgram);
-#else
-#error Shader file generation is not implemented fo release configuration
-#endif
-
-
 	auto resPair = MSM[modelName].solids.emplace(solidName, std::move(newSolid));
 
 	if (resPair.second)
@@ -369,6 +350,26 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 		MSM[modelName].model.first.render = true;
 
 		CheckAndAddToNameTracker(resPair.first->first);
+
+		ShaderGenerator shaderGen;
+		size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
+
+#ifdef _DEBUG
+		std::string filePath = FileLoader::GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
+
+		shaderGen.LoadPreSources(filePath);
+		if (totalBoneAmount)
+		{
+			shaderGen.SetValueToDefine("BONE_AMOUNT", totalBoneAmount);
+		}
+		shaderGen.SetValueToDefine("SOLID_AMOUNT", GetCreatedSolidAmount());
+		shaderGen.GenerateShaderFiles(filePath);
+
+		mainLGL->RecompileShader(defaultShaderProgram);
+
+#else
+#error Shader file generation is not implemented fo release configuration
+#endif
 
 		return true;
 	}
@@ -527,6 +528,18 @@ bool EverettEngine::DeleteSound(const std::string& soundName)
 	mainLGL->PauseRendering(false);
 
 	return res;
+}
+
+size_t EverettEngine::GetCreatedSolidAmount()
+{
+	size_t solidAmount = 0;
+
+	for (auto& model : MSM)
+	{
+		solidAmount += model.second.solids.size();
+	}
+
+	return solidAmount;
 }
 
 IObjectSim* EverettEngine::GetObjectInterface(
