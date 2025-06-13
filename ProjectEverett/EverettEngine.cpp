@@ -329,6 +329,11 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 bool EverettEngine::CreateSolid(const std::string& modelName, const std::string& solidName)
 {
+	return CreateSolidImpl(modelName, solidName, true);
+}
+
+bool EverettEngine::CreateSolidImpl(const std::string& modelName, const std::string& solidName, bool regenerateShader)
+{
 	if (MSM[modelName].solids.find(solidName) != MSM[modelName].solids.end())
 	{
 		return true;
@@ -351,30 +356,38 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 
 		CheckAndAddToNameTracker(resPair.first->first);
 
-		ShaderGenerator shaderGen;
-		size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
-
-#ifdef _DEBUG
-		std::string filePath = FileLoader::GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
-
-		shaderGen.LoadPreSources(filePath);
-		if (totalBoneAmount)
+		if (regenerateShader)
 		{
-			shaderGen.SetValueToDefine("BONE_AMOUNT", totalBoneAmount);
+			GenerateShader();
 		}
-		shaderGen.SetValueToDefine("SOLID_AMOUNT", GetCreatedSolidAmount());
-		shaderGen.GenerateShaderFiles(filePath);
-
-		mainLGL->RecompileShader(defaultShaderProgram);
-
-#else
-#error Shader file generation is not implemented fo release configuration
-#endif
 
 		return true;
 	}
 
 	return false;
+}
+
+void EverettEngine::GenerateShader()
+{
+	ShaderGenerator shaderGen;
+	size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
+
+#ifdef _DEBUG
+	std::string filePath = FileLoader::GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
+
+	shaderGen.LoadPreSources(filePath);
+	if (totalBoneAmount)
+	{
+		shaderGen.SetValueToDefine("BONE_AMOUNT", totalBoneAmount);
+	}
+	shaderGen.SetValueToDefine("SOLID_AMOUNT", GetCreatedSolidAmount());
+	shaderGen.GenerateShaderFiles(filePath);
+
+	mainLGL->RecompileShader(defaultShaderProgram);
+
+#else
+#error Shader file generation is not implemented fo release configuration
+#endif
 }
 
 bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightType)
@@ -981,7 +994,7 @@ void EverettEngine::LoadSolidFromLine(std::string_view& line, const std::array<s
 	bool res = false;
 
 	if (CreateModel(objectInfo[ObjectInfoNames::Path], objectInfo[ObjectInfoNames::SubtypeName]) &&
-		CreateSolid(objectInfo[ObjectInfoNames::SubtypeName], objectInfo[ObjectInfoNames::ObjectName]))
+		CreateSolidImpl(objectInfo[ObjectInfoNames::SubtypeName], objectInfo[ObjectInfoNames::ObjectName], false))
 	{
 		ApplySimInfoFromLine<SolidSim>(line, objectInfo, res);
 	}
@@ -1083,6 +1096,7 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 			}
 		}
 	}
+	GenerateShader();
 	mainLGL->PauseRendering(false);
 
 	return true;

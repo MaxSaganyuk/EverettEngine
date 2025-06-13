@@ -186,6 +186,9 @@ private:
 	using LightCollection = std::map<LightTypes, std::map<std::string, LightSim>>;
 	using SoundCollection = std::map<std::string, SoundSim>;
 
+	bool CreateSolidImpl(const std::string& modelName, const std::string& solidName, bool regenerateShader);
+	void GenerateShader();
+
 	size_t GetCreatedSolidAmount();
 
 	void LightUpdater();
