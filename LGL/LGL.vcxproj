@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="GLExecutor.h" />
     <ClInclude Include="LGL.h" />
+    <ClInclude Include="LGLUniformHasher.h" />
     <ClInclude Include="LGLKeyToStringMap.h" />
     <ClInclude Include="LGLStructs.h" />
     <ClInclude Include="LGLUtils.h" />

@@ -5,6 +5,8 @@
 #include <cctype>
 #include <array>
 
+#include "LGLUniformHasher.h"
+
 #define LGL_EXPORT
 #include "LGL.h"
 #include "stdEx/mapEx.h"
@@ -50,6 +52,9 @@ LGL::LGL()
 	currentVAOToRender = {};
 	window = nullptr;
 	pauseRendering = false;
+	uniformHasher = std::make_unique<LGLUniformHasher>();
+	batchUniformVals = true;
+	hashUniformVals = true;
 
 	std::cout << "Created LambdaGL instance\n";
 }
@@ -927,6 +932,11 @@ void LGL::RecompileShader(const std::string& shaderName)
 void LGL::DeleteShader(const std::string& shaderName)
 {
 	lastProgram.clear();
+	if (uniformHasher)
+	{
+		uniformHasher->ResetHashesByShader(shaderProgramCollection[shaderName]);
+	}
+
 	GLSafeExecute(glUseProgram, 0);
 
 	for (auto& shaderInfo : shaderInfoCollection[shaderName])
@@ -1106,16 +1116,29 @@ const std::unordered_map<std::type_index, std::function<void(int, void*)>> unifo
 	ShaderCallMatrixAndVector(glm::mat4,    glUniformMatrix4fv),
 };
 
-
-int LGL::CheckUniformValueLocation(const std::string& valueName, const std::string& shaderProgramName)
+void LGL::EnableUniformValueBatchSending(bool value)
 {
-	std::string shaderProgToUse = shaderProgramName == "" ? lastProgram : shaderProgramName;
+	batchUniformVals = value;
+}
 
-	if (shaderProgramCollection.find(shaderProgToUse) != shaderProgramCollection.end())
+void LGL::EnableUniformValueHashing(bool value)
+{
+	hashUniformVals = value;
+}
+
+int LGL::CheckUniformValueLocation(
+	const std::string& valueName, 
+	const std::string& shaderProgramName, 
+	ShaderProgram& shaderProgramID
+)
+{
+	const std::string& shaderProgramNameToUse = shaderProgramName == "" ? lastProgram : shaderProgramName;
+
+	if (shaderProgramCollection.find(shaderProgramNameToUse) != shaderProgramCollection.end())
 	{
-		ShaderProgram shaderProgramToUse = shaderProgramCollection[shaderProgToUse];
+		shaderProgramID = shaderProgramCollection[shaderProgramNameToUse];
 
-		int uniformValueLocation = glGetUniformLocation(shaderProgramToUse, valueName.c_str());
+		int uniformValueLocation = glGetUniformLocation(shaderProgramID, valueName.c_str());
 
 		if (uniformValueLocation == -1)
 		{
@@ -1135,19 +1158,25 @@ int LGL::CheckUniformValueLocation(const std::string& valueName, const std::stri
 template<typename Type>
 bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, const std::string& shaderProgramName)
 {
-	int uniformValueLocation = CheckUniformValueLocation(valueName, shaderProgramName);
+	ShaderProgram shaderProgramIDToUse = 0;
+	int uniformValueLocation = CheckUniformValueLocation(valueName, shaderProgramName, shaderProgramIDToUse);
 
 	if (uniformValueLocation == -1 || lastProgram.empty())
 	{
 		return false;
 	}
 
-	if (uniformLocationTracker.find(uniformValueLocation) != uniformLocationTracker.end())
+	if (!batchUniformVals || uniformLocationTracker.find(uniformValueLocation) != uniformLocationTracker.end())
 	{
 		Render();
 	}
-	uniformLocationTracker.insert(uniformValueLocation);
-	uniformValueLocators.at(typeid(Type))(uniformValueLocation, &value);
+
+	if (!hashUniformVals || 
+		(uniformHasher && uniformHasher->CheckIfDiffersAndHashValue(shaderProgramIDToUse, uniformValueLocation, value)))
+	{
+		uniformLocationTracker.insert(uniformValueLocation);
+		uniformValueLocators.at(typeid(Type))(uniformValueLocation, &value);
+	}
 
 	return true;
 }

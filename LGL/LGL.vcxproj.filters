@@ -30,6 +30,9 @@
     <ClInclude Include="LGLKeyToStringMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LGLUniformHasher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c">

@@ -35,6 +35,14 @@
 #include "ShaderGenerator.h"
 
 //#define BONE_TEST
+//#define UNOPTIMIZED_TEST
+
+#ifdef UNOPTIMIZED_TEST
+#define ENABLE_OPTIMIZATIONS false
+#else
+#define ENABLE_OPTIMIZATIONS true
+#endif // UNOPTIMIZED_TEST
+
 
 using ObjectInfoNames = SimSerializer::ObjectInfoNames;
 
@@ -200,6 +208,9 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	);
 
 	animSystem = std::make_unique<AnimSystem>();
+
+	mainLGL->EnableUniformValueBatchSending(ENABLE_OPTIMIZATIONS);
+	mainLGL->EnableUniformValueHashing(ENABLE_OPTIMIZATIONS);
 }
 
 int EverettEngine::PollForLastKeyPressed()

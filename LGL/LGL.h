@@ -21,6 +21,7 @@
 #define CALLBACK static void
 
 struct GLFWwindow;
+class LGLUniformHasher;
 
 /*
 	Lambda (Open) GL
@@ -176,6 +177,9 @@ public:
 	template<typename Type>
 	LGL_API bool SetShaderUniformValue(const std::string& valueName, Type&& value, const std::string& shaderProgramName = "");
 
+	LGL_API void EnableUniformValueBatchSending(bool value = true);
+	LGL_API void EnableUniformValueHashing(bool value = true);
+
 private:
 	bool InitGLAD();
 	void InitCallbacks();
@@ -183,7 +187,11 @@ private:
 	void DeleteGLObjects();
 	void DeleteShader(const std::string& shaderName);
 
-	int CheckUniformValueLocation(const std::string& valueName, const std::string& shaderProgramName);
+	int CheckUniformValueLocation(
+		const std::string& valueName, 
+		const std::string& shaderProgramName, 
+		ShaderProgram& shaderProgramID
+	);
 
 	// If no name is given will compile last loaded shader
 	bool CompileShader(const std::string& name = "");
@@ -232,11 +240,13 @@ private:
 	std::string lastProgram;
 	std::map<std::string, ShaderProgram> shaderProgramCollection;
 
-	std::vector<std::string> uniformErrorAntispam;
-
 	std::map<size_t, InteractableInfo> interactCollection;
 
+	bool batchUniformVals;
+	bool hashUniformVals;
+	std::vector<std::string> uniformErrorAntispam;
 	std::unordered_set<size_t> uniformLocationTracker;
+	std::unique_ptr<LGLUniformHasher> uniformHasher;
 };
 
 #undef CALLBACK
