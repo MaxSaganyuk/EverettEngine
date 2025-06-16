@@ -33,6 +33,10 @@ std::string ObjectSim::GetObjectTypeNameStr()
 	return "Object";
 }
 
+void ObjectSim::SetRenderDeltaTime(float deltaTime)
+{
+	renderDeltaTime = deltaTime;
+}
 
 std::string ObjectSim::GetSimInfoToSaveImpl()
 {
@@ -204,25 +208,27 @@ void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		lastBlocker = false;
 	}
 
+	float correctedSpeed = speed * renderDeltaTime;
+
 	switch (dir)
 	{
 	case Direction::Forward:
-		pos += speed * front * limitAxis;
+		pos += correctedSpeed * front * limitAxis;
 		break;
 	case Direction::Backward:
-		pos -= speed * front * limitAxis;
+		pos -= correctedSpeed * front * limitAxis;
 		break;
 	case Direction::Left:
-		pos -= speed * glm::normalize(glm::cross(front, up));
+		pos -= correctedSpeed * glm::normalize(glm::cross(front, up));
 		break;
 	case Direction::Right:
-		pos += speed * glm::normalize(glm::cross(front, up));
+		pos += correctedSpeed * glm::normalize(glm::cross(front, up));
 		break;
 	case Direction::Up:
-		pos += glm::abs(speed * glm::normalize(front * up));
+		pos += glm::abs(correctedSpeed * glm::normalize(front * up));
 		break;
 	case Direction::Down:
-		pos -= glm::abs(speed * glm::normalize(front * up));
+		pos -= glm::abs(correctedSpeed * glm::normalize(front * up));
 		break;
 	case Direction::Nowhere:
 		return;

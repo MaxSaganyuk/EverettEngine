@@ -30,7 +30,7 @@ public:
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
 		const glm::vec3& scale = glm::vec3(1.0f, 1.0f, 1.0f),
 		const glm::vec3& front = glm::vec3(0.0f, 0.0f, 1.0f),
-		const float speed = 0.006f
+		const float speed = 1.0f
 	);
 
 	static std::string GetObjectTypeNameStr();

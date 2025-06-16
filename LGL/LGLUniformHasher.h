@@ -132,7 +132,7 @@ private:
 
 public:
 	template<typename Type>
-	bool CheckIfDiffersAndHashValue(const ShaderProgID& shaderProgID, Location uniformLocation, const Type& value)
+	bool CheckIfDiffersAndHashValue(const ShaderProgID shaderProgID, const Location uniformLocation, const Type& value)
 	{
 		Hash hash = HashValue(value);
 
@@ -154,7 +154,7 @@ public:
 		return false;
 	}
 
-	void ResetHashesByShader(const ShaderProgID& shaderProgID)
+	void ResetHashesByShader(const ShaderProgID shaderProgID)
 	{
 		bool validShaderName = uniformHashes.find(shaderProgID) != uniformHashes.end();
 

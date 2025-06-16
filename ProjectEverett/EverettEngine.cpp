@@ -35,13 +35,21 @@
 #include "ShaderGenerator.h"
 
 //#define BONE_TEST
+
+// OPTIMIZATION_TEST - to view uncapped FPS, UNOPTIMIZED_TEST - to compare to unoptimal logic
+//#define OPTIMIZATION_TEST
 //#define UNOPTIMIZED_TEST
 
+#define ENABLE_OPTIMIZATIONS true
+
+#ifdef OPTIMIZATION_TEST
+#define ENABLE_VSYNC false
 #ifdef UNOPTIMIZED_TEST
 #define ENABLE_OPTIMIZATIONS false
+#endif
 #else
-#define ENABLE_OPTIMIZATIONS true
-#endif // UNOPTIMIZED_TEST
+#define ENABLE_VSYNC true
+#endif // OPTIMIZATION_TEST
 
 
 using ObjectInfoNames = SimSerializer::ObjectInfoNames;
@@ -142,6 +150,8 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 		[this](double xpos, double ypos) { camera->Zoom(static_cast<float>(xpos), static_cast<float>(ypos)); }
 	);
 
+	mainLGL->SetRenderDeltaCallback(ObjectSim::SetRenderDeltaTime);
+
 	std::string walkingDirections = "WSAD";
 	for (size_t i = 0; i < walkingDirections.size(); ++i)
 	{
@@ -209,6 +219,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 
 	animSystem = std::make_unique<AnimSystem>();
 
+	mainLGL->EnableVSync(ENABLE_VSYNC);
 	mainLGL->EnableUniformValueBatchSending(ENABLE_OPTIMIZATIONS);
 	mainLGL->EnableUniformValueHashing(ENABLE_OPTIMIZATIONS);
 }

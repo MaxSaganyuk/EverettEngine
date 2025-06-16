@@ -28,6 +28,7 @@ using namespace LGLStructs;
 std::function<void(double, double)> LGL::cursorPositionFunc = nullptr;
 std::function<void(double, double)> LGL::scrollCallbackFunc = nullptr;
 std::function<void(int, int, int, int)> LGL::keyPressCallbackFunc = nullptr;
+std::function<void(float)> LGL::renderTimeCallbackFunc = nullptr;
 
 std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
 {
@@ -55,6 +56,8 @@ LGL::LGL()
 	uniformHasher = std::make_unique<LGLUniformHasher>();
 	batchUniformVals = true;
 	hashUniformVals = true;
+	useVSync = true;
+	renderDeltaTime = 1.0f;
 
 	std::cout << "Created LambdaGL instance\n";
 }
@@ -239,6 +242,13 @@ void LGL::SetKeyPressCallback(std::function<void(int, int, int, int)> callbackFu
 	std::cout << "Key press callback set\n";
 }
 
+void LGL::SetRenderDeltaCallback(std::function<void(float)> callbackFunc)
+{
+	renderTimeCallbackFunc = callbackFunc;
+
+	std::cout << "Render delta callback set\n";
+}
+
 int LGL::GetMaxAmountOfVertexAttr()
 {
 	ContextLock
@@ -283,6 +293,11 @@ void LGL::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
+void LGL::EnableVSync(bool value)
+{
+	useVSync = value;
+}
+
 void LGL::Render()
 {
 	if (currentVAOToRender.vboId != 0)
@@ -308,6 +323,8 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 	while (!glfwWindowShouldClose(window))
 	{
 		ContextLock
+		std::chrono::system_clock::time_point renderStartTime = std::chrono::system_clock::now();
+		glfwSwapInterval(useVSync);
 
 		if(pauseRendering) continue;
 
@@ -385,6 +402,12 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		renderDeltaTime = std::chrono::duration<float>(std::chrono::system_clock::now() - renderStartTime).count();
+		if (renderTimeCallbackFunc)
+		{
+			renderTimeCallbackFunc(renderDeltaTime);
+		}
 	}
 }
 

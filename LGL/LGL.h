@@ -122,6 +122,7 @@ public:
 	LGL_API void RunRenderingCycle(std::function<void()> additionalSteps = nullptr);
 	LGL_API void PauseRendering(bool value = true);
 	LGL_API void SetStaticBackgroundColor(const glm::vec4& rgba);
+	LGL_API void EnableVSync(bool value = true);
 
 	// Creates a VAO, VBO and (if indices are given) EBO
 	// Must accept amount of steps for
@@ -172,6 +173,7 @@ public:
 	LGL_API void SetCursorPositionCallback(std::function<void(double, double)> callbackFunc);
 	LGL_API void SetScrollCallback(std::function<void(double, double)> callbackFunc);
 	LGL_API void SetKeyPressCallback(std::function<void(int, int, int, int)> callbackFunc);
+	LGL_API void SetRenderDeltaCallback(std::function<void(float)> callbackFunc);
 
 	//Function templates
 	template<typename Type>
@@ -217,9 +219,14 @@ private:
 	CALLBACK KeyPressCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	static std::function<void(int, int, int, int)> keyPressCallbackFunc;
 
+	static std::function<void(float)> renderTimeCallbackFunc;
+
 	void ProcessInput();
 	void Render();
 
+	float renderDeltaTime;
+
+	bool useVSync; // Passed value is not bool, but will do for on/off switch
 	bool pauseRendering;
 
 	GLFWwindow* window;
