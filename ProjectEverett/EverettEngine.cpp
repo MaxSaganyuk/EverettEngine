@@ -977,8 +977,11 @@ bool EverettEngine::SaveDataToFile(const std::string& filePath)
 
 void EverettEngine::LoadCameraFromLine(std::string_view& line)
 {
-	camera->SetSimInfoToLoad(line);
-	camera->ForceModelUpdate();
+	bool res = false;
+
+	ApplySimInfoFromLine<CameraSim>(line, {"", "", "Camera", ""}, res);
+
+	assert(res && "Camera setup from file failed");
 }
 
 template<typename Sim>
@@ -988,7 +991,7 @@ void EverettEngine::ApplySimInfoFromLine(std::string_view& line, const std::arra
 		GetObjectPureTypeToName(typeid(Sim)),
 		objectInfo[ObjectInfoNames::SubtypeName],
 		objectInfo[ObjectInfoNames::ObjectName])
-		);
+	);
 
 	if (createdObject)
 	{
@@ -996,7 +999,7 @@ void EverettEngine::ApplySimInfoFromLine(std::string_view& line, const std::arra
 
 		if (!res) return;
 
-		if constexpr (std::is_same_v<Sim, SolidSim>) 
+		if constexpr (std::is_base_of_v<SolidSim, Sim>) 
 		{
 			createdObject->ForceModelUpdate();
 		}
