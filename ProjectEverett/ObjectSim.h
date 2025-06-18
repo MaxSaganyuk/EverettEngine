@@ -10,9 +10,9 @@
 
 class ObjectSim : virtual public IObjectSim
 {
-private:
-	static inline float renderDeltaTime = 1.0f;
 protected:
+	static inline float renderDeltaTime = 1.0f;
+
 	std::string GetSimInfoToSaveImpl();
 	bool SetSimInfoToLoad(std::string_view& line);
 	void CheckRotationLimits();
@@ -55,6 +55,9 @@ public:
 	glm::vec3& GetPositionVectorAddr() override;
 	glm::vec3& GetUpVectorAddr() override;
 	glm::vec3& GetScaleVectorAddr() override;
+
+	void SetMovementSpeed(float speed) override;
+	float GetMovementSpeed() override;
 
 	void SetGhostMode(bool val) override;
 	bool IsGhostMode() const override;

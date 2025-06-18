@@ -20,7 +20,7 @@ CameraSim::CameraSim(
 	lastX = static_cast<float>(windowHeight);
 	lastY = static_cast<float>(windowWidth);
 
-	sensitivity = 0.05f;
+	sensitivity = 0.1f;
 
 	mode = Mode::Fly;
 

@@ -46,6 +46,9 @@ public:
 	virtual void InvertMovement() = 0;
 	virtual bool IsMovementInverted() = 0;
 
+	virtual void SetMovementSpeed(float speed) = 0;
+	virtual float GetMovementSpeed() = 0;
+
 	virtual glm::vec3& GetFrontVectorAddr() = 0;
 	virtual glm::vec3& GetPositionVectorAddr() = 0;
 	virtual glm::vec3& GetUpVectorAddr() = 0;

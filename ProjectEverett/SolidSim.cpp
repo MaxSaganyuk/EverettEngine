@@ -145,7 +145,7 @@ void SolidSim::Rotate(const Rotation& toRotate)
 		{
 			if (toRotate[i])
 			{
-				model = glm::rotate(model, toRotate[i], { i == 0, i == 1, i == 2 });
+				model = glm::rotate(model, renderDeltaTime * toRotate[i], { i == 0, i == 1, i == 2 });
 				rotate[i] += toRotate[i];
 			}
 		}

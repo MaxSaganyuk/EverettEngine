@@ -120,6 +120,16 @@ bool ObjectSim::IsGhostMode() const
 	return ghostMode;
 }
 
+void ObjectSim::SetMovementSpeed(float speed)
+{
+	this->speed = speed;
+}
+
+float ObjectSim::GetMovementSpeed()
+{
+	return speed;
+}
+
 void ObjectSim::InvertMovement()
 {
 	speed = (-1) * speed;

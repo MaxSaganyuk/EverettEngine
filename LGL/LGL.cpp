@@ -185,6 +185,8 @@ void LGL::InitCallbacks()
 
 	glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
 	glfwSetErrorCallback(GLFWErrorCallback);
+
+	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, true);
 }
 
 void LGL::TerminateOpenGL()
@@ -329,6 +331,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 		if(pauseRendering) continue;
 
 		ProcessInput();
+		glfwPollEvents();
 
 		GLSafeExecute(glClearColor, background.r, background.g, background.b, background.a);
 		GLSafeExecute(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -401,7 +404,6 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 		}
 
 		glfwSwapBuffers(window);
-		glfwPollEvents();
 
 		renderDeltaTime = std::chrono::duration<float>(std::chrono::system_clock::now() - renderStartTime).count();
 		if (renderTimeCallbackFunc)
