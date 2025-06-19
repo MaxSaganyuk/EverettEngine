@@ -176,6 +176,9 @@ private:
 	static inline const std::string saveFileType = ".esav";
 	std::string defaultShaderProgram;
 
+	size_t currentStartSolidIndex;
+	size_t nextStartSolidIndex;
+
 	std::function<void(double, double)> cursorCaptureCallback;
 
 	struct ModelSolidInfo;

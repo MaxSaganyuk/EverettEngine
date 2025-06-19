@@ -167,6 +167,9 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->CaptureMouse(true);
 
 	auto additionalFuncs = [this]() {
+		currentStartSolidIndex = 0;
+		nextStartSolidIndex = 0;
+
 		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();
 
 		if (!finalTransforms.empty())
@@ -306,7 +309,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 		if (!model.solids.empty())
 		{
-			size_t index = 0;
+			size_t index = currentStartSolidIndex = nextStartSolidIndex;
 			for (auto& [solidName, solid] : model.solids)
 			{
 				glm::mat4& modelMatrix = solid.GetModelMatrixAddr();
@@ -324,6 +327,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 				++index;
 			}
+			nextStartSolidIndex = index;
 		}
 	};
 
@@ -332,7 +336,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
 
-		size_t index = 0;
+		size_t index = currentStartSolidIndex;
 		for (auto& [solidName, solid] : model.solids)
 		{
 			mainLGL->SetShaderUniformValue("meshVisibility", static_cast<int>(solid.GetModelMeshVisibility(meshIndex)));
