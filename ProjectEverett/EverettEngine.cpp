@@ -259,6 +259,11 @@ int EverettEngine::ConvertKeyTo(const std::string& keyName)
 
 bool EverettEngine::CreateModel(const std::string& path, const std::string& name)
 {
+	return CreateModelImpl(path, name, !MSM.size());
+}
+
+bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader)
+{
 	if (MSM.find(name) != MSM.end())
 	{
 		return true;
@@ -346,6 +351,11 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 		}
 	};
 
+	if (regenerateShader)
+	{
+		GenerateShader();
+	}
+
 	mainLGL->CreateModel(name, newModel);
 
 	fileLoader->modelLoader.FreeTextureData();
@@ -397,16 +407,20 @@ void EverettEngine::GenerateShader()
 {
 	ShaderGenerator shaderGen;
 	size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
+	size_t totalSolidAmount = GetCreatedSolidAmount();
 
 #ifdef _DEBUG
 	std::string filePath = FileLoader::GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
 
 	shaderGen.LoadPreSources(filePath);
-	if (totalBoneAmount)
+	if (totalBoneAmount > 1)
 	{
 		shaderGen.SetValueToDefine("BONE_AMOUNT", totalBoneAmount);
 	}
-	shaderGen.SetValueToDefine("SOLID_AMOUNT", GetCreatedSolidAmount());
+	if (totalSolidAmount > 1)
+	{
+		shaderGen.SetValueToDefine("SOLID_AMOUNT", totalSolidAmount);
+	}
 	shaderGen.GenerateShaderFiles(filePath);
 
 	mainLGL->RecompileShader(defaultShaderProgram);
@@ -494,6 +508,7 @@ bool EverettEngine::DeleteModel(const std::string& modelName)
 
 		res = true;
 	}
+	GenerateShader();
 	
 	mainLGL->PauseRendering(false);
 
@@ -518,6 +533,7 @@ bool EverettEngine::DeleteSolid(const std::string& solidName)
 			res = true;
 		}
 	}
+	GenerateShader();
 
 	mainLGL->PauseRendering(false);
 
@@ -1022,7 +1038,7 @@ void EverettEngine::LoadSolidFromLine(std::string_view& line, const std::array<s
 {
 	bool res = false;
 
-	if (CreateModel(objectInfo[ObjectInfoNames::Path], objectInfo[ObjectInfoNames::SubtypeName]) &&
+	if (CreateModelImpl(objectInfo[ObjectInfoNames::Path], objectInfo[ObjectInfoNames::SubtypeName], false) &&
 		CreateSolidImpl(objectInfo[ObjectInfoNames::SubtypeName], objectInfo[ObjectInfoNames::ObjectName], false))
 	{
 		ApplySimInfoFromLine<SolidSim>(line, objectInfo, res);

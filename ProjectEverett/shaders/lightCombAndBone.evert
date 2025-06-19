@@ -16,7 +16,7 @@ out vec4 Weights;
 uniform mat4 view;
 uniform mat4 proj;
 
-#genDefine SOLID_AMOUNT 0
+#genDefine SOLID_AMOUNT 1
 uniform mat4 models[SOLID_AMOUNT];
 uniform mat4 invs[SOLID_AMOUNT];
 uniform int solidIndex;
