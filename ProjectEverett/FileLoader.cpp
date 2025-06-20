@@ -614,14 +614,14 @@ void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
 	dllHandleMap[dllPath].first = nullptr;
 }
 
-std::vector<std::string> FileLoader::DLLLoader::GetLoadedScriptDlls()
+std::vector<std::pair<std::string, std::string>> FileLoader::DLLLoader::GetLoadedScriptDlls()
 {
-	std::vector<std::string> loadedDlls;
+	std::vector<std::pair<std::string, std::string>> loadedDlls;
 	loadedDlls.reserve(dllHandleMap.size());
 
-	for (auto& [dllName, dllInfo] : dllHandleMap)
+	for (auto& [dllPath, dllInfo] : dllHandleMap)
 	{
-		loadedDlls.push_back(dllName);
+		loadedDlls.push_back({ dllPath, dllPath.substr(dllPath.rfind('\\') + 1, std::string::npos) });
 	}
 
 	return loadedDlls;

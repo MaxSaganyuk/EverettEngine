@@ -92,7 +92,7 @@ class FileLoader
 			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
 		);
 		void UnloadScriptDLL(const std::string& dllPath);
-		std::vector<std::string> GetLoadedScriptDlls();
+		std::vector<std::pair<std::string, std::string>> GetLoadedScriptDlls();
 	};
 
 public:

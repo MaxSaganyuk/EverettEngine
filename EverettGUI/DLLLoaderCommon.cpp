@@ -62,6 +62,7 @@ BOOL DLLLoaderCommon::OnInitDialog()
 		dllComboBox.SetCurSel(0);
 		loadScriptButton.EnableWindow(true);
 		scriptRunIndicator.SetCheck(isScriptSetFunc(selectedScriptDllInfo[0].second));
+		UpdateScriptButtons();
 	}
 
 	return true;

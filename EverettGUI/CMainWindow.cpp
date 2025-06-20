@@ -184,3 +184,13 @@ std::vector<std::pair<AdString, AdString>>& CMainWindow::GetSelectedScriptDllInf
 {
 	return selectedScriptDllInfo;
 }
+
+bool CMainWindow::SetSelectedScriptDLLInfo(const std::vector<std::pair<std::string, std::string>>& scriptDLLInfo)
+{
+	for (auto& scriptDLLPair : scriptDLLInfo)
+	{
+		selectedScriptDllInfo.push_back({ scriptDLLPair.first, scriptDLLPair.second });
+	}
+
+	return true;
+}

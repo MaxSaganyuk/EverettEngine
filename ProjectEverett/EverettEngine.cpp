@@ -827,6 +827,11 @@ bool EverettEngine::IsKeyScriptSet(
 	return pressedFunc.IsScriptFuncRunnable(dllName) || releasedFunc.IsScriptFuncRunnable(dllName);
 }
 
+std::vector<std::pair<std::string, std::string>> EverettEngine::GetLoadedScriptDLLs()
+{
+	return fileLoader->dllloader.GetLoadedScriptDlls();
+}
+
 std::vector<std::string> EverettEngine::GetObjectsInDirList(
 	const std::string& path, 
 	const std::vector<std::string>& fileTypes

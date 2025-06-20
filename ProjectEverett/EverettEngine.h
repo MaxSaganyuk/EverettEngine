@@ -139,6 +139,7 @@ public:
 	);
 
 	EVERETT_API void UnsetScript(const std::string& dllName);
+	EVERETT_API std::vector<std::pair<std::string, std::string>> GetLoadedScriptDLLs();
 
 	EVERETT_API std::vector<std::string> GetModelInDirList(const std::string& path);
 	EVERETT_API std::vector<std::string> GetSoundInDirList(const std::string& path);

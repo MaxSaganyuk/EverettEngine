@@ -228,7 +228,11 @@ void CMainFrame::OnLoadSave(bool load, std::function<bool(const std::string&)> l
 void CMainFrame::OnLoad()
 {
 	OnLoadSave(true, [this](const std::string& path){ 
-		return ClearTree() && engine.LoadDataFromFile(path) && LoadObjectNamesToTree(); 
+		return 
+			ClearTree() && 
+			engine.LoadDataFromFile(path) && 
+			LoadObjectNamesToTree() && 
+			mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
 	});
 }
 
