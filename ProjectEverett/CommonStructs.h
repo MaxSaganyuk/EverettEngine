@@ -13,6 +13,13 @@ struct PlayerStates
 		looped = false;
 	}
 
+	void NullifyValues()
+	{
+		playing = false;
+		paused = false;
+		looped = false;
+	}
+
 	PlayerStates()
 	{
 		ResetValues();

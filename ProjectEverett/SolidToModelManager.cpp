@@ -13,6 +13,11 @@ void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
 	animationSpeed = 1.0;
 
 	initialized = true;
+
+	if (!GetAnimationAmount())
+	{
+		animStates.NullifyValues();
+	}
 }
 
 void SolidToModelManager::ResetAnimationTime()

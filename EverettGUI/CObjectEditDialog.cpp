@@ -106,6 +106,8 @@ void CObjectEditDialog::SetupModelParams()
 	playerPlayButton.EnableWindow(false);
 	playerPauseButton.EnableWindow(false);
 	playerStopButton.EnableWindow(false);
+	playerLoopCheck.EnableWindow(false);
+	playerSpeedEdit.EnableWindow(false);
 
 	if (isSolid || isSound)
 	{
@@ -137,6 +139,10 @@ void CObjectEditDialog::SetupModelParams()
 				meshComboBox.SetCurSel(0);
 			}
 
+			meshVisCheck.SetCheck(
+				castedSolidInterface->GetModelMeshVisibility(0)
+			);
+
 			std::vector<std::string> animNames = castedSolidInterface->GetModelAnimationNames();
 			for (auto& animName : animNames)
 			{
@@ -146,6 +152,8 @@ void CObjectEditDialog::SetupModelParams()
 			if (!animNames.empty())
 			{
 				playerComboBox.SetCurSel(static_cast<int>(castedSolidInterface->GetModelAnimation()));
+				playerLoopCheck.EnableWindow(true);
+				playerSpeedEdit.EnableWindow(true);
 			}
 		}
 
