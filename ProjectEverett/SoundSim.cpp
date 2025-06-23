@@ -203,5 +203,13 @@ std::string SoundSim::GetObjectTypeNameStr()
 
 SoundSim::~SoundSim()
 {
-	drwav_free(sound.data, nullptr);
+	if (freeDRWav)
+	{
+		drwav_free(sound.data, nullptr);
+	}
+}
+
+void SoundSim::TriggerFreeDrWav(bool value)
+{
+	freeDRWav = value;
 }

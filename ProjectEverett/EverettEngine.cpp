@@ -954,7 +954,11 @@ void EverettEngine::ResetEngine()
 {
 	MSM.clear();
 	lights.clear();
+
+	SoundSim::TriggerFreeDrWav();
 	sounds.clear();
+	SoundSim::TriggerFreeDrWav(false);
+
 	keyScriptFuncMap.clear();
 	allNameTracker.clear();
 

@@ -20,7 +20,9 @@ class SoundSim : public ObjectSim, public ISoundSim
 {
 	static inline ALCdevice* device = nullptr;
 	static inline CameraSim* camera = nullptr;
-	
+
+	static inline bool freeDRWav = false;
+
 	ALCcontext* context = nullptr;
 
 	struct SoundInfo
@@ -58,6 +60,7 @@ public:
 	bool SetSimInfoToLoad(std::string_view& line);
 
 	static void InitOpenAL();
+	static void TriggerFreeDrWav(bool value = true);
 	static void SetCamera(CameraSim& camera);
 	SoundSim() = default;
 	SoundSim(const std::string& file, glm::vec3& pos);
