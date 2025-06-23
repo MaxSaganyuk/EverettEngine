@@ -380,7 +380,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 						}
 					}
 
-					std::function<void(int)> behaviourToCheck = currentVAO.meshInfo->behaviour;
+					std::function<void(int)>& behaviourToCheck = currentVAO.meshInfo->behaviour;
 					if (behaviourToCheck)
 					{
 						behaviourToCheck(static_cast<int>(meshIndex));
