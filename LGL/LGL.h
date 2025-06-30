@@ -88,6 +88,12 @@ private:
 		std::function<void()> releasedFunc;
 	};
 
+	struct RenderCharVertex
+	{
+		glm::vec2 pos;
+		glm::vec2 uv;
+	};
+
 	class LGLEnumInterpreter
 	{
 	public:
@@ -137,10 +143,13 @@ public:
 #else	
 	LGL_API void CreateMesh(const std::string& modelName, LGLStructs::MeshInfo& meshInfo);
 	LGL_API void CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model);
+	LGL_API void CreateText(const std::string& textLabel, LGLStructs::TextInfo& text);
 
 	LGL_API void DeleteModel(const std::string& modelName);
+	LGL_API void DeleteText(const std::string& textLabel);
 #endif
 	LGL_API bool ConfigureTexture(const std::string& modelName, const LGLStructs::Texture& texture);
+	LGL_API bool ConfigueGlyphTexture(const std::string& collectionName, const LGLStructs::GlyphTexture& glyphText);
 
 	LGL_API static void InitOpenGL(int major, int minor);
 
@@ -195,12 +204,16 @@ private:
 		ShaderProgram& shaderProgramID
 	);
 
+	void CreateRenderTextVO();
+
 	// If no name is given will compile last loaded shader
 	bool CompileShader(const std::string& name = "");
 	bool LoadShaderFromFile(const std::string& name, const std::string& file, const std::string& shaderType);
 
 	// If no list of shaders is provided, will create a program with all compiled shaders
 	bool CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderVector = {});
+
+	bool ConfigureTextureImpl(TextureID& newTextureID, const LGLStructs::Texture& texture);
 
 	// If shader file names can be identical to shader program name, general load and compile can be used
 	bool LoadAndCompileShader(const std::string& name);
@@ -223,6 +236,7 @@ private:
 
 	void ProcessInput();
 	void Render();
+	void RenderText();
 
 	float renderDeltaTime;
 
@@ -237,6 +251,12 @@ private:
 	std::vector<VBO> VBOCollection;
 	InternalModelMap internalModelMap;
 	std::vector<EBO> EBOCollection;
+
+	VAO renderTextVAO;
+	VBO renderTextVBO;
+	bool renderTextVOCreated;
+	std::map<std::string, LGLStructs::TextInfo*> internalTextMap;
+	std::map<std::string, std::map<char, TextureID>> collectionToCharTextures;
 
 	// Shader
 	std::string shaderPath;

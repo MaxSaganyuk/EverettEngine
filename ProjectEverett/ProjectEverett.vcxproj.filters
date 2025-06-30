@@ -96,6 +96,12 @@
     <ClInclude Include="CommonStructs.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="RenderTextManager.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderLogger.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MazeGen.cpp">
@@ -144,6 +150,12 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="SimSerializer.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTextManager.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderLogger.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
@@ -221,6 +233,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\boneTest.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\rText.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\rText.vert">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

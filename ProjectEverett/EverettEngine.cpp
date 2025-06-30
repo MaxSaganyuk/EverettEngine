@@ -27,6 +27,9 @@
 
 #include "AnimSystem.h"
 
+#include "RenderTextManager.h"
+#include "RenderLogger.h"
+
 #define EVERETT_EXPORT
 #include "EverettEngine.h"
 
@@ -113,6 +116,10 @@ EverettEngine::EverettEngine()
 
 	fileLoader = std::make_unique<FileLoader>();
 	cmdHandler = std::make_unique<CommandHandler>();
+	renderTextManager = std::make_unique<RenderTextManager>();
+
+	stdOutStreamBuffer = std::cout.rdbuf();
+	stdErrStreamBuffer = std::cerr.rdbuf();
 }
 
 EverettEngine::~EverettEngine()
@@ -134,6 +141,31 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 #if _DEBUG
 	mainLGL->SetShaderFolder(FileLoader::GetCurrentDir() + debugShaderPath);
 #endif
+	renderTextManager->Init();
+	renderTextManager->LoadFontFromPath(debugFontPath + std::string("\\") + loggerFont, 16);
+
+	generalRenderTextBehaviour = [this, windowHeight, windowWidth](glm::vec4&& colorToUse)
+	{
+		mainLGL->SetShaderUniformValue(
+			"proj", 
+			glm::ortho(0.0f, static_cast<float>(windowHeight), 0.0f, static_cast<float>(windowWidth))
+		);
+		mainLGL->SetShaderUniformValue("textColor", colorToUse);
+	};
+
+	defaultRenderTextShaderProgram = "rText";
+
+	logger = std::make_unique<RenderLogger>(
+		renderTextManager->GetAllGlyphTextures(loggerFont),
+		defaultRenderTextShaderProgram,
+		[this] () { generalRenderTextBehaviour({ 1.0f, 1.0f, 1.0f, 1.0f }); },
+		[this] () { generalRenderTextBehaviour({ 1.0f, 0.0f, 0.0f, 1.0f }); },
+		[this] (const std::string& labelName, LGLStructs::TextInfo& text) { mainLGL->CreateText(labelName, text); },
+		[this] (const std::string& labelName) { mainLGL->DeleteText(labelName); }
+	);
+	
+	SetCustomStreamBuffers();
+
 	camera = std::make_unique<CameraSim>(windowHeight, windowWidth);;
 	camera->SetMode(CameraSim::Mode::Fly);
 	camera->SetGhostMode(true);
@@ -216,6 +248,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 #else
 	defaultShaderProgram = "lightCombAndBone";
 #endif
+
 	mainLGLRenderThread = std::make_unique<std::thread>(
 		[this, additionalFuncs]() { mainLGL->RunRenderingCycle(additionalFuncs); }
 	);
@@ -952,6 +985,8 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 
 void EverettEngine::ResetEngine()
 {
+	SetCustomStreamBuffers(false);
+
 	MSM.clear();
 	lights.clear();
 
@@ -968,6 +1003,8 @@ void EverettEngine::ResetEngine()
 	}
 
 	mainLGL->ResetLGL();
+
+	SetCustomStreamBuffers();
 }
 
 bool EverettEngine::SaveDataToFile(const std::string& filePath)
@@ -1364,6 +1401,16 @@ void EverettEngine::CheckAndAddToNameTracker(const std::string& name)
 	{
 		allNameTracker.emplace(&name, 1);
 	}
+}
+
+void EverettEngine::SetCustomStreamBuffers(bool value)
+{
+	if (value)
+	{
+		logger->CreateLogMessage("Trigger render text shader load and custom output buffer set");
+	}
+	std::cout.rdbuf(value ? logger->GetCustomLogOutputBuffer() : stdOutStreamBuffer);
+	std::cerr.rdbuf(value ? logger->GetCustomErrorOutputBuffer() : stdErrStreamBuffer);
 }
 
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)

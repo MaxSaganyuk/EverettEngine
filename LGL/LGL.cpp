@@ -58,6 +58,7 @@ LGL::LGL()
 	hashUniformVals = true;
 	useVSync = true;
 	renderDeltaTime = 1.0f;
+	renderTextVOCreated = false;
 
 	std::cout << "Created LambdaGL instance\n";
 }
@@ -91,6 +92,23 @@ void LGL::DeleteGLObjects()
 		}
 	}
 	internalModelMap.clear();
+	internalTextMap.clear();
+
+	for (auto& fontAndChars : collectionToCharTextures)
+	{
+		for (auto& chars : fontAndChars.second)
+		{
+			GLSafeExecute(glDeleteTextures, 1, &chars.second);
+		}
+	}
+	collectionToCharTextures.clear();
+
+	if (renderTextVOCreated)
+	{
+		GLSafeExecute(glDeleteVertexArrays, 1, &renderTextVAO);
+		GLSafeExecute(glDeleteBuffers, 1, &renderTextVBO);
+		renderTextVOCreated = false;
+	}
 
 	for (auto& VBO : VBOCollection)
 	{
@@ -173,6 +191,9 @@ bool LGL::InitGLAD()
 	}
 
 	SetDepthTest(DepthTestMode::Less);
+
+	GLSafeExecute(glEnable, GL_BLEND);
+	GLSafeExecute(glBlendFunc, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	std::cout << "GLAD initialized\n";
 
@@ -300,6 +321,72 @@ void LGL::EnableVSync(bool value)
 	useVSync = value;
 }
 
+void LGL::RenderText()
+{
+	ContextLock
+
+	for (auto& text : internalTextMap)
+	{
+		if (!text.second->render) continue;
+
+		std::string& shaderProgramToCheck = text.second->shaderProgram;
+		if (lastProgram != shaderProgramToCheck)
+		{
+			lastProgram = shaderProgramToCheck;
+			GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
+		}
+
+		GLSafeExecute(glActiveTexture, GL_TEXTURE0);
+		GLSafeExecute(glBindVertexArray, renderTextVAO);
+
+		if (text.second->behaviour)
+		{
+			text.second->behaviour();
+		}
+
+		// Needs to be optimized to batch and draw string by string, likely
+		std::vector<RenderCharVertex> currentRenderCharVertVec;
+		currentRenderCharVertVec.reserve(6);
+		glm::vec3 pos = text.second->position;
+
+		for (auto c : text.second->text)
+		{
+			const LGLStructs::GlyphTexture& glyph = text.second->glyphInfo.glyphs.at(c);
+
+			float xpos = pos.x + glyph.bitmap_left * pos.z;
+			float ypos = pos.y - (glyph.height - glyph.bitmap_top) * pos.z;
+			float wpos = glyph.width * pos.z;
+			float hpos = glyph.height * pos.z;
+
+			currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        }, { 0.0f, 0.0f }});
+			currentRenderCharVertVec.push_back({{ xpos, ypos               }, { 0.0f, 1.0f }});
+			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        }, { 1.0f, 1.0f }});
+			currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        }, { 0.0f, 0.0f }});
+			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        }, { 1.0f, 1.0f }});
+			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos + hpos }, { 1.0f, 0.0f }});           
+
+			GLSafeExecute(glBindTexture, GL_TEXTURE_2D, collectionToCharTextures[text.second->glyphInfo.fontName][c]);
+
+			GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, renderTextVBO);
+
+			GLSafeExecute(
+				glBufferData,
+				GL_ARRAY_BUFFER,
+				currentRenderCharVertVec.size() * sizeof(RenderCharVertex),
+				currentRenderCharVertVec.data(),
+				GL_DYNAMIC_DRAW
+			);
+			GLSafeExecute(glDrawArrays, GL_TRIANGLES, 0, currentRenderCharVertVec.size());
+			currentRenderCharVertVec.clear();
+
+			pos.x += (glyph.advanceX >> 6);
+		}
+	}
+
+	GLSafeExecute(glActiveTexture, GL_TEXTURE0);
+	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
+}
+
 void LGL::Render()
 {
 	if (currentVAOToRender.vboId != 0)
@@ -341,8 +428,17 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			additionalSteps();
 		}
 
+		RenderText();
+
 		for (auto& currentModelToProcess : internalModelMap)
 		{
+			std::string& shaderProgramToCheck = currentModelToProcess.second.modelPtr->shaderProgram;
+			if (lastProgram != shaderProgramToCheck)
+			{
+				lastProgram = shaderProgramToCheck;
+				GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
+			}
+
 			std::function<void()>& modelBeh = currentModelToProcess.second.modelPtr->modelBehaviour;
 			if (modelBeh)
 			{
@@ -357,7 +453,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 				{
 					currentVAOToRender = currentVAO;
 
-					std::string shaderProgramToCheck = currentVAO.meshInfo->shaderProgram;
+					std::string& shaderProgramToCheck = currentVAO.meshInfo->shaderProgram;
 					if (lastProgram != shaderProgramToCheck)
 					{
 						lastProgram = shaderProgramToCheck;
@@ -423,6 +519,19 @@ void LGL::PauseRendering(bool value)
 void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
 {
 	background = rgba;
+}
+
+void LGL::CreateRenderTextVO()
+{
+	ContextLock
+
+	GLSafeExecute(glGenVertexArrays, 1, &renderTextVAO);
+	GLSafeExecute(glGenBuffers, 1, &renderTextVBO);
+	GLSafeExecute(glBindVertexArray, renderTextVAO);
+	GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, renderTextVBO);
+	GLSafeExecute(glBufferData, GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+	GLSafeExecute(glEnableVertexAttribArray, 0);
+	GLSafeExecute(glVertexAttribPointer, 0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 }
 
 void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
@@ -558,22 +667,49 @@ void LGL::CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model
 	}
 }
 
+void LGL::CreateText(const std::string& textLabel, LGLStructs::TextInfo& text)
+{
+	LoadAndCompileShader(text.shaderProgram);
+	if (collectionToCharTextures.find(text.glyphInfo.fontName) == collectionToCharTextures.end())
+	{
+		for (auto& charTexture : text.glyphInfo.glyphs)
+		{
+			ConfigueGlyphTexture(text.glyphInfo.fontName, charTexture.second);
+		}
+	}
+
+	internalTextMap[textLabel] = &text;
+}
+
 void LGL::DeleteModel(const std::string& modelName)
 {
 	ContextLock
 
-	GLSafeExecute(glBindVertexArray, 0);
-
-	for (auto& VAO : internalModelMap[modelName].VAOs)
+	if(internalModelMap.find(modelName) != internalModelMap.end())
 	{
-		GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
-	}
-	for (auto& texture : internalModelMap[modelName].textureIDs)
-	{
-		GLSafeExecute(glDeleteTextures, 1, &texture.second);
-	}
+		GLSafeExecute(glBindVertexArray, 0);
 
-	internalModelMap.erase(modelName);
+		for (auto& VAO : internalModelMap[modelName].VAOs)
+		{
+			GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
+		}
+		for (auto& texture : internalModelMap[modelName].textureIDs)
+		{
+			GLSafeExecute(glDeleteTextures, 1, &texture.second);
+		}
+
+		internalModelMap.erase(modelName);
+	}
+}
+
+void LGL::DeleteText(const std::string& textLabel)
+{
+	ContextLock
+
+	if (internalTextMap.find(textLabel) != internalTextMap.end())
+	{
+		internalTextMap.erase(textLabel);
+	}
 }
 
 #ifdef ENABLE_OLD_MODEL_IMPORT
@@ -779,6 +915,8 @@ bool LGL::CompileShader(const std::string& name)
 
 bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, const std::string& shaderType)
 {
+	ContextLock
+
 	std::string shader; // change to stringstream
 	std::string line;
 
@@ -788,7 +926,7 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, c
 
 	if (!reader)
 	{
-		std::cout << file + " shader does not exist\n";
+		std::cout << name + '.' + shaderType + " shader does not exist\n";
 		return atLeastOneFileLoaded;
 	}
 
@@ -804,23 +942,15 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, c
 		}
 	);
 
-	std::cout << "Shader " << file << " loaded\n";
+	std::cout << "Shader " << name + '.' + shaderType << " loaded\n";
 
 	return true;
 }
 
-bool LGL::ConfigureTexture(const std::string& modelName, const Texture& texture)
+bool LGL::ConfigureTextureImpl(TextureID& newTextureID, const Texture& texture)
 {
 	ContextLock
 
-	if (internalModelMap[modelName].textureIDs.find(texture.name) != internalModelMap[modelName].textureIDs.end())
-	{
-		return true;
-	}
-
-	internalModelMap[modelName].textureIDs[texture.name] = TextureID();
-
-	TextureID& newTextureID = internalModelMap[modelName].textureIDs[texture.name];
 	GLSafeExecute(glGenTextures, 1, &newTextureID);
 	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, newTextureID);
 
@@ -830,7 +960,7 @@ bool LGL::ConfigureTexture(const std::string& modelName, const Texture& texture)
 		texture.params.color.b,
 		texture.params.color.a,
 	};
-
+	
 	GLSafeExecute(
 		glTexParameteri,
 		GL_TEXTURE_2D, 
@@ -875,6 +1005,11 @@ bool LGL::ConfigureTexture(const std::string& modelName, const Texture& texture)
 		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glParams[texture.params.BFConfig.minFilter]);
 		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glParams[texture.params.BFConfig.maxFilter]);
 	}
+	
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	unsigned int textureFormat;
 
@@ -894,8 +1029,7 @@ bool LGL::ConfigureTexture(const std::string& modelName, const Texture& texture)
 		return false;
 	}
 
-	GLSafeExecute(glPixelStorei, GL_UNPACK_ALIGNMENT, textureFormat == 3 ? 1 : 4);
-
+	GLSafeExecute(glPixelStorei, GL_UNPACK_ALIGNMENT, textureFormat != GL_RGBA ? 1 : 4);
 
 	GLSafeExecute(
 		glTexImage2D,
@@ -913,6 +1047,38 @@ bool LGL::ConfigureTexture(const std::string& modelName, const Texture& texture)
 	std::cout << "Texture " << texture.name << " configured\n";
 
 	return true;
+}
+
+bool LGL::ConfigureTexture(const std::string& modelName, const LGLStructs::Texture& texture)
+{
+	if (internalModelMap[modelName].textureIDs.find(texture.name) != internalModelMap[modelName].textureIDs.end())
+	{
+		return true;
+	}
+
+	internalModelMap[modelName].textureIDs[texture.name] = TextureID();
+
+	TextureID& newTextureID = internalModelMap[modelName].textureIDs[texture.name];
+
+	return ConfigureTextureImpl(newTextureID, texture);
+}
+
+bool LGL::ConfigueGlyphTexture(const std::string& collectionName, const LGLStructs::GlyphTexture& glyphTexture)
+{
+	if (!renderTextVOCreated)
+	{
+		CreateRenderTextVO();
+		renderTextVOCreated = true;
+	}
+	
+	if (collectionToCharTextures.find(collectionName) == collectionToCharTextures.end())
+	{
+		collectionToCharTextures[collectionName] = {};
+	}
+
+	TextureID& currentRenderCharTexture = collectionToCharTextures[collectionName][glyphTexture.c];
+
+	return ConfigureTextureImpl(currentRenderCharTexture, glyphTexture);
 }
 
 bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderNames)
@@ -1169,7 +1335,7 @@ int LGL::CheckUniformValueLocation(
 		{
 			if (std::find(uniformErrorAntispam.begin(), uniformErrorAntispam.end(), valueName) == std::end(uniformErrorAntispam))
 			{
-				std::cout << "[ERROR] Shader value " + valueName << " could not be located\n";
+				std::cerr << "[ERROR] Shader value " + valueName << " could not be located\n";
 				uniformErrorAntispam.push_back(valueName);
 			}
 		}

@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <array>
+#include <map>
 #include <unordered_map>
 
 namespace LGLStructs
@@ -179,6 +180,25 @@ namespace LGLStructs
 		int height;
 		int channelAmount;
 
+		Texture() = default;
+
+		Texture(
+			const std::string& name,
+			TextureType type,
+			TextureData data,
+			TextureParams params,
+			int width,
+			int height,
+			int channelAmount
+		) :
+			name(name),
+			type(type),
+			data(data),
+			params(params),
+			width(width),
+			height(height),
+			channelAmount(channelAmount) {}
+
 		constexpr static size_t GetTextureTypeAmount()
 		{
 			constexpr size_t typeAmount = static_cast<size_t>(TextureType::_SIZE);
@@ -308,5 +328,62 @@ namespace LGLStructs
 
 			return *this;
 		}
+	};
+
+	struct GlyphTexture : Texture
+	{
+		char c{};
+		int bitmap_left{};
+		int bitmap_top{};
+		signed long advanceX{};
+
+		GlyphTexture() = default;
+
+		GlyphTexture(
+			char c,
+			TextureData data,
+			int width,
+			int height,
+			int bitmap_left,
+			int bitmap_top,
+			signed long advanceX
+		) :
+			c(c),
+			bitmap_left(bitmap_left),
+			bitmap_top(bitmap_top),
+			advanceX(advanceX),
+			Texture("", {}, data, {}, width, height, 1) {}
+	};
+
+	struct GlyphInfo
+	{
+		std::string fontName;
+		std::map<char, GlyphTexture> glyphs;
+	};
+
+	struct TextInfo
+	{
+		std::string text;
+		glm::vec3 position;
+		bool render;
+		std::string shaderProgram;
+		const GlyphInfo& glyphInfo;
+		std::function<void()> behaviour;
+
+		TextInfo(
+			const std::string& text,
+			const glm::vec3& position,
+			bool render,
+			const std::string& shaderProgram,
+			const GlyphInfo& glyphInfo,
+			std::function<void()> behaviour = nullptr
+		) :
+			text(text),
+			position(position),
+			render(render),
+			shaderProgram(shaderProgram),
+			glyphInfo(glyphInfo),
+			behaviour(behaviour)
+		{}
 	};
 }

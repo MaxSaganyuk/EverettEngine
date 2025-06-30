@@ -43,6 +43,8 @@ class LGL;
 class WindowHandleHolder;
 class ScriptFuncStorage;
 class AnimSystem;
+class RenderTextManager;
+class RenderLogger;
 
 namespace LGLStructs
 {
@@ -170,12 +172,18 @@ public:
 	EVERETT_API bool LoadDataFromFile(const std::string& filePath);
 private:
 #ifdef _DEBUG
-	constexpr static inline char debugShaderPath[] = "\\..\\ProjectEverett\\shaders";
+	constexpr static inline char debugShaderPath[] = ".\\..\\ProjectEverett\\shaders";
+	constexpr static inline char debugFontPath[] = ".\\..\\ProjectEverett\\fonts";
+#else
+#error "Release build shader and font paths do not exist"
 #endif
 	struct ObjectTypeInfo;
 
 	static inline const std::string saveFileType = ".esav";
 	std::string defaultShaderProgram;
+	std::string defaultRenderTextShaderProgram;
+	constexpr static inline char loggerFont[] = "consolab.ttf";
+	std::function<void(glm::vec4&&)> generalRenderTextBehaviour;
 
 	size_t currentStartSolidIndex;
 	size_t nextStartSolidIndex;
@@ -241,14 +249,16 @@ private:
 	void LoadKeybindsFromLine(std::string_view& line);
 
 	void ResetEngine();
+	void SetCustomStreamBuffers(bool value = true);
 
 	std::unique_ptr<LGL> mainLGL;
 	std::unique_ptr<std::thread> mainLGLRenderThread;
 
 	std::unique_ptr<FileLoader> fileLoader;
 	std::unique_ptr<CommandHandler> cmdHandler;
-
 	std::unique_ptr<AnimSystem> animSystem;
+	std::unique_ptr<RenderTextManager> renderTextManager;
+	std::unique_ptr<RenderLogger> logger;
 
 	ModelSolidsMap MSM;
 	LightCollection lights;
@@ -267,6 +277,9 @@ private:
 	std::map<std::string, KeyScriptFuncInfo> keyScriptFuncMap;
 
 	UnorderedPtrMap<const std::string*, int> allNameTracker;
+
+	std::streambuf* stdOutStreamBuffer;
+	std::streambuf* stdErrStreamBuffer;
 
 	class LastKeyPressPoll
 	{

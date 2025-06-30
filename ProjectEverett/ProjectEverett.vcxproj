@@ -99,7 +99,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\LGL\x64\Debug;..\x64\Debug;..\LGL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenAL32.lib;assimp-vc143-mtd.lib;LGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenAL32.lib;assimp-vc143-mtd.lib;LGL.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -133,7 +133,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\LGL\x64\Debug;..\x64\Debug;..\LGL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenAL32.lib;assimp-vc143-mtd.lib;LGL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenAL32.lib;assimp-vc143-mtd.lib;LGL.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -166,7 +166,9 @@
     <ClInclude Include="interfaces\IObjectSim.h" />
     <ClInclude Include="interfaces\ISolidSim.h" />
     <ClInclude Include="interfaces\ISoundSim.h" />
+    <ClInclude Include="RenderLogger.h" />
     <ClInclude Include="MazeGen.h" />
+    <ClInclude Include="RenderTextManager.h" />
     <ClInclude Include="ShaderGenerator.h" />
     <ClInclude Include="SimSerializer.h" />
     <ClInclude Include="SolidToModelManager.h" />
@@ -189,6 +191,8 @@
     <ClCompile Include="LightSim.cpp" />
     <ClCompile Include="MazeGen.cpp" />
     <ClCompile Include="ObjectSim.cpp" />
+    <ClCompile Include="RenderLogger.cpp" />
+    <ClCompile Include="RenderTextManager.cpp" />
     <ClCompile Include="ScriptFuncStorage.cpp" />
     <ClCompile Include="ShaderGenerator.cpp" />
     <ClCompile Include="SimSerializer.cpp" />
@@ -218,6 +222,8 @@
     <None Include="shaders\lightDir.vert" />
     <None Include="shaders\lightPoint.frag" />
     <None Include="shaders\lightPoint.vert" />
+    <None Include="shaders\rText.frag" />
+    <None Include="shaders\rText.vert" />
     <None Include="shaders\simple.frag" />
     <None Include="shaders\simple.vert" />
     <None Include="shaders\texColor.frag" />
