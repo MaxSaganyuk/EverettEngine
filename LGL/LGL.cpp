@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cctype>
 #include <array>
+#include <chrono>
 
 #include "LGLUniformHasher.h"
 
