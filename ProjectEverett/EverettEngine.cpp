@@ -141,7 +141,6 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 #if _DEBUG
 	mainLGL->SetShaderFolder(FileLoader::GetCurrentDir() + debugShaderPath);
 #endif
-	renderTextManager->Init();
 	renderTextManager->LoadFontFromPath(debugFontPath + std::string("\\") + loggerFont, 16);
 
 	generalRenderTextBehaviour = [this, windowHeight, windowWidth](glm::vec4&& colorToUse)
@@ -163,6 +162,8 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 		[this] (const std::string& labelName, LGLStructs::TextInfo& text) { mainLGL->CreateText(labelName, text); },
 		[this] (const std::string& labelName) { mainLGL->DeleteText(labelName); }
 	);
+
+	renderTextManager->FreeFaceInfoByFont(loggerFont, true);
 	
 	SetCustomStreamBuffers();
 

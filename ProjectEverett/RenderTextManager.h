@@ -6,21 +6,25 @@
 
 #include "LGLStructs.h"
 
-#define ForwardDeclarePtrTo(type, usingType) \
-struct type; \
-using usingType = type*;
+#define ForwardDeclarePtrTo(Type) \
+struct Type##Rec_; \
+using Type = Type##Rec_*;
 
-ForwardDeclarePtrTo(FT_LibraryRec_, FT_Library)
-ForwardDeclarePtrTo(FT_FaceRec_, FT_Face)
+ForwardDeclarePtrTo(FT_Library)
+ForwardDeclarePtrTo(FT_Face)
 
 class RenderTextManager
 {
 public:
-	void Init();
+	RenderTextManager();
+	~RenderTextManager();
+
 	std::string LoadFontFromPath(const std::string& fontPath, int fontSize);
 
 	LGLStructs::GlyphTexture GetGlyphTextureOf(const std::string& fontName, char c);
 	LGLStructs::GlyphInfo& GetAllGlyphTextures(const std::string& fontName);
+
+	void FreeFaceInfoByFont(const std::string& fontName, bool keepGlyphData = false);
 
 private:
 	struct FaceInfo
@@ -35,3 +39,5 @@ private:
 	FT_Library ft;
 	std::map<std::string, FaceInfo> fontToFaceMap;
 };
+
+#undef ForwardDeclarePtrTo

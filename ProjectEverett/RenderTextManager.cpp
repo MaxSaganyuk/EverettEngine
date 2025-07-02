@@ -6,10 +6,20 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H  
 
-
-void RenderTextManager::Init()
+RenderTextManager::RenderTextManager()
 {
 	assert(!FT_Init_FreeType(&ft) && "Cannot init FreeType lib");
+}
+
+RenderTextManager::~RenderTextManager()
+{
+	for (auto& faceInfo : fontToFaceMap)
+	{
+		FreeFaceInfoByFont(faceInfo.first);
+	}
+	fontToFaceMap.clear();
+
+	FT_Done_FreeType(ft);
 }
 
 std::string RenderTextManager::LoadFontFromPath(const std::string& fontPath, int fontSize)
@@ -90,4 +100,22 @@ LGLStructs::GlyphTexture RenderTextManager::GetGlyphTextureOfImpl(FaceInfo& face
 	}
 
 	assert(false && "Could not load glyph");
+}
+
+void RenderTextManager::FreeFaceInfoByFont(const std::string& fontName, bool keepGlyphData)
+{
+	if (fontToFaceMap.contains(fontName))
+	{
+		FT_Done_Face(fontToFaceMap[fontName].face);
+		fontToFaceMap[fontName].face = nullptr;
+
+		if (!keepGlyphData)
+		{
+			fontToFaceMap[fontName].glyphData.clear();
+		}
+
+		return;
+	}
+
+	assert(false && "Invalid font name");
 }
