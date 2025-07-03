@@ -12,14 +12,27 @@
 #include "ScriptFuncStorage.h"
 #include "AnimSystem.h"
 
-struct HINSTANCE__;
-using HMODULE = HINSTANCE__*;
-
+// Assimp forward declarations
 struct aiScene;
 struct aiMesh;
 struct aiNode;
-class SolidSim;
 
+// FreeType forward declarations
+#define ForwardDeclarePtrTo(Type) \
+struct Type##Rec_; \
+using Type = Type##Rec_*;
+
+ForwardDeclarePtrTo(FT_Library)
+ForwardDeclarePtrTo(FT_Face)
+
+// Other forward declarations
+struct HINSTANCE__;
+using HMODULE = HINSTANCE__*;
+
+/*
+* FileLoader will include all direct usages of APIs that just load and process files
+* otherwise, will separate to other class and files (ShaderGenerator for example)
+*/
 class FileLoader
 {
 	class ModelLoader
@@ -95,6 +108,32 @@ class FileLoader
 		std::vector<std::pair<std::string, std::string>> GetLoadedScriptDlls();
 	};
 
+	class FontLoader
+	{
+		struct FaceInfo
+		{
+			FT_Face face;
+			std::map<char, std::vector<unsigned char>> glyphData;
+			LGLStructs::GlyphInfo glyphInfo;
+		};
+
+		LGLStructs::GlyphTexture GetGlyphTextureOfImpl(FaceInfo& face, char c);
+
+		FT_Library ft;
+		std::map<std::string, FaceInfo> fontToFaceMap;
+
+	public:
+		FontLoader();
+		~FontLoader();
+
+		std::string LoadFontFromPath(const std::string& fontPath, int fontSize);
+
+		LGLStructs::GlyphTexture GetGlyphTextureOf(const std::string& fontName, char c);
+		LGLStructs::GlyphInfo& GetAllGlyphTextures(const std::string& fontName);
+
+		void FreeFaceInfoByFont(const std::string& fontName, bool keepGlyphData = false);
+	};
+
 public:
 	FileLoader();
 	~FileLoader();
@@ -102,6 +141,9 @@ public:
 	static std::string GetCurrentDir();
 	static bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);
 
-	DLLLoader dllloader;
+	DLLLoader dllLoader;
 	ModelLoader modelLoader;
+	FontLoader fontLoader;
 };
+
+#undef ForwardDeclarePtrTo

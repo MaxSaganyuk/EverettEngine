@@ -27,7 +27,6 @@
 
 #include "AnimSystem.h"
 
-#include "RenderTextManager.h"
 #include "RenderLogger.h"
 
 #define EVERETT_EXPORT
@@ -116,7 +115,6 @@ EverettEngine::EverettEngine()
 
 	fileLoader = std::make_unique<FileLoader>();
 	cmdHandler = std::make_unique<CommandHandler>();
-	renderTextManager = std::make_unique<RenderTextManager>();
 
 	stdOutStreamBuffer = std::cout.rdbuf();
 	stdErrStreamBuffer = std::cerr.rdbuf();
@@ -141,7 +139,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 #if _DEBUG
 	mainLGL->SetShaderFolder(FileLoader::GetCurrentDir() + debugShaderPath);
 #endif
-	renderTextManager->LoadFontFromPath(debugFontPath + std::string("\\") + loggerFont, 16);
+	fileLoader->fontLoader.LoadFontFromPath(debugFontPath + std::string("\\") + loggerFont, 16);
 
 	generalRenderTextBehaviour = [this, windowHeight, windowWidth](glm::vec4&& colorToUse)
 	{
@@ -155,7 +153,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	defaultRenderTextShaderProgram = "rText";
 
 	logger = std::make_unique<RenderLogger>(
-		renderTextManager->GetAllGlyphTextures(loggerFont),
+		fileLoader->fontLoader.GetAllGlyphTextures(loggerFont),
 		defaultRenderTextShaderProgram,
 		[this] () { generalRenderTextBehaviour({ 1.0f, 1.0f, 1.0f, 1.0f }); },
 		[this] () { generalRenderTextBehaviour({ 1.0f, 0.0f, 0.0f, 1.0f }); },
@@ -163,7 +161,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 		[this] (const std::string& labelName) { mainLGL->DeleteText(labelName); }
 	);
 
-	renderTextManager->FreeFaceInfoByFont(loggerFont, true);
+	fileLoader->fontLoader.FreeFaceInfoByFont(loggerFont, true);
 	
 	SetCustomStreamBuffers();
 
@@ -743,7 +741,7 @@ void EverettEngine::SetScriptToObjectImpl(
 	{
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncWeakPtr;
 
-		fileLoader->dllloader.GetScriptFuncFromDLL(
+		fileLoader->dllLoader.GetScriptFuncFromDLL(
 			dllPath,
 			objectName,
 			scriptFuncWeakPtr
@@ -765,7 +763,7 @@ void EverettEngine::UnsetScript(const std::string& dllPath)
 {
 	if(fileLoader)
 	{ 
-		fileLoader->dllloader.UnloadScriptDLL(dllPath);
+		fileLoader->dllLoader.UnloadScriptDLL(dllPath);
 	}
 }
 
@@ -803,8 +801,8 @@ void EverettEngine::SetScriptToKey(
 
 		// Using bitwise or to avoid short-circuiting second call
 		bool anyFuncAdded = 
-			fileLoader->dllloader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress) | 
-			fileLoader->dllloader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease);
+			fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress) | 
+			fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease);
 
 		if (anyFuncAdded)
 		{
@@ -863,7 +861,7 @@ bool EverettEngine::IsKeyScriptSet(
 
 std::vector<std::pair<std::string, std::string>> EverettEngine::GetLoadedScriptDLLs()
 {
-	return fileLoader->dllloader.GetLoadedScriptDlls();
+	return fileLoader->dllLoader.GetLoadedScriptDlls();
 }
 
 std::vector<std::string> EverettEngine::GetObjectsInDirList(
@@ -1000,7 +998,7 @@ void EverettEngine::ResetEngine()
 
 	if (fileLoader)
 	{
-		fileLoader->dllloader.FreeDllData();
+		fileLoader->dllLoader.FreeDllData();
 	}
 
 	mainLGL->ResetLGL();

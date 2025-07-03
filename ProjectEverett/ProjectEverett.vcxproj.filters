@@ -96,9 +96,6 @@
     <ClInclude Include="CommonStructs.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="RenderTextManager.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="RenderLogger.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
@@ -150,9 +147,6 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="SimSerializer.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderTextManager.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="RenderLogger.cpp">

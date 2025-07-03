@@ -43,7 +43,6 @@ class LGL;
 class WindowHandleHolder;
 class ScriptFuncStorage;
 class AnimSystem;
-class RenderTextManager;
 class RenderLogger;
 
 namespace LGLStructs
@@ -257,7 +256,6 @@ private:
 	std::unique_ptr<FileLoader> fileLoader;
 	std::unique_ptr<CommandHandler> cmdHandler;
 	std::unique_ptr<AnimSystem> animSystem;
-	std::unique_ptr<RenderTextManager> renderTextManager;
 	std::unique_ptr<RenderLogger> logger;
 
 	ModelSolidsMap MSM;
