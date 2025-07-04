@@ -31,6 +31,7 @@
 
 #define EVERETT_EXPORT
 #include "EverettEngine.h"
+#include "EverettException.h"
 
 #include "SolidToModelManager.h"
 
@@ -212,16 +213,10 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 		camera->SetPosition(CameraSim::Direction::Nowhere);
 		camera->ExecuteAllScriptFuncs();
 
-		LightUpdater();
-
-		LGLUtils::SetShaderUniformStruct(
-			*mainLGL,
-			lightShaderValueNames[0].first,
-			lightShaderValueNames[0].second,
-			0,
-			1,
-			0.5f
-		);
+		if (MSM.size())
+		{
+			LightUpdater();
+		}
 	};
 
 #ifdef BONE_TEST
@@ -712,6 +707,15 @@ void EverettEngine::LightUpdater()
 
 
 	mainLGL->SetShaderUniformValue("viewPos", camera->GetPositionVectorAddr());
+
+	LGLUtils::SetShaderUniformStruct(
+		*mainLGL,
+		lightShaderValueNames[0].first,
+		lightShaderValueNames[0].second,
+		0,
+		1,
+		0.5f
+	);
 }
 
 void EverettEngine::SetScriptToObject(
@@ -985,6 +989,7 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 void EverettEngine::ResetEngine()
 {
 	SetCustomStreamBuffers(false);
+	mainLGL->PauseRendering();
 
 	MSM.clear();
 	lights.clear();
@@ -1003,6 +1008,7 @@ void EverettEngine::ResetEngine()
 
 	mainLGL->ResetLGL();
 
+	mainLGL->PauseRendering(false);
 	SetCustomStreamBuffers();
 }
 
@@ -1046,7 +1052,7 @@ void EverettEngine::LoadCameraFromLine(std::string_view& line)
 
 	ApplySimInfoFromLine<CameraSim>(line, {"", "", "Camera", ""}, res);
 
-	assert(res && "Camera setup from file failed");
+	CheckAndThrowExceptionWMessage(res, "Camera setup from file failed");
 }
 
 template<typename Sim>
@@ -1089,7 +1095,7 @@ void EverettEngine::LoadSolidFromLine(std::string_view& line, const std::array<s
 		ApplySimInfoFromLine<SolidSim>(line, objectInfo, res);
 	}
 
-	assert(res && "Solid creation from file failed");
+	CheckAndThrowExceptionWMessage(res, "Solid creation from file failed");
 }
 
 void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
@@ -1104,7 +1110,7 @@ void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<s
 		ApplySimInfoFromLine<LightSim>(line, objectInfo, res);
 	}
 
-	assert(res && "Light creation from file failed");
+	CheckAndThrowExceptionWMessage(res, "Light creation from file failed");
 }
 
 void EverettEngine::LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
@@ -1116,13 +1122,16 @@ void EverettEngine::LoadSoundFromLine(std::string_view& line, const std::array<s
 		ApplySimInfoFromLine<SoundSim>(line, objectInfo, res);
 	}
 
-	assert(res && "Sound creation from file failed");
+	CheckAndThrowExceptionWMessage(res, "Sound creation from file failed");
 }
 
 void EverettEngine::LoadKeybindsFromLine(std::string_view& line)
 {
 	size_t objectInfoAmount = std::count(line.begin(), line.end(), '*');
-	assert(objectInfoAmount == 4 && "Invalid keybind info amount during world load");
+	CheckAndThrowExceptionWMessage(
+		static_cast<bool>(objectInfoAmount == 4),
+		"Invalid keybind info amount during world load"
+	);
 
 	line.remove_prefix(line.find('*') + 1);
 	std::string_view keyname = line.substr(0, line.find('*'));
@@ -1152,8 +1161,8 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	line = lineLoader;
 	SimSerializer::GetVersionFromLine(line);
 
-	mainLGL->PauseRendering();
 	ResetEngine();
+	mainLGL->PauseRendering();
 	while (!file.eof())
 	{
 		std::getline(file, lineLoader);
@@ -1182,7 +1191,7 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 				LoadSoundFromLine(line, objectInfo);
 				break;
 			default:
-				assert(false && "unreachable");
+				ThrowExceptionWMessage("Unreachable");
 			}
 		}
 	}
@@ -1239,8 +1248,7 @@ std::string EverettEngine::GetObjectTypeToName(ObjectTypes objectType)
 		}
 	}
 
-	assert(false && "Nonexistent type");
-	throw;
+	ThrowExceptionWMessage("Nonexistent type");
 }
 
 EverettEngine::ObjectTypes EverettEngine::GetObjectTypeToName(const std::string& objectName)
@@ -1253,8 +1261,7 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectTypeToName(const std::string&
 		}
 	}
 
-	assert(false && "Nonexistent name");
-	throw;
+	ThrowExceptionWMessage("Nonexistent type");
 }
 
 std::type_index EverettEngine::GetObjectPureTypeToName(ObjectTypes objectType)
@@ -1267,8 +1274,7 @@ std::type_index EverettEngine::GetObjectPureTypeToName(ObjectTypes objectType)
 		}
 	}
 
-	assert(false && "Nonexistent name");
-	throw;
+	ThrowExceptionWMessage("Nonexistent type");
 }
 
 std::type_index EverettEngine::GetObjectPureTypeToName(const std::string& objectName)
@@ -1281,8 +1287,7 @@ std::type_index EverettEngine::GetObjectPureTypeToName(const std::string& object
 		}
 	}
 
-	assert(false && "Nonexistent name");
-	throw;
+	ThrowExceptionWMessage("Nonexistent type");
 }
 
 EverettEngine::ObjectTypes EverettEngine::GetObjectPureTypeToName(std::type_index pureType)
@@ -1295,8 +1300,7 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectPureTypeToName(std::type_inde
 		}
 	}
 
-	assert(false && "Nonexistent name");
-	throw;
+	ThrowExceptionWMessage("Nonexistent type");
 }
 
 std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType)
@@ -1310,8 +1314,7 @@ std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType)
 	case ObjectTypes::Sound:
 		return GetSoundList();
 	default:
-		assert(false && "unreachable");
-		throw;
+		ThrowExceptionWMessage("Unreachable");
 	}
 }
 

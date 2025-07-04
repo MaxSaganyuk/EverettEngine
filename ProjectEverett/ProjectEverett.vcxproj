@@ -158,6 +158,7 @@
     <ClInclude Include="AnimSystem.h" />
     <ClInclude Include="CommonStructs.h" />
     <ClInclude Include="EverettEngine.h" />
+    <ClInclude Include="EverettException.h" />
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="CameraSim.h" />
     <ClInclude Include="CommandHandler.h" />
@@ -184,6 +185,7 @@
   <ItemGroup>
     <ClCompile Include="AnimSystem.cpp" />
     <ClCompile Include="EverettEngine.cpp" />
+    <ClCompile Include="EverettException.cpp" />
     <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="CameraSim.cpp" />
     <ClCompile Include="CommandHandler.cpp" />

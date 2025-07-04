@@ -21,6 +21,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H  
 
+#include "EverettException.h"
+
 void ConvertFromAssimpToGLM(const aiMatrix4x4& assimpMatrix, glm::mat4& glmMatrix)
 {
 	glmMatrix = {
@@ -181,7 +183,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 			tempVector = meshHandle->mBitangents;
 			break;
 		default:
-			assert(false && "Vertex param does not exist");
+			ThrowExceptionWMessage("Vertex param does not exist");
 		}
 
 		return tempVector;
@@ -434,7 +436,7 @@ void FileLoader::ModelLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, 
 			ConvertFromAssimpToGLM((keys + animInfoIndex)->mValue, glmCont.back().second);
 		}
 
-		assert(validKeys && "Invalid keys for animation, check if animation is baked");
+		CheckAndThrowExceptionWMessage(validKeys, "Invalid keys for animation, check if animation is baked");
 	}
 }
 
@@ -646,7 +648,7 @@ void FileLoader::DLLLoader::FreeDllData()
 
 FileLoader::FontLoader::FontLoader()
 {
-	assert(!FT_Init_FreeType(&ft) && "Cannot init FreeType lib");
+	CheckAndThrowExceptionWMessage(!FT_Init_FreeType(&ft), "Cannot init FreeType lib");
 }
 
 FileLoader::FontLoader::~FontLoader()
@@ -669,11 +671,11 @@ std::string FileLoader::FontLoader::LoadFontFromPath(const std::string& fontPath
 
 	bool failure = FT_New_Face(ft, fontPath.c_str(), 0, &fontToFaceMap[fontName].face);
 
-	assert(!failure && "Failed to load font");
+	CheckAndThrowExceptionWMessage(!failure, "Failed to load font");
 
 	failure = !failure && FT_Set_Pixel_Sizes(fontToFaceMap[fontName].face, 0, fontSize);
 
-	assert(!failure && "Cannot set font size");
+	CheckAndThrowExceptionWMessage(!failure, "Cannot set font size");
 
 	if (failure)
 	{
@@ -691,7 +693,7 @@ LGLStructs::GlyphTexture FileLoader::FontLoader::GetGlyphTextureOf(const std::st
 		return GetGlyphTextureOfImpl(fontToFaceMap[fontName], c);
 	}
 
-	assert(false && "Invalid font name");
+	ThrowExceptionWMessage("Invalid font name");
 }
 
 LGLStructs::GlyphInfo& FileLoader::FontLoader::GetAllGlyphTextures(const std::string& fontName)
@@ -710,7 +712,7 @@ LGLStructs::GlyphInfo& FileLoader::FontLoader::GetAllGlyphTextures(const std::st
 		return fontToFaceMap[fontName].glyphInfo;
 	}
 
-	assert(false && "Invalid font name");
+	ThrowExceptionWMessage("Invalid font name");
 }
 
 LGLStructs::GlyphTexture FileLoader::FontLoader::GetGlyphTextureOfImpl(FaceInfo& faceInfo, char c)
@@ -737,7 +739,7 @@ LGLStructs::GlyphTexture FileLoader::FontLoader::GetGlyphTextureOfImpl(FaceInfo&
 		}
 	}
 
-	assert(false && "Could not load glyph");
+	ThrowExceptionWMessage("Could not load glyph");
 }
 
 void FileLoader::FontLoader::FreeFaceInfoByFont(const std::string& fontName, bool keepGlyphData)
@@ -755,5 +757,5 @@ void FileLoader::FontLoader::FreeFaceInfoByFont(const std::string& fontName, boo
 		return;
 	}
 
-	assert(false && "Invalid font name");
+	ThrowExceptionWMessage("Invalid font name");
 }

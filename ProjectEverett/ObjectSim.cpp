@@ -1,4 +1,5 @@
 #include "ObjectSim.h"
+#include "EverettException.h"
 
 ObjectSim::ObjectSim(
 	const glm::vec3& pos,
@@ -243,7 +244,7 @@ void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 	case Direction::Nowhere:
 		return;
 	default:
-		assert(false && "Undefined direction");
+		ThrowExceptionWMessage("Undefined direction");
 		return;
 	}
 }

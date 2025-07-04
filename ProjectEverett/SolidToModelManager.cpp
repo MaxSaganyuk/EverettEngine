@@ -1,4 +1,5 @@
 #include "SolidToModelManager.h"
+#include "EverettException.h"
 
 SolidToModelManager::SolidToModelManager() 
 	: initialized(false) {}
@@ -70,7 +71,7 @@ size_t SolidToModelManager::GetIndexByName(const std::string& name, const std::v
 		return iter - cont.begin();
 	}
 
-	assert(false && "Index outside of container range");
+	ThrowExceptionWMessage("Index outside of container range");
 	return 0;
 }
 
@@ -268,6 +269,6 @@ size_t SolidToModelManager::GetCurrentStartingBoneIndex()
 
 void SolidToModelManager::CheckIfInitialized()
 {
-	assert(initialized && "SolidToModelManager is uninitialized");
+	CheckAndThrowExceptionWMessage(initialized, "SolidToModelManager is uninitialized");
 }
 

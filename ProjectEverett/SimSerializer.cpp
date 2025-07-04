@@ -1,4 +1,5 @@
 #include "SimSerializer.h"
+#include "EverettException.h"
 
 using namespace std::chrono;
 
@@ -28,7 +29,7 @@ void SimSerializer::UnpackValue(std::string_view& line, std::string& value, bool
 
 bool SimSerializer::AssertAndReturn(bool evaluation)
 {
-	assert(evaluation && "SimSerializer failed to parse values");
+	CheckAndThrowExceptionWMessage(evaluation, "SimSerializer failed to parse values");
 	return evaluation;
 }
 
@@ -51,7 +52,7 @@ SimSerializer::VersionValidationState SimSerializer::ValidateVersion(int require
 	}
 	else
 	{
-		assert(false && "Used version was not set");
+		ThrowExceptionWMessage("Used version was not set");
 		return VersionValidationState::UnsetCritical;
 	}
 }
@@ -60,7 +61,7 @@ bool SimSerializer::SetUsedVersion(int usedVersionToSet)
 {
 	bool isValidVersion = usedVersionToSet <= latestSerializerVersion;
 
-	assert(isValidVersion && "Used version exceeds maximum supported one");
+	CheckAndThrowExceptionWMessage(isValidVersion, "Used version exceeds maximum supported one");
 	if(isValidVersion)
 	{
 		usedVersion = usedVersionToSet;
@@ -83,7 +84,10 @@ std::string SimSerializer::GetLatestVersionStr()
 void SimSerializer::GetObjectInfo(std::string_view& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo)
 {
 	size_t objectInfoAmount = std::count(line.begin(), line.end(), '*');
-	assert(objectInfoAmount <= ObjectInfoNames::_SIZE && "Invalid object info amount during world load");
+	CheckAndThrowExceptionWMessage(
+		static_cast<bool>(objectInfoAmount <= ObjectInfoNames::_SIZE), 
+		"Invalid object info amount during world load"
+	);
 
 	for (size_t i = 0; i < objectInfoAmount; ++i)
 	{

@@ -7,6 +7,8 @@
 #include "CBrowseDialog.h"
 #include "CObjectEditDialog.h"
 
+#include "EverettException.h"
+
 using ObjectTypes = EverettEngine::ObjectTypes;
 
 // CMainWindow
@@ -111,8 +113,17 @@ HTREEITEM CMainWindow::ForceNodeSelection()
 void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
+	ObjectTypes currentType;
 
-	ObjectTypes currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
+	try
+	{
+		currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
+	}
+	catch (const EverettException&)
+	{
+		// Invalid value here is unexpected, but not fatal - log, ignore and do not crash
+		return;
+	}
 	selectedNodes.pop_back();
 
 	if (selectedNodes.size() == validSubnodeAmount[currentType])
@@ -139,7 +150,17 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
 
-	ObjectTypes currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
+	ObjectTypes currentType;
+
+	try
+	{
+		currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
+	}
+	catch (const EverettException&)
+	{
+		// Invalid value here is unexpected, but not fatal - log, ignore and do not crash
+		return;
+	}
 	selectedNodes.pop_back();
 
 	std::function<bool(const std::string&)> deleterFunc = nullptr;

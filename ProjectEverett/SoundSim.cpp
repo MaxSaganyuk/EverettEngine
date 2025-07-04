@@ -13,6 +13,8 @@
 std::recursive_mutex ContextManager<ALCcontext>::rMutex;
 size_t ContextManager<ALCcontext>::counter = 0;
 
+#include "EverettException.h"
+
 std::string SoundSim::GetSimInfoForSaveImpl()
 {
 	return ObjectSim::GetSimInfoToSaveImpl();
@@ -92,7 +94,7 @@ void SoundSim::Play(bool loop)
 {
 	if (!SoundSim::camera)
 	{
-		assert(false && "Cannot play sound without listener (camera)");
+		ThrowExceptionWMessage("Cannot play sound without listener (camera)");
 	}
 
 	ContextLock

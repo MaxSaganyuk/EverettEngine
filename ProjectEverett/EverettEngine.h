@@ -169,6 +169,8 @@ public:
 
 	EVERETT_API bool SaveDataToFile(const std::string& filePath);
 	EVERETT_API bool LoadDataFromFile(const std::string& filePath);
+
+	EVERETT_API void ResetEngine();
 private:
 #ifdef _DEBUG
 	constexpr static inline char debugShaderPath[] = ".\\..\\ProjectEverett\\shaders";
@@ -247,7 +249,6 @@ private:
 	void LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadKeybindsFromLine(std::string_view& line);
 
-	void ResetEngine();
 	void SetCustomStreamBuffers(bool value = true);
 
 	std::unique_ptr<LGL> mainLGL;

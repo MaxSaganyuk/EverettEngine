@@ -1,4 +1,5 @@
 #include "LightSim.h"
+#include "EverettException.h"
 
 std::map<int, LightSim::Attenuation> LightSim::attenuationVals
 {
@@ -72,8 +73,7 @@ LightSim::Attenuation LightSim::GetAttenuation(int range)
 		}
 	}
 
-	assert(false && "Unexpected Attenuation range value\n");
-	return { 0.0f, 0.0f };
+	ThrowExceptionWMessage("Unexpected Attenuation range value");
 }
 
 LightSim::Attenuation LightSim::GetAttenuation()
@@ -103,8 +103,7 @@ LightSim::LightTypes LightSim::GetTypeToName(const std::string& name)
 		}
 	}
 
-	assert(false && "Nonexistent type");
-	throw;
+	ThrowExceptionWMessage("Nonexistent type");
 }
 
 std::string LightSim::GetTypeToName(LightSim::LightTypes lightType)
@@ -117,8 +116,7 @@ std::string LightSim::GetTypeToName(LightSim::LightTypes lightType)
 		}
 	}
 
-	assert(false && "Nonexistent name");
-	throw;
+	ThrowExceptionWMessage("Nonexistent type");
 }
 
 std::string LightSim::GetCurrentLightType()

@@ -18,6 +18,8 @@
 #include "MainFrm.h"
 #include "AdString.h"
 
+#include "EverettException.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -51,7 +53,15 @@ static UINT indicators[] =
 
 CMainFrame::CMainFrame() noexcept
 {
-	engine.CreateAndSetupMainWindow(800, 600, "Everett");
+	try
+	{
+		engine.CreateAndSetupMainWindow(800, 600, "Everett");
+	}
+	catch (const EverettException&)
+	{
+		// Inability to create render window is fatal, crash
+		std::terminate();
+	}
 	nameCheckFunc = [this](const std::string& name) { return engine.GetAvailableObjectName(name); };
 	NameEditChecker::SetNameCheckFunc(nameCheckFunc);
 }
@@ -227,18 +237,38 @@ void CMainFrame::OnLoadSave(bool load, std::function<bool(const std::string&)> l
 
 void CMainFrame::OnLoad()
 {
-	OnLoadSave(true, [this](const std::string& path){ 
-		return 
-			ClearTree() && 
-			engine.LoadDataFromFile(path) && 
-			LoadObjectNamesToTree() && 
-			mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
+	OnLoadSave(true, [this](const std::string& path){
+		try
+		{
+			return
+				ClearTree() &&
+				engine.LoadDataFromFile(path) &&
+				LoadObjectNamesToTree() &&
+				mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
+		}
+		catch (const EverettException& e)
+		{
+			// Reset the internal state of the engine, do not crash
+			e.what();
+			engine.ResetEngine();
+			return false;
+		}
 	});
 }
 
 void CMainFrame::OnSave()
 {
-	OnLoadSave(false, [this](const std::string& path) { return engine.SaveDataToFile(path); });
+	OnLoadSave(false, [this](const std::string& path) {
+		try
+		{
+			return engine.SaveDataToFile(path);
+		}
+		catch (const EverettException&)
+		{
+			// Can continue execution after failed save
+			return false;
+		}
+	});
 }
 
 void CMainFrame::OnLoadModel()
@@ -248,15 +278,23 @@ void CMainFrame::OnLoadModel()
 		[this](const std::string& path) { return engine.GetModelInDirList(path); },
 		nameCheckFunc
 	);
-	
+
 	if (loadModelDlg.DoModal() == IDOK)
 	{
 		CLoadingDialog loadingDlg(
-			{ 
-				[this, &loadModelDlg]() 
-				{ 
-					return engine.CreateModel(loadModelDlg.GetChosenPathAndFilename(), loadModelDlg.GetChosenName()); 
-				} 
+			{
+				[this, &loadModelDlg]()
+				{
+					try
+					{
+						return engine.CreateModel(loadModelDlg.GetChosenPathAndFilename(), loadModelDlg.GetChosenName());
+					}
+					catch (const EverettException&)
+					{
+						engine.DeleteModel(loadModelDlg.GetChosenName());
+						return false;
+					}
+				}
 			}
 		);
 
@@ -264,7 +302,7 @@ void CMainFrame::OnLoadModel()
 		{
 			mainWindow->GetObjectTree().AddModelToTree(loadModelDlg.GetChosenName());
 		}
-	
+
 	}
 }
 
