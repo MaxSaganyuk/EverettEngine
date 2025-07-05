@@ -13,10 +13,10 @@ namespace LGLUtils
 		const std::string& structName, 
 		const std::vector<std::string>& valueNames, 
 		size_t i, 
-		Type value
+		Type&& value
 	)
 	{
-		return lgl.SetShaderUniformValue(structName + '.' + valueNames[i], value);
+		return lgl.SetShaderUniformValue(structName + '.' + valueNames[i], std::forward<Type>(value));
 	}
 
 	template<typename Type, typename... Types>
@@ -25,15 +25,15 @@ namespace LGLUtils
 		const std::string& structName, 
 		const std::vector<std::string>& valueNames, 
 		size_t i, 
-		Type value, 
-		Types... values
+		Type&& value, 
+		Types&&... values
 	)
 	{
-		bool res = lgl.SetShaderUniformValue(structName + '.' + valueNames[i], value);
+		bool res = lgl.SetShaderUniformValue(structName + '.' + valueNames[i], std::forward<Type>(value));
 
 		// Can't decide if I should stop processing the whole structure if one of the elements failed.
 		// return SetShaderUniformStruct(structName, std::move(valueNames), values...) && res;
-		return res && _SetShaderUniformStructImpl(lgl, structName, valueNames, ++i, values...);
+		return res && _SetShaderUniformStructImpl(lgl, structName, valueNames, ++i, std::forward<Types>(values)...);
 	}
 
 	template<typename Type>
@@ -41,10 +41,10 @@ namespace LGLUtils
 		LGL& lgl, 
 		const std::string& structName, 
 		const std::vector<std::string>& valueNames, 
-		Type value
+		Type&& value
 	)
 	{
-		return _SetShaderUniformValueImpl(lgl, structName, valueNames, 0, value);
+		return _SetShaderUniformValueImpl(lgl, structName, valueNames, 0, std::forward<Type>(value));
 	}
 
 	template<typename Type, typename... Types>
@@ -52,8 +52,8 @@ namespace LGLUtils
 		LGL& lgl, 
 		const std::string& structName,
 		const std::vector<std::string>& valueNames, 
-		Type value, 
-		Types... values
+		Type&& value, 
+		Types&&... values
 	)
 	{
 		// In C++20 and after could probably be made as a compile time check
@@ -63,13 +63,20 @@ namespace LGLUtils
 			return false;
 		}
 
-		return _SetShaderUniformStructImpl(lgl, structName, valueNames, 0, value, values...);
+		return _SetShaderUniformStructImpl(
+			lgl, 
+			structName, 
+			valueNames, 
+			0, 
+			std::forward<Type>(value), 
+			std::forward<Types>(values)...
+		);
 	}
 
 	template<typename Type>
-	bool SetShaderUniformArrayAt(LGL& lgl, const std::string& arrayName, size_t index, Type value)
+	bool SetShaderUniformArrayAt(LGL& lgl, const std::string& arrayName, size_t index, Type&& value)
 	{
-		return lgl.SetShaderUniformValue(arrayName + '[' + std::to_string(index) + ']', value);
+		return lgl.SetShaderUniformValue(arrayName + '[' + std::to_string(index) + ']', std::forward<Type>(value));
 	}
 
 	template<typename Type>
@@ -78,10 +85,15 @@ namespace LGLUtils
 		const std::string& arrayOfStructsName,
 		size_t index,
 		const std::vector<std::string>& valueNames,
-		Type value
+		Type&& value
 	)
 	{
-		return SetShaderUniformStruct(lgl, arrayOfStructsName + '[' + std::to_string(index) + ']', valueNames, value);
+		return SetShaderUniformStruct(
+			lgl, 
+			arrayOfStructsName + '[' + std::to_string(index) + ']', 
+			valueNames, 
+			std::forward<Type>(value)
+		);
 	}
 
 	template<typename Type, typename... Types>
@@ -90,11 +102,17 @@ namespace LGLUtils
 		const std::string& arrayOfStructsName, 
 		size_t index, 
 		const std::vector<std::string>& valueNames, 
-		Type value, 
-		Types... values
+		Type&& value, 
+		Types&&... values
 	)
 	{ 
-		return SetShaderUniformStruct(lgl, arrayOfStructsName + '[' + std::to_string(index) + ']', valueNames, value, values...);
+		return SetShaderUniformStruct(
+			lgl, 
+			arrayOfStructsName + '[' + std::to_string(index) + ']',
+			valueNames, 
+			std::forward<Type>(value), 
+			std::forward<Types>(values)...
+		);
 	}
 
 
