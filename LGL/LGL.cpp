@@ -330,12 +330,7 @@ void LGL::RenderText()
 	{
 		if (!text.second->render) continue;
 
-		std::string& shaderProgramToCheck = text.second->shaderProgram;
-		if (lastProgram != shaderProgramToCheck)
-		{
-			lastProgram = shaderProgramToCheck;
-			GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
-		}
+		SetCurrentShaderProg(text.second->shaderProgram);
 
 		GLSafeExecute(glActiveTexture, GL_TEXTURE0);
 		GLSafeExecute(glBindVertexArray, renderTextVAO);
@@ -429,16 +424,9 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			additionalSteps();
 		}
 
-		RenderText();
-
 		for (auto& currentModelToProcess : internalModelMap)
 		{
-			std::string& shaderProgramToCheck = currentModelToProcess.second.modelPtr->shaderProgram;
-			if (lastProgram != shaderProgramToCheck)
-			{
-				lastProgram = shaderProgramToCheck;
-				GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
-			}
+			SetCurrentShaderProg(currentModelToProcess.second.modelPtr->shaderProgram);
 
 			std::function<void()>& modelBeh = currentModelToProcess.second.modelPtr->modelBehaviour;
 			if (modelBeh)
@@ -454,12 +442,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 				{
 					currentVAOToRender = currentVAO;
 
-					std::string& shaderProgramToCheck = currentVAO.meshInfo->shaderProgram;
-					if (lastProgram != shaderProgramToCheck)
-					{
-						lastProgram = shaderProgramToCheck;
-						GLSafeExecute(glUseProgram, shaderProgramCollection[lastProgram]);
-					}
+					SetCurrentShaderProg(currentVAO.meshInfo->shaderProgram);
 
 					GLSafeExecute(glBindVertexArray, currentVAO.vboId);
 
@@ -499,6 +482,8 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 			currentVAOToRender = {};
 		}
+
+		RenderText();
 
 		glfwSwapBuffers(window);
 
@@ -948,6 +933,23 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, c
 	return true;
 }
 
+LGL::ShaderProgram LGL::SetCurrentShaderProg(const std::string& shaderProg)
+{
+	ShaderProgram shaderProgID = ~ShaderProgram{};
+	if (shaderProgramCollection.find(shaderProg) != shaderProgramCollection.end())
+	{
+		shaderProgID = shaderProgramCollection[shaderProg];
+
+		if (lastProgram != shaderProg)
+		{
+			lastProgram = shaderProg;
+			GLSafeExecute(glUseProgram, shaderProgID);
+		}
+	}
+
+	return shaderProgID;
+}
+
 bool LGL::ConfigureTextureImpl(TextureID& newTextureID, const Texture& texture)
 {
 	ContextLock
@@ -1326,10 +1328,8 @@ int LGL::CheckUniformValueLocation(
 {
 	const std::string& shaderProgramNameToUse = shaderProgramName == "" ? lastProgram : shaderProgramName;
 
-	if (shaderProgramCollection.find(shaderProgramNameToUse) != shaderProgramCollection.end())
+	if ((shaderProgramID = SetCurrentShaderProg(shaderProgramNameToUse)) != ~ShaderProgram{})
 	{
-		shaderProgramID = shaderProgramCollection[shaderProgramNameToUse];
-
 		int uniformValueLocation = glGetUniformLocation(shaderProgramID, valueName.c_str());
 
 		if (uniformValueLocation == -1)

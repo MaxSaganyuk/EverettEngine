@@ -212,6 +212,7 @@ private:
 
 	// If no list of shaders is provided, will create a program with all compiled shaders
 	bool CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderVector = {});
+	ShaderProgram SetCurrentShaderProg(const std::string& shaderProg);
 
 	bool ConfigureTextureImpl(TextureID& newTextureID, const LGLStructs::Texture& texture);
 

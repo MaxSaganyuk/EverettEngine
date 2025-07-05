@@ -198,27 +198,6 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	mainLGL->GetMaxAmountOfVertexAttr();
 	mainLGL->CaptureMouse(true);
 
-	auto additionalFuncs = [this]() {
-		currentStartSolidIndex = 0;
-		nextStartSolidIndex = 0;
-
-		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();
-
-		if (!finalTransforms.empty())
-		{
-			mainLGL->SetShaderUniformValue("Bones", finalTransforms);
-		}
-		animSystem->ResetFinalTransforms();
-
-		camera->SetPosition(CameraSim::Direction::Nowhere);
-		camera->ExecuteAllScriptFuncs();
-
-		if (MSM.size())
-		{
-			LightUpdater();
-		}
-	};
-
 #ifdef BONE_TEST
 	defaultShaderProgram = "boneTest";
 
@@ -242,6 +221,27 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 #else
 	defaultShaderProgram = "lightCombAndBone";
 #endif
+
+	auto additionalFuncs = [this]() {
+		currentStartSolidIndex = 0;
+		nextStartSolidIndex = 0;
+
+		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();
+
+		if (!finalTransforms.empty())
+		{
+			mainLGL->SetShaderUniformValue("Bones", finalTransforms, defaultShaderProgram);
+		}
+		animSystem->ResetFinalTransforms();
+
+		camera->SetPosition(CameraSim::Direction::Nowhere);
+		camera->ExecuteAllScriptFuncs();
+
+		if (MSM.size())
+		{
+			LightUpdater();
+		}
+	};
 
 	mainLGLRenderThread = std::make_unique<std::thread>(
 		[this, additionalFuncs]() { mainLGL->RunRenderingCycle(additionalFuncs); }
@@ -664,7 +664,7 @@ ICameraSim* EverettEngine::GetCameraInterface()
 
 void EverettEngine::LightUpdater()
 {
-	mainLGL->SetShaderUniformValue("proj", camera->GetProjectionMatrixAddr());
+	mainLGL->SetShaderUniformValue("proj", camera->GetProjectionMatrixAddr(), defaultShaderProgram);
 	mainLGL->SetShaderUniformValue("view", camera->GetViewMatrixAddr());
 
 	mainLGL->SetShaderUniformValue("dirLightAmount",   static_cast<int>(lights[LightTypes::Direction].size()));
