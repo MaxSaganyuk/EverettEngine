@@ -121,7 +121,7 @@ public:
 	LGL_API LGL();
 	LGL_API ~LGL();
 
-	LGL_API bool CreateWindow(const int height, const int width, const std::string& title);
+	LGL_API bool CreateWindow(const int width, const int height, const std::string& title);
 	
 	// Additional steps to rendering can be passed as a function pointer or a lambda
 	// It is expected to get a lambda with a script for camera behaviour

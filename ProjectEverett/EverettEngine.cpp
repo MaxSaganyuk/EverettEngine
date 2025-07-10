@@ -127,11 +127,11 @@ EverettEngine::~EverettEngine()
 	LGL::TerminateOpenGL();
 }
 
-void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, const std::string& title)
+void EverettEngine::CreateAndSetupMainWindow(int windowWidth, int windowHeight, const std::string& title)
 {
 	mainLGL = std::make_unique<LGL>();
 
-	mainLGL->CreateWindow(windowHeight, windowWidth, title);
+	mainLGL->CreateWindow(windowWidth, windowHeight, title);
 
 	hwndHolder = std::make_unique<WindowHandleHolder>();
 	hwndHolder->AddCurrentWindowHandle("LGL");
@@ -146,7 +146,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	{
 		mainLGL->SetShaderUniformValue(
 			"proj", 
-			glm::ortho(0.0f, static_cast<float>(windowHeight), 0.0f, static_cast<float>(windowWidth))
+			glm::ortho(0.0f, static_cast<float>(windowWidth), 0.0f, static_cast<float>(windowHeight))
 		);
 		mainLGL->SetShaderUniformValue("textColor", colorToUse);
 	};
@@ -154,6 +154,8 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	defaultRenderTextShaderProgram = "rText";
 
 	logger = std::make_unique<RenderLogger>(
+		static_cast<float>(windowWidth),
+		static_cast<float>(windowHeight),
 		fileLoader->fontLoader.GetAllGlyphTextures(loggerFont),
 		defaultRenderTextShaderProgram,
 		[this] () { generalRenderTextBehaviour({ 1.0f, 1.0f, 1.0f, 1.0f }); },
@@ -166,7 +168,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowHeight, int windowWidth, 
 	
 	SetCustomStreamBuffers();
 
-	camera = std::make_unique<CameraSim>(windowHeight, windowWidth);;
+	camera = std::make_unique<CameraSim>(windowWidth, windowHeight);
 	camera->SetMode(CameraSim::Mode::Fly);
 	camera->SetGhostMode(true);
 

@@ -1,8 +1,8 @@
 #include "CameraSim.h"
 
 CameraSim::CameraSim(
-	const int windowHeight,
 	const int windowWidth,
+	const int windowHeight,
 	const glm::vec3& pos,
 	const glm::vec3& scale,
 	const glm::vec3& front,
@@ -14,8 +14,10 @@ CameraSim::CameraSim(
 	  windowWidth(windowWidth), 
 	  fov(fov)
 {
+	float aspect = static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
+
 	view = glm::mat4(1.0f);
-	projection = glm::perspective(glm::radians(fov), static_cast<float>(windowHeight / windowWidth), 0.1f, 100.f);
+	projection = glm::perspective(glm::radians(fov), aspect, 0.1f,  100.f);
 
 	lastX = static_cast<float>(windowHeight);
 	lastY = static_cast<float>(windowWidth);
@@ -90,7 +92,6 @@ void CameraSim::SetPosition(Direction dir)
 	SolidSim::SetPosition(dir, { 1.0f, static_cast<float>(mode == Mode::Fly), 1.0f });
 
 	view = glm::lookAt(pos, pos + front, GetUpVectorAddr());
-	projection = glm::perspective(glm::radians(fov), static_cast<float>(windowHeight / windowWidth), 0.1f, 100.f);
 }
 
 void CameraSim::Rotate(float xpos, float ypos)

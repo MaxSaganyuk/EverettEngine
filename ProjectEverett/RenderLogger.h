@@ -14,6 +14,8 @@ public:
 	using RenderTextDeleteFunc = std::function<void(const std::string&)>;
 
 	RenderLogger(
+		const float windowWidth,
+		const float windowHeight,
 		const LGLStructs::GlyphInfo& glyphs,
 		const std::string& shader,
 		const ShaderBehaviourLog shaderBehaviourLog,
@@ -86,9 +88,8 @@ private:
 		std::unique_ptr<std::ostream> ostream;
 	};
 
-	// later should be made to be dynamic
-	glm::vec3 startTextPos = { 20.0f, 575.0f, 1.0f };
-	constexpr static int maxAmountOfMessages = 10; 
+	glm::vec3 startTextPos;
+	int maxAmountOfMessages; 
 
 	CustomOutput logOutput;
 	CustomOutput errorOutput;

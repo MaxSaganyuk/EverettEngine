@@ -139,7 +139,7 @@ void LGL::DeleteGLObjects()
 	shaderProgramCollection.clear();
 }
 
-bool LGL::CreateWindow(const int height, const int width, const std::string& title)
+bool LGL::CreateWindow(const int width, const int height, const std::string& title)
 {
 	if (window)
 	{
@@ -147,7 +147,7 @@ bool LGL::CreateWindow(const int height, const int width, const std::string& tit
 		return false;
 	}
 
-	window = glfwCreateWindow(height, width, title.c_str(), nullptr, nullptr);
+	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 
 	if (!window)
 	{

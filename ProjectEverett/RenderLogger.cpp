@@ -3,6 +3,8 @@
 #include <thread>
 
 RenderLogger::RenderLogger(
+	const float windowWidth,
+	const float windowHeight,
 	const LGLStructs::GlyphInfo& glyphs,
 	const std::string& shader,
 	const ShaderBehaviourLog shaderBehaviourLog,
@@ -21,6 +23,9 @@ RenderLogger::RenderLogger(
 {
 	logOutput.SetEndlineCallback([this](const std::string& str) { CreateLogMessage(str); });
 	errorOutput.SetEndlineCallback([this](const std::string& str) { CreateErrorMessage(str); });
+
+	startTextPos = { 20.0f, windowHeight - 25.0f, 1.0f };
+	maxAmountOfMessages = static_cast<int>(windowHeight / 60.0f);
 }
 
 
