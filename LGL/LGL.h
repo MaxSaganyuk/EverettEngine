@@ -122,6 +122,9 @@ public:
 	LGL_API ~LGL();
 
 	LGL_API bool CreateWindow(const int width, const int height, const std::string& title);
+
+	LGL_API int GetCurrentWindowWidth();
+	LGL_API int GetCurrentWindowHeight();
 	
 	// Additional steps to rendering can be passed as a function pointer or a lambda
 	// It is expected to get a lambda with a script for camera behaviour
@@ -179,6 +182,7 @@ public:
 	LGL_API void ResetLGL();
 
 	//Callback setters - Pass nothing to make callback self-contained
+	LGL_API void SetFramebufferSizeCallback(std::function<void(int, int)> callbackFunc);
 	LGL_API void SetCursorPositionCallback(std::function<void(double, double)> callbackFunc);
 	LGL_API void SetScrollCallback(std::function<void(double, double)> callbackFunc);
 	LGL_API void SetKeyPressCallback(std::function<void(int, int, int, int)> callbackFunc);
@@ -197,6 +201,8 @@ private:
 
 	void DeleteGLObjects();
 	void DeleteShader(const std::string& shaderName);
+
+	void UpdateWindowSize(int width, int height);
 
 	int CheckUniformValueLocation(
 		const std::string& valueName, 
@@ -223,6 +229,7 @@ private:
 	CALLBACK GLFWErrorCallback(int errorCode, const char* description);
 
 	CALLBACK FramebufferSizeCallback(GLFWwindow* window, int width, int height);
+	static std::function<void(int, int)> framebufferSizeFunc;
 	
 	CALLBACK CursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
 	static std::function<void(double, double)> cursorPositionFunc;
@@ -235,9 +242,14 @@ private:
 
 	static std::function<void(float)> renderTimeCallbackFunc;
 
+	static std::map<GLFWwindow*, LGL*> contextToInstance;
+
 	void ProcessInput();
 	void Render();
 	void RenderText();
+
+	int windowWidth;
+	int windowHeight;
 
 	float renderDeltaTime;
 

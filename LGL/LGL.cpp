@@ -26,10 +26,13 @@ size_t ContextManager<GLFWwindow>::counter = 0;
 
 using namespace LGLStructs;
 
+std::function<void(int, int)> LGL::framebufferSizeFunc = nullptr;
 std::function<void(double, double)> LGL::cursorPositionFunc = nullptr;
 std::function<void(double, double)> LGL::scrollCallbackFunc = nullptr;
 std::function<void(int, int, int, int)> LGL::keyPressCallbackFunc = nullptr;
 std::function<void(float)> LGL::renderTimeCallbackFunc = nullptr;
+
+std::map<GLFWwindow*, LGL*> LGL::contextToInstance;
 
 std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
 {
@@ -51,6 +54,8 @@ const std::vector<int> LGL::LGLEnumInterpreter::TextureOverlayTypeInter =
 LGL::LGL()
 {
 	background = { 0, 0, 0, 1 };
+	windowWidth = -1;
+	windowHeight = -1;
 	currentVAOToRender = {};
 	window = nullptr;
 	pauseRendering = false;
@@ -67,6 +72,10 @@ LGL::LGL()
 LGL::~LGL()
 {
 	DeleteGLObjects();
+
+	contextToInstance.erase(window);
+	glfwDestroyWindow(window);
+	window = nullptr;
 
 	std::cout << "LambdaGL instance destroyed\n";
 }
@@ -149,6 +158,9 @@ bool LGL::CreateWindow(const int width, const int height, const std::string& tit
 
 	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 
+	windowWidth = width;
+	windowHeight = height;
+
 	if (!window)
 	{
 		std::cout << "Failed to crate GLFW window\n";
@@ -165,10 +177,22 @@ bool LGL::CreateWindow(const int width, const int height, const std::string& tit
 
 	std::cout << "Created a GLFW window by address " << window << '\n';
 
+	contextToInstance[window] = this;
+
 	InitGLAD();
 	InitCallbacks();
 
 	return true;
+}
+
+int LGL::GetCurrentWindowWidth()
+{
+	return windowWidth;
+}
+
+int LGL::GetCurrentWindowHeight()
+{
+	return windowHeight;
 }
 
 void LGL::InitOpenGL(int major, int minor)
@@ -240,6 +264,13 @@ void LGL::CaptureMouse(bool value)
 	glfwSetInputMode(window, GLFW_CURSOR, value ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 
 	std::cout << "Mouse has been captured\n";
+}
+
+void LGL::SetFramebufferSizeCallback(std::function<void(int, int)> callbackFunc)
+{
+	framebufferSizeFunc = callbackFunc;
+
+	std::cout << "Framebuffer size callback\n";
 }
 
 void LGL::SetCursorPositionCallback(std::function<void(double, double)> callbackFunc)
@@ -314,7 +345,15 @@ void LGL::ProcessInput()
 
 void LGL::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-	glViewport(0, 0, width, height);
+	if (framebufferSizeFunc)
+	{
+		framebufferSizeFunc(width, height);
+	}
+
+	if (contextToInstance.find(window) != contextToInstance.end() && contextToInstance[window])
+	{
+		contextToInstance[window]->UpdateWindowSize(width, height);
+	}
 }
 
 void LGL::EnableVSync(bool value)
@@ -1139,6 +1178,16 @@ void LGL::DeleteShader(const std::string& shaderName)
 	}
 
 	GLSafeExecute(glDeleteProgram, shaderProgramCollection[shaderName]);
+}
+
+void LGL::UpdateWindowSize(int width, int height)
+{
+	ContextLock
+
+	windowWidth = width;
+	windowHeight = height;
+
+	GLSafeExecute(glViewport, 0, 0, width, height);
 }
 
 void LGL::ResetLGL()

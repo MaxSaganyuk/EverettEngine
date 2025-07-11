@@ -142,11 +142,16 @@ void EverettEngine::CreateAndSetupMainWindow(int windowWidth, int windowHeight, 
 #endif
 	fileLoader->fontLoader.LoadFontFromPath(debugFontPath + std::string("\\") + loggerFont, 16);
 
-	generalRenderTextBehaviour = [this, windowHeight, windowWidth](glm::vec4&& colorToUse)
+	generalRenderTextBehaviour = [this](glm::vec4&& colorToUse)
 	{
 		mainLGL->SetShaderUniformValue(
 			"proj", 
-			glm::ortho(0.0f, static_cast<float>(windowWidth), 0.0f, static_cast<float>(windowHeight))
+			glm::ortho(
+				0.0f, 
+				static_cast<float>(mainLGL->GetCurrentWindowWidth()), 
+				0.0f, 
+				static_cast<float>(mainLGL->GetCurrentWindowHeight())
+			)
 		);
 		mainLGL->SetShaderUniformValue("textColor", colorToUse);
 	};
@@ -171,6 +176,8 @@ void EverettEngine::CreateAndSetupMainWindow(int windowWidth, int windowHeight, 
 	camera = std::make_unique<CameraSim>(windowWidth, windowHeight);
 	camera->SetMode(CameraSim::Mode::Fly);
 	camera->SetGhostMode(true);
+
+	mainLGL->SetFramebufferSizeCallback([this](int width, int height) { camera->SetAspect(width, height); });
 
 	SoundSim::SetCamera(*camera);
 
