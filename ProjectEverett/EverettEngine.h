@@ -23,7 +23,6 @@
 #include <chrono>
 #include <typeindex>
 
-#include "WindowHandleHolder.h"
 #include "UnorderedPtrMap.h"
 
 #include "interfaces/IObjectSim.h"
@@ -254,6 +253,8 @@ private:
 	std::unique_ptr<LGL> mainLGL;
 	std::unique_ptr<std::thread> mainLGLRenderThread;
 
+	std::unique_ptr<CameraSim> camera;
+	std::unique_ptr<WindowHandleHolder> hwndHolder;
 	std::unique_ptr<FileLoader> fileLoader;
 	std::unique_ptr<CommandHandler> cmdHandler;
 	std::unique_ptr<AnimSystem> animSystem;
@@ -266,10 +267,6 @@ private:
 	static LightShaderValueNames lightShaderValueNames;
 	static std::vector<ObjectTypeInfo> objectTypes;
 	static std::vector<std::string> lightTypes;
-
-	std::unique_ptr<CameraSim> camera;
-
-	std::unique_ptr<WindowHandleHolder> hwndHolder;
 
 	struct KeyScriptFuncInfo;
 

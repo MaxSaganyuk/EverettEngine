@@ -246,10 +246,9 @@ void CMainFrame::OnLoad()
 				LoadObjectNamesToTree() &&
 				mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
 		}
-		catch (const EverettException& e)
+		catch (const EverettException&)
 		{
 			// Reset the internal state of the engine, do not crash
-			e.what();
 			engine.ResetEngine();
 			return false;
 		}

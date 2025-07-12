@@ -114,8 +114,11 @@ EverettEngine::EverettEngine()
 	LGL::InitOpenGL(3, 3);
 	SoundSim::InitOpenAL();
 
+	mainLGL    = std::make_unique<LGL>();
 	fileLoader = std::make_unique<FileLoader>();
+	animSystem = std::make_unique<AnimSystem>();
 	cmdHandler = std::make_unique<CommandHandler>();
+	hwndHolder = std::make_unique<WindowHandleHolder>();
 
 	stdOutStreamBuffer = std::cout.rdbuf();
 	stdErrStreamBuffer = std::cerr.rdbuf();
@@ -129,11 +132,8 @@ EverettEngine::~EverettEngine()
 
 void EverettEngine::CreateAndSetupMainWindow(int windowWidth, int windowHeight, const std::string& title)
 {
-	mainLGL = std::make_unique<LGL>();
-
 	mainLGL->CreateWindow(windowWidth, windowHeight, title);
 
-	hwndHolder = std::make_unique<WindowHandleHolder>();
 	hwndHolder->AddCurrentWindowHandle("LGL");
 
 	mainLGL->SetAssetOnOpenGLFailure(true);
@@ -255,8 +255,6 @@ void EverettEngine::CreateAndSetupMainWindow(int windowWidth, int windowHeight, 
 	mainLGLRenderThread = std::make_unique<std::thread>(
 		[this, additionalFuncs]() { mainLGL->RunRenderingCycle(additionalFuncs); }
 	);
-
-	animSystem = std::make_unique<AnimSystem>();
 
 	mainLGL->EnableVSync(ENABLE_VSYNC);
 	mainLGL->EnableUniformValueBatchSending(ENABLE_OPTIMIZATIONS);
