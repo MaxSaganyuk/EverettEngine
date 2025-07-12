@@ -26,12 +26,6 @@ size_t ContextManager<GLFWwindow>::counter = 0;
 
 using namespace LGLStructs;
 
-std::function<void(int, int)> LGL::framebufferSizeFunc = nullptr;
-std::function<void(double, double)> LGL::cursorPositionFunc = nullptr;
-std::function<void(double, double)> LGL::scrollCallbackFunc = nullptr;
-std::function<void(int, int, int, int)> LGL::keyPressCallbackFunc = nullptr;
-std::function<void(float)> LGL::renderTimeCallbackFunc = nullptr;
-
 std::map<GLFWwindow*, LGL*> LGL::contextToInstance;
 
 std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
@@ -345,14 +339,16 @@ void LGL::ProcessInput()
 
 void LGL::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-	if (framebufferSizeFunc)
-	{
-		framebufferSizeFunc(width, height);
-	}
+	LGL* instance = CheckAndGetInstanceByContext(window);
 
-	if (contextToInstance.find(window) != contextToInstance.end() && contextToInstance[window])
+	if(instance)
 	{
-		contextToInstance[window]->UpdateWindowSize(width, height);
+		if (instance->framebufferSizeFunc)
+		{
+			instance->framebufferSizeFunc(width, height);
+		}
+
+		instance->UpdateWindowSize(width, height);
 	}
 }
 
@@ -1247,27 +1243,43 @@ void LGL::GLFWErrorCallback(int errorCode, const char* description)
 	int x = errorCode;
 }
 
+LGL* LGL::CheckAndGetInstanceByContext(GLFWwindow* window)
+{
+	if (contextToInstance.find(window) != contextToInstance.end() && contextToInstance[window])
+	{
+		return contextToInstance[window];
+	}
+
+	return nullptr;
+}
+
 void LGL::CursorPositionCallback(GLFWwindow* window, double xpos, double ypos)
 {
-	if (cursorPositionFunc)
+	LGL* instance = CheckAndGetInstanceByContext(window);
+
+	if (instance && instance->cursorPositionFunc)
 	{
-		cursorPositionFunc(xpos, ypos);
+		instance->cursorPositionFunc(xpos, ypos);
 	}
 }
 
 void LGL::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	if (scrollCallbackFunc)
+	LGL* instance = CheckAndGetInstanceByContext(window);
+
+	if (instance && instance->scrollCallbackFunc)
 	{
-		scrollCallbackFunc(xoffset, yoffset);
+		instance->scrollCallbackFunc(xoffset, yoffset);
 	}
 }
 
 void LGL::KeyPressCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	if(keyPressCallbackFunc)
+	LGL* instance = CheckAndGetInstanceByContext(window);
+
+	if (instance && instance->keyPressCallbackFunc)
 	{
-		keyPressCallbackFunc(key, scancode, action, mods);
+		instance->keyPressCallbackFunc(key, scancode, action, mods);
 	}
 }
 

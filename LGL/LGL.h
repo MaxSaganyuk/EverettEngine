@@ -229,19 +229,20 @@ private:
 	CALLBACK GLFWErrorCallback(int errorCode, const char* description);
 
 	CALLBACK FramebufferSizeCallback(GLFWwindow* window, int width, int height);
-	static std::function<void(int, int)> framebufferSizeFunc;
+	std::function<void(int, int)> framebufferSizeFunc;
 	
 	CALLBACK CursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
-	static std::function<void(double, double)> cursorPositionFunc;
+	std::function<void(double, double)> cursorPositionFunc;
 	
 	CALLBACK ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
-	static std::function<void(double, double)> scrollCallbackFunc;
+	std::function<void(double, double)> scrollCallbackFunc;
 
 	CALLBACK KeyPressCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-	static std::function<void(int, int, int, int)> keyPressCallbackFunc;
+	std::function<void(int, int, int, int)> keyPressCallbackFunc;
 
-	static std::function<void(float)> renderTimeCallbackFunc;
+	std::function<void(float)> renderTimeCallbackFunc;
 
+	static LGL* CheckAndGetInstanceByContext(GLFWwindow* window);
 	static std::map<GLFWwindow*, LGL*> contextToInstance;
 
 	void ProcessInput();
