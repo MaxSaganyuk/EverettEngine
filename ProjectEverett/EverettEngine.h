@@ -172,10 +172,11 @@ public:
 	EVERETT_API void ResetEngine();
 private:
 #ifdef _DEBUG
-	constexpr static inline char debugShaderPath[] = ".\\..\\ProjectEverett\\shaders";
-	constexpr static inline char debugFontPath[] = ".\\..\\ProjectEverett\\fonts";
+	constexpr static inline char debugShaderPath[] = "..\\ProjectEverett\\shaders";
+	constexpr static inline char debugFontPath[] = "..\\ProjectEverett\\fonts";
 #else
-#error "Release build shader and font paths do not exist"
+	constexpr static inline char debugShaderPath[] = "shaders";
+	constexpr static inline char debugFontPath[] = "fonts";
 #endif
 	struct ObjectTypeInfo;
 

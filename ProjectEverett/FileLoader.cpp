@@ -665,11 +665,11 @@ FileLoader::FontLoader::~FontLoader()
 std::string FileLoader::FontLoader::LoadFontFromPath(const std::string& fontPath, int fontSize)
 {
 	std::string fontName = fontPath.substr(fontPath.rfind('\\') + 1, std::string::npos);
+	std::string realPath = GetCurrentDir() + '\\' + fontPath;
 
 	fontToFaceMap[fontName] = {};
-	fontToFaceMap[fontName].face = nullptr;
 
-	bool failure = FT_New_Face(ft, fontPath.c_str(), 0, &fontToFaceMap[fontName].face);
+	int failure = FT_New_Face(ft, realPath.c_str(), 0, &fontToFaceMap[fontName].face);
 
 	CheckAndThrowExceptionWMessage(!failure, "Failed to load font");
 

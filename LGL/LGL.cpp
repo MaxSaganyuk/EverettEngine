@@ -21,6 +21,10 @@
 
 #include "ContextManager.h"
 #define ContextLock ContextManager<GLFWwindow> mux(window, [this](GLFWwindow* context){ glfwMakeContextCurrent(context); });
+#define HandshakeContextLock \
+PauseRendering(); \
+ContextLock \
+PauseRendering(false);
 std::recursive_mutex ContextManager<GLFWwindow>::rMutex;
 size_t ContextManager<GLFWwindow>::counter = 0;
 
@@ -76,7 +80,7 @@ LGL::~LGL()
 
 void LGL::DeleteGLObjects()
 {
-	ContextLock
+	HandshakeContextLock
 
 	GLSafeExecute(glBindVertexArray, 0);
 	GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, 0);
@@ -238,7 +242,7 @@ void LGL::TerminateOpenGL()
 
 void LGL::SetDepthTest(DepthTestMode depthTestMode)
 {
-	ContextLock
+	HandshakeContextLock
 
 	if (depthTestMode == DepthTestMode::Disable)
 	{
@@ -253,7 +257,7 @@ void LGL::SetDepthTest(DepthTestMode depthTestMode)
 
 void LGL::CaptureMouse(bool value)
 {
-	ContextLock
+	HandshakeContextLock
 
 	glfwSetInputMode(window, GLFW_CURSOR, value ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 
@@ -300,7 +304,7 @@ void LGL::SetRenderDeltaCallback(std::function<void(float)> callbackFunc)
 
 int LGL::GetMaxAmountOfVertexAttr()
 {
-	ContextLock
+	HandshakeContextLock
 
 	int attr;
 	GLSafeExecute(glGetIntegerv, GL_MAX_VERTEX_ATTRIBS, &attr);
@@ -442,11 +446,16 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 	while (!glfwWindowShouldClose(window))
 	{
+		if (pauseRendering)
+		{
+			std::unique_lock<std::mutex> pauseLock(pauserMux);
+			pauser.wait(pauseLock, [this]() { return !pauseRendering; });
+		}
+
 		ContextLock
+
 		std::chrono::system_clock::time_point renderStartTime = std::chrono::system_clock::now();
 		glfwSwapInterval(useVSync);
-
-		if(pauseRendering) continue;
 
 		ProcessInput();
 		glfwPollEvents();
@@ -532,9 +541,12 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 void LGL::PauseRendering(bool value)
 {
-	ContextLock
-
 	pauseRendering = value;
+
+	if (!pauseRendering)
+	{
+		pauser.notify_one();
+	}
 }
 
 void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
@@ -544,7 +556,7 @@ void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
 
 void LGL::CreateRenderTextVO()
 {
-	ContextLock
+	HandshakeContextLock
 
 	GLSafeExecute(glGenVertexArrays, 1, &renderTextVAO);
 	GLSafeExecute(glGenBuffers, 1, &renderTextVBO);
@@ -557,7 +569,7 @@ void LGL::CreateRenderTextVO()
 
 void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 {
-	ContextLock
+	HandshakeContextLock
 
 	auto CollectSteps = []() {
 		std::vector<size_t> steps;
@@ -704,7 +716,7 @@ void LGL::CreateText(const std::string& textLabel, LGLStructs::TextInfo& text)
 
 void LGL::DeleteModel(const std::string& modelName)
 {
-	ContextLock
+	HandshakeContextLock
 
 	if(internalModelMap.find(modelName) != internalModelMap.end())
 	{
@@ -725,7 +737,7 @@ void LGL::DeleteModel(const std::string& modelName)
 
 void LGL::DeleteText(const std::string& textLabel)
 {
-	ContextLock
+	HandshakeContextLock
 
 	if (internalTextMap.find(textLabel) != internalTextMap.end())
 	{
@@ -915,7 +927,7 @@ bool LGL::CompileShader(const std::string& name)
 {
 	using AcceptableShaderCode = const char* const;
 
-	ContextLock
+	HandshakeContextLock
 
 	if (shaderInfoCollection.find(name) == shaderInfoCollection.end())
 	{
@@ -936,7 +948,7 @@ bool LGL::CompileShader(const std::string& name)
 
 bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, const std::string& shaderType)
 {
-	ContextLock
+	HandshakeContextLock
 
 	std::string shader; // change to stringstream
 	std::string line;
@@ -987,7 +999,7 @@ LGL::ShaderProgram LGL::SetCurrentShaderProg(const std::string& shaderProg)
 
 bool LGL::ConfigureTextureImpl(TextureID& newTextureID, const Texture& texture)
 {
-	ContextLock
+	HandshakeContextLock
 
 	GLSafeExecute(glGenTextures, 1, &newTextureID);
 	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, newTextureID);
@@ -1121,7 +1133,7 @@ bool LGL::ConfigueGlyphTexture(const std::string& collectionName, const LGLStruc
 
 bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderNames)
 {	
-	ContextLock
+	HandshakeContextLock
 
 	shaderProgramCollection.emplace(name, glCreateProgram());
 	ShaderProgram* newShaderProgram = &shaderProgramCollection[name];
@@ -1148,7 +1160,9 @@ void LGL::SetShaderFolder(const std::string& path)
 
 void LGL::RecompileShader(const std::string& shaderName)
 {
-	ContextLock
+	HandshakeContextLock
+
+	PauseRendering(false);
 
 	DeleteShader(shaderName);
 
@@ -1178,7 +1192,7 @@ void LGL::DeleteShader(const std::string& shaderName)
 
 void LGL::UpdateWindowSize(int width, int height)
 {
-	ContextLock
+	HandshakeContextLock
 
 	windowWidth = width;
 	windowHeight = height;

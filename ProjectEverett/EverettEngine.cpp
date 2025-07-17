@@ -137,9 +137,7 @@ void EverettEngine::CreateAndSetupMainWindow(int windowWidth, int windowHeight, 
 	hwndHolder->AddCurrentWindowHandle("LGL");
 
 	mainLGL->SetAssetOnOpenGLFailure(true);
-#if _DEBUG
-	mainLGL->SetShaderFolder(FileLoader::GetCurrentDir() + debugShaderPath);
-#endif
+	mainLGL->SetShaderFolder(FileLoader::GetCurrentDir() + '\\' + debugShaderPath);
 	fileLoader->fontLoader.LoadFontFromPath(debugFontPath + std::string("\\") + loggerFont, 16);
 
 	generalRenderTextBehaviour = [this](glm::vec4&& colorToUse)
@@ -443,8 +441,7 @@ void EverettEngine::GenerateShader()
 	size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
 	size_t totalSolidAmount = GetCreatedSolidAmount();
 
-#ifdef _DEBUG
-	std::string filePath = FileLoader::GetCurrentDir() + debugShaderPath + '\\' + defaultShaderProgram;
+	std::string filePath = FileLoader::GetCurrentDir() + '\\' + debugShaderPath + '\\' + defaultShaderProgram;
 
 	shaderGen.LoadPreSources(filePath);
 	if (totalBoneAmount > 1)
@@ -458,10 +455,6 @@ void EverettEngine::GenerateShader()
 	shaderGen.GenerateShaderFiles(filePath);
 
 	mainLGL->RecompileShader(defaultShaderProgram);
-
-#else
-#error Shader file generation is not implemented fo release configuration
-#endif
 }
 
 bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightType)

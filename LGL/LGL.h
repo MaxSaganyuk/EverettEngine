@@ -256,6 +256,8 @@ private:
 
 	bool useVSync; // Passed value is not bool, but will do for on/off switch
 	bool pauseRendering;
+	std::mutex pauserMux;
+	std::condition_variable pauser;
 
 	GLFWwindow* window;
 
