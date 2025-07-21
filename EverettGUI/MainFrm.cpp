@@ -14,6 +14,7 @@
 #include "CLoadingDialog.h"
 #include "CObjectEditDialog.h"
 #include "CKeybindOptionDlg.h"
+#include "CGameProducerDlg.h"
 
 #include "MainFrm.h"
 #include "AdString.h"
@@ -39,6 +40,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_BUTTON32773, &CMainFrame::OnPlaceSound)
 	ON_COMMAND(ID_BUTTON32774, &CMainFrame::OnCameraOptions)
 	ON_COMMAND(ID_BUTTON32775, &CMainFrame::OnKeybindOptions)
+	ON_COMMAND(ID_BUTTON32778, &CMainFrame::OnGameProduce)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -55,19 +57,26 @@ CMainFrame::CMainFrame() noexcept
 {
 	try
 	{
+#if _DEBUG
+		engine.SetShaderPath("..\\ProjectEverett\\debugShaders");
+		engine.SetFontPath("..\\ProjectEverett\\fonts");
+#endif
 		engine.CreateAndSetupMainWindow(800, 600, "Everett");
+		engine.SetDefaultWASDControls();
 	}
 	catch (const EverettException&)
 	{
 		// Inability to create render window is fatal, crash
 		std::terminate();
 	}
+	engineRenderThread = std::thread([this] () { engine.RunRenderWindow(); });
 	nameCheckFunc = [this](const std::string& name) { return engine.GetAvailableObjectName(name); };
 	NameEditChecker::SetNameCheckFunc(nameCheckFunc);
 }
 
 CMainFrame::~CMainFrame()
 {
+	engineRenderThread.join();
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -105,7 +114,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	mainWindow->SetEverettEngineRef(engine);
 
 	mainWindow->ShowWindow(SW_SHOW);
-	SetWindowPos(nullptr, 0, 0, 400, 600, 0);
+	SetWindowPos(nullptr, 0, 0, 440, 600, 0);
 
 	SetActiveView(mainWindow.get());
 	BringWindowToTop();
@@ -367,4 +376,11 @@ void CMainFrame::OnKeybindOptions()
 	CKeybindOptionDlg keybindDlg(engine, mainWindow->GetSelectedScriptDllInfo());
 
 	keybindDlg.DoModal();
+}
+
+void CMainFrame::OnGameProduce()
+{
+	CGameProducerDlg gameProducerDlg;
+
+	gameProducerDlg.DoModal();
 }

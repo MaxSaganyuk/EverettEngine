@@ -110,7 +110,7 @@
     </Midl>
     <ResourceCompile>
       <Culture>0x0409</Culture>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;ENGINE_GUI 1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
   </ItemDefinitionGroup>
@@ -181,6 +181,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>..\ProjectEverett;..\CommonUtils;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -201,20 +202,14 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>xcopy $(TargetDir)..\..\ProjectEverett\fonts $(TargetDir)\fonts /i
-mkdir $(TargetDir)shaders
-copy  $(TargetDir)..\..\ProjectEverett\shaders\lightCombAndBone.evert $(TargetDir)shaders
-copy  $(TargetDir)..\..\ProjectEverett\shaders\lightCombAndBone.efrag $(TargetDir)shaders
-copy  $(TargetDir)..\..\ProjectEverett\shaders\rText.frag $(TargetDir)shaders
-copy  $(TargetDir)..\..\ProjectEverett\shaders\rText.vert $(TargetDir)shaders
-del /q "$(TargetDir)*.exp"
-del /q "$(TargetDir)*.lib"
-del /q "$(TargetDir)*.pdb"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AdString.h" />
     <ClInclude Include="CBrowseDialog.h" />
+    <ClInclude Include="CGameProducerDlg.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="CKeybindOptionDlg.h" />
     <ClInclude Include="CLoadingDialog.h" />
@@ -236,6 +231,7 @@ del /q "$(TargetDir)*.pdb"</Command>
   <ItemGroup>
     <ClCompile Include="AdString.cpp" />
     <ClCompile Include="CBrowseDialog.cpp" />
+    <ClCompile Include="CGameProducerDlg.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="CKeybindOptionDlg.cpp" />
     <ClCompile Include="CLoadingDialog.cpp" />

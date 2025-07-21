@@ -163,4 +163,9 @@ public:
 			uniformHashes[shaderProgID].clear();
 		}
 	}
+
+	void ResetHasher()
+	{
+		uniformHashes.clear();
+	}
 };

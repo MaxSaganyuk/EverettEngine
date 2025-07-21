@@ -61,8 +61,10 @@ private:
 	void OnPlaceSound();
 	void OnCameraOptions();
 	void OnKeybindOptions();
+	void OnGameProduce();
 	EverettEngine engine;
 	std::unique_ptr<CMainWindow> mainWindow;
+	std::thread engineRenderThread;
 
 	NameEditChecker::NameCheckFunc nameCheckFunc;
 };

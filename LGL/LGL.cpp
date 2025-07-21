@@ -87,7 +87,7 @@ void LGL::DeleteGLObjects()
 	GLSafeExecute(glBindBuffer, GL_ELEMENT_ARRAY_BUFFER, 0);
 	GLSafeExecute(glUseProgram, 0);
 	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
-
+	
 	for (auto& model : internalModelMap)
 	{
 		for (auto& VAO : model.second.VAOs)
@@ -144,9 +144,15 @@ void LGL::DeleteGLObjects()
 		GLSafeExecute(glDeleteProgram, shaderProgram.second);
 	}
 	shaderProgramCollection.clear();
+
+	if (uniformHasher)
+	{
+		uniformHasher->ResetHasher();
+	}
+	lastProgram.clear();
 }
 
-bool LGL::CreateWindow(const int width, const int height, const std::string& title)
+bool LGL::CreateWindow(const int width, const int height, const std::string& title, bool fullscreen)
 {
 	if (window)
 	{
@@ -154,7 +160,7 @@ bool LGL::CreateWindow(const int width, const int height, const std::string& tit
 		return false;
 	}
 
-	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+	window = glfwCreateWindow(width, height, title.c_str(), fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
 
 	windowWidth = width;
 	windowHeight = height;
@@ -702,6 +708,11 @@ void LGL::CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model
 
 void LGL::CreateText(const std::string& textLabel, LGLStructs::TextInfo& text)
 {
+	if (!renderTextVOCreated)
+	{
+		CreateRenderTextVO();
+		renderTextVOCreated = true;
+	}
 	LoadAndCompileShader(text.shaderProgram);
 	if (collectionToCharTextures.find(text.glyphInfo.fontName) == collectionToCharTextures.end())
 	{
@@ -931,7 +942,7 @@ bool LGL::CompileShader(const std::string& name)
 
 	if (shaderInfoCollection.find(name) == shaderInfoCollection.end())
 	{
-		std::cout << "Shader by this name is not found\n";
+		std::cerr << "Shader " + name + "not found\n";
 		return false;
 	}
 
@@ -953,14 +964,12 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, c
 	std::string shader; // change to stringstream
 	std::string line;
 
-	bool atLeastOneFileLoaded = shaderInfoCollection.find(name) != shaderInfoCollection.end();
-
 	std::ifstream reader(file);
 
 	if (!reader)
 	{
 		std::cout << name + '.' + shaderType + " shader does not exist\n";
-		return atLeastOneFileLoaded;
+		return false;
 	}
 
 	while (std::getline(reader, line))
@@ -1115,12 +1124,6 @@ bool LGL::ConfigureTexture(const std::string& modelName, const LGLStructs::Textu
 
 bool LGL::ConfigueGlyphTexture(const std::string& collectionName, const LGLStructs::GlyphTexture& glyphTexture)
 {
-	if (!renderTextVOCreated)
-	{
-		CreateRenderTextVO();
-		renderTextVOCreated = true;
-	}
-	
 	if (collectionToCharTextures.find(collectionName) == collectionToCharTextures.end())
 	{
 		collectionToCharTextures[collectionName] = {};
@@ -1161,8 +1164,6 @@ void LGL::SetShaderFolder(const std::string& path)
 void LGL::RecompileShader(const std::string& shaderName)
 {
 	HandshakeContextLock
-
-	PauseRendering(false);
 
 	DeleteShader(shaderName);
 

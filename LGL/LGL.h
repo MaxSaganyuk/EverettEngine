@@ -121,7 +121,7 @@ public:
 	LGL_API LGL();
 	LGL_API ~LGL();
 
-	LGL_API bool CreateWindow(const int width, const int height, const std::string& title);
+	LGL_API bool CreateWindow(const int width, const int height, const std::string& title, bool fullscreen = false);
 
 	LGL_API int GetCurrentWindowWidth();
 	LGL_API int GetCurrentWindowHeight();

@@ -1,0 +1,73 @@
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec3 aTexCoords;
+layout (location = 3) in vec3 aTangent;
+layout (location = 4) in vec3 aBitangent;
+layout (location = 5) in ivec4 aBoneIDs;
+layout (location = 6) in vec4 aWeights;
+
+out vec3 FragPos;
+out vec3 Normal;
+out vec2 TexCoords;
+flat out ivec4 BoneIDs;
+out vec4 Weights;
+
+uniform mat4 view;
+uniform mat4 proj;
+
+#genDefine SOLID_AMOUNT 1
+uniform mat4 models[SOLID_AMOUNT];
+uniform mat4 invs[SOLID_AMOUNT];
+uniform int solidIndex;
+uniform int meshVisibility;
+
+#genDefine BONE_AMOUNT 1
+uniform mat4 Bones[BONE_AMOUNT];
+uniform int animationless;
+uniform int startingBoneIndex;
+
+void main()
+{
+    vec4 skinnedPos;
+
+    // Bone skinning
+    if(animationless == 0)
+    {
+        mat4 BoneTransform = Bones[startingBoneIndex + aBoneIDs[0]] * aWeights[0];
+        BoneTransform     += Bones[startingBoneIndex + aBoneIDs[1]] * aWeights[1];
+        BoneTransform     += Bones[startingBoneIndex + aBoneIDs[2]] * aWeights[2];
+        BoneTransform     += Bones[startingBoneIndex + aBoneIDs[3]] * aWeights[3];
+
+        skinnedPos = BoneTransform * vec4(aPos, 1.0);
+    }
+    else
+    {
+        skinnedPos = vec4(aPos, 1.0);
+    }
+
+    mat4 currentModel;
+    mat4 currentInv;
+    if(meshVisibility == 1)
+    {
+        currentModel = models[solidIndex];
+        currentInv = invs[solidIndex];
+    }
+    else
+    {
+        currentModel = mat4(0.0);
+        currentInv = mat4(0.0);
+    }
+
+    // Final transforms
+    vec4 worldPos = currentModel * skinnedPos;
+    FragPos = vec3(worldPos);
+    gl_Position = proj * view * worldPos;
+
+    // Outputs
+    Normal = mat3(transpose(currentInv)) * aNormal;
+
+    TexCoords = vec2(aTexCoords.x, aTexCoords.y);
+    BoneIDs = aBoneIDs;
+    Weights = aWeights;
+}

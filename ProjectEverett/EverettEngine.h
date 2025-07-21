@@ -44,6 +44,9 @@ class ScriptFuncStorage;
 class AnimSystem;
 class RenderLogger;
 
+struct HWND__;
+using HWND = HWND__*;
+
 namespace LGLStructs
 {
 	struct ModelInfo;
@@ -83,7 +86,19 @@ public:
 
 	EVERETT_API EverettEngine();
 	EVERETT_API ~EverettEngine();
-	EVERETT_API void CreateAndSetupMainWindow(int windowWidth, int windowHeight, const std::string& title);
+	EVERETT_API void CreateAndSetupMainWindow(
+		int windowWidth, 
+		int windowHeight, 
+		const std::string& title,
+		bool fullscreen = false,
+		bool enableLogger = true
+	);
+
+	EVERETT_API void SetShaderPath(const std::string& shaderPath);
+	EVERETT_API void SetFontPath(const std::string& fontPath);
+	EVERETT_API void SetDefaultWASDControls();
+
+	EVERETT_API void RunRenderWindow();
 
 	EVERETT_API bool CreateModel(const std::string& path, const std::string& name);
 	EVERETT_API bool CreateSolid(const std::string& modelName, const std::string& solidName);
@@ -171,13 +186,9 @@ public:
 
 	EVERETT_API void ResetEngine();
 private:
-#ifdef _DEBUG
-	constexpr static inline char debugShaderPath[] = "..\\ProjectEverett\\shaders";
-	constexpr static inline char debugFontPath[] = "..\\ProjectEverett\\fonts";
-#else
-	constexpr static inline char debugShaderPath[] = "shaders";
-	constexpr static inline char debugFontPath[] = "fonts";
-#endif
+	std::string shaderPath = "shaders";
+	std::string fontPath = "fonts";
+
 	struct ObjectTypeInfo;
 
 	static inline const std::string saveFileType = ".esav";
@@ -252,7 +263,6 @@ private:
 	void SetCustomStreamBuffers(bool value = true);
 
 	std::unique_ptr<LGL> mainLGL;
-	std::unique_ptr<std::thread> mainLGLRenderThread;
 
 	std::unique_ptr<CameraSim> camera;
 	std::unique_ptr<WindowHandleHolder> hwndHolder;
