@@ -69,13 +69,18 @@ CMainFrame::CMainFrame() noexcept
 		// Inability to create render window is fatal, crash
 		std::terminate();
 	}
-	engineRenderThread = std::thread([this] () { engine.RunRenderWindow(); });
+	engineRenderThread = std::thread([this] () { 
+		engine.RunRenderWindow(); 
+		engine.CloseWindow("EverettGUI");
+	});
 	nameCheckFunc = [this](const std::string& name) { return engine.GetAvailableObjectName(name); };
 	NameEditChecker::SetNameCheckFunc(nameCheckFunc);
 }
 
 CMainFrame::~CMainFrame()
 {
+	engine.RemoveWindowHandler("EverettGUI");
+	engine.StopRenderWindow();
 	engineRenderThread.join();
 }
 
@@ -109,14 +114,13 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	context.m_pNewViewClass = RUNTIME_CLASS(CMainWindow);
 	context.m_pCurrentDoc = nullptr;
 
-	mainWindow.reset(reinterpret_cast<CMainWindow*>(CreateView(&context)));
-
+	mainWindow = reinterpret_cast<CMainWindow*>(CreateView(&context));
 	mainWindow->SetEverettEngineRef(engine);
 
 	mainWindow->ShowWindow(SW_SHOW);
 	SetWindowPos(nullptr, 0, 0, 440, 600, 0);
 
-	SetActiveView(mainWindow.get());
+	SetActiveView(mainWindow);
 	BringWindowToTop();
 	engine.AddCurrentWindowHandler("EverettGUI");
 	RecalcLayout();

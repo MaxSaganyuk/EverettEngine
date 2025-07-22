@@ -126,6 +126,9 @@ EverettEngine::EverettEngine()
 
 EverettEngine::~EverettEngine()
 {
+	SoundSim::TriggerFreeDrWav();
+	SoundSim::TerminateOpenAL();
+	SetCustomStreamBuffers(false);
 	LGL::TerminateOpenGL();
 }
 
@@ -269,6 +272,11 @@ void EverettEngine::RunRenderWindow()
 	};
 
 	mainLGL->RunRenderingCycle(additionalFuncs);
+}
+
+void EverettEngine::StopRenderWindow()
+{
+	mainLGL->StopRenderingCycle();
 }
 
 void EverettEngine::SetShaderPath(const std::string& shaderPath)
@@ -1397,11 +1405,27 @@ void EverettEngine::AddWindowHandler(HWND windowHandler, const std::string& name
 	}
 }
 
+void EverettEngine::RemoveWindowHandler(const std::string& name)
+{
+	if (hwndHolder)
+	{
+		hwndHolder->RemoveWindowHandle(name);
+	}
+}
+
 void EverettEngine::AddCurrentWindowHandler(const std::string& name)
 {
 	if (hwndHolder)
 	{
 		hwndHolder->AddCurrentWindowHandle(name);
+	}
+}
+
+void EverettEngine::CloseWindow(const std::string& name)
+{
+	if (hwndHolder)
+	{
+		hwndHolder->CloseWindow(name);
 	}
 }
 

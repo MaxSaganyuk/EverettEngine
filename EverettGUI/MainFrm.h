@@ -63,7 +63,7 @@ private:
 	void OnKeybindOptions();
 	void OnGameProduce();
 	EverettEngine engine;
-	std::unique_ptr<CMainWindow> mainWindow;
+	CMainWindow* mainWindow; // not owner
 	std::thread engineRenderThread;
 
 	NameEditChecker::NameCheckFunc nameCheckFunc;

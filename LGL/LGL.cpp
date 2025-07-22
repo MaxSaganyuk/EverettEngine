@@ -57,6 +57,7 @@ LGL::LGL()
 	currentVAOToRender = {};
 	window = nullptr;
 	pauseRendering = false;
+	stopRendering = false;
 	uniformHasher = std::make_unique<LGLUniformHasher>();
 	batchUniformVals = true;
 	hashUniformVals = true;
@@ -69,7 +70,10 @@ LGL::LGL()
 
 LGL::~LGL()
 {
-	DeleteGLObjects();
+	if (!stopRendering)
+	{
+		StopRenderingCycle();
+	}
 
 	contextToInstance.erase(window);
 	glfwDestroyWindow(window);
@@ -450,7 +454,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 	std::array<int, Texture::GetTextureTypeAmount()> textureTypesToUnbind;
 	std::fill(textureTypesToUnbind.begin(), textureTypesToUnbind.end(), false);
 
-	while (!glfwWindowShouldClose(window))
+	while (!(stopRendering || glfwWindowShouldClose(window)))
 	{
 		if (pauseRendering)
 		{
@@ -543,6 +547,14 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			renderTimeCallbackFunc(renderDeltaTime);
 		}
 	}
+
+	stopRendering = true;
+	DeleteGLObjects();
+}
+
+void LGL::StopRenderingCycle()
+{
+	stopRendering = true;
 }
 
 void LGL::PauseRendering(bool value)

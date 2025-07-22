@@ -14,7 +14,9 @@ public:
 	WindowHandleHolder();
 	void AddCurrentWindowHandle(const std::string& name);
 	void AddWindowHandle(HWND windowHandle, const std::string& name);
+	void RemoveWindowHandle(const std::string& name);
 	void BringWindowOnTop(const std::string& name);
+	void CloseWindow(const std::string& name);
 private:
 	stdEx::map<std::string, HWND> windowHandleMap;
 };

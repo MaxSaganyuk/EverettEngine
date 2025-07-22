@@ -99,6 +99,7 @@ public:
 	EVERETT_API void SetDefaultWASDControls();
 
 	EVERETT_API void RunRenderWindow();
+	EVERETT_API void StopRenderWindow();
 
 	EVERETT_API bool CreateModel(const std::string& path, const std::string& name);
 	EVERETT_API bool CreateSolid(const std::string& modelName, const std::string& solidName);
@@ -175,7 +176,9 @@ public:
 
 	EVERETT_API void ForceFocusOnWindow(const std::string& name);
 	EVERETT_API void AddWindowHandler(HWND windowHandler, const std::string& name);
+	EVERETT_API void RemoveWindowHandler(const std::string& name);
 	EVERETT_API void AddCurrentWindowHandler(const std::string& name);
+	EVERETT_API void CloseWindow(const std::string& name);
 
 	EVERETT_API std::string GetAvailableObjectName(const std::string& name);
 

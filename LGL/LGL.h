@@ -129,6 +129,7 @@ public:
 	// Additional steps to rendering can be passed as a function pointer or a lambda
 	// It is expected to get a lambda with a script for camera behaviour
 	LGL_API void RunRenderingCycle(std::function<void()> additionalSteps = nullptr);
+	LGL_API void StopRenderingCycle();
 	LGL_API void PauseRendering(bool value = true);
 	LGL_API void SetStaticBackgroundColor(const glm::vec4& rgba);
 	LGL_API void EnableVSync(bool value = true);
@@ -256,6 +257,7 @@ private:
 
 	bool useVSync; // Passed value is not bool, but will do for on/off switch
 	bool pauseRendering;
+	bool stopRendering;
 	std::mutex pauserMux;
 	std::condition_variable pauser;
 

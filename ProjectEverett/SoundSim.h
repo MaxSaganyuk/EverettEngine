@@ -60,6 +60,7 @@ public:
 	bool SetSimInfoToLoad(std::string_view& line);
 
 	static void InitOpenAL();
+	static void TerminateOpenAL();
 	static void TriggerFreeDrWav(bool value = true);
 	static void SetCamera(CameraSim& camera);
 	SoundSim() = default;

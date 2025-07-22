@@ -45,6 +45,11 @@ void SoundSim::InitOpenAL()
 	bool res = alcIsExtensionPresent(nullptr, "AL_EXT_float32");
 }
 
+void SoundSim::TerminateOpenAL()
+{
+	alcCloseDevice(device);
+}
+
 void SoundSim::SetCamera(CameraSim& camera)
 {
 	SoundSim::camera = &camera;
@@ -205,6 +210,10 @@ std::string SoundSim::GetObjectTypeNameStr()
 
 SoundSim::~SoundSim()
 {
+	ContextLock
+
+	alcDestroyContext(context);
+
 	if (freeDRWav)
 	{
 		drwav_free(sound.data, nullptr);
