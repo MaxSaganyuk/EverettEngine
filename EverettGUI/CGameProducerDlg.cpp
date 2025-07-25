@@ -15,8 +15,8 @@
 
 IMPLEMENT_DYNAMIC(CGameProducerDlg, CDialogEx)
 
-CGameProducerDlg::CGameProducerDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_DIALOG7, pParent)
+CGameProducerDlg::CGameProducerDlg(EverettEngine& engineRef, CWnd* pParent /*=nullptr*/)
+	: engineRef(engineRef), CDialogEx(IDD_DIALOG7, pParent)
 {
 
 }
@@ -56,7 +56,21 @@ BOOL CGameProducerDlg::OnInitDialog()
 	return true;
 }
 
-void CGameProducerDlg::CopyFoldersToGameFolder(const AdString& gameFolderStr)
+AdString CGameProducerDlg::GetFileFromPath(const AdString& path)
+{
+	std::string file = path;
+	return file.substr(file.rfind('\\') + 1);
+}
+
+void CGameProducerDlg::CreateFoldersInGameFolder()
+{
+	for (auto& folderName : foldersToCreate)
+	{
+		std::filesystem::create_directory(gameFolderStr + '\\' + folderName);
+	}
+}
+
+void CGameProducerDlg::CopyFoldersToGameFolder()
 {
 	for (auto& folderName : foldersToCopy)
 	{
@@ -64,7 +78,7 @@ void CGameProducerDlg::CopyFoldersToGameFolder(const AdString& gameFolderStr)
 	}
 }
 
-void CGameProducerDlg::CopyFilesToGameFolder(const AdString& gameFolderStr)
+void CGameProducerDlg::CopyFilesToGameFolder()
 {
 	for (auto& filename : filesToCopy)
 	{
@@ -72,18 +86,48 @@ void CGameProducerDlg::CopyFilesToGameFolder(const AdString& gameFolderStr)
 	}
 }
 
-void CGameProducerDlg::RenameGameExecutable(const AdString& gameFolderStr, const AdString& gameNameStr)
+void CGameProducerDlg::RenameGameExecutable(const AdString& gameNameStr)
 {
 	std::filesystem::rename(gameFolderStr + '\\' + filesToCopy[0], gameFolderStr + '\\' + gameNameStr + ".exe");
 }
 
-void CGameProducerDlg::CreateConfigFile(const AdString& gameFolderStr, const std::vector<std::pair<AdString, AdString>>& configParams)
+void CGameProducerDlg::CreateConfigFile(const std::vector<std::pair<AdString, AdString>>& configParams)
 {
 	std::fstream file(gameFolderStr + '\\' + configFileName, std::ios::out);
 
 	for (auto& currentParam : configParams)
 	{
 		file << currentParam.first + '=' + currentParam.second + '\n';
+	}
+}
+
+CGameProducerDlg::AssetPaths CGameProducerDlg::GetPathsFromWorldFile(
+	const AdString& worldPathStr, 
+	const AdString& worldFileName
+)
+{
+	AssetPaths assetPaths;
+
+	engineRef.GetPathsFromWorldFile(
+		worldPathStr,
+		assetPaths.modelPaths,
+		assetPaths.soundPaths,
+		assetPaths.scriptPaths
+	);
+	engineRef.HidePathsInWorldFile(worldPathStr, gameFolderStr + "//" + foldersToCreate[0] + "//" + worldFileName);
+
+	return assetPaths;
+}
+
+void CGameProducerDlg::CopyAssetsToGamePath(const AssetPaths& assetPaths)
+{
+	for (int i = 1; i < foldersToCreate.size(); ++i)
+	{
+		for (auto& path : assetPaths[i])
+		{
+			AdString fileName = GetFileFromPath(path);
+			std::filesystem::copy(path, gameFolderStr + "\\" + foldersToCreate[i] + "\\" + fileName);
+		}
 	}
 }
 
@@ -117,15 +161,15 @@ void CGameProducerDlg::OnBnClickedOk()
 		return value ? L"1" : L"0";
 	};
 
-	AdString gameFolderStr;
 	gameFolderEdit.GetWindowTextW(gameFolderStr);
 
 	AdString gameTitleStr;
 	gameTitleEdit.GetWindowTextW(gameTitleStr);
 
-	CopyFoldersToGameFolder(gameFolderStr);
-	CopyFilesToGameFolder(gameFolderStr);
-	RenameGameExecutable(gameFolderStr, gameTitleStr);
+	CreateFoldersInGameFolder();
+	CopyFoldersToGameFolder();
+	CopyFilesToGameFolder();
+	RenameGameExecutable(gameTitleStr);
 
 	AdString windowWidthStr;
 	AdString windowHeightStr;
@@ -135,11 +179,15 @@ void CGameProducerDlg::OnBnClickedOk()
 	windowHeightEdit.GetWindowTextW(windowHeightStr);
 	startWorldSaveEdit.GetWindowTextW(startWorldSaveStr);
 
-	CreateConfigFile(gameFolderStr, {
+	AdString worldFileName = GetFileFromPath(startWorldSaveStr);
+
+	CopyAssetsToGamePath(GetPathsFromWorldFile(startWorldSaveStr, worldFileName));
+
+	CreateConfigFile({
 		{ "WindowWidth",     windowWidthStr                             },
 		{ "WindowHeight",    windowHeightStr                            },
 		{ "WindowTitle",     gameTitleStr                               },
-		{ "StartSave",       startWorldSaveStr                          },
+		{ "StartSave",       worldFileName                              },
 		{ "FullscreenForce", BoolToStr(fullscreenForceCheck.GetCheck()) },
 		{ "DebugText",       BoolToStr(debugTextCheck.GetCheck())       },
 		{ "DefaultWASD",     BoolToStr(defaultWASDCheck.GetCheck())     }

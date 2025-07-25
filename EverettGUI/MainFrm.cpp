@@ -384,7 +384,7 @@ void CMainFrame::OnKeybindOptions()
 
 void CMainFrame::OnGameProduce()
 {
-	CGameProducerDlg gameProducerDlg;
+	CGameProducerDlg gameProducerDlg(engine);
 
 	gameProducerDlg.DoModal();
 }

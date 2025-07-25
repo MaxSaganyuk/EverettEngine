@@ -506,7 +506,10 @@ bool FileLoader::ModelLoader::LoadModel(
 	}
 
 	nameToSet = name;
-	GetTextureFilenames(file);
+	if (file.substr(file.find('.')) == ".obj")
+	{
+		GetTextureFilenames(file);
+	}
 
 	BoneMap boneMap;
 

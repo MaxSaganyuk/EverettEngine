@@ -186,6 +186,16 @@ public:
 
 	EVERETT_API bool SaveDataToFile(const std::string& filePath);
 	EVERETT_API bool LoadDataFromFile(const std::string& filePath);
+	EVERETT_API void GetPathsFromWorldFile(
+		const std::string& filePath,
+		std::unordered_set<std::string>& modelPaths,
+		std::unordered_set<std::string>& soundPaths,
+		std::unordered_set<std::string>& scriptPaths
+	);
+	EVERETT_API void HidePathsInWorldFile(
+		const std::string& originalFilePath, 
+		const std::string& hidenFilePath
+	);
 
 	EVERETT_API void ResetEngine();
 private:
@@ -233,6 +243,8 @@ private:
 		const std::string& dllPath,
 		const std::string& dllName
 	);
+
+	std::string CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder);
 
 	template<typename Sim>
 	std::vector<std::string> GetNameList(const std::map<std::string, Sim>& sims);

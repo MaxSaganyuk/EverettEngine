@@ -333,11 +333,13 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 	auto resPair = MSM.emplace(name, std::move(ModelSolidInfo{}));
 	
+	std::string pathToUse = CheckIfRelativePathToUse(path, "models");
+
 	LGLStructs::ModelInfo& newModel = MSM[name].model.first;
 	AnimSystem::ModelAnim& newModelAnim = MSM[name].model.second;
-	MSM[name].modelPath = path;
+	MSM[name].modelPath = pathToUse;
 
-	if (!fileLoader->modelLoader.LoadModel(path, name, newModel, newModelAnim))
+	if (!fileLoader->modelLoader.LoadModel(pathToUse, name, newModel, newModelAnim))
 	{
 		MSM.erase(name);
 		return false;
@@ -521,10 +523,12 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 		return true;
 	}
 
+	std::string pathToUse = CheckIfRelativePathToUse(path, "sounds");
+
 	auto resPair = sounds.emplace(
 		soundName,
 		SoundSim{
-			path,
+			pathToUse,
 			glm::vec3(camera->GetPositionVectorAddr())
 		}
 	);
@@ -774,16 +778,17 @@ void EverettEngine::SetScriptToObjectImpl(
 	if (fileLoader && object)
 	{
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncWeakPtr;
+		std::string dllPathToUse = CheckIfRelativePathToUse(dllPath, "scripts");
 
 		fileLoader->dllLoader.GetScriptFuncFromDLL(
-			dllPath,
+			dllPathToUse,
 			objectName,
 			scriptFuncWeakPtr
 		);
 
 		if (scriptFuncWeakPtr.lock())
 		{
-			object->AddScriptFunc(dllPath, dllName, scriptFuncWeakPtr);
+			object->AddScriptFunc(dllPathToUse, dllName, scriptFuncWeakPtr);
 		}
 
 		if (object->IsScriptFuncAdded(dllName))
@@ -891,6 +896,11 @@ bool EverettEngine::IsKeyScriptSet(
 	auto& [holdable, pressedFunc, releasedFunc] = keyScriptFuncMap[keyName];
 
 	return pressedFunc.IsScriptFuncRunnable(dllName) || releasedFunc.IsScriptFuncRunnable(dllName);
+}
+
+std::string EverettEngine::CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder)
+{
+	return path.find(':') != std::string::npos ? path : expectedFolder + "//" + path;
 }
 
 std::vector<std::pair<std::string, std::string>> EverettEngine::GetLoadedScriptDLLs()
@@ -1182,7 +1192,9 @@ void EverettEngine::LoadKeybindsFromLine(std::string_view& line)
 
 bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 {
-	std::fstream file(filePath, std::ios::in);
+	std::string dllPathToUse = CheckIfRelativePathToUse(filePath, "worlds");
+
+	std::fstream file(dllPathToUse, std::ios::in);
 	std::string lineLoader;
 	std::string_view line;
 	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
@@ -1229,6 +1241,87 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	mainLGL->PauseRendering(false);
 
 	return true;
+}
+
+void EverettEngine::GetPathsFromWorldFile(
+	const std::string& filePath,
+	std::unordered_set<std::string>& modelPaths,
+	std::unordered_set<std::string>& soundPaths,
+	std::unordered_set<std::string>& scriptPaths
+)
+{
+	std::fstream file(filePath, std::ios::in);
+	std::string lineLoader;
+	std::string_view line;
+	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
+
+	std::getline(file, lineLoader);
+	line = lineLoader;
+	SimSerializer::GetVersionFromLine(line);
+
+	while (!file.eof())
+	{
+		std::getline(file, lineLoader);
+		line = lineLoader;
+
+		if (!(line.empty() || line.substr(0, line.find('*')) == "Keybind"))
+		{
+			SimSerializer::GetObjectInfo(line, objectInfo);
+
+			switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]))
+			{
+			case EverettEngine::ObjectTypes::Camera:
+			case EverettEngine::ObjectTypes::Light:
+				break;
+			case EverettEngine::ObjectTypes::Solid:
+				modelPaths.insert(objectInfo[ObjectInfoNames::Path]);
+				break;
+			case EverettEngine::ObjectTypes::Sound:
+				soundPaths.insert(objectInfo[ObjectInfoNames::Path]);
+				break;
+			default:
+				ThrowExceptionWMessage("Unreachable");
+			}
+		}
+
+		while (line.find(':') != std::string::npos)
+		{
+			line.remove_prefix(line.find(':') - 1);
+			scriptPaths.insert(std::string(line.substr(0, line.find('.') + 4)));
+			line.remove_prefix(line.find('.') + 4);
+		}
+	}
+}
+
+void EverettEngine::HidePathsInWorldFile(
+	const std::string& originalFilePath,
+	const std::string& hidenFilePath
+)
+{
+	std::fstream originalFile(originalFilePath, std::ios::in);
+	std::string line;
+	std::string hidenFileContent;
+
+	while (!originalFile.eof())
+	{
+		std::getline(originalFile, line);
+		size_t startPointOfPath;
+
+		while ((startPointOfPath = line.find(':') - 1) != std::string::npos - 1)
+		{
+			size_t endPointOfPath = line.find('.', startPointOfPath) + 4;
+			std::string fileName = line.substr(startPointOfPath, endPointOfPath - startPointOfPath);
+			fileName = fileName.substr(fileName.rfind('\\') + 1);
+			line.replace(startPointOfPath, endPointOfPath - startPointOfPath, fileName);
+		}
+
+		hidenFileContent += line;
+		hidenFileContent += '\n';
+	}
+
+	std::fstream hidenFile(hidenFilePath, std::ios::out);
+	hidenFile << hidenFileContent;
+	hidenFile.close();
 }
 
 template<typename Sim>

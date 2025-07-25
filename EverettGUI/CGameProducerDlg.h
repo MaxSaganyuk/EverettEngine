@@ -4,6 +4,9 @@
 #include "AdString.h"
 #include <vector>
 #include <filesystem>
+#include <unordered_set>
+
+#include "EverettEngine.h"
 
 // CGameProducerDlg dialog
 
@@ -12,7 +15,7 @@ class CGameProducerDlg : public CDialogEx
 	DECLARE_DYNAMIC(CGameProducerDlg)
 
 public:
-	CGameProducerDlg(CWnd* pParent = nullptr);   // standard constructor
+	CGameProducerDlg(EverettEngine& engineRef, CWnd* pParent = nullptr);   // standard constructor
 	virtual ~CGameProducerDlg();
 
 // Dialog Data
@@ -34,6 +37,43 @@ private:
 	CButton fullscreenForceCheck;
 	CButton debugTextCheck;
 	CButton defaultWASDCheck;
+
+	AdString gameFolderStr;
+
+	EverettEngine& engineRef;
+
+	struct AssetPaths
+	{
+		std::unordered_set<std::string> modelPaths;
+		std::unordered_set<std::string> soundPaths;
+		std::unordered_set<std::string> scriptPaths;
+
+		const std::unordered_set<std::string>& operator[](size_t index) const
+		{
+			// Indexes correspond to foldersToCreate
+			switch (index)
+			{
+			case 0:
+				throw; // worlds are not collected
+			case 1:
+				return modelPaths;
+			case 2:
+				return soundPaths;
+			case 3:
+				return scriptPaths;
+			default:
+				throw;
+			}
+		}
+	};
+
+	static inline std::vector<AdString> foldersToCreate
+	{
+		"worlds",
+		"models",
+		"sounds",
+		"scripts"
+	};
 
 	static inline std::vector<AdString> foldersToCopy
 	{
@@ -61,10 +101,19 @@ private:
 
 	BOOL OnInitDialog() override;
 
-	void CopyFoldersToGameFolder(const AdString& gameFolderStr);
-	void CopyFilesToGameFolder(const AdString& gameFolderStr);
-	void RenameGameExecutable(const AdString& gameFolderStr, const AdString& gameNameStr);
-	void CreateConfigFile(const AdString& gameFolderStr, const std::vector<std::pair<AdString, AdString>>& configParams);
+	AdString GetFileFromPath(const AdString& path);
+
+	AssetPaths GetPathsFromWorldFile(
+		const AdString& worldPathStr,
+		const AdString& worldFileName
+	);
+	void CopyAssetsToGamePath(const AssetPaths& assetPaths);
+
+	void CreateFoldersInGameFolder();
+	void CopyFoldersToGameFolder();
+	void CopyFilesToGameFolder();
+	void RenameGameExecutable(const AdString& gameNameStr);
+	void CreateConfigFile(const std::vector<std::pair<AdString, AdString>>& configParams);
 
 	afx_msg void OnGameFolderBrowseClick();
 	afx_msg void OnBrowseButtonClick();
