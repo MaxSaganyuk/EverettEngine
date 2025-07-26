@@ -37,8 +37,9 @@ protected:
 private:
 	Mode chosenMode;
 	CEdit filePathEdit;
-	CButton browseButton;
 	CEdit fileNameEdit;
+	CButton browseButton;
+	CButton okButton;
 
 	AdString filePathStr;
 	AdString fileNameStr;

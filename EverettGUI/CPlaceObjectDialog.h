@@ -48,15 +48,15 @@ private:
 	CStatic choiceLabel;
 	CStatic nameLabel;
 	CStatic nameWarning;
-public:
+
+	CEdit nameEdit;
+	CButton placeObjectButton;
+
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnModelChoiceChange();
-
+	afx_msg void OnNameEditChanged();
+public:
 	size_t   GetChosenIndex();
 	AdString GetChosenObject();
 	AdString GetNewObjectName();
-private:
-	CEdit nameEdit;
-public:
-	afx_msg void OnNameEditChanged();
 };

@@ -16,7 +16,7 @@
 IMPLEMENT_DYNAMIC(CGameProducerDlg, CDialogEx)
 
 CGameProducerDlg::CGameProducerDlg(EverettEngine& engineRef, CWnd* pParent /*=nullptr*/)
-	: engineRef(engineRef), CDialogEx(IDD_DIALOG7, pParent)
+	: engineRef(engineRef), initialized(false), CDialogEx(IDD_DIALOG7, pParent)
 {
 
 }
@@ -36,6 +36,7 @@ void CGameProducerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT13, gameFolderEdit);
 	DDX_Control(pDX, IDC_CHECK2, debugTextCheck);
 	DDX_Control(pDX, IDC_CHECK3, defaultWASDCheck);
+	DDX_Control(pDX, IDOK, okButton);
 }
 
 
@@ -43,6 +44,11 @@ BEGIN_MESSAGE_MAP(CGameProducerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CGameProducerDlg::OnBrowseButtonClick)
 	ON_BN_CLICKED(IDOK, &CGameProducerDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_BUTTON8, &CGameProducerDlg::OnGameFolderBrowseClick)
+	ON_EN_CHANGE(IDC_EDIT1, &CGameProducerDlg::OnWidthEditChange)
+	ON_EN_CHANGE(IDC_EDIT2, &CGameProducerDlg::OnHeightEditChange)
+	ON_EN_CHANGE(IDC_EDIT10, &CGameProducerDlg::OnGameTitleEditChange)
+	ON_EN_CHANGE(IDC_EDIT13, &CGameProducerDlg::OnGameFolderEditChange)
+	ON_EN_CHANGE(IDC_EDIT12, &CGameProducerDlg::OnStartWorldSaveEditChange)
 END_MESSAGE_MAP()
 
 BOOL CGameProducerDlg::OnInitDialog()
@@ -52,6 +58,10 @@ BOOL CGameProducerDlg::OnInitDialog()
 	windowWidthEdit.SetWindowTextW(L"800");
 	windowHeightEdit.SetWindowTextW(L"600");
 	gameTitleEdit.SetWindowTextW(L"Game");
+
+	okButton.EnableWindow(false);
+
+	initialized = true;
 
 	return true;
 }
@@ -194,4 +204,43 @@ void CGameProducerDlg::OnBnClickedOk()
 	});
 
 	CDialogEx::OnOK();
+}
+
+void CGameProducerDlg::AreEditsFilled()
+{
+	if (initialized)
+	{
+		okButton.EnableWindow(!MFCUtilities::EditsAnyEmpty({
+			&windowWidthEdit,
+			&windowHeightEdit,
+			&gameTitleEdit,
+			&gameFolderEdit,
+			&startWorldSaveEdit
+			}));
+	}
+}
+
+void CGameProducerDlg::OnWidthEditChange()
+{
+	AreEditsFilled();
+}
+
+void CGameProducerDlg::OnHeightEditChange()
+{
+	AreEditsFilled();
+}
+
+void CGameProducerDlg::OnGameTitleEditChange()
+{
+	AreEditsFilled();
+}
+
+void CGameProducerDlg::OnGameFolderEditChange()
+{
+	AreEditsFilled();
+}
+
+void CGameProducerDlg::OnStartWorldSaveEditChange()
+{
+	AreEditsFilled();
 }

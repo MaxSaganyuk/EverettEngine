@@ -222,6 +222,7 @@
     <ClInclude Include="EverettGUI.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="MFCUtilities.h" />
     <ClInclude Include="NameEditChecker.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />

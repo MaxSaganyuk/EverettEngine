@@ -26,7 +26,7 @@ CPlaceObjectDialog::CPlaceObjectDialog(
 	sourceObjectTypeName(sourceObjectTypeName), 
 	nameCheckFunc(nameCheckFunc),
 	objectNameList(objectNameList),
-	chosenIndex(0)
+	chosenIndex(-1)
 {
 }
 
@@ -47,6 +47,9 @@ BOOL CPlaceObjectDialog::OnInitDialog()
 		objectChoice.AddString(AdString(object));
 	}
 
+	placeObjectButton.EnableWindow(false);
+	placeObjectButton.SetWindowTextW(L"Place " + objectTypeName);
+
 	return true;
 }
 
@@ -58,6 +61,7 @@ void CPlaceObjectDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHOICE_LABEL, choiceLabel);
 	DDX_Control(pDX, IDC_NAME_LABEL, nameLabel);
 	DDX_Control(pDX, IDC_NAME_WARNING, nameWarning);
+	DDX_Control(pDX, IDOK, placeObjectButton);
 }
 
 
@@ -115,4 +119,10 @@ void CPlaceObjectDialog::OnModelChoiceChange()
 void CPlaceObjectDialog::OnNameEditChanged()
 {
 	NameEditChecker::CheckAndEditName(nameEdit, nameWarning);
+
+	//AdString nameStr;
+	//nameEdit.GetWindowTextW(nameStr);
+	//placeObjectButton.EnableWindow(chosenIndex != -1 && !nameStr.empty());
+
+	placeObjectButton.EnableWindow(!MFCUtilities::EditIsEmpty(nameEdit));
 }

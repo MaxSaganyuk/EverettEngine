@@ -41,6 +41,8 @@ BOOL CSaveLoadDlg::OnInitDialog()
 
 	SetWindowText(chosenModeLabel);
 
+	okButton.EnableWindow(false);
+
 	return true;
 }
 
@@ -50,6 +52,7 @@ void CSaveLoadDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT1, filePathEdit);
 	DDX_Control(pDX, IDC_BUTTON1, browseButton);
 	DDX_Control(pDX, IDC_EDIT2, fileNameEdit);
+	DDX_Control(pDX, IDOK, okButton);
 }
 
 
@@ -79,4 +82,5 @@ void CSaveLoadDlg::OnBrowseButtonClick()
 
 void CSaveLoadDlg::OnFileNameEditChanged()
 {
+	okButton.EnableWindow(!MFCUtilities::EditIsEmpty(fileNameEdit));
 }

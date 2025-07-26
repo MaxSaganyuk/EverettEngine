@@ -37,10 +37,13 @@ private:
 	CButton fullscreenForceCheck;
 	CButton debugTextCheck;
 	CButton defaultWASDCheck;
+	CButton okButton;
 
 	AdString gameFolderStr;
 
 	EverettEngine& engineRef;
+
+	bool initialized;
 
 	struct AssetPaths
 	{
@@ -115,7 +118,14 @@ private:
 	void RenameGameExecutable(const AdString& gameNameStr);
 	void CreateConfigFile(const std::vector<std::pair<AdString, AdString>>& configParams);
 
+	void AreEditsFilled();
+
 	afx_msg void OnGameFolderBrowseClick();
 	afx_msg void OnBrowseButtonClick();
 	afx_msg void OnBnClickedOk();
+	afx_msg void OnWidthEditChange();
+	afx_msg void OnHeightEditChange();
+	afx_msg void OnGameTitleEditChange();
+	afx_msg void OnGameFolderEditChange();
+	afx_msg void OnStartWorldSaveEditChange();
 };

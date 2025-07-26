@@ -75,6 +75,9 @@
     <ClInclude Include="CGameProducerDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MFCUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EverettGUI.cpp">

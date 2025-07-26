@@ -43,6 +43,7 @@ BOOL CBrowseAndLoadDialog::OnInitDialog()
 	SetWindowText(L"Load " + objectName);
 	folderLabel.SetWindowTextW(objectName + L" folder:");
 	choiceLabel.SetWindowTextW(objectName + L':');
+	loadModelButton.SetWindowTextW(L"Load " + objectName);
 
 	TCHAR buffer[MAX_PATH];
 	std::ifstream file;
@@ -175,4 +176,8 @@ AdString CBrowseAndLoadDialog::GetChosenPathAndFilename()
 void CBrowseAndLoadDialog::OnNameEditChanged()
 {
 	NameEditChecker::CheckAndEditName(nameEdit, nameWarning);
+
+	AdString nameStr;
+	nameEdit.GetWindowTextW(nameStr);
+	loadModelButton.EnableWindow(!nameStr.empty());
 }
