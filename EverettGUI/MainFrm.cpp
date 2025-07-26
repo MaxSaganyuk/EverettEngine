@@ -62,6 +62,8 @@ CMainFrame::CMainFrame() noexcept
 		engine.SetFontPath("..\\ProjectEverett\\fonts");
 #endif
 		engine.CreateAndSetupMainWindow(800, 600, "Everett");
+		// Allowing custom icons for games will probably have this removed
+		GetActiveWindow()->SetIcon(AfxGetApp()->LoadIconW(IDR_MAINFRAME), false);
 		engine.SetDefaultWASDControls();
 	}
 	catch (const EverettException&)
@@ -130,6 +132,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockControlBar(&m_wndToolBar);
 
+	SetIcon(AfxGetApp()->LoadIconW(IDR_MAINFRAME), false);
 
 	return 0;
 }
