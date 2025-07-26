@@ -93,8 +93,19 @@ class FileLoader
 			const std::string& funcName,
 			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
 		);
+		void SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle);
 
-		using ScriptMap = std::map<std::string, std::pair<HMODULE, ScriptFuncStorage::ScriptFuncMainMap>>;
+		constexpr static char cleanUpFuncName[] = "CleanUp";
+
+		struct ScriptDLLInfo
+		{
+			HMODULE dllHandle;
+			ScriptFuncStorage::ScriptFuncMainMap scriptFuncMap;
+			std::function<void()> cleanUpFunc;
+		};
+
+		using ScriptDLLPath = std::string;
+		using ScriptMap = std::map<ScriptDLLPath, ScriptDLLInfo>;
 
 		ScriptMap dllHandleMap;
 	public:

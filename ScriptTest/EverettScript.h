@@ -46,3 +46,12 @@ extern "C" __declspec(dllexport) void Key##keyname##Released(void* placeholder) 
                                                                                    \
 void ImplKey##keyname##Released()                                                  \
 
+#define ScriptCleanUp()                                                            \
+void CleanUpImpl();                                                                \
+                                                                                   \
+extern "C" __declspec(dllexport) void CleanUp()                                    \
+{                                                                                  \
+    CleanUpImpl();                                                                 \
+}                                                                                  \
+                                                                                   \
+void CleanUpImpl()                                                                 \

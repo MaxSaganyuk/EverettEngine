@@ -1031,6 +1031,14 @@ void EverettEngine::ResetEngine()
 	SetCustomStreamBuffers(false);
 	mainLGL->PauseRendering();
 
+	mainLGL->ResetLGL();
+
+	if (fileLoader)
+	{
+		fileLoader->dllLoader.FreeDllData();
+	}
+
+	camera->ClearScriptFuncMap();
 	MSM.clear();
 	lights.clear();
 
@@ -1040,13 +1048,6 @@ void EverettEngine::ResetEngine()
 
 	keyScriptFuncMap.clear();
 	allNameTracker.clear();
-
-	if (fileLoader)
-	{
-		fileLoader->dllLoader.FreeDllData();
-	}
-
-	mainLGL->ResetLGL();
 
 	SetCustomStreamBuffers();
 	mainLGL->PauseRendering(false);

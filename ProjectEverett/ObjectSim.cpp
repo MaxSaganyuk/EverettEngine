@@ -274,6 +274,11 @@ void ObjectSim::AddScriptFunc(
 	scriptFuncStorage.AddScriptFunc(dllPath, dllName, scriptFunc);
 }
 
+void ObjectSim::ClearScriptFuncMap()
+{
+	scriptFuncStorage.ClearScriptFuncMap();
+}
+
 std::vector<std::pair<std::string, std::string>> ObjectSim::GetTempScriptDLLInfo()
 {
 	return scriptFuncStorage.GetTempScriptDllNameVect();

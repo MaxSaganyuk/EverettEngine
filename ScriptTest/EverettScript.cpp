@@ -3,10 +3,23 @@
 class InternalState
 {
 public:
-	bool charInterRunning = false;
-	ISolidSim* charInter = nullptr;
-	ILightSim* lightInter = nullptr;
-	ISolidSim* animCharInter = nullptr;
+	InternalState()
+	{
+		Reset();
+	}
+
+	void Reset()
+	{
+		charInterRunning = false;
+		charInter = nullptr;
+		lightInter = nullptr;
+		animCharInter = nullptr;
+	}
+
+	bool charInterRunning;
+	ISolidSim* charInter;
+	ILightSim* lightInter;
+	ISolidSim* animCharInter;
 };
 
 InternalState interState;
@@ -58,4 +71,9 @@ ScriptKeybindPressed(P)
 		interState.animCharInter->IsModelAnimationPaused() ?
 			interState.animCharInter->PlayModelAnimation(true) : interState.animCharInter->PauseModelAnimation();
 	}
+}
+
+ScriptCleanUp()
+{
+	interState.Reset();
 }

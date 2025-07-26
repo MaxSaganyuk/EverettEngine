@@ -24,6 +24,7 @@ public:
 	void ExecuteAllScriptFuncs(IObjectSim* object);
 	bool IsScriptFuncAdded(const std::string& dllName = "");
 	bool IsScriptFuncRunnable(const std::string& dllName = "");
+	void ClearScriptFuncMap();
 	std::vector<std::pair<std::string, std::string>> GetAddedScriptDLLs() const;
 	std::vector<std::pair<std::string, std::string>> GetTempScriptDllNameVect();
 

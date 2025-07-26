@@ -530,6 +530,24 @@ bool FileLoader::ModelLoader::LoadModel(
 	return true;
 }
 
+void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle)
+{
+	dllHandleMap[dllPath].dllHandle = dllHandle;
+
+	if (!dllHandleMap[dllPath].cleanUpFunc)
+	{
+		using CleanUpFuncType = void(*)();
+		CleanUpFuncType cleanUpFunc = reinterpret_cast<CleanUpFuncType>(
+			GetProcAddress(dllHandleMap[dllPath].dllHandle, cleanUpFuncName)
+		);
+
+		if (cleanUpFunc)
+		{
+			dllHandleMap[dllPath].cleanUpFunc = cleanUpFunc;
+		}
+	}
+}
+
 bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 	const std::string& dllPath,
 	const std::string& funcName,
@@ -544,13 +562,13 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 	{
 		success = true;
 
-		if (dllHandleMap.find(dllPath) != dllHandleMap.end())
+		if (dllHandleMap.contains(dllPath))
 		{
-			if (dllHandle != dllHandleMap[dllPath].first)
+			if (dllHandle != dllHandleMap[dllPath].dllHandle)
 			{
-				dllHandleMap[dllPath].first = dllHandle;
+				SetNewDLLHandle(dllPath, dllHandle);
 
-				for (auto& [currentFuncName, func] : dllHandleMap[dllPath].second)
+				for (auto& [currentFuncName, func] : dllHandleMap[dllPath].scriptFuncMap)
 				{
 					if (funcName != currentFuncName)
 					{
@@ -562,7 +580,7 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 		}
 		else
 		{
-			dllHandleMap[dllPath].first = dllHandle;
+			SetNewDLLHandle(dllPath, dllHandle);
 		}
 
 		success &= GetScriptFuncFromDLLImpl(dllPath, funcName, scriptFuncWeakPtr);
@@ -580,7 +598,7 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
 {
 	using ScriptWrapperType = void(*)(void*);
 	ScriptWrapperType scriptWrapperFunc = reinterpret_cast<ScriptWrapperType>(
-		GetProcAddress(dllHandleMap[dllPath].first, funcName.c_str())
+		GetProcAddress(dllHandleMap[dllPath].dllHandle, funcName.c_str())
 	);
 
 	if (scriptWrapperFunc)
@@ -591,14 +609,14 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
 			scriptWrapperFunc(reinterpret_cast<void*>(solid));
 		};
 
-		if (dllHandleMap[dllPath].second.find(funcName) == dllHandleMap[dllPath].second.end())
+		if (!dllHandleMap[dllPath].scriptFuncMap.contains(funcName))
 		{
-			dllHandleMap[dllPath].second.emplace(funcName, std::make_shared<ScriptFuncStorage::InterfaceScriptFunc>(scriptFunc));
-			scriptFuncWeakPtr = dllHandleMap[dllPath].second[funcName];
+			dllHandleMap[dllPath].scriptFuncMap.emplace(funcName, std::make_shared<ScriptFuncStorage::InterfaceScriptFunc>(scriptFunc));
+			scriptFuncWeakPtr = dllHandleMap[dllPath].scriptFuncMap[funcName];
 		}
 		else
 		{
-			ScriptFuncStorage::InterfaceScriptFunc* currentScriptWrapperFunc = dllHandleMap[dllPath].second[funcName].get();
+			ScriptFuncStorage::InterfaceScriptFunc* currentScriptWrapperFunc = dllHandleMap[dllPath].scriptFuncMap[funcName].get();
 			*currentScriptWrapperFunc = scriptFunc;
 		}
 
@@ -611,15 +629,23 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
 void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
 {
 	scriptWrapperLock.lock();
-	for (auto& [funcName, func] : dllHandleMap[dllPath].second)
+	for (auto& [funcName, func] : dllHandleMap[dllPath].scriptFuncMap)
 	{
 		ScriptFuncStorage::InterfaceScriptFunc* scriptFuncWrapper = func.get();
 		*scriptFuncWrapper = nullptr;
 	}
 	scriptWrapperLock.unlock();
 
-	FreeLibrary(dllHandleMap[dllPath].first);
-	dllHandleMap[dllPath].first = nullptr;
+	if (dllHandleMap[dllPath].dllHandle)
+	{
+		if (dllHandleMap[dllPath].cleanUpFunc)
+		{
+			dllHandleMap[dllPath].cleanUpFunc();
+		}
+
+		FreeLibrary(dllHandleMap[dllPath].dllHandle);
+		dllHandleMap[dllPath].dllHandle = nullptr;
+	}
 }
 
 std::vector<std::pair<std::string, std::string>> FileLoader::DLLLoader::GetLoadedScriptDlls()
@@ -639,11 +665,7 @@ void FileLoader::DLLLoader::FreeDllData()
 {
 	for (auto& [dllName, dllInfo] : dllHandleMap)
 	{
-		auto& [dllHandle, funcMap] = dllInfo;
-		if (dllHandle)
-		{
-			FreeLibrary(dllHandle);
-		}
+		UnloadScriptDLL(dllName);
 	}
 
 	dllHandleMap.clear();
