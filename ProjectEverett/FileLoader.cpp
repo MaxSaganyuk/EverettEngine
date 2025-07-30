@@ -419,8 +419,6 @@ void FileLoader::ModelLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, 
 {
 	if (keys && keyAmount)
 	{
-		bool validKeys = false;
-
 		glmCont.reserve(keyAmount);
 	
 		for (size_t animInfoIndex = 0; animInfoIndex < keyAmount; ++animInfoIndex)
@@ -428,15 +426,27 @@ void FileLoader::ModelLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, 
 			glmCont.push_back({});
 			glmCont.back().first = (keys + animInfoIndex)->mTime;
 
-			if (glmCont.back().first != 0.0f)
-			{
-				validKeys = true;
-			}
-
 			ConvertFromAssimpToGLM((keys + animInfoIndex)->mValue, glmCont.back().second);
 		}
+	}
+}
 
-		CheckAndThrowExceptionWMessage(validKeys, "Invalid keys for animation, check if animation is baked");
+void FileLoader::ModelLoader::SetGlobalInverseTransform(
+	const std::string& rootNodeName, 
+	AnimSystem::ModelAnim& modelAnim
+)
+{
+	glm::mat4 rootTransform = modelAnim.boneTree.FindNodeBy(rootNodeName)->GetValue().globalTransform;
+	modelAnim.globalInverseTransform = glm::inverse(rootTransform);
+
+	// Maybe should be expanded to allow for different rotations, but Y-up is a common problem
+	if (rootTransform[1][2] < 0)
+	{
+		modelAnim.globalInverseTransform = glm::rotate(
+			modelAnim.globalInverseTransform, 
+			glm::radians(-90.0f), 
+			{ 1.0, 0.0, 0.0 }
+		);
 	}
 }
 
@@ -523,8 +533,7 @@ bool FileLoader::ModelLoader::LoadModel(
 	std::string rootNodeName = modelHandle->mRootNode->mName.C_Str();
 	modelAnim.boneTree.AddRootNode(rootNodeName, {});
 	ProcessNodeForBoneTree(rootNodeName, modelHandle->mRootNode, boneMap, modelAnim.boneTree.FindNodeBy(rootNodeName), globalTransform);
-	modelAnim.globalInverseTransform = glm::inverse(modelAnim.boneTree.FindNodeBy(rootNodeName)->GetValue().globalTransform);
-
+	SetGlobalInverseTransform(rootNodeName, modelAnim);
 	LoadAnimations(modelAnim.animKeyMap, modelAnim.animInfoVect);
 	
 	return true;

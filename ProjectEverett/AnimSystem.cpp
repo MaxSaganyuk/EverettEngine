@@ -14,34 +14,26 @@ void AnimSystem::InterpolateImpl(const glm::quat& quat1, const glm::quat& quat2,
 template<typename GLMType>
 void AnimSystem::InterpolateKey(std::vector<std::pair<double, GLMType>>& keys, GLMType& res, double animTime)
 {
-	if (keys.size() == 1)
-	{
-		res = keys.front().second;
-		return;
-	}
+	size_t keyAmount = keys.size();
 
-	if (keys.size() == 2 && keys[0].second == keys[1].second)
+	if (keyAmount)
 	{
-		res = keys.back().second;
-		return;
-	}
-
-	for (size_t i = 0; i < keys.size() - 1; ++i)
-	{
-		if (animTime < keys[i + 1].first)
+		for (size_t i = 0; i < keyAmount - 1; ++i)
 		{
-			double t1 = keys[i].first;
-			double t2 = keys[i + 1].first;
-			float factor = static_cast<float>((animTime - t1) / (t2 - t1));
+			if (animTime < keys[i + 1].first)
+			{
+				double t1 = keys[i].first;
+				double t2 = keys[i + 1].first;
+				float factor = static_cast<float>((animTime - t1) / (t2 - t1));
 
-			InterpolateImpl(keys[i].second, keys[i + 1].second, res, factor);
+				InterpolateImpl(keys[i].second, keys[i + 1].second, res, factor);
 
-			return;
+				return;
+			}
 		}
+
+		res = keys.back().second;
 	}
-
-
-	res = keys.back().second;
 }
 
 void AnimSystem::ParseBoneTree(
@@ -59,9 +51,9 @@ void AnimSystem::ParseBoneTree(
 
 	if (!nameKeyPair.empty() && nameKeyPair[animIndex].KeysExist())
 	{
-		glm::vec3 interpolPos;
-		glm::quat interpolRot;
-		glm::vec3 interpolSca;
+		glm::vec3 interpolPos(1.0, 1.0, 1.0);
+		glm::quat interpolRot(1.0, 1.0, 1.0, 1.0);
+		glm::vec3 interpolSca(1.0, 1.0, 1.0);
 
 		InterpolateKey(nameKeyPair[animIndex].positionKeys, interpolPos, animationTimeTicks);
 		InterpolateKey(nameKeyPair[animIndex].rotationKeys, interpolRot, animationTimeTicks);

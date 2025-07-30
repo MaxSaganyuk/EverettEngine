@@ -56,6 +56,10 @@ class FileLoader
 			AnimSystem::BoneTree::TreeManagerNode* parentTreeNode,
 			glm::mat4& globalTransform
 		);
+		void SetGlobalInverseTransform(
+			const std::string& rootNodeName,
+			AnimSystem::ModelAnim& modelAnim
+		);
 		void LoadAnimations(
 			AnimSystem::AnimKeyMap& animKeyMap,
 			AnimSystem::AnimInfoVect& animInfo
