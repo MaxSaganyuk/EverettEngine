@@ -1,3 +1,7 @@
+<p align="center">
+<img width="500" height="250" alt="title" src="https://github.com/user-attachments/assets/cef36ef6-b5e5-414b-a851-ed8b00d33988" />
+</p>
+
 # ProjectEverett
 ProjectEverett is a combination of two projects - Everett (the game engine), LGL (the OpenGL wrapper). For noww Everett is documented currently as a guide (how to use the application) and LGL is documented as an API (how to code with), this might change later.
 
