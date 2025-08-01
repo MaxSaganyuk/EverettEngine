@@ -1,6 +1,6 @@
 #include "SoundSim.h"
 
-#include <AL\alext.h>
+#include <OpenAL\alext.h>
 
 #define DR_WAV_IMPLEMENTATION
 #include <DrWav/dr_wav.h>

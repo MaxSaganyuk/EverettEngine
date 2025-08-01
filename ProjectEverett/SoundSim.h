@@ -1,7 +1,7 @@
 #pragma once
 
-#include <AL\al.h>
-#include <AL\alc.h>
+#include <OpenAL\al.h>
+#include <OpenAL\alc.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
