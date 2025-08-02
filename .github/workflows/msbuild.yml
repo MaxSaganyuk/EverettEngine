@@ -27,7 +27,7 @@ jobs:
       run: msbuild ProjectEverett.sln /p:Configuration=${{env.BUILD_CONFIGURATION}}
 
     - name: Zip Release Folder
-      run: Compress-Archive -Path "Release\\*" -DestinationPath "EverettEngine.zip"
+      run: Compress-Archive -Path ".\\x64\\Release\\*" -DestinationPath "EverettEngine.zip"
 
     - name: Delete previous nightly build
       uses: mknejp/delete-release-assets@v1
