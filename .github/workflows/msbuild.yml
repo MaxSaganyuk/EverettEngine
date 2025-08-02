@@ -25,3 +25,26 @@ jobs:
 
     - name: Build
       run: msbuild ProjectEverett.sln /p:Configuration=${{env.BUILD_CONFIGURATION}}
+
+    - name: Zip Release Folder
+      run: Compress-Archive -Path "Release\\*" --DestinationPath "EverettEngine.zip"
+
+    - name: Delete previous nightly build
+      uses: svenstaro/delete-release-assets-action@v1
+      with:
+       tag: nightly
+       assets: EverettEngine.zip
+      env:
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+
+    - name: Upload new nightly build
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: nightly
+        name: Nightly Build
+        files: EverettEngine.zip
+        draft: false
+        prerelease: true
+      env:
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
