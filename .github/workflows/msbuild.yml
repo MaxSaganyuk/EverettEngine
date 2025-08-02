@@ -20,5 +20,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.3
+
     - name: Build
       run: msbuild ProjectEverett.sln /p:Configuration=${{env.BUILD_CONFIGURATION}}
