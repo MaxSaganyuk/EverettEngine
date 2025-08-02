@@ -30,13 +30,13 @@ jobs:
       run: Compress-Archive -Path "Release\\*" --DestinationPath "EverettEngine.zip"
 
     - name: Delete previous nightly build
-      uses: svenstaro/delete-release-assets-action@v1
+      uses: mknejp/delete-release-assets@v1
       with:
-       tag: nightly
-       assets: EverettEngine.zip
-      env:
-       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      continue-on-error: true
+        token: ${{ github.token }}
+        tag: nightly
+        assets: 'EverettEngine.zip'
+        fail-if-no-release: false
+        fail-if-no-assets: false
 
     - name: Upload new nightly build
       uses: softprops/action-gh-release@v1
