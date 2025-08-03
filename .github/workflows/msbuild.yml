@@ -36,11 +36,16 @@ jobs:
         fail-if-no-release: false
         fail-if-no-assets: false
 
+    - name: Get latest commit message
+      id: getCommit
+      run: echo "msg=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+
     - name: Upload new nightly build
       uses: softprops/action-gh-release@v1
       with:
         tag_name: nightly
         name: Nightly Build
+        body: ${{ steps.getCommit.outputs.msg }}
         files: EverettEngine.zip
         draft: false
         prerelease: true
