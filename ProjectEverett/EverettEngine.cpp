@@ -330,7 +330,6 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader)
 {
-	ThrowException;
 	if (MSM.find(name) != MSM.end())
 	{
 		return true;
