@@ -21,9 +21,6 @@ RenderLogger::RenderLogger(
 	deleteFunc(deleteFunc),
 	counter(0)
 {
-	logOutput.SetEndlineCallback([this](const std::string& str) { CreateLogMessage(str); });
-	errorOutput.SetEndlineCallback([this](const std::string& str) { CreateErrorMessage(str); });
-
 	startTextPos = { 20.0f, windowHeight - 25.0f, 1.0f };
 	maxAmountOfMessages = static_cast<int>(windowHeight / 60.0f);
 }
@@ -69,14 +66,4 @@ glm::vec3 RenderLogger::GetCurrentTextPosition()
 	currentTextPos.y -= renderMessageCollection.size() * 15.0f;
 
 	return currentTextPos;
-}
-
-std::streambuf* RenderLogger::GetCustomLogOutputBuffer()
-{
-	return logOutput.GetStreamBuffer();
-}
-
-std::streambuf* RenderLogger::GetCustomErrorOutputBuffer()
-{
-	return errorOutput.GetStreamBuffer();
 }

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
+#include <format>
 
 #include "LGL.h"
 #include "LGLUtils.h"
@@ -27,6 +28,7 @@
 
 #include "AnimSystem.h"
 
+#include "CustomOutput.h"
 #include "RenderLogger.h"
 
 #define EVERETT_EXPORT
@@ -111,6 +113,11 @@ struct EverettEngine::KeyScriptFuncInfo
 
 EverettEngine::EverettEngine()
 {
+	logOutput = std::make_unique<CustomOutput>();
+	errorOutput = std::make_unique<CustomOutput>();
+
+	SetLogCallback();
+	
 	LGL::InitOpenGL(3, 3);
 	SoundSim::InitOpenAL();
 
@@ -119,16 +126,13 @@ EverettEngine::EverettEngine()
 	animSystem = std::make_unique<AnimSystem>();
 	cmdHandler = std::make_unique<CommandHandler>();
 	hwndHolder = std::make_unique<WindowHandleHolder>();
-
-	stdOutStreamBuffer = std::cout.rdbuf();
-	stdErrStreamBuffer = std::cerr.rdbuf();
 }
 
 EverettEngine::~EverettEngine()
 {
 	SoundSim::TriggerFreeDrWav();
 	SoundSim::TerminateOpenAL();
-	SetCustomStreamBuffers(false);
+	SetRenderLoggerCallbacks(false);
 	LGL::TerminateOpenGL();
 }
 
@@ -180,7 +184,7 @@ void EverettEngine::CreateAndSetupMainWindow(
 
 		fileLoader->fontLoader.FreeFaceInfoByFont(loggerFont, true);
 
-		SetCustomStreamBuffers();
+		SetRenderLoggerCallbacks();
 	}
 
 	camera = std::make_unique<CameraSim>(windowWidth, windowHeight);
@@ -326,6 +330,7 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader)
 {
+	ThrowException;
 	if (MSM.find(name) != MSM.end())
 	{
 		return true;
@@ -1028,7 +1033,7 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 
 void EverettEngine::ResetEngine()
 {
-	SetCustomStreamBuffers(false);
+	SetRenderLoggerCallbacks(false);
 	mainLGL->PauseRendering();
 
 	mainLGL->ResetLGL();
@@ -1049,7 +1054,7 @@ void EverettEngine::ResetEngine()
 	keyScriptFuncMap.clear();
 	allNameTracker.clear();
 
-	SetCustomStreamBuffers();
+	SetRenderLoggerCallbacks();
 	mainLGL->PauseRendering(false);
 }
 
@@ -1545,17 +1550,69 @@ void EverettEngine::CheckAndAddToNameTracker(const std::string& name)
 	}
 }
 
-void EverettEngine::SetCustomStreamBuffers(bool value)
+std::string EverettEngine::GetDateTimeStr()
+{
+	auto now = std::chrono::zoned_time{
+		std::chrono::current_zone(), std::chrono::system_clock::now() 
+	}.get_local_time();
+
+	auto today = std::chrono::floor<std::chrono::days>(now);
+	std::chrono::year_month_day ymd = std::chrono::year_month_day{ today };
+	std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ now - today };
+
+	return std::format(
+		"{:02}-{:02}-{:04}-{:02}-{:02}-{:02}",
+		static_cast<unsigned>(ymd.day()),
+		static_cast<unsigned>(ymd.month()),
+		static_cast<int>     (ymd.year()),
+		static_cast<unsigned>(hms.hours().count()),
+		static_cast<unsigned>(hms.minutes().count()),
+		static_cast<unsigned>(hms.seconds().count())
+	);
+}
+
+void EverettEngine::SetLogCallback()
+{
+	stdOutStreamBuffer = std::cout.rdbuf();
+	stdErrStreamBuffer = std::cerr.rdbuf();
+
+	std::cout.set_rdbuf(logOutput->GetStreamBuffer());
+	std::cerr.set_rdbuf(errorOutput->GetStreamBuffer());
+
+	logOutput->SetEndlineCallback("AllLog", [this](const std::string& str) { logStrings.push_back(str); });
+	errorOutput->SetEndlineCallback("AllLog", [this](const std::string& str) { logStrings.push_back("ERROR: " + str); });
+
+	EverettException::SetLogReportCreator([this]() { CreateLogReport(); });
+}
+
+void EverettEngine::SetRenderLoggerCallbacks(bool value)
 {
 	if (logger)
 	{
 		if (value)
 		{
 			logger->CreateLogMessage("Trigger render text shader load and custom output buffer set");
+			logOutput->SetEndlineCallback("RenderLogger", [this](const std::string& str) { logger->CreateLogMessage(str); });
+			errorOutput->SetEndlineCallback("RenderLogger", [this](const std::string& str) { logger->CreateErrorMessage(str); });
 		}
-		std::cout.rdbuf(value ? logger->GetCustomLogOutputBuffer() : stdOutStreamBuffer);
-		std::cerr.rdbuf(value ? logger->GetCustomErrorOutputBuffer() : stdErrStreamBuffer);
+		else
+		{
+			logOutput->RemoveEndlineCallback("RenderLogger");
+			errorOutput->RemoveEndlineCallback("RenderLogger");
+		}
 	}
+}
+
+void EverettEngine::CreateLogReport()
+{
+	std::fstream file("EverettEngineLogReport-" + GetDateTimeStr() + ".txt", std::ios::out);
+
+	for (auto& str : logStrings)
+	{
+		file << str << '\n';
+	}
+
+	file.close();
 }
 
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)

@@ -26,9 +26,19 @@ std::string EverettException::CreateTheMessage(
 
 	message = additionalMessage + " - " + message;
 
+	if (logReportCreatorFunc)
+	{
+		logReportCreatorFunc();
+	}
+
 	assert(false && "Critical error, see error message");
 
 	return message;
+}
+
+void EverettException::SetLogReportCreator(std::function<void()> logReportCreatorFuncToSet)
+{
+	logReportCreatorFunc = logReportCreatorFuncToSet;
 }
 
 EverettException::EverettException(const std::source_location& currentSourceLocation, const std::string& additionalMessage)

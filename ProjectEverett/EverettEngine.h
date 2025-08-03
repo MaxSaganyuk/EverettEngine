@@ -43,6 +43,7 @@ class WindowHandleHolder;
 class ScriptFuncStorage;
 class AnimSystem;
 class RenderLogger;
+class CustomOutput;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -198,6 +199,8 @@ public:
 	);
 
 	EVERETT_API void ResetEngine();
+
+	EVERETT_API void CreateLogReport();
 private:
 	std::string shaderPath = "shaders";
 	std::string fontPath = "fonts";
@@ -275,7 +278,9 @@ private:
 	void LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadKeybindsFromLine(std::string_view& line);
 
-	void SetCustomStreamBuffers(bool value = true);
+	void SetLogCallback();
+	void SetRenderLoggerCallbacks(bool value = true);
+	std::string GetDateTimeStr();
 
 	std::unique_ptr<LGL> mainLGL;
 
@@ -302,6 +307,10 @@ private:
 
 	std::streambuf* stdOutStreamBuffer;
 	std::streambuf* stdErrStreamBuffer;
+
+	std::unique_ptr<CustomOutput> logOutput;
+	std::unique_ptr<CustomOutput> errorOutput;
+	std::vector<std::string> logStrings;
 
 	class LastKeyPressPoll
 	{
