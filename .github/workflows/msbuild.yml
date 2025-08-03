@@ -38,14 +38,14 @@ jobs:
 
     - name: Get latest commit message
       id: getCommit
-      run: echo "msg=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+      run: echo "$(git log -1 --pretty=%B)" >> commitMes.txt
 
     - name: Upload new nightly build
       uses: softprops/action-gh-release@v1
       with:
         tag_name: nightly
         name: Nightly Build
-        body: ${{ steps.getCommit.outputs.msg }}
+        body_path: commitMes.txt
         files: EverettEngine.zip
         draft: false
         prerelease: true
