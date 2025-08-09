@@ -89,8 +89,13 @@ private:
 		"EverettPlayer.exe",
 		"LGL.dll",
 		"EverettCore.dll",
+#ifdef _DEBUG
 		"assimp-vc143-mtd.dll",
-		"freetype.dll"
+#else
+		"assimp-vc143-mt.dll",
+#endif
+		"freetype.dll",
+		"OpenAL32.dll"
 	};
 
 	constexpr static const char configFileName[] = "config.ini";
