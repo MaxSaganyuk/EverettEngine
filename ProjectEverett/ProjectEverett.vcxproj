@@ -182,7 +182,6 @@
     <ClInclude Include="interfaces\ISolidSim.h" />
     <ClInclude Include="interfaces\ISoundSim.h" />
     <ClInclude Include="RenderLogger.h" />
-    <ClInclude Include="MazeGen.h" />
     <ClInclude Include="ShaderGenerator.h" />
     <ClInclude Include="SimSerializer.h" />
     <ClInclude Include="SolidToModelManager.h" />
@@ -204,7 +203,6 @@
     <ClCompile Include="CameraSim.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
     <ClCompile Include="LightSim.cpp" />
-    <ClCompile Include="MazeGen.cpp" />
     <ClCompile Include="ObjectSim.cpp" />
     <ClCompile Include="RenderLogger.cpp" />
     <ClCompile Include="ScriptFuncStorage.cpp" />

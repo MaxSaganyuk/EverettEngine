@@ -17,8 +17,6 @@
 
 #include "CommandHandler.h"
 
-#include "MazeGen.h"
-
 #include "WindowHandleHolder.h"
 #include "ScriptFuncStorage.h"
 

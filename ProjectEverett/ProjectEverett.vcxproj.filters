@@ -33,9 +33,6 @@
     <ClInclude Include="CameraSim.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="MazeGen.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="SolidSim.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
@@ -107,9 +104,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MazeGen.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="SolidSim.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
