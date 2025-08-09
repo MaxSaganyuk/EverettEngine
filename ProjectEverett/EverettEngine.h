@@ -278,7 +278,7 @@ private:
 	void LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadKeybindsFromLine(std::string_view& line);
 
-	void SetLogCallback();
+	void SetLogCallback(bool value = true);
 	void SetRenderLoggerCallbacks(bool value = true);
 	std::string GetDateTimeStr();
 

@@ -115,6 +115,8 @@ EverettEngine::EverettEngine()
 {
 	logOutput = std::make_unique<CustomOutput>();
 	errorOutput = std::make_unique<CustomOutput>();
+	stdOutStreamBuffer = std::cout.rdbuf();
+	stdErrStreamBuffer = std::cerr.rdbuf();
 
 	SetLogCallback();
 	
@@ -130,6 +132,7 @@ EverettEngine::EverettEngine()
 
 EverettEngine::~EverettEngine()
 {
+	SetLogCallback(false);
 	SoundSim::TriggerFreeDrWav();
 	SoundSim::TerminateOpenAL();
 	SetRenderLoggerCallbacks(false);
@@ -1570,18 +1573,25 @@ std::string EverettEngine::GetDateTimeStr()
 	);
 }
 
-void EverettEngine::SetLogCallback()
+void EverettEngine::SetLogCallback(bool value)
 {
-	stdOutStreamBuffer = std::cout.rdbuf();
-	stdErrStreamBuffer = std::cerr.rdbuf();
+	std::cout.set_rdbuf(value ? logOutput->GetStreamBuffer() : stdOutStreamBuffer);
+	std::cerr.set_rdbuf(value ? errorOutput->GetStreamBuffer() : stdErrStreamBuffer);
 
-	std::cout.set_rdbuf(logOutput->GetStreamBuffer());
-	std::cerr.set_rdbuf(errorOutput->GetStreamBuffer());
+	if (value)
+	{
+		logOutput->SetEndlineCallback("AllLog", [this](const std::string& str) { logStrings.push_back(str); });
+		errorOutput->SetEndlineCallback("AllLog", [this](const std::string& str) { logStrings.push_back("ERROR: " + str); });
 
-	logOutput->SetEndlineCallback("AllLog", [this](const std::string& str) { logStrings.push_back(str); });
-	errorOutput->SetEndlineCallback("AllLog", [this](const std::string& str) { logStrings.push_back("ERROR: " + str); });
+		EverettException::SetLogReportCreator([this]() { CreateLogReport(); });
+	}
+	else
+	{
+		logOutput->RemoveEndlineCallback("AllLog");
+		errorOutput->RemoveEndlineCallback("AllLog");
 
-	EverettException::SetLogReportCreator([this]() { CreateLogReport(); });
+		EverettException::SetLogReportCreator(nullptr);
+	}
 }
 
 void EverettEngine::SetRenderLoggerCallbacks(bool value)
