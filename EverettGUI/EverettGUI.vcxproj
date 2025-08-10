@@ -216,6 +216,7 @@
     <ClInclude Include="CBrowseAndLoadDialog.h" />
     <ClInclude Include="CMainWindow.h" />
     <ClInclude Include="CObjectEditDialog.h" />
+    <ClInclude Include="CObjectMoveDialog.h" />
     <ClInclude Include="CPlaceObjectDialog.h" />
     <ClInclude Include="CSaveLoadDlg.h" />
     <ClInclude Include="DLLLoaderCommon.h" />
@@ -239,6 +240,7 @@
     <ClCompile Include="CBrowseAndLoadDialog.cpp" />
     <ClCompile Include="CMainWindow.cpp" />
     <ClCompile Include="CObjectEditDialog.cpp" />
+    <ClCompile Include="CObjectMoveDialog.cpp" />
     <ClCompile Include="CPlaceObjectDialog.cpp" />
     <ClCompile Include="CSaveLoadDlg.cpp" />
     <ClCompile Include="DLLLoaderCommon.cpp" />
@@ -260,6 +262,7 @@
     <None Include="res\EverettGUI.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\coords.png" />
     <Image Include="res\EverettGUI.ico" />
     <Image Include="res\Toolbar.bmp" />
   </ItemGroup>

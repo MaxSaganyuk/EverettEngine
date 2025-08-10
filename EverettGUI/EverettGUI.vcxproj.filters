@@ -78,6 +78,9 @@
     <ClInclude Include="MFCUtilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CObjectMoveDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EverettGUI.cpp">
@@ -131,6 +134,9 @@
     <ClCompile Include="CGameProducerDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CObjectMoveDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EverettGUI.rc">
@@ -147,6 +153,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\Toolbar.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\coords.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

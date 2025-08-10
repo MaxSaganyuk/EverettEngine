@@ -30,6 +30,8 @@ public:
 public:
 	afx_msg void OnAppAbout();
 	DECLARE_MESSAGE_MAP()
+private:
+	ULONG_PTR m_GDIPlusToken;
 };
 
 extern CEverettGUIApp theApp;

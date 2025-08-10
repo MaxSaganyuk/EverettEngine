@@ -165,18 +165,22 @@ void CObjectEditDialog::SetupModelParams()
 	}
 }
 
+void CObjectEditDialog::UpdateParams()
+{
+	SetObjectParams({
+		currentObjectInterface.GetPositionVectorAddr(),
+		currentObjectInterface.GetScaleVectorAddr(),
+		currentObjectInterface.GetFrontVectorAddr()
+	});
+}
+
 BOOL CObjectEditDialog::OnInitDialog()
 {
 	DLLLoaderCommon::OnInitDialog();
 
 	SetWindowText(GenerateTitle());
 
-	SetObjectParams({
-		currentObjectInterface.GetPositionVectorAddr(),
-		currentObjectInterface.GetScaleVectorAddr(),
-		currentObjectInterface.GetFrontVectorAddr()
-	});
-
+	UpdateParams();
 	SetupModelParams();
 
 	return true;
@@ -190,6 +194,9 @@ BEGIN_MESSAGE_MAP(CObjectEditDialog, DLLLoaderCommon)
 	ON_BN_CLICKED(IDC_BUTTON6, &CObjectEditDialog::OnPausePlayerButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON7, &CObjectEditDialog::OnStopPlayerButtonClick)
 	ON_CBN_SELCHANGE(IDC_COMBO3, &CObjectEditDialog::OnAnimCBSelChange)
+	ON_BN_CLICKED(IDC_BUTTON8, &CObjectEditDialog::OnPosEditButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON9, &CObjectEditDialog::OnScaEditButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON10, &CObjectEditDialog::OnRotEditButtonClick)
 END_MESSAGE_MAP()
 
 
@@ -295,4 +302,32 @@ void CObjectEditDialog::OnStopPlayerButtonClick()
 
 void CObjectEditDialog::OnAnimCBSelChange()
 {
+}
+
+void CObjectEditDialog::StartObjectMoveDlg(CObjectMoveDialog::TransformationType transType)
+{
+	CObjectMoveDialog moveDlg(
+		engineRef,
+		currentObjectInterface,
+		castedSolidInterface != nullptr,
+		transType
+	);
+
+	moveDlg.DoModal();
+	UpdateParams();
+}
+
+void CObjectEditDialog::OnPosEditButtonClick()
+{
+	StartObjectMoveDlg(CObjectMoveDialog::TransformationType::Position);
+}
+
+void CObjectEditDialog::OnScaEditButtonClick()
+{
+	StartObjectMoveDlg(CObjectMoveDialog::TransformationType::Scale);
+}
+
+void CObjectEditDialog::OnRotEditButtonClick()
+{
+	StartObjectMoveDlg(CObjectMoveDialog::TransformationType::Rotation);
 }

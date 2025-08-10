@@ -11,12 +11,12 @@ void SolidSim::ResetModelMatrix(const Rotation& toRotate)
 
 	model = glm::mat4(1.0f);
 	model = glm::translate(model, pos);
-	model = glm::scale(model, scale);
 	// gimbal lock will happen, will rewrite to use quaternions later
-	for (int i = 0; i <3; ++i)
+	for (int i = 0; i < 3; ++i)
 	{
 		model = glm::rotate(model, rotate[i], { i == 0, i == 1, i == 2 });
 	}
+	model = glm::scale(model, scale);
 }
 
 SolidSim::SolidSim(

@@ -7,6 +7,7 @@
 #include "EverettEngine.h"
 
 #include "DLLLoaderCommon.h"
+#include "CObjectMoveDialog.h"
 
 // CObjectEditDialog dialog
 
@@ -36,6 +37,9 @@ private:
 	CString GenerateTitle();
 	void SetupModelParams();
 	void SetPlayerButtons(bool play, bool pause, bool stop);
+
+	void UpdateParams();
+	void StartObjectMoveDlg(CObjectMoveDialog::TransformationType transType);
 
 	EverettEngine& engineRef;
 
@@ -77,4 +81,7 @@ public:
 	afx_msg void OnPausePlayerButtonClick();
 	afx_msg void OnStopPlayerButtonClick();
 	afx_msg void OnAnimCBSelChange();
+	afx_msg void OnPosEditButtonClick();
+	afx_msg void OnScaEditButtonClick();
+	afx_msg void OnRotEditButtonClick();
 };

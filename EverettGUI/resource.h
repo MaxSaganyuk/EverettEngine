@@ -13,8 +13,11 @@
 #define IDD_DIALOG5                     321
 #define IDD_DIALOG6                     323
 #define IDD_DIALOG7                     327
+#define IDD_DIALOG8                     329
+#define IDB_PNG1                        331
 #define IDC_BUTTON1                     1001
 #define IDC_BUTTON8                     1002
+#define IDC_BUTTON9                     1003
 #define IDC_COMBO1                      1004
 #define IDC_EDIT1                       1005
 #define IDC_EDIT2                       1006
@@ -31,13 +34,17 @@
 #define IDC_EDIT9                       1014
 #define IDC_CHECK1                      1015
 #define IDC_TREE1                       1016
+#define IDC_BUTTON10                    1016
 #define IDC_PROGRESS1                   1017
 #define IDC_BUTTON2                     1018
 #define IDC_BUTTON3                     1019
 #define IDC_BUTTON4                     1020
 #define IDC_CHECK2                      1021
+#define IDC_BUTTON11                    1021
 #define IDC_FOLDER_LABEL                1022
+#define IDC_BUTTON12                    1022
 #define IDC_CHOICE_LABEL                1023
+#define IDC_BUTTON13                    1023
 #define IDC_NAME_LABEL                  1025
 #define IDC_NAME_WARNING                1026
 #define IDC_CHECK3                      1027
@@ -65,7 +72,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        329
+#define _APS_NEXT_RESOURCE_VALUE        332
 #define _APS_NEXT_COMMAND_VALUE         32779
 #define _APS_NEXT_CONTROL_VALUE         1040
 #define _APS_NEXT_SYMED_VALUE           310

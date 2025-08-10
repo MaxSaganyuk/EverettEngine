@@ -42,4 +42,39 @@ public:
 
 		return res;
 	}
+
+	// Yields owner, must be deleted
+	static Gdiplus::Bitmap* LoadPNGFromResource(HMODULE hModule, unsigned int resourceID, LPCTSTR resourceType)
+	{
+		HRSRC hResource = FindResourceW(hModule, MAKEINTRESOURCE(resourceID), resourceType);
+		if (!hResource) return nullptr;
+
+		DWORD imageSize = SizeofResource(hModule, hResource);
+		if (!imageSize) return nullptr;
+
+		HGLOBAL hMemory = LoadResource(hModule, hResource);
+		if (!hMemory) return nullptr;
+
+		void* pResourceData = LockResource(hMemory);
+		if (!pResourceData) return nullptr;
+
+		HGLOBAL hBuffer = GlobalAlloc(GMEM_MOVEABLE, imageSize);
+		if (!hBuffer) return nullptr;
+
+		void* pBuffer = GlobalLock(hBuffer);
+		memcpy(pBuffer, pResourceData, imageSize);
+		GlobalUnlock(hBuffer);
+
+		IStream* pStream = nullptr;
+		if (FAILED(CreateStreamOnHGlobal(hBuffer, true, &pStream)))
+		{
+			GlobalFree(hBuffer);
+			return nullptr;
+		}
+
+		Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromStream(pStream);
+		pStream->Release();
+
+		return pBitmap;
+	}
 };

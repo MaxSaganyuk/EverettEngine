@@ -8,6 +8,9 @@
 #include "afxdialogex.h"
 #include "EverettGUI.h"
 #include "MainFrm.h"
+#include <gdiplus.h>
+
+#pragma comment(lib, "gdiplus.lib")
 
 
 #ifdef _DEBUG
@@ -107,6 +110,9 @@ BOOL CEverettGUIApp::InitInstance()
 	// The one and only window has been initialized, so show and update it
 	pFrame->ShowWindow(SW_SHOW);
 	pFrame->UpdateWindow();
+
+	Gdiplus::GdiplusStartupInput GdiPlusInput;
+	Gdiplus::GdiplusStartup(&m_GDIPlusToken, &GdiPlusInput, nullptr);
 	return TRUE;
 }
 
@@ -115,6 +121,7 @@ int CEverettGUIApp::ExitInstance()
 	//TODO: handle additional resources you may have added
 	AfxOleTerm(FALSE);
 
+	Gdiplus::GdiplusShutdown(m_GDIPlusToken);
 	return CWinApp::ExitInstance();
 }
 
