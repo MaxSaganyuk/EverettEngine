@@ -212,10 +212,9 @@ SoundSim::~SoundSim()
 {
 	ContextLock
 
-	alcDestroyContext(context);
-
 	if (freeDRWav)
 	{
+		alcDestroyContext(context);
 		drwav_free(sound.data, nullptr);
 	}
 }
