@@ -390,14 +390,9 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 				LGLUtils::SetShaderUniformArrayAt(*mainLGL, "models", index, modelMatrix);
 				LGLUtils::SetShaderUniformArrayAt(*mainLGL, "invs", index, glm::inverse(modelMatrix));
-
-				if (!model.model.second.animInfoVect.empty())
-				{
-					mainLGL->SetShaderUniformValue("startingBoneIndex", static_cast<int>(
-						solid.GetModelCurrentStartingBoneIndex()
-						)
-					);
-				}
+				LGLUtils::SetShaderUniformArrayAt(
+					*mainLGL, "startingBoneIndexes", index, static_cast<int>(solid.GetModelCurrentStartingBoneIndex())
+				);
 
 				++index;
 			}

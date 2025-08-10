@@ -25,7 +25,7 @@ uniform int meshVisibility;
 #genDefine BONE_AMOUNT 1
 uniform mat4 Bones[BONE_AMOUNT];
 uniform int animationless;
-uniform int startingBoneIndex;
+uniform int startingBoneIndexes[SOLID_AMOUNT];
 
 void main()
 {
@@ -34,10 +34,10 @@ void main()
     // Bone skinning
     if(animationless == 0)
     {
-        mat4 BoneTransform = Bones[startingBoneIndex + aBoneIDs[0]] * aWeights[0];
-        BoneTransform     += Bones[startingBoneIndex + aBoneIDs[1]] * aWeights[1];
-        BoneTransform     += Bones[startingBoneIndex + aBoneIDs[2]] * aWeights[2];
-        BoneTransform     += Bones[startingBoneIndex + aBoneIDs[3]] * aWeights[3];
+        mat4 BoneTransform = Bones[startingBoneIndexes[solidIndex] + aBoneIDs[0]] * aWeights[0];
+        BoneTransform     += Bones[startingBoneIndexes[solidIndex] + aBoneIDs[1]] * aWeights[1];
+        BoneTransform     += Bones[startingBoneIndexes[solidIndex] + aBoneIDs[2]] * aWeights[2];
+        BoneTransform     += Bones[startingBoneIndexes[solidIndex] + aBoneIDs[3]] * aWeights[3];
 
         skinnedPos = BoneTransform * vec4(aPos, 1.0);
     }
@@ -45,7 +45,6 @@ void main()
     {
         skinnedPos = vec4(aPos, 1.0);
     }
-
     mat4 currentModel;
     mat4 currentInv;
     if(meshVisibility == 1)
