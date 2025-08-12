@@ -12,8 +12,8 @@ ObjectSim::ObjectSim(
 	rotate = { 0.0f, 0.0f, 0.0f };
 
 	rotationLimits = {
-		{0.0f, 0.0f, 0.0f},
-		{fullRotation, fullRotation, fullRotation}
+		{-fullRotation, -fullRotation, -fullRotation},
+		{ fullRotation,  fullRotation,  fullRotation}
 	};
 
 	up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -84,25 +84,25 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 void ObjectSim::CheckRotationLimits()
 {
 	auto CheckRotation = [](float& toCheck, float min, float max)
+	{
+		if (toCheck > fullRotation)
 		{
-			if (toCheck > fullRotation)
-			{
-				toCheck = 0.0f;
-			}
-			if (toCheck < -fullRotation)
-			{
-				toCheck = 0.0f;
-			}
+			toCheck = 0.0f;
+		}
+		if (toCheck < -fullRotation)
+		{
+			toCheck = 0.0f;
+		}
 
-			if (toCheck > max)
-			{
-				toCheck = max;
-			}
-			else if (toCheck < min)
-			{
-				toCheck = min;
-			}
-		};
+		if (toCheck > max)
+		{
+			toCheck = max;
+		}
+		else if (toCheck < min)
+		{
+			toCheck = min;
+		}
+	};
 
 	for (int i = 0; i < 3; ++i)
 	{
