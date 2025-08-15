@@ -97,7 +97,14 @@ public:
 
 	EVERETT_API void SetShaderPath(const std::string& shaderPath);
 	EVERETT_API void SetFontPath(const std::string& fontPath);
-	EVERETT_API void SetDefaultWASDControls();
+
+	EVERETT_API void SetDefaultWASDControls(bool value = true);
+	EVERETT_API void SetInteractable(
+		char key, 
+		bool holdable,
+		std::function<void()> pressFunc, 
+		std::function<void()> releaseFunc = nullptr
+	);
 
 	EVERETT_API void RunRenderWindow();
 	EVERETT_API void StopRenderWindow();

@@ -304,7 +304,7 @@ void CObjectEditDialog::OnAnimCBSelChange()
 {
 }
 
-void CObjectEditDialog::StartObjectMoveDlg(CObjectMoveDialog::TransformationType transType)
+void CObjectEditDialog::StartObjectMoveDlg(CObjectMoveDialog::ObjectTransformType transType)
 {
 	CObjectMoveDialog moveDlg(
 		engineRef,
@@ -319,15 +319,15 @@ void CObjectEditDialog::StartObjectMoveDlg(CObjectMoveDialog::TransformationType
 
 void CObjectEditDialog::OnPosEditButtonClick()
 {
-	StartObjectMoveDlg(CObjectMoveDialog::TransformationType::Position);
+	StartObjectMoveDlg(CObjectMoveDialog::ObjectTransformType::Position);
 }
 
 void CObjectEditDialog::OnScaEditButtonClick()
 {
-	StartObjectMoveDlg(CObjectMoveDialog::TransformationType::Scale);
+	StartObjectMoveDlg(CObjectMoveDialog::ObjectTransformType::Scale);
 }
 
 void CObjectEditDialog::OnRotEditButtonClick()
 {
-	StartObjectMoveDlg(CObjectMoveDialog::TransformationType::Rotation);
+	StartObjectMoveDlg(CObjectMoveDialog::ObjectTransformType::Rotation);
 }

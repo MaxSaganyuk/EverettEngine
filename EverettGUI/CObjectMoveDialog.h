@@ -2,6 +2,9 @@
 #include "afxdialogex.h"
 #include "EverettEngine.h"
 
+#include <array>
+#include <map>
+
 namespace Gdiplus
 {
 	class Bitmap;
@@ -14,7 +17,7 @@ class CObjectMoveDialog : public CDialogEx
 	DECLARE_DYNAMIC(CObjectMoveDialog)
 
 public:
-	enum class TransformationType
+	enum class ObjectTransformType
 	{
 		Position,
 		Scale,
@@ -25,7 +28,7 @@ public:
 		EverettEngine& engineRef, 
 		IObjectSim& object,
 		bool isSolid, 
-		TransformationType moveType, 
+		ObjectTransformType moveType,
 		CWnd* pParent = nullptr
 	);
 	virtual ~CObjectMoveDialog();
@@ -51,17 +54,40 @@ private:
 		Forward = 1
 	};
 
-	void TransformObject(DirectionType x, DirectionType y, DirectionType z);
+	void TransformObject(const std::array<DirectionType, 3>& directionValues);
 
 	CEdit rateOfChangeEdit;
 
 	EverettEngine& engineRef;
 	IObjectSim& object;
 	bool isSolid;
-	TransformationType transType;
+	ObjectTransformType transType;
+
+	bool WASDBasedTransOn;
+
+	enum DirectionXYZ
+	{
+		XPlus,
+		XMinus,
+		YPlus,
+		YMinus,
+		ZPlus,
+		ZMinus
+	};
+
+	std::map<DirectionXYZ, std::array<DirectionType, 3>> directions
+	{
+		{ XPlus,  { Forward, None,    None    } },
+		{ XMinus, { Back   , None,    None    } },
+		{ YPlus,  { None,    Forward, None    } },
+		{ YMinus, { None,    Back,    None    } },
+		{ ZPlus,  { None,    None,    Forward } },
+		{ ZMinus, { None,    None,    Back    } }
+	};
 	
 	Gdiplus::Bitmap* coordBitmap;
 
+	void ToggleWASDBasedControls();
 
 	afx_msg void OnXPlusButtonClick();
 	afx_msg void OnXMinusButtonClick();
@@ -69,4 +95,6 @@ private:
 	afx_msg void OnYMinusButtonClick();
 	afx_msg void OnZPlusButtonClick();
 	afx_msg void OnZMinusButtonClick();
+
+	afx_msg void OnWASDBasedButtonClick();
 };

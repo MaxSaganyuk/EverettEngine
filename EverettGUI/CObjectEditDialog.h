@@ -39,7 +39,7 @@ private:
 	void SetPlayerButtons(bool play, bool pause, bool stop);
 
 	void UpdateParams();
-	void StartObjectMoveDlg(CObjectMoveDialog::TransformationType transType);
+	void StartObjectMoveDlg(CObjectMoveDialog::ObjectTransformType transType);
 
 	EverettEngine& engineRef;
 

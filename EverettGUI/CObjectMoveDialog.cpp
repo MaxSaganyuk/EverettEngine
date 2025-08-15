@@ -8,6 +8,7 @@
 
 #include <gdiplus.h>
 
+#include <iostream>
 
 // CObjectMoveDialog dialog
 
@@ -17,7 +18,7 @@ CObjectMoveDialog::CObjectMoveDialog(
 	EverettEngine& engineRef, 
 	IObjectSim& object, 
 	bool isSolid,
-	TransformationType transType, 
+	ObjectTransformType transType, 
 	CWnd* pParent
 )
 	: 
@@ -25,6 +26,7 @@ CObjectMoveDialog::CObjectMoveDialog(
 	object(object),
 	isSolid(isSolid),
 	transType(transType),
+	WASDBasedTransOn(false),
 	CDialogEx(IDD_DIALOG8, pParent)
 {
 
@@ -35,6 +37,11 @@ CObjectMoveDialog::~CObjectMoveDialog()
 	if (coordBitmap)
 	{
 		delete coordBitmap;
+	}
+
+	if (WASDBasedTransOn)
+	{
+		ToggleWASDBasedControls();
 	}
 }
 
@@ -86,25 +93,26 @@ ON_BN_CLICKED(IDC_BUTTON4, &CObjectMoveDialog::OnYPlusButtonClick)
 ON_BN_CLICKED(IDC_BUTTON11, &CObjectMoveDialog::OnYMinusButtonClick)
 ON_BN_CLICKED(IDC_BUTTON12, &CObjectMoveDialog::OnZPlusButtonClick)
 ON_BN_CLICKED(IDC_BUTTON13, &CObjectMoveDialog::OnZMinusButtonClick)
+ON_BN_CLICKED(IDC_BUTTON1, &CObjectMoveDialog::OnWASDBasedButtonClick)
 END_MESSAGE_MAP()
 
 
 // CObjectMoveDialog message handlers
 
-void CObjectMoveDialog::TransformObject(DirectionType x, DirectionType y, DirectionType z)
+void CObjectMoveDialog::TransformObject(const std::array<DirectionType, 3>& directionValues)
 {
 	glm::vec3* vectorPtr = nullptr;
 	bool rotation = false;
 
 	switch (transType)
 	{
-	case TransformationType::Position:
+	case ObjectTransformType::Position:
 		vectorPtr = &object.GetPositionVectorAddr();
 		break;
-	case TransformationType::Scale:
+	case ObjectTransformType::Scale:
 		vectorPtr = &object.GetScaleVectorAddr();
 		break;
-	case TransformationType::Rotation:
+	case ObjectTransformType::Rotation:
 		rotation = true;
 		break;
 	default:
@@ -114,10 +122,14 @@ void CObjectMoveDialog::TransformObject(DirectionType x, DirectionType y, Direct
 	CString value;
 	rateOfChangeEdit.GetWindowTextW(value);
 	float rateOfChange = static_cast<float>(_tstof(value));
+
+	float x = static_cast<float>(directionValues[0]);
+	float y = static_cast<float>(directionValues[1]);
+	float z = static_cast<float>(directionValues[2]);
 	
-	float xChange = static_cast<float>(x) * rateOfChange;
-	float yChange = static_cast<float>(y) * rateOfChange;
-	float zChange = static_cast<float>(z) * rateOfChange;
+	float xChange = x * rateOfChange;
+	float yChange = y * rateOfChange;
+	float zChange = z * rateOfChange;
 
 	if (rateOfChange != 0.0f)
 	{
@@ -126,6 +138,7 @@ void CObjectMoveDialog::TransformObject(DirectionType x, DirectionType y, Direct
 			vectorPtr->x += xChange;
 			vectorPtr->y += yChange;
 			vectorPtr->z += zChange;
+		
 		}
 		else if (rotation)
 		{
@@ -148,30 +161,64 @@ void CObjectMoveDialog::TransformObject(DirectionType x, DirectionType y, Direct
 
 void CObjectMoveDialog::OnXPlusButtonClick()
 {
-	TransformObject(Forward, None, None);
+	TransformObject(directions[XPlus]);
 }
 
 void CObjectMoveDialog::OnXMinusButtonClick()
 {
-	TransformObject(Back, None, None);
+	TransformObject(directions[XMinus]);
 }
 
 void CObjectMoveDialog::OnYPlusButtonClick()
 {
-	TransformObject(None, Forward, None);
+	TransformObject(directions[YPlus]);
 }
 
 void CObjectMoveDialog::OnYMinusButtonClick()
 {
-	TransformObject(None, Back, None);
+	TransformObject(directions[YMinus]);
 }
 
 void CObjectMoveDialog::OnZPlusButtonClick()
 {
-	TransformObject(None, None, Forward);
+	TransformObject(directions[ZPlus]);
 }
 
 void CObjectMoveDialog::OnZMinusButtonClick()
 {
-	TransformObject(None, None, Back);
+	TransformObject(directions[ZMinus]);
+}
+
+void CObjectMoveDialog::ToggleWASDBasedControls()
+{
+	std::string keys = "ADWSRF";
+
+	WASDBasedTransOn = !WASDBasedTransOn;
+
+	if (WASDBasedTransOn)
+	{
+		engineRef.SetDefaultWASDControls(!WASDBasedTransOn);
+	}
+
+	for (int i = 0; i < keys.size(); ++i)
+	{
+		engineRef.SetInteractable(
+			keys[i],
+			false,
+			WASDBasedTransOn ?
+			[this, i]() { TransformObject(directions[static_cast<DirectionXYZ>(i)]); } : std::function<void()>(nullptr)
+		);
+	}
+
+	if (!WASDBasedTransOn)
+	{
+		engineRef.SetDefaultWASDControls(!WASDBasedTransOn);
+	}
+
+	std::cout << "Turned " << (WASDBasedTransOn ? "On" : "Off") << " WASD based transformations\n";
+}
+
+void CObjectMoveDialog::OnWASDBasedButtonClick()
+{
+	ToggleWASDBasedControls();
 }

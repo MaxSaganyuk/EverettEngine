@@ -240,7 +240,7 @@ void EverettEngine::CreateAndSetupMainWindow(
 	mainLGL->EnableUniformValueHashing(ENABLE_OPTIMIZATIONS);
 }
 
-void EverettEngine::SetDefaultWASDControls()
+void EverettEngine::SetDefaultWASDControls(bool value)
 {
 	std::string walkingDirections = "WSAD";
 	for (size_t i = 0; i < walkingDirections.size(); ++i)
@@ -248,9 +248,19 @@ void EverettEngine::SetDefaultWASDControls()
 		mainLGL->SetInteractable(
 			walkingDirections[i],
 			true,
-			[this, i]() { camera->SetPosition(static_cast<CameraSim::Direction>(i)); }
+			value ? [this, i]() { camera->SetPosition(static_cast<CameraSim::Direction>(i)); } : std::function<void()>(nullptr)
 		);
 	}
+}
+
+void EverettEngine::SetInteractable(
+	char key,
+	bool holdable,
+	std::function<void()> pressFunc,
+	std::function<void()> releaseFunc
+)
+{
+	mainLGL->SetInteractable(LGL::ConvertKeyTo(std::string{ key }), holdable, pressFunc, releaseFunc);
 }
 
 void EverettEngine::RunRenderWindow()
