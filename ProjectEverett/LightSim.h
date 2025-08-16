@@ -38,6 +38,8 @@ public:
 
 	static Attenuation GetAttenuation(int range);
 	Attenuation GetAttenuation() override;
+
+	glm::vec3& GetColorVectorAddr() override;
 private:
 	std::string GetSimInfoToSaveImpl();
 
@@ -51,4 +53,5 @@ private:
 	};
 
 	LightTypes lightType{};
+	glm::vec3 color;
 };

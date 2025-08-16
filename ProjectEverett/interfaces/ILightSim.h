@@ -22,4 +22,5 @@ public:
 	virtual std::string GetCurrentLightType() = 0;
 
 	virtual Attenuation GetAttenuation() = 0;
+	virtual glm::vec3& GetColorVectorAddr() = 0;
 };

@@ -729,7 +729,7 @@ void EverettEngine::LightUpdater()
 			lightShaderValueNames[1].first,
 			index++,
 			lightShaderValueNames[1].second,
-			light.GetPositionVectorAddr(), glm::vec3(0.4f, 0.4f, 0.4f),
+			light.GetPositionVectorAddr(), light.GetColorVectorAddr(),
 			glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, atten.linear,
 			atten.quadratic
 		);
@@ -746,7 +746,7 @@ void EverettEngine::LightUpdater()
 			index++,
 			lightShaderValueNames[2].second,
 			light.GetPositionVectorAddr(), light.GetFrontVectorAddr(),
-			glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
+			light.GetColorVectorAddr(), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
 			atten.linear, atten.quadratic, glm::cos(glm::radians(12.5f)),
 			glm::cos(glm::radians(17.5f))
 		);

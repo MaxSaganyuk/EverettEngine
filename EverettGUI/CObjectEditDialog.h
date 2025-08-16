@@ -35,7 +35,7 @@ private:
 
 	void SetObjectParams(const std::vector<glm::vec3>& params);
 	CString GenerateTitle();
-	void SetupModelParams();
+	void SetupObjectParams();
 	void SetPlayerButtons(bool play, bool pause, bool stop);
 
 	void UpdateParams();
@@ -52,14 +52,20 @@ private:
 	AdString chosenObjectName;
 	IObjectSim& currentObjectInterface;
 	ISolidSim* castedSolidInterface;
+	ILightSim* castedLightInterface;
 	ISoundSim* castedSoundInterface;
+
+	CStatic propText;
 
 	// Model property objects
 	CStatic meshText;
-	CStatic modelPropText;
 	CComboBox meshComboBox;
 	CButton meshVisCheck;
 
+	// Light property objects
+	CButton colorEditButton;
+
+	// Player property objects
 	CStatic playerText;
 	CComboBox playerComboBox;
 	CButton playerPlayButton;
@@ -69,11 +75,6 @@ private:
 	CStatic playerSpeedText;
 	CEdit playerSpeedEdit;
 
-protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-
-	DECLARE_MESSAGE_MAP()
-public:
 	afx_msg void OnUpdateParamsButtonClick();
 	afx_msg void OnBnClickedCheck3();
 	afx_msg void OnMeshCBSelChange();
@@ -84,4 +85,11 @@ public:
 	afx_msg void OnPosEditButtonClick();
 	afx_msg void OnScaEditButtonClick();
 	afx_msg void OnRotEditButtonClick();
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+
+	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnColorEditButtonClick();
 };

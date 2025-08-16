@@ -24,10 +24,12 @@ LightSim::LightSim(
 	const glm::vec3& front,
 	const float speed,
 	const float range
-) : ObjectSim(pos, scale, front, speed)
+) : 
+	lightType(lightType),
+	lightRange(static_cast<int>(range)),
+	color({0.5, 0.5, 0.5}),
+	ObjectSim(pos, scale, front, speed)
 {
-	this->lightType = lightType;
-	this->lightRange = static_cast<int>(range);
 }
 
 std::string LightSim::GetObjectTypeNameStr()
@@ -122,5 +124,10 @@ std::string LightSim::GetTypeToName(LightSim::LightTypes lightType)
 std::string LightSim::GetCurrentLightType()
 {
 	return GetTypeToName(lightType);
+}
+
+glm::vec3& LightSim::GetColorVectorAddr()
+{
+	return color;
 }
 

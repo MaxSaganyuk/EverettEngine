@@ -1,5 +1,6 @@
 #include "afxdialogex.h"
 #include <vector>
+#include <array>
 
 class MFCUtilities
 {
@@ -76,5 +77,25 @@ public:
 		pStream->Release();
 
 		return pBitmap;
+	}
+
+	static std::array<float, 3> GetColorFromPickerDlg(const std::array<float, 3>& initialColor = {0.5f, 0.5f, 0.5f})
+	{
+		CColorDialog colorDlg(RGB(initialColor[0] * 255, initialColor[1] * 255, initialColor[2] * 255), CC_FULLOPEN);
+
+		std::array<float, 3> colorRes = { -1.0f, -1.0f, -1.0f };
+
+		if (colorDlg.DoModal() == IDOK)
+		{
+			COLORREF colorRef = colorDlg.GetColor();
+			
+			colorRes = {
+				GetRValue(colorRef) / 255.0f,
+				GetGValue(colorRef) / 255.0f,
+				GetBValue(colorRef) / 255.0f
+			};
+		}
+
+		return colorRes;
 	}
 };

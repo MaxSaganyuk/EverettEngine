@@ -38,6 +38,7 @@ CObjectEditDialog::CObjectEditDialog(
 	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
 	currentObjectInterface(*engineRef.GetObjectInterface(objectType, subtypeName, objectName)),
 	castedSolidInterface(nullptr),
+	castedLightInterface(nullptr),
 	castedSoundInterface(nullptr)
 {
 }
@@ -62,7 +63,7 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO2, meshComboBox);
 	DDX_Control(pDX, IDC_CHECK3, meshVisCheck);
 	DDX_Control(pDX, IDC_MESH_TEXT, meshText);
-	DDX_Control(pDX, IDC_MODEL_PROP_TEXT, modelPropText);
+	DDX_Control(pDX, IDC_MODEL_PROP_TEXT, propText);
 	DDX_Control(pDX, IDC_ANIM_TEXT, playerText);
 	DDX_Control(pDX, IDC_COMBO3, playerComboBox);
 	DDX_Control(pDX, IDC_BUTTON5, playerPlayButton);
@@ -71,6 +72,7 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK4, playerLoopCheck);
 	DDX_Control(pDX, IDC_SPEED_TEXT, playerSpeedText);
 	DDX_Control(pDX, IDC_EDIT11, playerSpeedEdit);
+	DDX_Control(pDX, IDC_BUTTON12, colorEditButton);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -84,15 +86,24 @@ CString CObjectEditDialog::GenerateTitle()
 	return titleRes;
 }
 
-void CObjectEditDialog::SetupModelParams()
+void CObjectEditDialog::SetupObjectParams()
 {
 	bool isSolid = objectType == EverettEngine::ObjectTypes::Solid;
+	bool isLight = objectType == EverettEngine::ObjectTypes::Light;
 	bool isSound = objectType == EverettEngine::ObjectTypes::Sound;
+
+	propText.ShowWindow(isSolid || isLight);
+	if (isSolid || isLight)
+	{
+		AdString text = isSolid ? L"Model" : L"Light";
+		propText.SetWindowTextW(text + L" properties");
+	}
 
 	meshComboBox.ShowWindow (isSolid);
 	meshVisCheck.ShowWindow (isSolid);
 	meshText.ShowWindow     (isSolid);
-	modelPropText.ShowWindow(isSolid);
+
+	colorEditButton.ShowWindow(isLight);
 
 	playerText.ShowWindow       (isSolid           );
 	playerComboBox.ShowWindow   (isSolid           );
@@ -109,17 +120,21 @@ void CObjectEditDialog::SetupModelParams()
 	playerLoopCheck.EnableWindow(false);
 	playerSpeedEdit.EnableWindow(false);
 
+	if (isSolid)
+	{
+		castedSolidInterface = dynamic_cast<ISolidSim*>(&currentObjectInterface);
+	}
+	else if (isLight)
+	{
+		castedLightInterface = dynamic_cast<ILightSim*>(&currentObjectInterface);
+	}
+	else
+	{
+		castedSoundInterface = dynamic_cast<ISoundSim*>(&currentObjectInterface);
+	}
+
 	if (isSolid || isSound)
 	{
-		if (isSolid)
-		{
-			castedSolidInterface = dynamic_cast<ISolidSim*>(&currentObjectInterface);
-		}
-		else
-		{
-			castedSoundInterface = dynamic_cast<ISoundSim*>(&currentObjectInterface);
-		}
-
 		CString speedValue;
 		speedValue.Format(_T("%.2f"), castedSolidInterface ? 
 			castedSolidInterface->GetModelAnimationSpeed() : castedSoundInterface->GetPlaybackSpeed()
@@ -181,7 +196,7 @@ BOOL CObjectEditDialog::OnInitDialog()
 	SetWindowText(GenerateTitle());
 
 	UpdateParams();
-	SetupModelParams();
+	SetupObjectParams();
 
 	return true;
 }
@@ -197,6 +212,7 @@ BEGIN_MESSAGE_MAP(CObjectEditDialog, DLLLoaderCommon)
 	ON_BN_CLICKED(IDC_BUTTON8, &CObjectEditDialog::OnPosEditButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON9, &CObjectEditDialog::OnScaEditButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON10, &CObjectEditDialog::OnRotEditButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON12, &CObjectEditDialog::OnColorEditButtonClick)
 END_MESSAGE_MAP()
 
 
@@ -330,4 +346,21 @@ void CObjectEditDialog::OnScaEditButtonClick()
 void CObjectEditDialog::OnRotEditButtonClick()
 {
 	StartObjectMoveDlg(CObjectMoveDialog::ObjectTransformType::Rotation);
+}
+
+void CObjectEditDialog::OnColorEditButtonClick()
+{
+	glm::vec3& colorVectorAddr = castedLightInterface->GetColorVectorAddr();
+
+	std::array<float, 3> colorRaw = MFCUtilities::GetColorFromPickerDlg(
+		{ colorVectorAddr.x, colorVectorAddr.y, colorVectorAddr.z }
+	);
+
+	if (colorRaw.front() > 0.0f)
+	{
+		for (int i = 0; i < colorRaw.size(); ++i)
+		{
+			colorVectorAddr[i] = colorRaw[i];
+		}
+	}
 }
