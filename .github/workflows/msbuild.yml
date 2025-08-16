@@ -27,14 +27,13 @@ jobs:
     - name: Zip Release Folder
       run: Compress-Archive -Path ".\\x64\\Release\\*" -DestinationPath "EverettEngine.zip"
 
-    - name: Delete previous nightly build
-      uses: mknejp/delete-release-assets@v1
+    - name: Delete previous nightly release and tag
+      uses: dev-drprasad/delete-tag-and-release@v0.2.1
       with:
-        token: ${{ github.token }}
-        tag: nightly
-        assets: 'EverettEngine.zip'
-        fail-if-no-release: false
-        fail-if-no-assets: false
+        tag_name: nightly
+        delete_release: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Get latest commit message
       id: getCommit
