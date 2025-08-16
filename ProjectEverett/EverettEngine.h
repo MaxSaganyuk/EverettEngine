@@ -119,6 +119,8 @@ public:
 	EVERETT_API bool DeleteLight(const std::string& lightName);
 	EVERETT_API bool DeleteSound(const std::string& soundName);
 
+	EVERETT_API glm::vec3& GetAmbientLightVectorAddr(); 
+
 	EVERETT_API IObjectSim* GetObjectInterface(
 		ObjectTypes objectType,
 		const std::string& subtypeName,

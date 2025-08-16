@@ -62,6 +62,7 @@ BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
 	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE1, &CMainWindow::OnTreeSelectionChanged)
 	ON_NOTIFY(NM_DBLCLK, IDC_TREE1, &CMainWindow::OnNodeDoubleClick)
 	ON_NOTIFY(NM_RCLICK, IDC_TREE1, &CMainWindow::OnNodeRightClick)
+	ON_BN_CLICKED(IDC_BUTTON1, &CMainWindow::OnEditAmbientLightButton)
 END_MESSAGE_MAP()
 
 // CMainWindow diagnostics
@@ -214,4 +215,21 @@ bool CMainWindow::SetSelectedScriptDLLInfo(const std::vector<std::pair<std::stri
 	}
 
 	return true;
+}
+
+void CMainWindow::OnEditAmbientLightButton()
+{
+	glm::vec3& colorVectorAddr = engineP->GetAmbientLightVectorAddr();
+
+	std::array<float, 3> colorRaw = MFCUtilities::GetColorFromPickerDlg(
+		{ colorVectorAddr.x, colorVectorAddr.y, colorVectorAddr.z }
+	);
+
+	if (colorRaw.front() > 0.0f)
+	{
+		for (int i = 0; i < colorRaw.size(); ++i)
+		{
+			colorVectorAddr[i] = colorRaw[i];
+		}
+	}
 }

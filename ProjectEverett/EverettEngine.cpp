@@ -659,6 +659,11 @@ bool EverettEngine::DeleteSound(const std::string& soundName)
 	return res;
 }
 
+glm::vec3& EverettEngine::GetAmbientLightVectorAddr()
+{
+	return LightSim::SGetAmbientLightColorVectorAddr();
+}
+
 size_t EverettEngine::GetCreatedSolidAmount()
 {
 	size_t solidAmount = 0;
@@ -717,7 +722,7 @@ void EverettEngine::LightUpdater()
 	mainLGL->SetShaderUniformValue("dirLightAmount",   static_cast<int>(lights[LightTypes::Direction].size()));
 	mainLGL->SetShaderUniformValue("pointLightAmount", static_cast<int>(lights[LightTypes::Point].size()));
 	mainLGL->SetShaderUniformValue("spotLightAmount",  static_cast<int>(lights[LightTypes::Spot].size()));
-	mainLGL->SetShaderUniformValue("ambient", glm::vec3(0.4f, 0.4f, 0.4f));
+	mainLGL->SetShaderUniformValue("ambient", LightSim::SGetAmbientLightColorVectorAddr());
 	
 	int index = 0;
 	for (auto& [lightName, light] : lights[LightTypes::Point])
@@ -726,9 +731,9 @@ void EverettEngine::LightUpdater()
 
 		LGLUtils::SetShaderUniformArrayAt(
 			*mainLGL,
-			lightShaderValueNames[1].first,
+			lightShaderValueNames[static_cast<int>(LightTypes::Point)].first,
 			index++,
-			lightShaderValueNames[1].second,
+			lightShaderValueNames[static_cast<int>(LightTypes::Point)].second,
 			light.GetPositionVectorAddr(), light.GetColorVectorAddr(),
 			glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, atten.linear,
 			atten.quadratic
@@ -742,9 +747,9 @@ void EverettEngine::LightUpdater()
 
 		LGLUtils::SetShaderUniformArrayAt(
 			*mainLGL,
-			lightShaderValueNames[2].first,
+			lightShaderValueNames[static_cast<int>(LightTypes::Spot)].first,
 			index++,
-			lightShaderValueNames[2].second,
+			lightShaderValueNames[static_cast<int>(LightTypes::Spot)].second,
 			light.GetPositionVectorAddr(), light.GetFrontVectorAddr(),
 			light.GetColorVectorAddr(), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
 			atten.linear, atten.quadratic, glm::cos(glm::radians(12.5f)),
@@ -757,8 +762,8 @@ void EverettEngine::LightUpdater()
 
 	LGLUtils::SetShaderUniformStruct(
 		*mainLGL,
-		lightShaderValueNames[0].first,
-		lightShaderValueNames[0].second,
+		lightShaderValueNames[static_cast<int>(LightTypes::Direction)].first,
+		lightShaderValueNames[static_cast<int>(LightTypes::Direction)].second,
 		0,
 		1,
 		0.5f
@@ -1072,6 +1077,7 @@ bool EverettEngine::SaveDataToFile(const std::string& filePath)
 	std::fstream file(realFilePath, std::ios::out);
 
 	file << SimSerializer::GetLatestVersionStr();
+	file << "AmbientLight*" << SimSerializer::GetValueToSaveFrom(LightSim::SGetAmbientLightColorVectorAddr()) << '\n';
 
 	SaveObjectsToFile<CameraSim>(file);
 	SaveObjectsToFile<SolidSim>(file);
@@ -1223,8 +1229,13 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	{
 		std::getline(file, lineLoader);
 		line = lineLoader;
+		std::string_view lineTitle = line.substr(0, line.find('*'));
 
-		if (line.substr(0, line.find('*')) == "Keybind")
+		if (lineTitle == "AmbientLight")
+		{
+			SimSerializer::SetValueToLoadFrom(line, LightSim::SGetAmbientLightColorVectorAddr(), 4);
+		}
+		else if (lineTitle == "Keybind")
 		{
 			LoadKeybindsFromLine(line);
 		}

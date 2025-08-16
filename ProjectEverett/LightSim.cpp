@@ -128,6 +128,16 @@ std::string LightSim::GetCurrentLightType()
 	return GetTypeToName(lightType);
 }
 
+glm::vec3& LightSim::SGetAmbientLightColorVectorAddr()
+{
+	return ambientLightColor;
+}
+
+glm::vec3& LightSim::GetAmbientLightColorVectorAddr()
+{
+	return ambientLightColor;
+}
+
 glm::vec3& LightSim::GetColorVectorAddr()
 {
 	return color;

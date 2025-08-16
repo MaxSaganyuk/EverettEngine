@@ -67,6 +67,7 @@ public:
 	afx_msg void OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnEditAmbientLightButton();
 };
 
 
