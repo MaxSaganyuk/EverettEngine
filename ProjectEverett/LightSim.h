@@ -6,7 +6,7 @@
 #include <ranges>
 
 #include "interfaces/ILightSim.h"
-#include "SolidSim.h"
+#include "ObjectSim.h"
 
 // Source: https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
 

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "ISolidSim.h"
-#include "ILightSim.h"
+#include "IObjectSim.h"
 
 class ILightSim : virtual public IObjectSim
 {

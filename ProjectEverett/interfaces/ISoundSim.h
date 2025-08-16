@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ISolidSim.h"
+#include "IObjectSim.h"
 
 class ISoundSim : virtual public IObjectSim
 {

@@ -27,7 +27,7 @@ LightSim::LightSim(
 ) : 
 	lightType(lightType),
 	lightRange(static_cast<int>(range)),
-	color({0.5, 0.5, 0.5}),
+	color({0.5f, 0.5f, 0.5f}),
 	ObjectSim(pos, scale, front, speed)
 {
 }
@@ -51,6 +51,7 @@ std::string LightSim::GetSimInfoToSaveImpl()
 	std::string res = ObjectSim::GetSimInfoToSaveImpl();
 
 	res += SimSerializer::GetValueToSaveFrom(lightRange);
+	res += SimSerializer::GetValueToSaveFrom(color);
 
 	return res;
 }
@@ -60,6 +61,7 @@ bool LightSim::SetSimInfoToLoad(std::string_view& line)
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 	
 	res = res && SimSerializer::SetValueToLoadFrom(line, lightRange, 1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, color, 3);
 
 	return res;
 }
