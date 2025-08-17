@@ -345,6 +345,14 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 		{
 			LoadTextureByMaterial(mesh, material, i);
 		}
+
+		float shininessBase = 1.0f;
+		float shininessStr = 1.0f;
+
+		material->Get(AI_MATKEY_SHININESS, shininessBase);
+		material->Get(AI_MATKEY_SHININESS_STRENGTH, shininessStr);
+
+		mesh.shininess = shininessBase * shininessStr;
 	};
 
 	LGLStructs::Mesh mesh;

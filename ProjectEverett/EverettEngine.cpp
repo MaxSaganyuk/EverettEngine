@@ -423,6 +423,10 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		{
 			mainLGL->SetShaderUniformValue("meshVisibility", static_cast<int>(solid.GetModelMeshVisibility(meshIndex)));
 			mainLGL->SetShaderUniformValue("solidIndex", static_cast<int>(index));
+			mainLGL->SetShaderUniformValue(
+				lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[2], 
+				solid.GetModelMeshShininess(index)
+			);
 
 			++index;
 		}
@@ -760,14 +764,8 @@ void EverettEngine::LightUpdater()
 
 	mainLGL->SetShaderUniformValue("viewPos", camera->GetPositionVectorAddr());
 
-	LGLUtils::SetShaderUniformStruct(
-		*mainLGL,
-		lightShaderValueNames[static_cast<int>(LightTypes::Direction)].first,
-		lightShaderValueNames[static_cast<int>(LightTypes::Direction)].second,
-		0,
-		1,
-		0.5f
-	);
+	mainLGL->SetShaderUniformValue(lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[0], 0);
+	mainLGL->SetShaderUniformValue(lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[1], 1);
 }
 
 void EverettEngine::SetScriptToObject(

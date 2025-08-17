@@ -212,6 +212,7 @@ namespace LGLStructs
 		std::vector<Vertex> vert;
 		std::vector<unsigned int> indices;
 		std::vector<Texture> textures;
+		float shininess;
 	};
 
 	struct MeshInfo

@@ -55,6 +55,10 @@ public:
 	bool GetModelMeshVisibility(const std::string name) override;
 	bool GetModelMeshVisibility(size_t index) override;
 
+	// Mesh access; engine only
+	float GetModelMeshShininess(const std::string& name);
+	float GetModelMeshShininess(size_t index);
+
 	// Animation access; avalible through interface
 	std::vector<std::string> GetModelAnimationNames() override;
 	size_t GetModelAnimationAmount() override;

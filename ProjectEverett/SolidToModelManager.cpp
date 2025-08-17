@@ -106,6 +106,20 @@ bool SolidToModelManager::GetMeshVisibility(const std::string& name)
 	return meshVisibility[GetIndexByName(name, GetMeshNames())];
 }
 
+float SolidToModelManager::GetMeshShininess(size_t index)
+{
+	CheckIfInitialized();
+
+	return fullModelInfoP->first.meshes[index].mesh.shininess;
+}
+
+float SolidToModelManager::GetMeshShininess(const std::string& name)
+{
+	CheckIfInitialized();
+
+	return GetMeshShininess(GetIndexByName(name, GetMeshNames()));
+}
+
 std::vector<std::string> SolidToModelManager::GetAnimationNames()
 {
 	CheckIfInitialized();

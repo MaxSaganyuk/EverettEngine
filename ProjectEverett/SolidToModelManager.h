@@ -27,6 +27,8 @@ public:
 	void SetMeshVisibility(const std::string& name, bool value);
 	bool GetMeshVisibility(size_t intex);
 	bool GetMeshVisibility(const std::string& name);
+	float GetMeshShininess(size_t index);
+	float GetMeshShininess(const std::string& name);
 
 	std::vector<std::string> GetAnimationNames();
 	size_t GetAnimationAmount();

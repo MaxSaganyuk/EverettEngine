@@ -218,6 +218,16 @@ bool SolidSim::GetModelMeshVisibility(size_t index)
 	return STMM.GetMeshVisibility(index);
 }
 
+float SolidSim::GetModelMeshShininess(const std::string& name)
+{
+	return STMM.GetMeshShininess(name);
+}
+
+float SolidSim::GetModelMeshShininess(size_t index)
+{
+	return STMM.GetMeshShininess(index);
+}
+
 std::vector<std::string> SolidSim::GetModelAnimationNames()
 {
 	return STMM.GetAnimationNames();
