@@ -203,6 +203,13 @@ SoundSim::SoundSim(const std::string& file, glm::vec3&& pos)
 	SetupSound(file);
 }
 
+SoundSim::SoundSim(SoundSim&& otherSoundSim)
+	: context(otherSoundSim.context), sound(otherSoundSim.sound)
+{
+	otherSoundSim.context = nullptr;
+	otherSoundSim.sound.data = nullptr;
+}
+
 std::string SoundSim::GetObjectTypeNameStr()
 {
 	return "Sound";
@@ -212,14 +219,13 @@ SoundSim::~SoundSim()
 {
 	ContextLock
 
-	if (freeDRWav)
-	{
+	if(context)
+	{ 
 		alcDestroyContext(context);
+	}
+
+	if (sound.data)
+	{
 		drwav_free(sound.data, nullptr);
 	}
-}
-
-void SoundSim::TriggerFreeDrWav(bool value)
-{
-	freeDRWav = value;
 }

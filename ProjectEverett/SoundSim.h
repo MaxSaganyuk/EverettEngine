@@ -21,8 +21,6 @@ class SoundSim : public ObjectSim, public ISoundSim
 	static inline ALCdevice* device = nullptr;
 	static inline CameraSim* camera = nullptr;
 
-	static inline bool freeDRWav = false;
-
 	ALCcontext* context = nullptr;
 
 	struct SoundInfo
@@ -61,11 +59,11 @@ public:
 
 	static void InitOpenAL();
 	static void TerminateOpenAL();
-	static void TriggerFreeDrWav(bool value = true);
 	static void SetCamera(CameraSim& camera);
 	SoundSim() = default;
 	SoundSim(const std::string& file, glm::vec3& pos);
 	SoundSim(const std::string& file, glm::vec3&& pos);
+	SoundSim(SoundSim&& otherSoundSim);
 
 	static std::string GetObjectTypeNameStr();
 

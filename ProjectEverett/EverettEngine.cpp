@@ -131,7 +131,6 @@ EverettEngine::EverettEngine()
 EverettEngine::~EverettEngine()
 {
 	SetLogCallback(false);
-	SoundSim::TriggerFreeDrWav();
 	SoundSim::TerminateOpenAL();
 	SetRenderLoggerCallbacks(false);
 	LGL::TerminateOpenGL();
@@ -1057,10 +1056,7 @@ void EverettEngine::ResetEngine()
 	camera->ClearScriptFuncMap();
 	MSM.clear();
 	lights.clear();
-
-	SoundSim::TriggerFreeDrWav();
 	sounds.clear();
-	SoundSim::TriggerFreeDrWav(false);
 
 	keyScriptFuncMap.clear();
 	allNameTracker.clear();
