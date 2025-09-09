@@ -1150,7 +1150,7 @@ bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::st
 {	
 	HandshakeContextLock
 
-	shaderProgramCollection.emplace(name, glCreateProgram());
+	shaderProgramCollection.emplace(name, GLSafeExecuteRet(glCreateProgram));
 	ShaderProgram* newShaderProgram = &shaderProgramCollection[name];
 
 	for (auto& shaderInfo : shaderInfoCollection[name])
@@ -1418,7 +1418,7 @@ int LGL::CheckUniformValueLocation(
 
 	if ((shaderProgramID = SetCurrentShaderProg(shaderProgramNameToUse)) != ~ShaderProgram{})
 	{
-		int uniformValueLocation = glGetUniformLocation(shaderProgramID, valueName.c_str());
+		int uniformValueLocation = GLSafeExecuteRet(glGetUniformLocation, shaderProgramID, valueName.c_str());
 
 		if (uniformValueLocation == -1)
 		{

@@ -13,27 +13,63 @@
 #include <unordered_map>
 
 #define GLSafeExecute(glFunc, ...) GLExecutor::SafeExecute(#glFunc, glFunc, __VA_ARGS__)
+#define GLSafeExecuteRet(glFunc, ...) GLExecutor::SafeExecuteWithReturn(#glFunc, glFunc, __VA_ARGS__)
 
 class GLExecutor
 {
-	static std::unordered_map<unsigned int, std::string> errorMessages;
+	static std::unordered_map<GLenum, std::string> errorMessages;
 	static bool assertOnFailure;
+
+	template<typename FunctionType>
+	struct ReturnTypeGetter;
+
+	template<typename ReturnType, typename... Types>
+	struct ReturnTypeGetter<ReturnType(*)(Types...)>
+	{
+		using Type = ReturnType;
+	};
+
+	static bool CheckForGLErrors(const std::string& annotation)
+	{
+#ifdef _DEBUG
+		GLenum errorID{};
+		bool error = false;
+
+		while ((errorID = glGetError()) != GL_NO_ERROR)
+		{
+			error = true;
+			std::cerr <<
+				"OpenGL ERROR:" << errorMessages[errorID] << (annotation.size() ? " comment: " + annotation : "") << '\n';
+			assert(!assertOnFailure && "OpenGL ERROR: check log");
+		}
+
+		return error;
+#else
+		return false;
+#endif
+	}
 
 public:
 	template<typename GLFunc, typename... Types>
-	static bool SafeExecute(const std::string& annotation, GLFunc glFunc, Types... values)
+	static bool SafeExecute(const std::string& annotation, GLFunc glFunc, Types&&... values)
 	{
-		unsigned int error;
+		glFunc(std::forward<Types>(values)...);
 
-		glFunc(values...);
+		return !CheckForGLErrors(annotation);
+	}
 
-		while((error = glGetError()) != GL_NO_ERROR)
-		{
-			std::cerr << "OpenGL ERROR:" + errorMessages[error] + (annotation.size() ? " comment: " + annotation : "") + '\n';
-			assert(!assertOnFailure && "OpenGL ERROR: check cmd");
-		}
+	template<typename GLFunc, typename... Types>
+	static typename ReturnTypeGetter<GLFunc>::Type SafeExecuteWithReturn(
+		const std::string& annotation, 
+		GLFunc glFunc, 
+		Types&&... values
+	)
+	{
+		typename ReturnTypeGetter<GLFunc>::Type res = glFunc(std::forward<Types>(values)...);
 
-		return !error;
+		CheckForGLErrors(annotation);
+
+		return res;
 	}
 
 	static void SetAssertOnFailure(bool value)
@@ -42,7 +78,7 @@ public:
 	}
 };
 
-std::unordered_map<unsigned int, std::string> GLExecutor::errorMessages
+std::unordered_map<GLenum, std::string> GLExecutor::errorMessages
 {
 	{GL_INVALID_ENUM, "An invalid enum value was used in a function."},
 	{GL_INVALID_VALUE, "A numeric argument is out of range"},
