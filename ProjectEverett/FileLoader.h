@@ -12,6 +12,8 @@
 #include "ScriptFuncStorage.h"
 #include "AnimSystem.h"
 
+#include "CommonStructs.h"
+
 // Assimp forward declarations
 struct aiScene;
 struct aiMesh;
@@ -149,6 +151,13 @@ class FileLoader
 		void FreeFaceInfoByFont(const std::string& fontName, bool keepGlyphData = false);
 	};
 
+	class AudioLoader
+	{
+		std::map<std::string, WavDataOwner> audioData;
+	public:
+		WavData GetWavDataFromFile(const std::string& filename);
+	};
+
 public:
 	FileLoader();
 	~FileLoader();
@@ -159,6 +168,7 @@ public:
 	DLLLoader dllLoader;
 	ModelLoader modelLoader;
 	FontLoader fontLoader;
+	AudioLoader audioLoader;
 };
 
 #undef ForwardDeclarePtrTo

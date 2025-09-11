@@ -18,28 +18,26 @@
 
 class SoundSim : public ObjectSim, public ISoundSim
 {
+private:
 	static inline ALCdevice* device = nullptr;
 	static inline CameraSim* camera = nullptr;
 
 	ALCcontext* context = nullptr;
 
-	struct SoundInfo
+	struct SoundInfo : WavData
 	{
 		stdEx::ValWithBackup<glm::vec3> pos;
 
 		PlayerStates playStates;
 
-		std::string fileName;
 		float playbackSpeed{};
-		unsigned int channels{};
-		unsigned int sampleRate{};
-		unsigned long long totalPCMFrameCount{};
-		float* data = nullptr;
 
 		ALuint buffer{};
 		ALuint source{};
 
-		SoundInfo()
+		SoundInfo() = default;
+		SoundInfo(WavData wavData)
+			: WavData(wavData)
 		{
 			playbackSpeed = 1.0f;
 			pos.ResetBackup(&camera->GetPositionVectorAddr());
@@ -48,8 +46,7 @@ class SoundSim : public ObjectSim, public ISoundSim
 
 	SoundInfo sound;
 
-	void SetupSound(const std::string& file);
-	bool LoadFile(const std::string& file);
+	void SetupSound(WavData&& wavData);
 	bool CreateContext();
 	bool CreateBufferAndSource();
 	std::string GetSimInfoForSaveImpl();
@@ -61,9 +58,8 @@ public:
 	static void TerminateOpenAL();
 	static void SetCamera(CameraSim& camera);
 	SoundSim() = default;
-	SoundSim(const std::string& file, glm::vec3& pos);
-	SoundSim(const std::string& file, glm::vec3&& pos);
-	SoundSim(SoundSim&& otherSoundSim);
+	SoundSim(WavData&& wavData);
+	SoundSim(SoundSim&& otherSoundSim) noexcept;
 
 	static std::string GetObjectTypeNameStr();
 

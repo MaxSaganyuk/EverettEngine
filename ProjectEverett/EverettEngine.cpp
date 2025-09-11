@@ -543,10 +543,7 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 
 	auto resPair = sounds.emplace(
 		soundName,
-		SoundSim{
-			pathToUse,
-			glm::vec3(camera->GetPositionVectorAddr())
-		}
+		SoundSim{ fileLoader->audioLoader.GetWavDataFromFile(pathToUse) }
 	);
 
 	if (resPair.second)

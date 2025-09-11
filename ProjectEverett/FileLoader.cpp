@@ -17,9 +17,13 @@
 #include "stb_image.h"
 
 #include "SolidSim.h"
+#include "SoundSim.h"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H  
+
+#define DR_WAV_IMPLEMENTATION
+#include <DrWav/dr_wav.h>
 
 #include "EverettException.h"
 
@@ -800,4 +804,38 @@ void FileLoader::FontLoader::FreeFaceInfoByFont(const std::string& fontName, boo
 	}
 
 	ThrowExceptionWMessage("Invalid font name");
+}
+
+WavData FileLoader::AudioLoader::GetWavDataFromFile(const std::string& fileName)
+{
+	WavDataOwner wavDataOwn;
+	WavData wavData;
+	bool success = true;
+
+	if (!audioData.contains(fileName))
+	{
+		wavDataOwn.data = std::shared_ptr<float>(
+			drwav_open_file_and_read_pcm_frames_f32(
+				fileName.c_str(), &wavDataOwn.channels, &wavDataOwn.sampleRate, &wavDataOwn.totalPCMFrameCount, nullptr
+			), 
+			[] (float* data) { drwav_free(data, nullptr); }
+		);
+
+		if (wavDataOwn.data)
+		{
+			audioData[fileName] = std::move(wavDataOwn);
+		}
+		else
+		{
+			success = false;
+		}
+	}
+
+	if (success)
+	{
+		wavData = audioData[fileName];
+		wavData.fileName = fileName;
+	}
+
+	return wavData;
 }

@@ -2,9 +2,6 @@
 
 #include <OpenAL\alext.h>
 
-#define DR_WAV_IMPLEMENTATION
-#include <DrWav/dr_wav.h>
-
 #include <iostream>
 #include <cassert>
 
@@ -55,21 +52,6 @@ void SoundSim::SetCamera(CameraSim& camera)
 	SoundSim::camera = &camera;
 }
 
-bool SoundSim::LoadFile(const std::string& file)
-{
-	sound.fileName = file;
-	sound.data = drwav_open_file_and_read_pcm_frames_f32
-		(file.c_str(), &sound.channels, &sound.sampleRate, &sound.totalPCMFrameCount, nullptr);
-
-	if (!sound.data)
-	{
-		std::cerr << "Cannot get data from file " + file + '\n';
-		return false;
-	}
-
-	return true;
-}
-
 bool SoundSim::CreateContext()
 {
 	context = alcCreateContext(device, nullptr);
@@ -87,7 +69,7 @@ bool SoundSim::CreateBufferAndSource()
 	alBufferData(
 		sound.buffer, 
 		(sound.channels == 1) ? AL_FORMAT_MONO_FLOAT32 : AL_FORMAT_STEREO_FLOAT32, 
-		sound.data, 
+		sound.data.lock().get(),
 		static_cast<int>(sound.totalPCMFrameCount * sizeof(float)), 
 		sound.sampleRate
 	);
@@ -150,10 +132,11 @@ void SoundSim::Stop()
 	sound.playStates.ResetValues();
 }
 
-void SoundSim::SetupSound(const std::string& file)
+void SoundSim::SetupSound(WavData&& wavData)
 {
+	sound = std::move(wavData);
+
 	CreateContext();
-	LoadFile(file);
 	CreateBufferAndSource();
 }
 
@@ -191,23 +174,15 @@ void SoundSim::UpdatePositions()
 	alListenerfv(AL_ORIENTATION, cameraOrientation.data());
 }
 
-SoundSim::SoundSim(const std::string& file, glm::vec3& pos)
+SoundSim::SoundSim(WavData&& wavData)
 {
-	sound.pos = std::move(pos);
-	SetupSound(file);
+	SetupSound(std::move(wavData));
 }
 
-SoundSim::SoundSim(const std::string& file, glm::vec3&& pos) 
-{
-	sound.pos = std::move(pos);
-	SetupSound(file);
-}
-
-SoundSim::SoundSim(SoundSim&& otherSoundSim)
+SoundSim::SoundSim(SoundSim&& otherSoundSim) noexcept
 	: context(otherSoundSim.context), sound(otherSoundSim.sound)
 {
 	otherSoundSim.context = nullptr;
-	otherSoundSim.sound.data = nullptr;
 }
 
 std::string SoundSim::GetObjectTypeNameStr()
@@ -222,10 +197,5 @@ SoundSim::~SoundSim()
 	if(context)
 	{ 
 		alcDestroyContext(context);
-	}
-
-	if (sound.data)
-	{
-		drwav_free(sound.data, nullptr);
 	}
 }
