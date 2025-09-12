@@ -540,18 +540,22 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 	}
 
 	std::string pathToUse = CheckIfRelativePathToUse(path, "sounds");
+	WavData wavData = fileLoader->audioLoader.GetWavDataFromFile(pathToUse);
 
-	auto resPair = sounds.emplace(
-		soundName,
-		SoundSim{ fileLoader->audioLoader.GetWavDataFromFile(pathToUse) }
-	);
-
-	if (resPair.second)
+	if (wavData)
 	{
-		//sounds[soundName].Play();
-		CheckAndAddToNameTracker(resPair.first->first);
+		auto resPair = sounds.emplace(
+			soundName,
+			SoundSim{ std::move(wavData) }
+		);
 
-		return true;
+		if (resPair.second)
+		{
+			//sounds[soundName].Play();
+			CheckAndAddToNameTracker(resPair.first->first);
+
+			return true;
+		}
 	}
 
 	return false;

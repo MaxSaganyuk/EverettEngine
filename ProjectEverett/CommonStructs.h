@@ -53,4 +53,9 @@ struct WavData : WavDataRaw
 		sampleRate = wavDataOwner.sampleRate;
 		totalPCMFrameCount = wavDataOwner.totalPCMFrameCount;
 	}
+
+	operator bool()
+	{
+		return data.lock().get();
+	}
 };
