@@ -6,10 +6,6 @@
 #define EVERETT_API __declspec(dllimport)
 #endif
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
 #include <map>
 #include <unordered_map>
 #include <string>
@@ -22,6 +18,7 @@
 #include <unordered_set>
 #include <chrono>
 #include <typeindex>
+#include <optional>
 
 #include "UnorderedPtrMap.h"
 
@@ -30,6 +27,8 @@
 #include "interfaces/ILightSim.h"
 #include "interfaces/ISoundSim.h"
 #include "interfaces/ICameraSim.h"
+
+#include "EverettStructs.h"
 
 class FileLoader;
 class ObjectSim;
@@ -63,17 +62,6 @@ public:
 		Direction,
 		Point,
 		Spot
-	};
-
-	struct LightParams
-	{
-		float constant;
-		float linear;
-		float quadratic;
-
-		glm::vec3 direction;
-		float cutOff;
-		float outerCutOff;
 	};
 
 	enum class ObjectTypes
@@ -170,7 +158,7 @@ public:
 	EVERETT_API std::vector<std::string> GetModelInDirList(const std::string& path);
 	EVERETT_API std::vector<std::string> GetSoundInDirList(const std::string& path);
 
-	EVERETT_API std::vector<std::string> GetCreatedModels();
+	EVERETT_API std::vector<std::string> GetCreatedModels(bool getFullPaths = false);
 	EVERETT_API std::vector<std::string> GetNamesByObject(ObjectTypes objType);
 	EVERETT_API static std::vector<std::string> GetLightTypeList();
 
@@ -196,18 +184,13 @@ public:
 
 	EVERETT_API bool SaveDataToFile(const std::string& filePath);
 	EVERETT_API bool LoadDataFromFile(const std::string& filePath);
-	EVERETT_API void GetPathsFromWorldFile(
-		const std::string& filePath,
-		std::unordered_set<std::string>& modelPaths,
-		std::unordered_set<std::string>& soundPaths,
-		std::unordered_set<std::string>& scriptPaths
-	);
+	EVERETT_API EverettStructs::AssetPaths GetPathsFromWorldFile(const std::string& filePath);
 	EVERETT_API void HidePathsInWorldFile(
 		const std::string& originalFilePath, 
 		const std::string& hidenFilePath
 	);
 
-	EVERETT_API void ResetEngine();
+	EVERETT_API void ResetEngine(const std::optional<EverettStructs::AssetPaths>& assetPaths = std::nullopt);
 
 	EVERETT_API void CreateLogReport();
 private:

@@ -25,6 +25,7 @@
 #define DR_WAV_IMPLEMENTATION
 #include <DrWav/dr_wav.h>
 
+#include "EverettStructs.h"
 #include "EverettException.h"
 
 void ConvertFromAssimpToGLM(const aiMatrix4x4& assimpMatrix, glm::mat4& glmMatrix)
@@ -51,6 +52,22 @@ void ConvertFromAssimpToGLM(const aiQuaternion& assimpQuat, glm::quat& glmQuat)
 	glmQuat.y = assimpQuat.y;
 	glmQuat.z = assimpQuat.z;
 	glmQuat.w = assimpQuat.w;
+}
+
+template<typename AssetType>
+void FileLoader::AssetManager<AssetType>::DeleteAbsentAssets(const std::unordered_set<std::string>& assetsToKeep)
+{
+	for (auto iter = ownerContainer.begin(); iter != ownerContainer.end();)
+	{
+		if (!assetsToKeep.contains(iter->first))
+		{
+			iter = ownerContainer.erase(iter);
+		}
+		else
+		{
+			++iter;
+		}
+	}
 }
 
 std::string FileLoader::GetCurrentDir()
@@ -109,6 +126,13 @@ bool FileLoader::GetFilesInDir(std::vector<std::string>& files, const std::strin
 	return true;
 }
 
+void FileLoader::DeleteAllAbsentAssets(const EverettStructs::AssetPaths& assetPaths)
+{
+	modelLoader.DeleteAbsentAssets(assetPaths.modelPaths);
+	audioLoader.DeleteAbsentAssets(assetPaths.soundPaths);
+	dllLoader.FreeDllData();
+}
+
 bool FileLoader::ModelLoader::LoadTexture(
 	const std::string& file, 
 	LGLStructs::Texture& texture, 
@@ -132,7 +156,7 @@ bool FileLoader::ModelLoader::LoadTexture(
 		}
 
 		texture.name = textureName;
-		texturesLoaded[texture.name] = texture;
+		ownerContainer[file].textureMap[texture.name] = texture.data;
 
 		return true;
 	}
@@ -144,8 +168,25 @@ FileLoader::FileLoader() {}
 
 FileLoader::~FileLoader()
 {
-	modelLoader.FreeTextureData();
 	dllLoader.FreeDllData();
+}
+
+FileLoader::ModelOwner::ModelOwner()
+{
+	model = std::make_shared<LGLStructs::ModelInfo>();
+	modelAnim = std::make_shared<AnimSystem::ModelAnim>();
+}
+
+FileLoader::ModelOwner::~ModelOwner()
+{
+	for (auto& [textureName, textureData] : textureMap)
+	{
+		if (textureData)
+		{
+			stbi_image_free(textureData);
+			textureData = nullptr;
+		}
+	}
 }
 
 bool FileLoader::ModelLoader::GetTextureFilenames(const std::string& path)
@@ -160,7 +201,8 @@ bool FileLoader::ModelLoader::GetTextureFilenames(const std::string& path)
 
 LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 	const aiMesh* meshHandle, 
-	BoneMap& boneMap
+	BoneMap& boneMap,
+	TempTexMap& tempTexMap
 )
 {
 	auto GetVertexParam = [&meshHandle](LGLStructs::Vertex::BasicVertexData whichData)
@@ -259,7 +301,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 		}
 	};
 
-	auto ProcessTextures = [this, &meshHandle](LGLStructs::Mesh& mesh)
+	auto ProcessTextures = [this, &meshHandle](LGLStructs::Mesh& mesh, TempTexMap& tempTexMap)
 	{
 		using TextureType = LGLStructs::Texture::TextureType;
 
@@ -278,7 +320,12 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 			{TextureType::Height,   aiTextureType_HEIGHT,   'h'}
 		};
 
-		auto LoadTextureByMaterial = [this](LGLStructs::Mesh& mesh, aiMaterial* material, size_t texTypeIndex)
+		auto LoadTextureByMaterial = [this](
+			LGLStructs::Mesh& mesh, 
+			aiMaterial* material, 
+			size_t texTypeIndex, 
+			TempTexMap& tempTexMap
+		)
 		{
 			/*
 			auto CheckForAdditionalTextures = [this](LGLStructs::Mesh& mesh)
@@ -322,18 +369,19 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 
 				const aiTexture* embeddedTexture = modelHandle->GetEmbeddedTexture(strWithoutPrefix.c_str());
 
-				if (texturesLoaded.find(newTexture.name) == texturesLoaded.end())
+				if (!ownerContainer[fileProcessed].textureMap.contains(newTexture.name))
 				{
 					LoadTexture(
-						newTexture.name,
+						fileProcessed,
 						newTexture,
 						embeddedTexture ? reinterpret_cast<unsigned char*>(embeddedTexture->pcData) : nullptr,
 						embeddedTexture ? embeddedTexture->mWidth : -1
 					);
+					tempTexMap.emplace(newTexture.name, newTexture);
 				}
 				else
 				{
-					newTexture = texturesLoaded[newTexture.name];
+					newTexture = tempTexMap[newTexture.name];
 				}
 
 				if (newTexture.data)
@@ -347,7 +395,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 
 		for (size_t i = 0; i < LGLStructs::Texture::GetTextureTypeAmount(); ++i)
 		{
-			LoadTextureByMaterial(mesh, material, i);
+			LoadTextureByMaterial(mesh, material, i, tempTexMap);
 		}
 
 		float shininessBase = 1.0f;
@@ -363,7 +411,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 
 	ProcessVerteces(mesh);
 	ProcessFaces(mesh);
-	ProcessTextures(mesh);
+	ProcessTextures(mesh, tempTexMap);
 	ProcessBones(mesh, boneMap);
 
 	return mesh;
@@ -371,19 +419,20 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 
 void FileLoader::ModelLoader::ProcessNodeForModelInfo(
 	const aiNode* nodeHandle,
-	LGLStructs::ModelInfo& model,
-	BoneMap& boneMap
+	std::weak_ptr<LGLStructs::ModelInfo> model,
+	BoneMap& boneMap,
+	TempTexMap& tempTexMap
 )
 {
 	for (size_t i = 0; i < nodeHandle->mNumMeshes; ++i)
 	{
 		aiMesh* meshHandle = modelHandle->mMeshes[nodeHandle->mMeshes[i]];
-		model.AddMesh(ProcessMesh(meshHandle, boneMap), meshHandle->mName.C_Str());
+		model.lock()->AddMesh(ProcessMesh(meshHandle, boneMap, tempTexMap), meshHandle->mName.C_Str());
 	}
 
 	for (size_t i = 0; i < nodeHandle->mNumChildren; ++i)
 	{
-		ProcessNodeForModelInfo(nodeHandle->mChildren[i], model, boneMap);
+		ProcessNodeForModelInfo(nodeHandle->mChildren[i], model, boneMap, tempTexMap);
 	}
 }
 
@@ -445,17 +494,18 @@ void FileLoader::ModelLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, 
 
 void FileLoader::ModelLoader::SetGlobalInverseTransform(
 	const std::string& rootNodeName, 
-	AnimSystem::ModelAnim& modelAnim
+	std::weak_ptr<AnimSystem::ModelAnim> modelAnim
 )
 {
-	glm::mat4 rootTransform = modelAnim.boneTree.FindNodeBy(rootNodeName)->GetValue().globalTransform;
-	modelAnim.globalInverseTransform = glm::inverse(rootTransform);
+	auto modelAnimPtr = modelAnim.lock();
+	glm::mat4 rootTransform = modelAnimPtr->boneTree.FindNodeBy(rootNodeName)->GetValue().globalTransform;
+	modelAnimPtr->globalInverseTransform = glm::inverse(rootTransform);
 
 	// Maybe should be expanded to allow for different rotations, but Y-up is a common problem
 	if (rootTransform[1][2] < 0)
 	{
-		modelAnim.globalInverseTransform = glm::rotate(
-			modelAnim.globalInverseTransform, 
+		modelAnimPtr->globalInverseTransform = glm::rotate(
+			modelAnimPtr->globalInverseTransform,
 			glm::radians(-90.0f), 
 			{ 1.0, 0.0, 0.0 }
 		);
@@ -499,55 +549,67 @@ void FileLoader::ModelLoader::LoadAnimations(
 	}
 }
 
-
-void FileLoader::ModelLoader::FreeTextureData()
-{
-	for (auto& [textureName, texture] : texturesLoaded)
-	{
-		stbi_image_free(texture.data);
-		texture.data = nullptr;
-	}
-
-	texturesLoaded.clear();
-}
-
 bool FileLoader::ModelLoader::LoadModel(
 	const std::string& file,
 	const std::string& name,
-	LGLStructs::ModelInfo& model,
-	AnimSystem::ModelAnim& modelAnim
+	std::weak_ptr<LGLStructs::ModelInfo>& model,
+	std::weak_ptr<AnimSystem::ModelAnim>& modelAnim
 )
 {
-	Assimp::Importer importer;
-	modelHandle = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_LimitBoneWeights);
-
-	if (!modelHandle || modelHandle->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !modelHandle->mRootNode)
+	if (!ownerContainer.contains(file))
 	{
-		std::cerr << "AssimpHelper error moduleHandle is invalid\n";
-		return false;
+		Assimp::Importer importer;
+		modelHandle = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_LimitBoneWeights);
+
+		if (!modelHandle || modelHandle->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !modelHandle->mRootNode)
+		{
+			std::cerr << "AssimpHelper error moduleHandle is invalid\n";
+			return false;
+		}
+
+		ownerContainer.emplace(file, std::move(ModelOwner{}));
+
+		nameToSet = name;
+		fileProcessed = file;
+		if (file.substr(file.find('.')) == ".obj")
+		{
+			GetTextureFilenames(file);
+		}
+
+		BoneMap boneMap;
+		TempTexMap tempTexMap;
+
+		model = ownerContainer[file].model;
+		modelAnim = ownerContainer[file].modelAnim;
+
+		auto& modelPtr = ownerContainer[file].model;
+		auto& modelAnimPtr = ownerContainer[file].modelAnim;
+
+		ProcessNodeForModelInfo(modelHandle->mRootNode, model, boneMap, tempTexMap);
+		modelPtr->RecheckIfTextureless();
+		modelPtr->NormalizeAllEmptyWeights();
+
+		modelAnimPtr->boneAmount = boneMap.size();
+
+		glm::mat4 globalTransform = glm::mat4(1.0f);
+		std::string rootNodeName = modelHandle->mRootNode->mName.C_Str();
+		modelAnimPtr->boneTree.AddRootNode(rootNodeName, {});
+		ProcessNodeForBoneTree(
+			rootNodeName,
+			modelHandle->mRootNode,
+			boneMap,
+			modelAnimPtr->boneTree.FindNodeBy(rootNodeName),
+			globalTransform
+		);
+		SetGlobalInverseTransform(rootNodeName, modelAnim);
+		LoadAnimations(modelAnimPtr->animKeyMap, modelAnimPtr->animInfoVect);
+	}
+	else
+	{
+		model = ownerContainer[file].model;
+		modelAnim = ownerContainer[file].modelAnim;
 	}
 
-	nameToSet = name;
-	if (file.substr(file.find('.')) == ".obj")
-	{
-		GetTextureFilenames(file);
-	}
-
-	BoneMap boneMap;
-
-	ProcessNodeForModelInfo(modelHandle->mRootNode, model, boneMap);
-	model.RecheckIfTextureless();
-	model.NormalizeAllEmptyWeights();
-
-	modelAnim.boneAmount = boneMap.size();
-
-	glm::mat4 globalTransform = glm::mat4(1.0f);
-	std::string rootNodeName = modelHandle->mRootNode->mName.C_Str();
-	modelAnim.boneTree.AddRootNode(rootNodeName, {});
-	ProcessNodeForBoneTree(rootNodeName, modelHandle->mRootNode, boneMap, modelAnim.boneTree.FindNodeBy(rootNodeName), globalTransform);
-	SetGlobalInverseTransform(rootNodeName, modelAnim);
-	LoadAnimations(modelAnim.animKeyMap, modelAnim.animInfoVect);
-	
 	return true;
 }
 
@@ -812,7 +874,7 @@ WavData FileLoader::AudioLoader::GetWavDataFromFile(const std::string& fileName)
 	WavData wavData;
 	bool success = true;
 
-	if (!audioData.contains(fileName))
+	if (!ownerContainer.contains(fileName))
 	{
 		wavDataOwn.data = std::shared_ptr<float>(
 			drwav_open_file_and_read_pcm_frames_f32(
@@ -823,7 +885,7 @@ WavData FileLoader::AudioLoader::GetWavDataFromFile(const std::string& fileName)
 
 		if (wavDataOwn.data)
 		{
-			audioData[fileName] = std::move(wavDataOwn);
+			ownerContainer[fileName] = std::move(wavDataOwn);
 		}
 		else
 		{
@@ -833,7 +895,7 @@ WavData FileLoader::AudioLoader::GetWavDataFromFile(const std::string& fileName)
 
 	if (success)
 	{
-		wavData = audioData[fileName];
+		wavData = ownerContainer[fileName];
 		wavData.fileName = fileName;
 	}
 

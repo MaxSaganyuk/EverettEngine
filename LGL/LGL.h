@@ -25,10 +25,6 @@ class LGLUniformHasher;
 
 /*
 	Lambda (Open) GL
-
-	Todo:
-	Add frame limiter (fix frame dependent camera movement speed)
-	Maybe improve SetShaderUniformValue for arrays
 */
 class LGL
 {
@@ -38,16 +34,17 @@ private:
 	using VAO = unsigned int; // Vertex Array Object
 	using EBO = unsigned int; // Element Buffer Object
 
-	using Shader = unsigned int;
+	using ShaderID = unsigned int;
 	using ShaderCode = std::string;
 	using ShaderType = int;
-	using ShaderProgram = unsigned int;
+	using ShaderProgramID = unsigned int;
+	using ShaderName = std::string;
 
 	using TextureID = unsigned int;
 	using TextureData = unsigned char*;
 
 	struct VAOInfo;
-	struct InternalModelInfo;
+	class InternalModelInfo;
 	using InternalModelMap = std::map<std::string, InternalModelInfo>;
 
 	// Structs for internal use
@@ -67,16 +64,9 @@ private:
 		}
 	};
 
-	struct InternalModelInfo
-	{
-		LGLStructs::ModelInfo* modelPtr = nullptr;
-		std::vector<VAOInfo> VAOs;
-		std::map<std::string, TextureID> textureIDs;
-	};
-
 	struct ShaderInfo
 	{
-		Shader shaderId;
+		ShaderID shaderId;
 		ShaderCode shaderCode;
 	};
 
@@ -92,6 +82,23 @@ private:
 	{
 		glm::vec2 pos;
 		glm::vec2 uv;
+	};
+
+	class InternalModelInfo
+	{
+		LGLStructs::ModelInfo* modelRawPtr = nullptr;
+		std::weak_ptr<LGLStructs::ModelInfo> modelWeakPtr;
+		bool isSmartPtrUsed = false;
+	public:
+		std::vector<VAOInfo> VAOs;
+		std::map<std::string, TextureID> textureIDs;
+
+		bool IsSmartPtrUsed();
+
+		void SetModelPtr(LGLStructs::ModelInfo* modelRawPtr);
+		void SetModelPtr(std::weak_ptr<LGLStructs::ModelInfo> modelWeakPtr);
+
+		LGLStructs::ModelInfo* GetModelPtr();
 	};
 
 	class LGLEnumInterpreter
@@ -147,6 +154,7 @@ public:
 #else	
 	LGL_API void CreateMesh(const std::string& modelName, LGLStructs::MeshInfo& meshInfo);
 	LGL_API void CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model);
+	LGL_API void CreateModel(const std::string& modelName, std::weak_ptr<LGLStructs::ModelInfo> model);
 	LGL_API void CreateText(const std::string& textLabel, LGLStructs::TextInfo& text);
 
 	LGL_API void DeleteModel(const std::string& modelName);
@@ -208,18 +216,18 @@ private:
 	int CheckUniformValueLocation(
 		const std::string& valueName, 
 		const std::string& shaderProgramName, 
-		ShaderProgram& shaderProgramID
+		ShaderProgramID& shaderProgramID
 	);
 
 	void CreateRenderTextVO();
 
 	// If no name is given will compile last loaded shader
-	bool CompileShader(const std::string& name = "");
+	bool CompileShader(ShaderType shaderType, const std::string& name = "");
 	bool LoadShaderFromFile(const std::string& name, const std::string& file, const std::string& shaderType);
 
 	// If no list of shaders is provided, will create a program with all compiled shaders
 	bool CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderVector = {});
-	ShaderProgram SetCurrentShaderProg(const std::string& shaderProg);
+	ShaderProgramID SetCurrentShaderProg(const std::string& shaderProg);
 
 	bool ConfigureTextureImpl(TextureID& newTextureID, const LGLStructs::Texture& texture);
 
@@ -277,13 +285,10 @@ private:
 	std::map<std::string, std::map<char, TextureID>> collectionToCharTextures;
 
 	// Shader
-	std::string shaderPath;
 	static std::map<std::string, ShaderType> shaderTypeChoice;
-
-	std::map<std::string, std::vector<ShaderInfo>> shaderInfoCollection;
-	
+	std::string shaderPath;
 	std::string lastProgram;
-	std::map<std::string, ShaderProgram> shaderProgramCollection;
+	std::map<ShaderName, std::pair<ShaderProgramID, std::map<ShaderType, ShaderInfo>>> shaderInfoCollection;
 
 	std::map<size_t, InteractableInfo> interactCollection;
 

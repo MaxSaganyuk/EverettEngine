@@ -12,7 +12,7 @@
 class SolidToModelManager
 {
 public:
-	using FullModelInfo = std::pair<LGLStructs::ModelInfo, AnimSystem::ModelAnim>;
+	using FullModelInfo = std::pair<std::weak_ptr<LGLStructs::ModelInfo>, std::weak_ptr<AnimSystem::ModelAnim>>;
 
 	SolidToModelManager();
 

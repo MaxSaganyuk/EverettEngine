@@ -1,6 +1,8 @@
 #pragma once
 
 #include "LGLStructs.h"
+#include "EverettStructs.h"
+#include "CommonStructs.h"
 
 #include <map>
 #include <vector>
@@ -11,8 +13,6 @@
 #include "interfaces/ISolidSim.h"
 #include "ScriptFuncStorage.h"
 #include "AnimSystem.h"
-
-#include "CommonStructs.h"
 
 // Assimp forward declarations
 struct aiScene;
@@ -37,19 +37,44 @@ using HMODULE = HINSTANCE__*;
 */
 class FileLoader
 {
-	class ModelLoader
+	struct ModelOwner
+	{
+		std::shared_ptr<LGLStructs::ModelInfo> model;
+		std::shared_ptr<AnimSystem::ModelAnim> modelAnim;
+		std::unordered_map<std::string, LGLStructs::Texture::TextureData> textureMap;
+
+		ModelOwner();
+		ModelOwner(ModelOwner&&) noexcept = default;
+		~ModelOwner();
+
+		ModelOwner(const ModelOwner&) = delete;
+		ModelOwner& operator=(const ModelOwner&) = delete;
+	};
+	
+	template<typename AssetType>
+	class AssetManager
+	{
+	protected:
+		std::unordered_map<std::string, AssetType> ownerContainer;
+	public:
+		void DeleteAbsentAssets(const std::unordered_set<std::string>& assetsToKeep);
+	};
+
+	class ModelLoader : public AssetManager<ModelOwner>
 	{
 		const aiScene* modelHandle;
 		std::vector<std::string> extraTextureName;
-		std::map<std::string, LGLStructs::Texture> texturesLoaded;
+		std::string fileProcessed;
 		std::string nameToSet;
 
 		using BoneMap = std::unordered_map<std::string, AnimSystem::BoneInfo>;
+		using TempTexMap = std::unordered_map<std::string, LGLStructs::Texture>;
 
 		void ProcessNodeForModelInfo(
 			const aiNode* nodeHandle,
-			LGLStructs::ModelInfo& model,
-			BoneMap& boneMap
+			std::weak_ptr<LGLStructs::ModelInfo> model,
+			BoneMap& boneMap,
+			TempTexMap& tempTexMap
 		);
 		void ProcessNodeForBoneTree(
 			const std::string& rootNodeName,
@@ -60,33 +85,31 @@ class FileLoader
 		);
 		void SetGlobalInverseTransform(
 			const std::string& rootNodeName,
-			AnimSystem::ModelAnim& modelAnim
+			std::weak_ptr<AnimSystem::ModelAnim> modelAnim
 		);
 		void LoadAnimations(
 			AnimSystem::AnimKeyMap& animKeyMap,
 			AnimSystem::AnimInfoVect& animInfo
 		);
 
+		template<typename AssimpType, typename GLMCont>
+		void ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmCont);
+
 		bool GetTextureFilenames(const std::string& path);
-		LGLStructs::Mesh ProcessMesh(const aiMesh* meshHandle, BoneMap& boneMap);
-	public:
-		bool LoadModel(
-			const std::string& file,
-			const std::string& name,
-			LGLStructs::ModelInfo& model,
-			AnimSystem::ModelAnim& modelAnim
-		);
+		LGLStructs::Mesh ProcessMesh(const aiMesh* meshHandle, BoneMap& boneMap, TempTexMap& tempTexMap);
 		bool LoadTexture(
 			const std::string& file,
 			LGLStructs::Texture& texture,
 			unsigned char* data = nullptr,
 			size_t dataSize = 0
 		);
-
-		void FreeTextureData();
-
-		template<typename AssimpType, typename GLMCont>
-		void ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmCont);
+	public:
+		bool LoadModel(
+			const std::string& file,
+			const std::string& name,
+			std::weak_ptr<LGLStructs::ModelInfo>& model,
+			std::weak_ptr<AnimSystem::ModelAnim>& modelAnim
+		);
 	};
 
 
@@ -151,9 +174,8 @@ class FileLoader
 		void FreeFaceInfoByFont(const std::string& fontName, bool keepGlyphData = false);
 	};
 
-	class AudioLoader
+	class AudioLoader : public AssetManager<WavDataOwner>
 	{
-		std::map<std::string, WavDataOwner> audioData;
 	public:
 		WavData GetWavDataFromFile(const std::string& filename);
 	};
@@ -164,6 +186,8 @@ public:
 
 	static std::string GetCurrentDir();
 	static bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);
+
+	void DeleteAllAbsentAssets(const EverettStructs::AssetPaths& assetPaths = {});
 
 	DLLLoader dllLoader;
 	ModelLoader modelLoader;

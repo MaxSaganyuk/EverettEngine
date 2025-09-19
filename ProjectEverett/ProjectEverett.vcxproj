@@ -173,6 +173,7 @@
     <ClInclude Include="CustomOutput.h" />
     <ClInclude Include="EverettEngine.h" />
     <ClInclude Include="EverettException.h" />
+    <ClInclude Include="EverettStructs.h" />
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="CameraSim.h" />
     <ClInclude Include="CommandHandler.h" />

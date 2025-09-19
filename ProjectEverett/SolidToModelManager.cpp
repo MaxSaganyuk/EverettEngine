@@ -7,7 +7,7 @@ SolidToModelManager::SolidToModelManager()
 void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
 {
 	fullModelInfoP = &fullModelInfoRef;
-	meshVisibility.resize(fullModelInfoP->first.meshes.size());
+	meshVisibility.resize(fullModelInfoP->first.lock()->meshes.size());
 	std::fill(meshVisibility.begin(), meshVisibility.end(), true);
 	currentAnimationIndex = 0;
 	lastAnimationTime = 0.0;
@@ -39,7 +39,7 @@ std::vector<std::string> SolidToModelManager::GetMeshNames()
 
 	if (fullModelInfoP)
 	{
-		return fullModelInfoP->first.GetMeshNames();
+		return fullModelInfoP->first.lock()->GetMeshNames();
 	}
 
 	return std::vector<std::string>();
@@ -49,7 +49,7 @@ size_t SolidToModelManager::GetMeshAmount()
 {
 	CheckIfInitialized();
 
-	return fullModelInfoP->first.meshes.size();
+	return fullModelInfoP->first.lock()->meshes.size();
 }
 
 void SolidToModelManager::SetAllMeshVisibility(bool value)
@@ -110,7 +110,7 @@ float SolidToModelManager::GetMeshShininess(size_t index)
 {
 	CheckIfInitialized();
 
-	return fullModelInfoP->first.meshes[index].mesh.shininess;
+	return fullModelInfoP->first.lock()->meshes[index].mesh.shininess;
 }
 
 float SolidToModelManager::GetMeshShininess(const std::string& name)
@@ -126,7 +126,7 @@ std::vector<std::string> SolidToModelManager::GetAnimationNames()
 
 	std::vector<std::string> res;
 
-	for (auto& animInfo : fullModelInfoP->second.animInfoVect)
+	for (auto& animInfo : fullModelInfoP->second.lock()->animInfoVect)
 	{
 		res.push_back(animInfo.animName);
 	}
@@ -138,7 +138,7 @@ size_t SolidToModelManager::GetAnimationAmount()
 {
 	CheckIfInitialized();
 
-	return fullModelInfoP->second.animInfoVect.size();
+	return fullModelInfoP->second.lock()->animInfoVect.size();
 }
 
 void SolidToModelManager::SetAnimation(size_t index)
@@ -236,10 +236,10 @@ bool SolidToModelManager::IsAnimationLooped()
 
 double SolidToModelManager::GetAnimationTimeTicks(double currentTime)
 {
-	double animDuration = fullModelInfoP->second.animInfoVect[currentAnimationIndex].animDuration;
+	double animDuration = fullModelInfoP->second.lock()->animInfoVect[currentAnimationIndex].animDuration;
 
 	double timeInTicks = 
-		currentTime * animationSpeed * fullModelInfoP->second.animInfoVect[currentAnimationIndex].ticksPerSecond;
+		currentTime * animationSpeed * fullModelInfoP->second.lock()->animInfoVect[currentAnimationIndex].ticksPerSecond;
 
 	double animationTime = std::fmod(timeInTicks, animDuration);
 

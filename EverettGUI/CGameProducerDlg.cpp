@@ -72,11 +72,21 @@ AdString CGameProducerDlg::GetFileFromPath(const AdString& path)
 	return file.substr(file.rfind('\\') + 1);
 }
 
+AdString CGameProducerDlg::ToLowercase(const AdString& str)
+{
+	std::string stdStr = str;
+	std::transform(stdStr.begin(), stdStr.end(), stdStr.begin(), [](unsigned char c) { return std::tolower(c); });
+
+	return stdStr;
+}
+
 void CGameProducerDlg::CreateFoldersInGameFolder()
 {
-	for (auto& folderName : foldersToCreate)
+	for (int i = 0; i < EverettStructs::AssetPaths::GetAssetTypeAmount(); ++i)
 	{
-		std::filesystem::create_directory(gameFolderStr + '\\' + folderName);
+		std::filesystem::create_directory(
+			gameFolderStr + '\\' + ToLowercase(EverettStructs::AssetPaths::GetAssetNameIndex(i))
+		);
 	}
 }
 
@@ -111,32 +121,31 @@ void CGameProducerDlg::CreateConfigFile(const std::vector<std::pair<AdString, Ad
 	}
 }
 
-CGameProducerDlg::AssetPaths CGameProducerDlg::GetPathsFromWorldFile(
+EverettStructs::AssetPaths CGameProducerDlg::GetPathsFromWorldFile(
 	const AdString& worldPathStr, 
 	const AdString& worldFileName
 )
 {
-	AssetPaths assetPaths;
-
-	engineRef.GetPathsFromWorldFile(
-		worldPathStr,
-		assetPaths.modelPaths,
-		assetPaths.soundPaths,
-		assetPaths.scriptPaths
+	EverettStructs::AssetPaths assetPaths = engineRef.GetPathsFromWorldFile(worldPathStr);
+	engineRef.HidePathsInWorldFile(
+		worldPathStr, 
+		gameFolderStr + "//" + ToLowercase(EverettStructs::AssetPaths::GetAssetNameIndex(0)) + "//" + worldFileName
 	);
-	engineRef.HidePathsInWorldFile(worldPathStr, gameFolderStr + "//" + foldersToCreate[0] + "//" + worldFileName);
 
 	return assetPaths;
 }
 
-void CGameProducerDlg::CopyAssetsToGamePath(const AssetPaths& assetPaths)
+void CGameProducerDlg::CopyAssetsToGamePath(const EverettStructs::AssetPaths& assetPaths)
 {
-	for (int i = 1; i < foldersToCreate.size(); ++i)
+	for (int i = 1; i < EverettStructs::AssetPaths::GetAssetTypeAmount(); ++i)
 	{
 		for (auto& path : assetPaths[i])
 		{
 			AdString fileName = GetFileFromPath(path);
-			std::filesystem::copy(path, gameFolderStr + "\\" + foldersToCreate[i] + "\\" + fileName);
+			std::filesystem::copy(
+				path, 
+				gameFolderStr + "\\" + ToLowercase(EverettStructs::AssetPaths::GetAssetNameIndex(i)) + "\\" + fileName
+			);
 		}
 	}
 }

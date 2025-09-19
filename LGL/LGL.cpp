@@ -39,6 +39,27 @@ std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
 	{"geom", GL_GEOMETRY_SHADER},
 };
 
+bool LGL::InternalModelInfo::IsSmartPtrUsed()
+{
+	return isSmartPtrUsed;
+}
+
+void LGL::InternalModelInfo::SetModelPtr(LGLStructs::ModelInfo* modelRawPtr)
+{
+	this->modelRawPtr = modelRawPtr;
+}
+
+void LGL::InternalModelInfo::SetModelPtr(std::weak_ptr<LGLStructs::ModelInfo> modelWeakPtr)
+{
+	isSmartPtrUsed = true;
+	this->modelWeakPtr = modelWeakPtr;
+}
+
+LGLStructs::ModelInfo* LGL::InternalModelInfo::GetModelPtr()
+{
+	return IsSmartPtrUsed() ? modelWeakPtr.lock().get() : modelRawPtr;
+}
+
 const std::vector<int> LGL::LGLEnumInterpreter::DepthTestModeInter =
 {
 	{0, GL_ALWAYS, GL_NEVER, GL_LESS, GL_GREATER, GL_EQUAL, GL_NOTEQUAL, GL_LEQUAL, GL_GEQUAL}
@@ -92,13 +113,13 @@ void LGL::DeleteGLObjects()
 	GLSafeExecute(glUseProgram, 0);
 	GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
 	
-	for (auto& model : internalModelMap)
+	for (auto& modelIter : internalModelMap)
 	{
-		for (auto& VAO : model.second.VAOs)
+		for (auto& VAO : modelIter.second.VAOs)
 		{
 			GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
 		}
-		for (auto& texture : model.second.textureIDs)
+		for (auto& texture : modelIter.second.textureIDs)
 		{
 			GLSafeExecute(glDeleteTextures, 1, &texture.second);
 		}
@@ -134,20 +155,14 @@ void LGL::DeleteGLObjects()
 	}
 	EBOCollection.clear();
 
-	for (auto& shaderInfo : shaderInfoCollection)
+	for (auto& shaderProgInfo : shaderInfoCollection)
 	{
-		for (auto& shader : shaderInfo.second)
+		for (auto& shaderIDInfo : shaderProgInfo.second.second)
 		{
-			GLSafeExecute(glDeleteShader, shader.shaderId);
+			GLSafeExecute(glDeleteShader, shaderIDInfo.second.shaderId);
 		}
+		GLSafeExecute(glDeleteProgram, shaderProgInfo.second.first);
 	}
-	shaderInfoCollection.clear();
-
-	for (auto& shaderProgram : shaderProgramCollection)
-	{
-		GLSafeExecute(glDeleteProgram, shaderProgram.second);
-	}
-	shaderProgramCollection.clear();
 
 	if (uniformHasher)
 	{
@@ -480,9 +495,9 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 		for (auto& currentModelToProcess : internalModelMap)
 		{
-			SetCurrentShaderProg(currentModelToProcess.second.modelPtr->shaderProgram);
+			SetCurrentShaderProg(currentModelToProcess.second.GetModelPtr()->shaderProgram);
 
-			std::function<void()>& modelBeh = currentModelToProcess.second.modelPtr->modelBehaviour;
+			std::function<void()>& modelBeh = currentModelToProcess.second.GetModelPtr()->modelBehaviour;
 			if (modelBeh)
 			{
 				modelBeh();
@@ -709,12 +724,27 @@ void LGL::CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model
 {
 	if (internalModelMap.find(modelName) == internalModelMap.end())
 	{
-		internalModelMap.emplace(modelName, InternalModelInfo{ &model, {}, {} });
-	}
+		internalModelMap.emplace(modelName, InternalModelInfo{});
+		internalModelMap[modelName].SetModelPtr(&model);
 
-	for (auto& mesh : model.meshes)
+		for (auto& mesh : internalModelMap[modelName].GetModelPtr()->meshes)
+		{
+			CreateMesh(modelName, mesh);
+		}
+	}
+}
+
+void LGL::CreateModel(const std::string& modelName, std::weak_ptr<LGLStructs::ModelInfo> model)
+{
+	if (internalModelMap.find(modelName) == internalModelMap.end())
 	{
-		CreateMesh(modelName, mesh);
+		internalModelMap.emplace(modelName, InternalModelInfo{});
+		internalModelMap[modelName].SetModelPtr(model);
+
+		for (auto& mesh : internalModelMap[modelName].GetModelPtr()->meshes)
+		{
+			CreateMesh(modelName, mesh);
+		}
 	}
 }
 
@@ -946,7 +976,7 @@ void LGL::GetMeshFromFile(const std::string& file, std::vector<Vertex>& vertexes
 }
 #endif
 
-bool LGL::CompileShader(const std::string& name)
+bool LGL::CompileShader(ShaderType shaderType, const std::string& name)
 {
 	using AcceptableShaderCode = const char* const;
 
@@ -958,10 +988,10 @@ bool LGL::CompileShader(const std::string& name)
 		return false;
 	}
 
-	ShaderInfo& currentShaderInfo = shaderInfoCollection[name].back();
+	ShaderInfo& currentShaderInfo = shaderInfoCollection[name].second[shaderType];
 	AcceptableShaderCode shaderToC = currentShaderInfo.shaderCode.c_str();
 
-	Shader* newShader = &currentShaderInfo.shaderId;
+	ShaderID* newShader = &currentShaderInfo.shaderId;
 
 	GLSafeExecute(glShaderSource, *newShader, 1, &shaderToC, nullptr);
 	bool shaderCompiled = GLSafeExecute(glCompileShader, *newShader);
@@ -973,6 +1003,7 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, c
 {
 	HandshakeContextLock
 
+	ShaderType shaderTypeID = shaderTypeChoice[shaderType];
 	std::string shader; // change to stringstream
 	std::string line;
 
@@ -989,9 +1020,10 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, c
 		shader += (line + '\n');
 	}
 
-	shaderInfoCollection[name].emplace_back(
+	shaderInfoCollection[name].second.emplace(
+		shaderTypeID,
 		ShaderInfo{
-			glCreateShader(shaderTypeChoice[shaderType]),
+			GLSafeExecuteRet(glCreateShader, shaderTypeID),
 			shader
 		}
 	);
@@ -1001,12 +1033,12 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, c
 	return true;
 }
 
-LGL::ShaderProgram LGL::SetCurrentShaderProg(const std::string& shaderProg)
+LGL::ShaderProgramID LGL::SetCurrentShaderProg(const std::string& shaderProg)
 {
-	ShaderProgram shaderProgID = ~ShaderProgram{};
-	if (shaderProgramCollection.find(shaderProg) != shaderProgramCollection.end())
+	ShaderProgramID shaderProgID = ~ShaderProgramID{};
+	if (shaderInfoCollection.find(shaderProg) != shaderInfoCollection.end())
 	{
-		shaderProgID = shaderProgramCollection[shaderProg];
+		shaderProgID = shaderInfoCollection[shaderProg].first;
 
 		if (lastProgram != shaderProg)
 		{
@@ -1150,12 +1182,12 @@ bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::st
 {	
 	HandshakeContextLock
 
-	shaderProgramCollection.emplace(name, GLSafeExecuteRet(glCreateProgram));
-	ShaderProgram* newShaderProgram = &shaderProgramCollection[name];
+	shaderInfoCollection[name].first = GLSafeExecuteRet(glCreateProgram);
+	ShaderProgramID* newShaderProgram = &shaderInfoCollection[name].first;
 
-	for (auto& shaderInfo : shaderInfoCollection[name])
+	for (auto& shaderInfo : shaderInfoCollection[name].second)
 	{
-		GLSafeExecute(glAttachShader, *newShaderProgram, shaderInfo.shaderId);
+		GLSafeExecute(glAttachShader, *newShaderProgram, shaderInfo.second.shaderId);
 	}
 	GLSafeExecute(glLinkProgram, *newShaderProgram);
 
@@ -1180,7 +1212,6 @@ void LGL::RecompileShader(const std::string& shaderName)
 	DeleteShader(shaderName);
 
 	shaderInfoCollection.erase(shaderName);
-	shaderProgramCollection.erase(shaderName);
 
 	LoadAndCompileShader(shaderName);
 }
@@ -1190,17 +1221,17 @@ void LGL::DeleteShader(const std::string& shaderName)
 	lastProgram.clear();
 	if (uniformHasher)
 	{
-		uniformHasher->ResetHashesByShader(shaderProgramCollection[shaderName]);
+		uniformHasher->ResetHashesByShader(shaderInfoCollection[shaderName].first);
 	}
 
 	GLSafeExecute(glUseProgram, 0);
 
-	for (auto& shaderInfo : shaderInfoCollection[shaderName])
+	for (auto& shaderInfo : shaderInfoCollection[shaderName].second)
 	{
-		GLSafeExecute(glDeleteShader, shaderInfo.shaderId);
+		GLSafeExecute(glDeleteShader, shaderInfo.second.shaderId);
 	}
 
-	GLSafeExecute(glDeleteProgram, shaderProgramCollection[shaderName]);
+	GLSafeExecute(glDeleteProgram, shaderInfoCollection[shaderName].first);
 }
 
 void LGL::UpdateWindowSize(int width, int height)
@@ -1220,7 +1251,7 @@ void LGL::ResetLGL()
 
 bool LGL::LoadAndCompileShader(const std::string& name)
 {
-	if (shaderProgramCollection.find(name) != shaderProgramCollection.end())
+	if (shaderInfoCollection.find(name) != shaderInfoCollection.end())
 	{
 		return true;
 	}
@@ -1230,13 +1261,13 @@ bool LGL::LoadAndCompileShader(const std::string& name)
 	for (const auto& shaderFileType : shaderTypeChoice)
 	{
 		if (!LoadShaderFromFile(name, shaderPath + '\\' + name + '.' + shaderFileType.first, shaderFileType.first)) continue;
-		if (!CompileShader(name)) // remove if did not compile
+		if (!CompileShader(shaderFileType.second, name)) // remove if did not compile
 		{
-			shaderInfoCollection[name].pop_back();
+			shaderInfoCollection[name].second.erase(shaderFileType.second);
 		}
 	}
 
-	return shaderInfoCollection[name].size() && CreateShaderProgram(name);
+	return shaderInfoCollection[name].second.size() && CreateShaderProgram(name);
 }
 
 void LGL::SetInteractable(
@@ -1411,12 +1442,12 @@ void LGL::EnableUniformValueHashing(bool value)
 int LGL::CheckUniformValueLocation(
 	const std::string& valueName, 
 	const std::string& shaderProgramName, 
-	ShaderProgram& shaderProgramID
+	ShaderProgramID& shaderProgramID
 )
 {
 	const std::string& shaderProgramNameToUse = shaderProgramName == "" ? lastProgram : shaderProgramName;
 
-	if ((shaderProgramID = SetCurrentShaderProg(shaderProgramNameToUse)) != ~ShaderProgram{})
+	if ((shaderProgramID = SetCurrentShaderProg(shaderProgramNameToUse)) != ~ShaderProgramID{})
 	{
 		int uniformValueLocation = GLSafeExecuteRet(glGetUniformLocation, shaderProgramID, valueName.c_str());
 
@@ -1438,7 +1469,7 @@ int LGL::CheckUniformValueLocation(
 template<typename Type>
 bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, const std::string& shaderProgramName)
 {
-	ShaderProgram shaderProgramIDToUse = 0;
+	ShaderProgramID shaderProgramIDToUse = 0;
 	int uniformValueLocation = CheckUniformValueLocation(valueName, shaderProgramName, shaderProgramIDToUse);
 
 	if (uniformValueLocation == -1 || lastProgram.empty())

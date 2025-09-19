@@ -45,39 +45,6 @@ private:
 
 	bool initialized;
 
-	struct AssetPaths
-	{
-		std::unordered_set<std::string> modelPaths;
-		std::unordered_set<std::string> soundPaths;
-		std::unordered_set<std::string> scriptPaths;
-
-		const std::unordered_set<std::string>& operator[](size_t index) const
-		{
-			// Indexes correspond to foldersToCreate
-			switch (index)
-			{
-			case 0:
-				throw; // worlds are not collected
-			case 1:
-				return modelPaths;
-			case 2:
-				return soundPaths;
-			case 3:
-				return scriptPaths;
-			default:
-				throw;
-			}
-		}
-	};
-
-	static inline std::vector<AdString> foldersToCreate
-	{
-		"worlds",
-		"models",
-		"sounds",
-		"scripts"
-	};
-
 	static inline std::vector<AdString> foldersToCopy
 	{
 		"fonts",
@@ -110,12 +77,13 @@ private:
 	BOOL OnInitDialog() override;
 
 	AdString GetFileFromPath(const AdString& path);
+	AdString ToLowercase(const AdString& str);
 
-	AssetPaths GetPathsFromWorldFile(
+	EverettStructs::AssetPaths GetPathsFromWorldFile(
 		const AdString& worldPathStr,
 		const AdString& worldFileName
 	);
-	void CopyAssetsToGamePath(const AssetPaths& assetPaths);
+	void CopyAssetsToGamePath(const EverettStructs::AssetPaths& assetPaths);
 
 	void CreateFoldersInGameFolder();
 	void CopyFoldersToGameFolder();

@@ -37,6 +37,8 @@
 
 #include "ShaderGenerator.h"
 
+using namespace EverettStructs;
+
 //#define BONE_TEST
 
 // OPTIMIZATION_TEST - to view uncapped FPS, UNOPTIMIZED_TEST - to compare to unoptimal logic
@@ -69,6 +71,23 @@ struct EverettEngine::ModelSolidInfo
 	std::string modelPath;
 	SolidToModelManager::FullModelInfo model;
 	std::map<std::string, SolidSim> solids;
+
+	~ModelSolidInfo()
+	{
+		auto modelPtr = model.first.lock();
+
+		if (modelPtr)
+		{
+			modelPtr->render = false;
+			modelPtr->modelBehaviour = nullptr;
+			modelPtr->generalMeshBehaviour = nullptr;
+
+			for (auto& mesh : modelPtr->meshes)
+			{
+				mesh.behaviour.ResetValue();
+			}
+		}
+	}
 };
 
 EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
@@ -349,8 +368,8 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 	
 	std::string pathToUse = CheckIfRelativePathToUse(path, "models");
 
-	LGLStructs::ModelInfo& newModel = MSM[name].model.first;
-	AnimSystem::ModelAnim& newModelAnim = MSM[name].model.second;
+	std::weak_ptr<LGLStructs::ModelInfo>& newModel = MSM[name].model.first;
+	std::weak_ptr<AnimSystem::ModelAnim>& newModelAnim = MSM[name].model.second;
 	MSM[name].modelPath = pathToUse;
 
 	if (!fileLoader->modelLoader.LoadModel(pathToUse, name, newModel, newModelAnim))
@@ -359,19 +378,23 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		return false;
 	}
 
+	auto newModelPtr = newModel.lock();
+
 	CheckAndAddToNameTracker(resPair.first->first);
 
-	newModel.shaderProgram = defaultShaderProgram;
-	newModel.render = false;
+	newModelPtr->shaderProgram = defaultShaderProgram;
+	newModelPtr->render = false;
 
-	newModel.modelBehaviour = [this, name]()
+	newModelPtr->modelBehaviour = [this, name]()
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
 		auto& [modelPath, modelInfo, solidInfo] = model;
+		auto modelPtr = model.model.first.lock();
+		auto modelAnimPtr = model.model.second.lock();
 
-		bool animationless = model.model.second.animInfoVect.empty();
-		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(modelInfo.first.isTextureless));
+		bool animationless = modelAnimPtr->animInfoVect.empty();
+		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(modelPtr->isTextureless));
 		mainLGL->SetShaderUniformValue("animationless", static_cast<int>(animationless));
 
 		if (!animationless)
@@ -381,7 +404,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 				if (solid.IsModelAnimationPlaying())
 				{
 					animSystem->ProcessAnimations(
-						modelInfo.second,
+						*modelAnimPtr,
 						solid.GetModelCurrentAnimationTime(),
 						solid.GetModelAnimation(),
 						solid.GetModelCurrentStartingBoneIndex()
@@ -412,7 +435,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		}
 	};
 
-	newModel.generalMeshBehaviour = [this, name](int meshIndex)
+	newModelPtr->generalMeshBehaviour = [this, name](int meshIndex)
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
@@ -438,8 +461,6 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 	mainLGL->CreateModel(name, newModel);
 
-	fileLoader->modelLoader.FreeTextureData();
-
 	return true;
 }
 
@@ -455,20 +476,23 @@ bool EverettEngine::CreateSolidImpl(const std::string& modelName, const std::str
 		return true;
 	}
 
+	auto modelPtr = MSM[modelName].model.first.lock();
+	auto modelAnimPtr = MSM[modelName].model.second.lock();
+
 	SolidSim newSolid(camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
 	newSolid.SetBackwardsModelAccess(MSM[modelName].model);
 
-	for (auto& animInfo : MSM[modelName].model.second.animInfoVect)
+	for (auto& animInfo : modelAnimPtr->animInfoVect)
 	{
 		newSolid.AppendModelStartingBoneIndex(animSystem->GetTotalBoneAmount());
-		animSystem->IncrementTotalBoneAmount(MSM[modelName].model.second);
+		animSystem->IncrementTotalBoneAmount(*modelAnimPtr);
 	}
 
 	auto resPair = MSM[modelName].solids.emplace(solidName, std::move(newSolid));
 
 	if (resPair.second)
 	{
-		MSM[modelName].model.first.render = true;
+		modelPtr->render = true;
 
 		CheckAndAddToNameTracker(resPair.first->first);
 
@@ -1042,16 +1066,26 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 	}
 }
 
-void EverettEngine::ResetEngine()
+void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 {
-	SetRenderLoggerCallbacks(false);
 	mainLGL->PauseRendering();
 
-	mainLGL->ResetLGL();
-
-	if (fileLoader)
+	if (assetPaths)
 	{
-		fileLoader->dllLoader.FreeDllData();
+		for (auto& [modelName, modelInfo] : MSM)
+		{
+			if (!assetPaths.value().modelPaths.contains(modelInfo.modelPath))
+			{
+				mainLGL->DeleteModel(modelName);
+			}
+		}
+	}
+	else
+	{
+		SetRenderLoggerCallbacks(false);
+		mainLGL->ResetLGL();
+
+		SetRenderLoggerCallbacks();
 	}
 
 	camera->ClearScriptFuncMap();
@@ -1062,7 +1096,18 @@ void EverettEngine::ResetEngine()
 	keyScriptFuncMap.clear();
 	allNameTracker.clear();
 
-	SetRenderLoggerCallbacks();
+	if (fileLoader)
+	{
+		if (assetPaths)
+		{
+			fileLoader->DeleteAllAbsentAssets(assetPaths.value());
+		}
+		else
+		{
+			fileLoader->DeleteAllAbsentAssets();
+		}
+	}
+
 	mainLGL->PauseRendering(false);
 }
 
@@ -1207,18 +1252,20 @@ void EverettEngine::LoadKeybindsFromLine(std::string_view& line)
 
 bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 {
-	std::string dllPathToUse = CheckIfRelativePathToUse(filePath, "worlds");
+	std::string pathToUse = CheckIfRelativePathToUse(filePath, "worlds");
 
-	std::fstream file(dllPathToUse, std::ios::in);
+	std::fstream file(pathToUse, std::ios::in);
 	std::string lineLoader;
 	std::string_view line;
 	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
+
+	AssetPaths loadedFiles = GetPathsFromWorldFile(pathToUse);
 
 	std::getline(file, lineLoader);
 	line = lineLoader;
 	SimSerializer::GetVersionFromLine(line);
 
-	ResetEngine();
+	ResetEngine(loadedFiles);
 	mainLGL->PauseRendering();
 	while (!file.eof())
 	{
@@ -1263,13 +1310,10 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	return true;
 }
 
-void EverettEngine::GetPathsFromWorldFile(
-	const std::string& filePath,
-	std::unordered_set<std::string>& modelPaths,
-	std::unordered_set<std::string>& soundPaths,
-	std::unordered_set<std::string>& scriptPaths
-)
+AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 {
+	AssetPaths assetPaths;
+
 	std::fstream file(filePath, std::ios::in);
 	std::string lineLoader;
 	std::string_view line;
@@ -1283,8 +1327,9 @@ void EverettEngine::GetPathsFromWorldFile(
 	{
 		std::getline(file, lineLoader);
 		line = lineLoader;
+		std::string_view lineTitle = line.substr(0, line.find('*'));
 
-		if (!(line.empty() || line.substr(0, line.find('*')) == "Keybind"))
+		if (!(line.empty() || lineTitle == "AmbientLight" || lineTitle == "Keybind"))
 		{
 			SimSerializer::GetObjectInfo(line, objectInfo);
 
@@ -1294,10 +1339,10 @@ void EverettEngine::GetPathsFromWorldFile(
 			case EverettEngine::ObjectTypes::Light:
 				break;
 			case EverettEngine::ObjectTypes::Solid:
-				modelPaths.insert(objectInfo[ObjectInfoNames::Path]);
+				assetPaths.modelPaths.insert(objectInfo[ObjectInfoNames::Path]);
 				break;
 			case EverettEngine::ObjectTypes::Sound:
-				soundPaths.insert(objectInfo[ObjectInfoNames::Path]);
+				assetPaths.soundPaths.insert(objectInfo[ObjectInfoNames::Path]);
 				break;
 			default:
 				ThrowExceptionWMessage("Unreachable");
@@ -1307,10 +1352,12 @@ void EverettEngine::GetPathsFromWorldFile(
 		while (line.find(':') != std::string::npos)
 		{
 			line.remove_prefix(line.find(':') - 1);
-			scriptPaths.insert(std::string(line.substr(0, line.find('.') + 4)));
+			assetPaths.scriptPaths.insert(std::string(line.substr(0, line.find('.') + 4)));
 			line.remove_prefix(line.find('.') + 4);
 		}
 	}
+
+	return assetPaths;
 }
 
 void EverettEngine::HidePathsInWorldFile(
@@ -1358,13 +1405,13 @@ std::vector<std::string> EverettEngine::GetNameList(const std::map<std::string, 
 	return names;
 }
 
-std::vector<std::string> EverettEngine::GetCreatedModels()
+std::vector<std::string> EverettEngine::GetCreatedModels(bool getFullPaths)
 {
 	std::vector<std::string> createdModels;
 
 	for (auto& model : MSM)
 	{
-		createdModels.push_back(model.first);
+		createdModels.push_back(getFullPaths ? model.second.modelPath : model.first);
 	}
 
 	return createdModels;
