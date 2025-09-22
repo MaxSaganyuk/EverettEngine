@@ -4,6 +4,8 @@
 #include <cassert>
 #include <utility>
 #include <atomic>
+#include <vector>
+#include <set>
 
 #if __cplusplus >= 201703L || _HAS_CXX17
 #include <optional>
@@ -74,6 +76,7 @@ namespace stdEx
 
 		PrintNDimension<MArray, extent.size(), 0>(mArray, extent);
 	}
+
 #endif
 	template<typename Type>
 	class ValWithBackup
@@ -89,7 +92,8 @@ namespace stdEx
 
 		public:
 			PseudoOptional()
-				: val(Type{}), check(false) {}
+				: val(Type{}), check(false) {
+			}
 
 			bool has_value() const
 			{
@@ -138,7 +142,8 @@ namespace stdEx
 		}
 
 		ValWithBackup(Type* backup = nullptr)
-			: backup(backup) {}
+			: backup(backup) {
+		}
 
 		void ResetBackup(Type* backup = nullptr)
 		{
@@ -274,7 +279,8 @@ namespace stdEx
 		}
 
 		ObjectCounter(const ObjectCounter&)
-			: ObjectCounter() {}
+			: ObjectCounter() {
+		}
 
 		void* operator new(size_t amount)
 		{
@@ -309,6 +315,139 @@ namespace stdEx
 	bool thread_local ObjectCounter<Type>::stackCheck = true;
 
 #define TrackedClass(className) class className : public stdEx::ObjectCounter<className>
+
+	enum class RelationType
+	{
+		NoRelation,   // A  x  B
+		LeftToRight,  // A  -> B
+		RightToLeft,  // A <-  B
+		Bidirectional // A <-> B
+	};
+
+	template<typename Type>
+	class RelationGraph
+	{
+		struct Element;
+
+		class SharedPtrValueComparator
+		{
+		public:
+			using is_transparent = void;
+
+			bool operator()(const std::shared_ptr<Element>& left, const std::shared_ptr<Element>& right) const
+			{
+				return *left < *right;
+			}
+
+			bool operator()(const Element& left, const std::shared_ptr<Element>& right) const
+			{
+				return left < *right;
+			}
+
+			bool operator()(const std::shared_ptr<Element>& left, const Element& right) const
+			{
+				return *left < right;
+			}
+		};
+
+		class WeakPtrValueComparator
+		{
+		public:
+			using is_transparent = void;
+
+			bool operator()(const std::weak_ptr<Element>& left, const std::weak_ptr<Element>& right) const
+			{
+				if (right.expired())
+				{
+					return false;
+				}
+				if (left.expired())
+				{
+					return true;
+				}
+
+				return *left.lock() < *right.lock();
+			}
+		};
+
+		struct Element
+		{
+			Type value;
+			std::set<std::weak_ptr<Element>, WeakPtrValueComparator> relations;
+
+			bool operator<(const Element& otherElement) const
+			{
+				return value < otherElement.value;
+			}
+		};
+
+		std::set<std::shared_ptr<Element>, SharedPtrValueComparator> elements;
+	public:
+
+		void AddElements(Type firstValue, Type secondValue, RelationType relationType)
+		{
+			const Element protoLeftElement = { firstValue };
+			const Element protoRightElement = { secondValue };
+
+			auto leftIter = elements.find(protoLeftElement);
+			auto rightIter = elements.find(protoRightElement);
+
+			if (leftIter == elements.end())
+			{
+				leftIter = elements.insert(std::make_shared<Element>(protoLeftElement)).first;
+			}
+			if (rightIter == elements.end())
+			{
+				rightIter = elements.insert(std::make_shared<Element>(protoRightElement)).first;
+			}
+
+			auto leftElement = *leftIter;
+			auto rightElement = *rightIter;
+
+			if (relationType == RelationType::Bidirectional || relationType == RelationType::LeftToRight)
+			{
+				leftElement->relations.insert(rightElement);
+			}
+			if (relationType == RelationType::Bidirectional || relationType == RelationType::RightToLeft)
+			{
+				rightElement->relations.insert(leftElement);
+			}
+		}
+
+		void RemoveElement(Type value)
+		{
+			elements.erase(Element{ value });
+		}
+
+		std::vector<Type> GetValuesRelatedTo(Type value)
+		{
+			std::vector<Type> values;
+			values.reserve(elements.size());
+
+			auto elementIter = elements.find(Element{ value });
+
+			if (elementIter != elements.end())
+			{
+				auto element = *elementIter;
+				auto& relations = element->relations;
+
+				for (auto relationIter = relations.begin(); relationIter != relations.end();)
+				{
+					if (!relationIter->expired())
+					{
+						values.push_back(relationIter->lock()->value);
+						++relationIter;
+					}
+					else
+					{
+						relationIter = relations.erase(relationIter);
+					}
+				}
+			}
+
+			return values;
+		}
+	};
 
 }
 #endif
