@@ -6,6 +6,7 @@
 #include <atomic>
 #include <vector>
 #include <set>
+#include <memory>
 
 #if __cplusplus >= 201703L || _HAS_CXX17
 #include <optional>
@@ -324,7 +325,14 @@ namespace stdEx
 		Bidirectional // A <-> B
 	};
 
+#if __cplusplus >= 202002L || _HAS_CXX20
 	template<typename Type>
+	concept OnlyComparable = requires(Type t) { t < t; };
+	
+	template<OnlyComparable Type>
+#else
+	template<typename Type> // Type must support operator<
+#endif
 	class RelationGraph
 	{
 		struct Element;
@@ -382,27 +390,31 @@ namespace stdEx
 		};
 
 		std::set<std::shared_ptr<Element>, SharedPtrValueComparator> elements;
-	public:
 
-		void AddElements(Type firstValue, Type secondValue, RelationType relationType)
+		std::shared_ptr<Element> AddElementImpl(const Type& value)
 		{
-			const Element protoLeftElement = { firstValue };
-			const Element protoRightElement = { secondValue };
+			const Element protoElement{ value };
+			auto iter = elements.find(protoElement);
 
-			auto leftIter = elements.find(protoLeftElement);
-			auto rightIter = elements.find(protoRightElement);
-
-			if (leftIter == elements.end())
+			if (iter == elements.end())
 			{
-				leftIter = elements.insert(std::make_shared<Element>(protoLeftElement)).first;
-			}
-			if (rightIter == elements.end())
-			{
-				rightIter = elements.insert(std::make_shared<Element>(protoRightElement)).first;
+				iter = elements.insert(std::make_shared<Element>(protoElement)).first;
 			}
 
-			auto leftElement = *leftIter;
-			auto rightElement = *rightIter;
+			return *iter;
+		}
+	public:
+		// Can be used as pre linking
+		void AddElement(const Type& value)
+		{
+			AddElementImpl(value);
+		}
+
+		// Links elements, already existent elements do not get re-added
+		void AddElements(const Type& firstValue, const Type& secondValue, RelationType relationType)
+		{
+			auto leftElement  = AddElementImpl(firstValue);
+			auto rightElement = AddElementImpl(secondValue);
 
 			if (relationType == RelationType::Bidirectional || relationType == RelationType::LeftToRight)
 			{
@@ -414,12 +426,18 @@ namespace stdEx
 			}
 		}
 
-		void RemoveElement(Type value)
+		// To maintain speed, remove does not invalidate expired elements
+		void RemoveElement(const Type& value)
 		{
-			elements.erase(Element{ value });
+			auto iter = elements.find(Element{ value });
+			if (iter != elements.end())
+			{
+				elements.erase(iter);
+			}
 		}
 
-		std::vector<Type> GetValuesRelatedTo(Type value)
+		// When related values are requested, we invalidate expired elements
+		std::vector<Type> GetValuesRelatedTo(const Type& value)
 		{
 			std::vector<Type> values;
 			values.reserve(elements.size());
@@ -448,6 +466,5 @@ namespace stdEx
 			return values;
 		}
 	};
-
 }
 #endif
