@@ -390,6 +390,7 @@ namespace stdEx
 		};
 
 		std::set<std::shared_ptr<Element>, SharedPtrValueComparator> elements;
+		bool isBidirEnabled = true;
 
 		std::shared_ptr<Element> AddElementImpl(const Type& value)
 		{
@@ -404,6 +405,11 @@ namespace stdEx
 			return *iter;
 		}
 	public:
+		void EnableBidirectionality(bool value = true)
+		{
+			isBidirEnabled = value;
+		}
+
 		// Can be used as pre linking
 		void AddElement(const Type& value)
 		{
@@ -413,16 +419,27 @@ namespace stdEx
 		// Links elements, already existent elements do not get re-added
 		void AddElements(const Type& firstValue, const Type& secondValue, RelationType relationType)
 		{
+			if (!isBidirEnabled && relationType == RelationType::Bidirectional)
+			{
+				return;
+			}
+
 			auto leftElement  = AddElementImpl(firstValue);
 			auto rightElement = AddElementImpl(secondValue);
 
 			if (relationType == RelationType::Bidirectional || relationType == RelationType::LeftToRight)
 			{
-				leftElement->relations.insert(rightElement);
+				if (isBidirEnabled || rightElement->relations.find(leftElement) == rightElement->relations.end())
+				{
+					leftElement->relations.insert(rightElement);
+				}
 			}
 			if (relationType == RelationType::Bidirectional || relationType == RelationType::RightToLeft)
 			{
-				rightElement->relations.insert(leftElement);
+				if (isBidirEnabled || leftElement->relations.find(rightElement) == leftElement->relations.end())
+				{
+					rightElement->relations.insert(leftElement);
+				}
 			}
 		}
 
