@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <format>
+#include <ranges>
 
 #include "LGL.h"
 #include "LGLUtils.h"
@@ -111,6 +112,12 @@ EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 	}
 };
 
+EverettEngine::GizmoInfo EverettEngine::gizmoInfo =
+{
+	{ EverettEngine::ObjectTypes::Light, {"lightGizmo", "lightBox.glb"} },
+	{ EverettEngine::ObjectTypes::Sound, {"soundGizmo", "soundBox.glb"} }
+};
+
 std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 {
 	{EverettEngine::ObjectTypes::Camera, CameraSim::GetObjectTypeNameStr(), typeid(CameraSim)},
@@ -145,6 +152,8 @@ EverettEngine::EverettEngine()
 	animSystem = std::make_unique<AnimSystem>();
 	cmdHandler = std::make_unique<CommandHandler>();
 	hwndHolder = std::make_unique<WindowHandleHolder>();
+
+	ObjectSim::InitializeObjectGraph();
 }
 
 EverettEngine::~EverettEngine()
@@ -271,6 +280,63 @@ void EverettEngine::SetDefaultWASDControls(bool value)
 	}
 }
 
+void EverettEngine::EnableGizmoCreation()
+{
+	gizmoEnabled = true;
+	LoadGizmoModels();
+}
+
+void EverettEngine::LoadGizmoModels()
+{
+	for (auto& [gizmoModelName, gizmoModelPath] : GetGizmoModelPaths())
+	{
+		CreateModel(gizmoModelPath, gizmoModelName);
+	}
+}
+
+std::vector<std::pair<std::string, std::string>> EverettEngine::GetGizmoModelPaths()
+{
+	std::vector<std::pair<std::string, std::string>> gizmoPaths;
+
+	for (size_t i = 0; i < static_cast<int>(ObjectTypes::_SIZE); ++i)
+	{
+		ObjectTypes objectType = static_cast<ObjectTypes>(i);
+		if (gizmoInfo.contains(objectType))
+		{
+			gizmoPaths.push_back({ 
+				gizmoInfo[objectType].first, 
+				FileLoader::GetCurrentDir() + '\\' + modelPath + '\\' + gizmoInfo[objectType].second 
+			});
+		}
+	}
+
+	return gizmoPaths;
+}
+
+bool EverettEngine::CreateGizmoSolid(
+	const std::string& gizmoModelName,
+	const std::string& relatedObjModelName,
+	ObjectSim& relatedObject
+)
+{
+	std::string gizmoSolidName = relatedObjModelName + "Gizmo";
+	
+	if (CreateSolid(gizmoModelName, gizmoSolidName))
+	{
+		SolidSim& gizmoSolid = MSM[gizmoModelName].solids[gizmoSolidName];
+		gizmoSolid.GetPositionVectorAddr() = relatedObject.GetPositionVectorAddr();
+		gizmoSolid.GetScaleVectorAddr() = { 0.25f, 0.25f, 0.25f };
+		gizmoSolid.ForceModelUpdate();
+		gizmoSolid.EnableAutoModelUpdates();
+
+		relatedObject.LinkObject(gizmoSolid);
+
+		return true;
+	}
+
+	return false;
+}
+
 void EverettEngine::SetInteractable(
 	char key,
 	bool holdable,
@@ -320,6 +386,11 @@ void EverettEngine::SetShaderPath(const std::string& shaderPath)
 void EverettEngine::SetFontPath(const std::string& fontPath)
 {
 	this->fontPath = fontPath;
+}
+
+void EverettEngine::SetModelPath(const std::string& modelPath)
+{
+	this->modelPath = modelPath;
 }
 
 int EverettEngine::PollForLastKeyPressed()
@@ -447,7 +518,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 			mainLGL->SetShaderUniformValue("solidIndex", static_cast<int>(index));
 			mainLGL->SetShaderUniformValue(
 				lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[2], 
-				solid.GetModelMeshShininess(index)
+				solid.GetModelMeshShininess(meshIndex)
 			);
 
 			++index;
@@ -531,6 +602,18 @@ void EverettEngine::GenerateShader()
 
 bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightType)
 {
+	bool res = CreateLightImpl(lightName, lightType);
+	
+	if (res && gizmoEnabled)
+	{
+		res = CreateGizmoSolid(gizmoInfo[ObjectTypes::Light].first, lightName, lights[lightType][lightName]);
+	}
+
+	return res;
+}
+
+bool EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lightType)
+{
 	if (lights[lightType].find(lightName) != lights[lightType].end())
 	{
 		return true;
@@ -557,6 +640,18 @@ bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 }
 
 bool EverettEngine::CreateSound(const std::string& path, const std::string& soundName)
+{
+	bool res = CreateSoundImpl(path, soundName);
+
+	if (res && gizmoEnabled)
+	{
+		res = CreateGizmoSolid(gizmoInfo[ObjectTypes::Sound].first, soundName, sounds[soundName]);
+	}
+
+	return res;
+}
+
+bool EverettEngine::CreateSoundImpl(const std::string& path, const std::string& soundName)
 {
 	if (sounds.find(soundName) != sounds.end())
 	{
@@ -631,6 +726,10 @@ bool EverettEngine::DeleteSolid(const std::string& solidName)
 		{
 			allNameTracker.erase(&iter->first);
 			modelInfo.solids.erase(solidName);
+			if (!modelInfo.solids.size())
+			{
+				modelInfo.model.first.lock()->render = false;
+			}
 
 			res = true;
 		}
@@ -661,6 +760,11 @@ bool EverettEngine::DeleteLight(const std::string& lightName)
 		}
 	}
 
+	if (gizmoEnabled)
+	{
+		DeleteSolid(lightName + "Gizmo");
+	}
+
 	mainLGL->PauseRendering(false);
 
 	return res;
@@ -680,6 +784,11 @@ bool EverettEngine::DeleteSound(const std::string& soundName)
 		sounds.erase(soundName);
 
 		res = true;
+	}
+
+	if (gizmoEnabled)
+	{
+		DeleteSolid(soundName + "Gizmo");
 	}
 
 	mainLGL->PauseRendering(false);
@@ -778,7 +887,7 @@ void EverettEngine::LightUpdater()
 			lightShaderValueNames[static_cast<int>(LightTypes::Spot)].first,
 			index++,
 			lightShaderValueNames[static_cast<int>(LightTypes::Spot)].second,
-			light.GetPositionVectorAddr(), light.GetFrontVectorAddr(),
+			light.GetPositionVectorAddr(), glm::vec3(light.GetFrontVectorAddr()),
 			light.GetColorVectorAddr(), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
 			atten.linear, atten.quadratic, glm::cos(glm::radians(12.5f)),
 			glm::cos(glm::radians(17.5f))
@@ -1035,7 +1144,7 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 	}
 	else if constexpr (std::is_same_v<Sim, SolidSim>)
 	{
-		for (auto& [modelName, model] : MSM)
+		for (auto& [modelName, model] : MSM | std::views::filter(IsGizmoModelInfo))
 		{
 			for (auto& [solidName, solid] : model.solids)
 			{
@@ -1106,6 +1215,11 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 		{
 			fileLoader->DeleteAllAbsentAssets();
 		}
+	}
+
+	if (gizmoEnabled)
+	{
+		LoadGizmoModels();
 	}
 
 	mainLGL->PauseRendering(false);
@@ -1180,8 +1294,6 @@ void EverettEngine::ApplySimInfoFromLine(std::string_view& line, const std::arra
 		{
 			SetScriptToObjectImpl(createdObject, objectInfo[ObjectInfoNames::ObjectName], dllNamePair.second, dllNamePair.first);
 		}
-
-		res = true;
 	}
 }
 
@@ -1201,13 +1313,16 @@ void EverettEngine::LoadSolidFromLine(std::string_view& line, const std::array<s
 void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
 {
 	bool res = false;
+	std::string lightName = objectInfo[ObjectInfoNames::ObjectName];
+	LightTypes lightType = static_cast<LightTypes>(LightSim::GetTypeToName(objectInfo[ObjectInfoNames::SubtypeName]));
 
-	if (CreateLight(
-		objectInfo[ObjectInfoNames::ObjectName],
-		static_cast<LightTypes>(LightSim::GetTypeToName(objectInfo[ObjectInfoNames::SubtypeName])))
-		)
+	if (CreateLightImpl(lightName, lightType))
 	{
 		ApplySimInfoFromLine<LightSim>(line, objectInfo, res);
+		if (gizmoEnabled)
+		{
+			CreateGizmoSolid(gizmoInfo[ObjectTypes::Light].first, lightName, lights[lightType][lightName]);
+		}
 	}
 
 	CheckAndThrowExceptionWMessage(res, "Light creation from file failed");
@@ -1216,10 +1331,15 @@ void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<s
 void EverettEngine::LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
 {
 	bool res = false;
+	std::string soundName = objectInfo[ObjectInfoNames::ObjectName];
 
-	if (CreateSound(objectInfo[ObjectInfoNames::Path], objectInfo[ObjectInfoNames::ObjectName]))
+	if (CreateSoundImpl(objectInfo[ObjectInfoNames::Path], soundName))
 	{
 		ApplySimInfoFromLine<SoundSim>(line, objectInfo, res);
+		if (gizmoEnabled)
+		{
+			CreateGizmoSolid(gizmoInfo[ObjectTypes::Sound].first, soundName, sounds[soundName]);
+		}
 	}
 
 	CheckAndThrowExceptionWMessage(res, "Sound creation from file failed");
@@ -1260,6 +1380,13 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
 
 	AssetPaths loadedFiles = GetPathsFromWorldFile(pathToUse);
+	if (gizmoEnabled)
+	{
+		for (auto& [_, gizmoModelPath] : GetGizmoModelPaths())
+		{
+			loadedFiles.modelPaths.insert(gizmoModelPath);
+		}
+	}
 
 	std::getline(file, lineLoader);
 	line = lineLoader;
@@ -1409,7 +1536,7 @@ std::vector<std::string> EverettEngine::GetCreatedModels(bool getFullPaths)
 {
 	std::vector<std::string> createdModels;
 
-	for (auto& model : MSM)
+	for (const auto& model : MSM | std::views::filter(IsGizmoModelInfo))
 	{
 		createdModels.push_back(getFullPaths ? model.second.modelPath : model.first);
 	}
@@ -1512,7 +1639,7 @@ std::vector<std::string> EverettEngine::GetSolidList()
 {
 	std::vector<std::string> solidNames;
 
-	for (auto& model : MSM)
+	for (const auto& model : MSM | std::views::filter(IsGizmoModelInfo))
 	{
 		solidNames.push_back('.' + model.first);
 		std::vector<std::string> modelSolidNames = GetNameList(model.second.solids);
@@ -1681,6 +1808,12 @@ void EverettEngine::CreateLogReport()
 	}
 
 	file.close();
+}
+
+bool EverettEngine::IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement)
+{
+	return MSMelement.first != gizmoInfo[ObjectTypes::Light].first && 
+		MSMelement.first != gizmoInfo[ObjectTypes::Sound].first;
 }
 
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)

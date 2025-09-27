@@ -5,18 +5,30 @@ void SolidSim::ForceModelUpdate()
 	ResetModelMatrix();
 }
 
-void SolidSim::ResetModelMatrix(const Rotation& toRotate)
+void SolidSim::ResetModelMatrix()
 {
-	rotate += toRotate;
-
 	model = glm::mat4(1.0f);
-	model = glm::translate(model, pos);
+
+	const glm::vec3& posRef = pos;
+	const glm::vec3& scaleRef = scale;
+
+	model = glm::translate(model, posRef);
 	// gimbal lock will happen, will rewrite to use quaternions later
 	for (int i = 0; i < 3; ++i)
 	{
 		model = glm::rotate(model, rotate[i], { i == 0, i == 1, i == 2 });
 	}
-	model = glm::scale(model, scale);
+	model = glm::scale(model, scaleRef);
+}
+
+void SolidSim::EnableAutoModelUpdates(bool value)
+{
+	std::function<void()> resetModelMatrixWrapper = 
+		value ? [this]() { ResetModelMatrix(); } : std::function<void()>(nullptr);
+
+	pos.SetCallback(resetModelMatrixWrapper);
+	scale.SetCallback(resetModelMatrixWrapper);
+	rotate.SetCallback(resetModelMatrixWrapper);
 }
 
 SolidSim::SolidSim(
@@ -127,9 +139,11 @@ void SolidSim::SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis)
 	}
 	else 
 	{
-		model[3].x = pos.x;
-		model[3].y = pos.y;
-		model[3].z = pos.z;
+		const glm::vec3& posRef = pos;
+
+		model[3].x = posRef.x;
+		model[3].y = posRef.y;
+		model[3].z = posRef.z;
 	}
 }
 
@@ -137,7 +151,8 @@ void SolidSim::Rotate(const Rotation& toRotate)
 {
 	if (type == SolidType::Static && lastBlocker)
 	{
-		ResetModelMatrix(toRotate);
+		rotate += toRotate;
+		ResetModelMatrix();
 	}
 	else 
 	{

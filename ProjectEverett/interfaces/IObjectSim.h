@@ -8,6 +8,8 @@
 #include <functional>
 #include <string>
 
+#define Linkable // Linkable methods allow chained execution
+
 class IObjectSim
 {
 public:
@@ -27,9 +29,9 @@ public:
 		Rotation(const glm::vec3& axis = {}) : glm::vec3(axis) {}
 		Rotation(float pitch, float yaw, float roll) : Rotation(glm::vec3{ pitch, yaw, roll }) {}
 
-		float GetPitch() { return x; };
-		float GetYaw() { return y; };
-		float GetRoll() { return z; };
+		float GetPitch() const { return x; };
+		float GetYaw() const   { return y; };
+		float GetRoll() const  { return z; };
 
 		Rotation& operator+=(const Rotation& toRotate)
 		{
@@ -43,34 +45,40 @@ public:
 
 	constexpr static float fullRotation = 360.0f;
 
-	virtual void InvertMovement() = 0;
+	Linkable virtual void InvertMovement(bool value = true) = 0;
 	virtual bool IsMovementInverted() = 0;
 
-	virtual void SetMovementSpeed(float speed) = 0;
+	Linkable virtual void SetMovementSpeed(float speed) = 0;
 	virtual float GetMovementSpeed() = 0;
 
-	virtual glm::vec3& GetFrontVectorAddr() = 0;
+	Linkable virtual void SetPositionVector(const glm::vec3& vect) = 0;
+	Linkable virtual void SetScaleVector(const glm::vec3& vect) = 0;
+
+	virtual const glm::vec3& GetUpVectorAddr() = 0;
+	virtual const glm::vec3& GetFrontVectorAddr() = 0;
+
 	virtual glm::vec3& GetPositionVectorAddr() = 0;
-	virtual glm::vec3& GetUpVectorAddr() = 0;
 	virtual glm::vec3& GetScaleVectorAddr() = 0;
 
-	virtual void SetGhostMode(bool val) = 0;
+	Linkable virtual void SetGhostMode(bool val) = 0;
 	virtual bool IsGhostMode() const = 0;
 
-	virtual void DisableDirection(Direction dir) = 0;
-	virtual void EnableDirection(Direction dir) = 0;
-	virtual void EnableAllDirections() = 0;
+	Linkable virtual void DisableDirection(Direction dir) = 0;
+	Linkable virtual void EnableDirection(Direction dir) = 0;
+	Linkable virtual void EnableAllDirections() = 0;
 	virtual size_t GetAmountOfDisabledDirs() = 0;
 	virtual Direction GetLastDirection() = 0;
 
-	virtual void SetLastPosition() = 0;
-	virtual void SetPosition(Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }) = 0;
+	Linkable virtual void SetLastPosition() = 0;
+	Linkable virtual void SetPosition(Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }) = 0;
 
-	virtual void LimitRotations(const Rotation& min, const Rotation& max) = 0;
-	virtual void Rotate(const Rotation& toRotate) = 0;
+	Linkable virtual void LimitRotations(const Rotation& min, const Rotation& max) = 0;
+	Linkable virtual void Rotate(const Rotation& toRotate) = 0;
 
 	virtual void ExecuteScriptFunc(const std::string& dllName = "") = 0;
 	virtual void ExecuteAllScriptFuncs() = 0;
 	virtual bool IsScriptFuncAdded(const std::string& dllName = "") = 0;
 	virtual bool IsScriptFuncRunnable(const std::string& dllName = "") = 0;
+
+	virtual void LinkObject(IObjectSim& objectToLink) = 0;
 };

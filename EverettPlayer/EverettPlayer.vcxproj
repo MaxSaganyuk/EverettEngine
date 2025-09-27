@@ -135,6 +135,7 @@
     <PostBuildEvent>
       <Command>xcopy $(TargetDir)..\..\ProjectEverett\fonts $(TargetDir)\fonts /i
 xcopy $(TargetDir)..\..\ProjectEverett\shaders $(TargetDir)\shaders /i
+xcopy $(TargetDir)..\..\ProjectEverett\models $(TargetDir)\models /i
 copy $(TargetDir)..\..\ThirdParty\dlls\Release\*.dll $(TargetDir)
 mkdir $(TargetDir)shaders
 del /q "$(TargetDir)*.exp"

@@ -165,8 +165,8 @@ void SoundSim::UpdatePositions()
 	alListener3f(AL_POSITION, listenerPos.x, listenerPos.y, listenerPos.z);
 	alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
-	glm::vec3& listenerFront = SoundSim::camera->GetFrontVectorAddr();
-	glm::vec3& listenerUp = SoundSim::camera->GetUpVectorAddr();
+	const glm::vec3& listenerFront = SoundSim::camera->GetFrontVectorAddr();
+	const glm::vec3& listenerUp = SoundSim::camera->GetUpVectorAddr();
 	std::vector<float> cameraOrientation {
 		listenerFront.x, listenerFront.y, listenerFront.z,
 		listenerUp.x,    listenerUp.y,    listenerUp.z

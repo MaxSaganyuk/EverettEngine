@@ -1,16 +1,31 @@
 #include "ObjectSim.h"
 #include "EverettException.h"
 
+template<typename MemberFuncType, typename... ParamTypes>
+void ObjectSim::ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... values)
+{
+	if (visited)
+	{
+		return;
+	}
+	visited = true;
+
+	for (ObjectSim* linkedObject : objectGraph.GetValuesRelatedTo(this))
+	{
+		(linkedObject->*memberFunc)(std::forward<ParamTypes>(values)...);
+	}
+
+	visited = false;
+}
+
 ObjectSim::ObjectSim(
 	const glm::vec3& pos,
 	const glm::vec3& scale,
 	const glm::vec3& front,
 	const float speed
 )
-	: front(front), pos(pos), scale(scale), speed(speed)
+	: front(front), pos(pos), scale(scale), speed(speed), rotate({}), visited(false)
 {
-	rotate = { 0.0f, 0.0f, 0.0f };
-
 	rotationLimits = {
 		{-fullRotation, -fullRotation, -fullRotation},
 		{ fullRotation,  fullRotation,  fullRotation}
@@ -27,6 +42,16 @@ ObjectSim::ObjectSim(
 	{
 		disabledDirs[static_cast<Direction>(i)] = false;
 	}
+}
+
+ObjectSim::~ObjectSim()
+{
+	objectGraph.RemoveElement(this);
+}
+
+void ObjectSim::InitializeObjectGraph()
+{
+	objectGraph.EnableBidirectionality(false);
 }
 
 std::string ObjectSim::GetObjectTypeNameStr()
@@ -124,6 +149,8 @@ bool ObjectSim::IsGhostMode() const
 void ObjectSim::SetMovementSpeed(float speed)
 {
 	this->speed = speed;
+
+	ExecuteLinkedObjects(&ObjectSim::SetMovementSpeed, speed);
 }
 
 float ObjectSim::GetMovementSpeed()
@@ -131,9 +158,11 @@ float ObjectSim::GetMovementSpeed()
 	return speed;
 }
 
-void ObjectSim::InvertMovement()
+void ObjectSim::InvertMovement(bool value)
 {
-	speed = (-1) * speed;
+	speed = (value ? (-1) : 1) * speed;
+
+	ExecuteLinkedObjects(&ObjectSim::InvertMovement, value);
 }
 
 bool ObjectSim::IsMovementInverted()
@@ -141,19 +170,33 @@ bool ObjectSim::IsMovementInverted()
 	return speed < 0.0f;
 }
 
-glm::vec3& ObjectSim::GetFrontVectorAddr()
+void ObjectSim::SetPositionVector(const glm::vec3& vect)
+{
+	pos = vect;
+
+	ExecuteLinkedObjects(&ObjectSim::SetPositionVector, vect);
+}
+
+void ObjectSim::SetScaleVector(const glm::vec3& vect)
+{
+	scale = vect;
+
+	ExecuteLinkedObjects(&ObjectSim::SetScaleVector, vect);
+}
+
+const glm::vec3& ObjectSim::GetFrontVectorAddr()
 {
 	return front;
+}
+
+const glm::vec3& ObjectSim::GetUpVectorAddr()
+{
+	return up;
 }
 
 glm::vec3& ObjectSim::GetPositionVectorAddr()
 {
 	return pos;
-}
-
-glm::vec3& ObjectSim::GetUpVectorAddr()
-{
-	return up;
 }
 
 glm::vec3& ObjectSim::GetScaleVectorAddr()
@@ -164,11 +207,15 @@ glm::vec3& ObjectSim::GetScaleVectorAddr()
 void ObjectSim::DisableDirection(Direction dir)
 {
 	disabledDirs[dir] = true;
+
+	ExecuteLinkedObjects(&ObjectSim::DisableDirection, dir);
 }
 
 void ObjectSim::EnableDirection(Direction dir)
 {
 	disabledDirs[dir] = false;
+
+	ExecuteLinkedObjects(&ObjectSim::EnableDirection, dir);
 }
 
 void ObjectSim::EnableAllDirections()
@@ -177,6 +224,8 @@ void ObjectSim::EnableAllDirections()
 	{
 		disabledDirs[static_cast<Direction>(i)] = false;
 	}
+
+	ExecuteLinkedObjects(&ObjectSim::EnableAllDirections);
 }
 
 size_t ObjectSim::GetAmountOfDisabledDirs()
@@ -199,6 +248,8 @@ ObjectSim::Direction ObjectSim::GetLastDirection()
 void ObjectSim::SetLastPosition()
 {
 	pos = lastPos;
+
+	ExecuteLinkedObjects(&ObjectSim::SetLastPosition);
 }
 
 void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
@@ -247,11 +298,15 @@ void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		ThrowExceptionWMessage("Undefined direction");
 		return;
 	}
+
+	ExecuteLinkedObjects(&ObjectSim::SetPosition, dir, limitAxis);
 }
 
 void ObjectSim::LimitRotations(const Rotation& min, const Rotation& max)
 {
 	rotationLimits = { min, max };
+
+	ExecuteLinkedObjects(&ObjectSim::LimitRotations, min, max);
 }
 
 void ObjectSim::Rotate(const Rotation& toRotate)
@@ -259,10 +314,13 @@ void ObjectSim::Rotate(const Rotation& toRotate)
 	CheckRotationLimits();
 
 	glm::vec3 direction;
-	direction.x = cos(glm::radians(rotate.GetPitch())) * cos(glm::radians(rotate.GetYaw()));
-	direction.y = sin(glm::radians(rotate.GetYaw()));
-	direction.z = sin(glm::radians(rotate.GetPitch())) * cos(glm::radians(rotate.GetYaw()));
+	const Rotation& roateRef = rotate;
+	direction.x = cos(glm::radians(roateRef.GetPitch())) * cos(glm::radians(roateRef.GetYaw()));
+	direction.y = sin(glm::radians(roateRef.GetYaw()));
+	direction.z = sin(glm::radians(roateRef.GetPitch())) * cos(glm::radians(roateRef.GetYaw()));
 	front = glm::normalize(direction);
+
+	ExecuteLinkedObjects(&ObjectSim::Rotate, toRotate);
 }
 
 void ObjectSim::AddScriptFunc(
@@ -302,4 +360,9 @@ bool ObjectSim::IsScriptFuncAdded(const std::string& dllName)
 bool ObjectSim::IsScriptFuncRunnable(const std::string& dllName)
 {
 	return scriptFuncStorage.IsScriptFuncRunnable(dllName);
+}
+
+void ObjectSim::LinkObject(IObjectSim& otherObject)
+{
+	objectGraph.AddElements(this, dynamic_cast<ObjectSim*>(&otherObject), stdEx::RelationType::LeftToRight);
 }

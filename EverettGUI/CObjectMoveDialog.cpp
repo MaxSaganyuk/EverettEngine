@@ -101,16 +101,20 @@ END_MESSAGE_MAP()
 
 void CObjectMoveDialog::TransformObject(const std::array<DirectionType, 3>& directionValues)
 {
-	glm::vec3* vectorPtr = nullptr;
+	glm::vec3 vector;
+	bool position = false;
+	bool scale = false;
 	bool rotation = false;
 
 	switch (transType)
 	{
 	case ObjectTransformType::Position:
-		vectorPtr = &object.GetPositionVectorAddr();
+		position = true;
+		vector = object.GetPositionVectorAddr();
 		break;
 	case ObjectTransformType::Scale:
-		vectorPtr = &object.GetScaleVectorAddr();
+		scale = true;
+		vector = object.GetScaleVectorAddr();
 		break;
 	case ObjectTransformType::Rotation:
 		rotation = true;
@@ -133,14 +137,7 @@ void CObjectMoveDialog::TransformObject(const std::array<DirectionType, 3>& dire
 
 	if (rateOfChange != 0.0f)
 	{
-		if (vectorPtr)
-		{
-			vectorPtr->x += xChange;
-			vectorPtr->y += yChange;
-			vectorPtr->z += zChange;
-		
-		}
-		else if (rotation)
+		if (rotation)
 		{
 			if (isSolid)
 			{
@@ -149,6 +146,21 @@ void CObjectMoveDialog::TransformObject(const std::array<DirectionType, 3>& dire
 			else
 			{
 				object.Rotate({ xChange, yChange, zChange });
+			}
+		}
+		else
+		{
+			vector.x += xChange;
+			vector.y += yChange;
+			vector.z += zChange;
+
+			if (position)
+			{
+				object.SetPositionVector(vector);
+			}
+			else if (scale)
+			{
+				object.SetScaleVector(vector);
 			}
 		}
 

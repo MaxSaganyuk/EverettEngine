@@ -20,7 +20,7 @@ private:
 	SolidType type;
 	SolidToModelManager STMM;
 
-	void ResetModelMatrix(const Rotation& toRotate = {});
+	void ResetModelMatrix();
 	std::string CollectInfoToSaveFromSTMM();
 	bool CollectInfoToLoadToSTMM(std::string_view& line);
 protected:
@@ -43,6 +43,8 @@ public:
 	void SetType(SolidType type) override;
 	void SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis) override;
 	void Rotate(const Rotation& toRotate) override;
+
+	void EnableAutoModelUpdates(bool value = true) override;
 	
 	// Solid to model access section
 	// Mesh access; avalible through interface

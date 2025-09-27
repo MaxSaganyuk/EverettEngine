@@ -85,8 +85,11 @@ public:
 
 	EVERETT_API void SetShaderPath(const std::string& shaderPath);
 	EVERETT_API void SetFontPath(const std::string& fontPath);
+	EVERETT_API void SetModelPath(const std::string& modelPath);
 
 	EVERETT_API void SetDefaultWASDControls(bool value = true);
+	EVERETT_API void EnableGizmoCreation();
+
 	EVERETT_API void SetInteractable(
 		char key, 
 		bool holdable,
@@ -195,7 +198,10 @@ public:
 	EVERETT_API void CreateLogReport();
 private:
 	std::string shaderPath = "shaders";
+	std::string modelPath = "models";
 	std::string fontPath = "fonts";
+
+	bool gizmoEnabled = false;
 
 	struct ObjectTypeInfo;
 
@@ -218,8 +224,22 @@ private:
 	using LightCollection = std::map<LightTypes, std::map<std::string, LightSim>>;
 	using SoundCollection = std::map<std::string, SoundSim>;
 
+	using GizmoInfo = std::map<ObjectTypes, std::pair<std::string, std::string>>;
+
+	static GizmoInfo gizmoInfo;
+
+	std::vector<std::pair<std::string, std::string>> GetGizmoModelPaths();
+	void LoadGizmoModels();
+	bool CreateGizmoSolid(
+		const std::string& gizmoModelName, 
+		const std::string& relatedObjModelName, 
+		ObjectSim& relatedObject
+	);
+
 	bool CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader);
 	bool CreateSolidImpl(const std::string& modelName, const std::string& solidName, bool regenerateShader);
+	bool CreateLightImpl(const std::string& lightName, LightTypes lightType);
+	bool CreateSoundImpl(const std::string& path, const std::string& soundName);
 	void GenerateShader();
 
 	size_t GetCreatedSolidAmount();
@@ -273,6 +293,9 @@ private:
 	void SetLogCallback(bool value = true);
 	void SetRenderLoggerCallbacks(bool value = true);
 	std::string GetDateTimeStr();
+
+	// Ranges predicates
+	static bool IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement);
 
 	std::unique_ptr<LGL> mainLGL;
 

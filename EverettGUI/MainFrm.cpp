@@ -60,11 +60,13 @@ CMainFrame::CMainFrame() noexcept
 #if _DEBUG
 		engine.SetShaderPath("..\\ProjectEverett\\debugShaders");
 		engine.SetFontPath("..\\ProjectEverett\\fonts");
+		engine.SetModelPath("..\\ProjectEverett\\models");
 #endif
 		engine.CreateAndSetupMainWindow(800, 600, "Everett");
 		// Allowing custom icons for games will probably have this removed
 		GetActiveWindow()->SetIcon(AfxGetApp()->LoadIconW(IDR_MAINFRAME), false);
 		engine.SetDefaultWASDControls();
+		engine.EnableGizmoCreation();
 	}
 	catch (const EverettException&)
 	{

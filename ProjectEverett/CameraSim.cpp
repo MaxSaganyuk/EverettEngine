@@ -92,8 +92,8 @@ glm::mat4& CameraSim::GetProjectionMatrixAddr()
 
 void CameraSim::SetPosition(Direction dir)
 {
-	glm::vec3& pos = ObjectSim::GetPositionVectorAddr();
-	glm::vec3& front = ObjectSim::GetFrontVectorAddr();
+	const glm::vec3& pos = ObjectSim::GetPositionVectorAddr();
+	const glm::vec3& front = ObjectSim::GetFrontVectorAddr();
 
 	SolidSim::SetPosition(dir, { 1.0f, static_cast<float>(mode == Mode::Fly), 1.0f });
 

@@ -17,6 +17,7 @@ public:
 	constexpr static float fullRotation = 360.0f;
 
 	virtual void ForceModelUpdate() = 0;
+	virtual void EnableAutoModelUpdates(bool value = true) = 0;
 	virtual glm::mat4& GetModelMatrixAddr() = 0;
 	virtual void SetType(SolidType type) = 0;
 

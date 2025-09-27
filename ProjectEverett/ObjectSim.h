@@ -2,14 +2,20 @@
 
 #include "interfaces/IObjectSim.h"
 
+#include "stdEx/utilityEx.h"
+
 #include <unordered_map>
 #include <type_traits>
 
 #include "ScriptFuncStorage.h"
 #include "SimSerializer.h"
+#include "ValueObserver.h"
 
 class ObjectSim : virtual public IObjectSim
 {
+private:
+	template<typename MemberFuncType, typename... ParamTypes>
+	void ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... values);
 protected:
 	static inline float renderDeltaTime = 1.0f;
 
@@ -19,12 +25,13 @@ protected:
 	
 	constexpr static size_t realDirectionAmount = 6;
 
-	glm::vec3 scale;
+	ValueObserver<glm::vec3> pos;
+	ValueObserver<glm::vec3> scale;
+	ValueObserver<Rotation>  rotate;
+
 	glm::vec3 front;
 	glm::vec3 up;
-	glm::vec3 pos;
 	glm::vec3 lastPos;
-	Rotation rotate;
 	bool lastBlocker;
 	float speed;
 
@@ -37,6 +44,9 @@ protected:
 
 	ScriptFuncStorage scriptFuncStorage;
 
+	static inline stdEx::RelationGraph<ObjectSim*> objectGraph;
+	bool visited; // Utility bool to prevent infinite loops of linked object traversal
+
 public:
 	ObjectSim(
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
@@ -44,16 +54,22 @@ public:
 		const glm::vec3& front = glm::vec3(0.0f, 0.0f, 1.0f),
 		const float speed = 1.0f
 	);
+	~ObjectSim();
 
+	static void InitializeObjectGraph();
 	static std::string GetObjectTypeNameStr();
 	static void SetRenderDeltaTime(float deltaTime);
 
-	void InvertMovement() override;
+	void InvertMovement(bool value = true) override;
 	bool IsMovementInverted() override;
 
-	glm::vec3& GetFrontVectorAddr() override;
+	void SetPositionVector(const glm::vec3& vect) override;
+	void SetScaleVector(const glm::vec3& vect) override;
+		
+	const glm::vec3& GetFrontVectorAddr() override;
+	const glm::vec3& GetUpVectorAddr() override;
+
 	glm::vec3& GetPositionVectorAddr() override;
-	glm::vec3& GetUpVectorAddr() override;
 	glm::vec3& GetScaleVectorAddr() override;
 
 	void SetMovementSpeed(float speed) override;
@@ -81,4 +97,6 @@ public:
 	void ExecuteAllScriptFuncs() override;
 	bool IsScriptFuncAdded(const std::string& dllName = "") override;
 	bool IsScriptFuncRunnable(const std::string& dllName = "") override;
+
+	void LinkObject(IObjectSim& otherObject) override;
 };
