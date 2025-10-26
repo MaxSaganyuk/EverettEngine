@@ -286,6 +286,14 @@ void EverettEngine::EnableGizmoCreation()
 	LoadGizmoModels();
 }
 
+void EverettEngine::SetGizmoVisible(bool value)
+{
+	for (auto& [_, model] : MSM | std::views::filter(IsNotGizmoModelInfo))
+	{
+		model.model.first.lock()->render = value;
+	}
+}
+
 void EverettEngine::LoadGizmoModels()
 {
 	for (auto& [gizmoModelName, gizmoModelPath] : GetGizmoModelPaths())
@@ -1814,6 +1822,11 @@ bool EverettEngine::IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelemen
 {
 	return MSMelement.first != gizmoInfo[ObjectTypes::Light].first && 
 		MSMelement.first != gizmoInfo[ObjectTypes::Sound].first;
+}
+
+bool EverettEngine::IsNotGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement)
+{
+	return !IsGizmoModelInfo(MSMelement);
 }
 
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)

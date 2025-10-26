@@ -63,11 +63,14 @@ private:
 		{EverettEngine::ObjectTypes::Light, 2 },
 		{EverettEngine::ObjectTypes::Sound, 1 }
 	};
+
+	CButton showGizmoCheck;
 public:
 	afx_msg void OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnEditAmbientLightButton();
+	afx_msg void OnShowGizmoCheckClick();
 };
 
 

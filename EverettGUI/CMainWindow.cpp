@@ -37,6 +37,8 @@ void CMainWindow::OnInitialUpdate()
 
 	objectTree.SetObjectTypes();
 	objectTree.GetTreeCtrl().ModifyStyle(0, TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS);
+
+	showGizmoCheck.SetCheck(true);
 }
 
 BOOL CMainWindow::Create(
@@ -56,6 +58,7 @@ void CMainWindow::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_TREE1, objectTree.GetTreeCtrl());
+	DDX_Control(pDX, IDC_CHECK1, showGizmoCheck);
 }
 
 BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
@@ -63,6 +66,7 @@ BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
 	ON_NOTIFY(NM_DBLCLK, IDC_TREE1, &CMainWindow::OnNodeDoubleClick)
 	ON_NOTIFY(NM_RCLICK, IDC_TREE1, &CMainWindow::OnNodeRightClick)
 	ON_BN_CLICKED(IDC_BUTTON1, &CMainWindow::OnEditAmbientLightButton)
+	ON_BN_CLICKED(IDC_CHECK1, &CMainWindow::OnShowGizmoCheckClick)
 END_MESSAGE_MAP()
 
 // CMainWindow diagnostics
@@ -232,4 +236,9 @@ void CMainWindow::OnEditAmbientLightButton()
 			colorVectorAddr[i] = colorRaw[i];
 		}
 	}
+}
+
+void CMainWindow::OnShowGizmoCheckClick()
+{
+	engineP->SetGizmoVisible(showGizmoCheck.GetCheck());
 }

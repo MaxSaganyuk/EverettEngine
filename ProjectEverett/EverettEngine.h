@@ -88,7 +88,9 @@ public:
 	EVERETT_API void SetModelPath(const std::string& modelPath);
 
 	EVERETT_API void SetDefaultWASDControls(bool value = true);
+	
 	EVERETT_API void EnableGizmoCreation();
+	EVERETT_API void SetGizmoVisible(bool value = true);
 
 	EVERETT_API void SetInteractable(
 		char key, 
@@ -296,6 +298,7 @@ private:
 
 	// Ranges predicates
 	static bool IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement);
+	static bool IsNotGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement);
 
 	std::unique_ptr<LGL> mainLGL;
 
