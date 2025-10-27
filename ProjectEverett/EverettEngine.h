@@ -298,7 +298,6 @@ private:
 
 	// Ranges predicates
 	static bool IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement);
-	static bool IsNotGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement);
 
 	std::unique_ptr<LGL> mainLGL;
 

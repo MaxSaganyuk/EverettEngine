@@ -24,6 +24,7 @@
 #include "CommonStrEdits.h"
 
 #include "stdEx/mapEx.h"
+#include "stdEx/rangesEx.h"
 
 #include "AnimSystem.h"
 
@@ -288,7 +289,7 @@ void EverettEngine::EnableGizmoCreation()
 
 void EverettEngine::SetGizmoVisible(bool value)
 {
-	for (auto& [_, model] : MSM | std::views::filter(IsNotGizmoModelInfo))
+	for (auto& [_, model] : MSM | stdEx::views::antifilter(IsGizmoModelInfo))
 	{
 		model.model.first.lock()->render = value;
 	}
@@ -1822,11 +1823,6 @@ bool EverettEngine::IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelemen
 {
 	return MSMelement.first != gizmoInfo[ObjectTypes::Light].first && 
 		MSMelement.first != gizmoInfo[ObjectTypes::Sound].first;
-}
-
-bool EverettEngine::IsNotGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement)
-{
-	return !IsGizmoModelInfo(MSMelement);
 }
 
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)
