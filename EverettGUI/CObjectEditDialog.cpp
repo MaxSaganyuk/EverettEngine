@@ -330,8 +330,10 @@ void CObjectEditDialog::StartObjectMoveDlg(CObjectMoveDialog::ObjectTransformTyp
 		transType
 	);
 
-	moveDlg.DoModal();
-	UpdateParams();
+	if (moveDlg.DoModal() == IDCANCEL)
+	{
+		UpdateParams();
+	}
 }
 
 void CObjectEditDialog::OnPosEditButtonClick()
