@@ -1469,6 +1469,8 @@ int LGL::CheckUniformValueLocation(
 template<typename Type>
 bool LGL::SetShaderUniformValue(const std::string& valueName, Type&& value, const std::string& shaderProgramName)
 {
+	ContextLock
+
 	ShaderProgramID shaderProgramIDToUse = 0;
 	int uniformValueLocation = CheckUniformValueLocation(valueName, shaderProgramName, shaderProgramIDToUse);
 
