@@ -1222,6 +1222,7 @@ void LGL::DeleteShader(const std::string& shaderName)
 	if (uniformHasher)
 	{
 		uniformHasher->ResetHashesByShader(shaderInfoCollection[shaderName].first);
+		uniformLocationCache.erase(shaderInfoCollection[shaderName].first);
 	}
 
 	GLSafeExecute(glUseProgram, 0);
@@ -1449,7 +1450,18 @@ int LGL::CheckUniformValueLocation(
 
 	if ((shaderProgramID = SetCurrentShaderProg(shaderProgramNameToUse)) != ~ShaderProgramID{})
 	{
-		int uniformValueLocation = GLSafeExecuteRet(glGetUniformLocation, shaderProgramID, valueName.c_str());
+		if (uniformLocationCache.find(shaderProgramID) == uniformLocationCache.end())
+		{
+			uniformLocationCache[shaderProgramID] = std::unordered_map<std::string, int>{};
+		}
+
+		if (uniformLocationCache[shaderProgramID].find(valueName) == uniformLocationCache[shaderProgramID].end())
+		{
+			uniformLocationCache[shaderProgramID][valueName] =
+				GLSafeExecuteRet(glGetUniformLocation, shaderProgramID, valueName.c_str());
+		}
+
+		int uniformValueLocation = uniformLocationCache[shaderProgramID][valueName];
 
 		if (uniformValueLocation == -1)
 		{

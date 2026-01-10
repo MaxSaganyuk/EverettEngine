@@ -296,6 +296,7 @@ private:
 	bool hashUniformVals;
 	std::vector<std::string> uniformErrorAntispam;
 	std::unordered_set<size_t> uniformLocationTracker;
+	std::unordered_map<ShaderProgramID, std::unordered_map<std::string, int>> uniformLocationCache;
 	std::unique_ptr<LGLUniformHasher> uniformHasher;
 };
 
