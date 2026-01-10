@@ -118,28 +118,32 @@ HTREEITEM CMainWindow::ForceNodeSelection()
 void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
-	ObjectTypes currentType;
 
-	try
+	if (!selectedNodes.empty())
 	{
-		currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
-	}
-	catch (const EverettException&)
-	{
-		// Invalid value here is unexpected, but not fatal - log, ignore and do not crash
-		return;
-	}
-	selectedNodes.pop_back();
+		ObjectTypes currentType;
 
-	if (selectedNodes.size() == validSubnodeAmount[currentType])
-	{
-		CObjectEditDialog objEditDlg(
-			*engineP,
-			currentType,
-			selectedScriptDllInfo,
-			selectedNodes
-		);
-		objEditDlg.DoModal();
+		try
+		{
+			currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
+		}
+		catch (const EverettException&)
+		{
+			// Invalid value here is unexpected, but not fatal - log, ignore and do not crash
+			return;
+		}
+		selectedNodes.pop_back();
+
+		if (selectedNodes.size() == validSubnodeAmount[currentType])
+		{
+			CObjectEditDialog objEditDlg(
+				*engineP,
+				currentType,
+				selectedScriptDllInfo,
+				selectedNodes
+			);
+			objEditDlg.DoModal();
+		}
 	}
 
 	*pResult = 0;
