@@ -523,8 +523,8 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		size_t index = currentStartSolidIndex;
 		for (auto& [solidName, solid] : model.solids)
 		{
-			mainLGL->SetShaderUniformValue("meshVisibility", static_cast<int>(solid.GetModelMeshVisibility(meshIndex)));
 			mainLGL->SetShaderUniformValue("solidIndex", static_cast<int>(index));
+			mainLGL->SetShaderUniformValue("meshVisibility", static_cast<int>(solid.GetModelMeshVisibility(meshIndex)));
 			mainLGL->SetShaderUniformValue(
 				lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[2], 
 				solid.GetModelMeshShininess(meshIndex)
