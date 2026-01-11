@@ -284,14 +284,17 @@ void EverettEngine::SetDefaultWASDControls(bool value)
 void EverettEngine::EnableGizmoCreation()
 {
 	gizmoEnabled = true;
+	gizmoVisible = true;
 	LoadGizmoModels();
 }
 
 void EverettEngine::SetGizmoVisible(bool value)
 {
+	gizmoVisible = value;
+
 	for (auto& [_, model] : MSM | stdEx::views::antifilter(IsGizmoModelInfo))
 	{
-		model.model.first.lock()->render = value;
+		model.model.first.lock()->render = gizmoVisible;
 	}
 }
 
@@ -330,7 +333,7 @@ bool EverettEngine::CreateGizmoSolid(
 {
 	std::string gizmoSolidName = relatedObjModelName + "Gizmo";
 	
-	if (CreateSolid(gizmoModelName, gizmoSolidName))
+	if (CreateSolidImpl(gizmoModelName, gizmoSolidName, true, gizmoVisible))
 	{
 		SolidSim& gizmoSolid = MSM[gizmoModelName].solids[gizmoSolidName];
 		gizmoSolid.GetPositionVectorAddr() = relatedObject.GetPositionVectorAddr();
@@ -546,10 +549,12 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 bool EverettEngine::CreateSolid(const std::string& modelName, const std::string& solidName)
 {
-	return CreateSolidImpl(modelName, solidName, true);
+	return CreateSolidImpl(modelName, solidName, true, true);
 }
 
-bool EverettEngine::CreateSolidImpl(const std::string& modelName, const std::string& solidName, bool regenerateShader)
+bool EverettEngine::CreateSolidImpl(
+	const std::string& modelName, const std::string& solidName, bool regenerateShader, bool forceVisible
+)
 {
 	if (MSM[modelName].solids.find(solidName) != MSM[modelName].solids.end())
 	{
@@ -572,7 +577,7 @@ bool EverettEngine::CreateSolidImpl(const std::string& modelName, const std::str
 
 	if (resPair.second)
 	{
-		if (MSM[modelName].solids.size() == 1)
+		if (forceVisible)
 		{
 			modelPtr->render = true;
 		}
@@ -1314,7 +1319,8 @@ void EverettEngine::LoadSolidFromLine(std::string_view& line, const std::array<s
 	bool res = false;
 
 	if (CreateModelImpl(objectInfo[ObjectInfoNames::Path], objectInfo[ObjectInfoNames::SubtypeName], false) &&
-		CreateSolidImpl(objectInfo[ObjectInfoNames::SubtypeName], objectInfo[ObjectInfoNames::ObjectName], false))
+		CreateSolidImpl(objectInfo[ObjectInfoNames::SubtypeName], objectInfo[ObjectInfoNames::ObjectName], false, true)
+	)
 	{
 		ApplySimInfoFromLine<SolidSim>(line, objectInfo, res);
 	}

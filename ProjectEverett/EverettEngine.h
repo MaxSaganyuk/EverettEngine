@@ -203,6 +203,7 @@ private:
 	std::string modelPath = "models";
 	std::string fontPath = "fonts";
 
+	bool gizmoVisible = false;
 	bool gizmoEnabled = false;
 
 	struct ObjectTypeInfo;
@@ -239,7 +240,9 @@ private:
 	);
 
 	bool CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader);
-	bool CreateSolidImpl(const std::string& modelName, const std::string& solidName, bool regenerateShader);
+	bool CreateSolidImpl(
+		const std::string& modelName, const std::string& solidName, bool regenerateShader, bool forceVisible
+	);
 	bool CreateLightImpl(const std::string& lightName, LightTypes lightType);
 	bool CreateSoundImpl(const std::string& path, const std::string& soundName);
 	void GenerateShader();
