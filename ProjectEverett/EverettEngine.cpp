@@ -572,7 +572,10 @@ bool EverettEngine::CreateSolidImpl(const std::string& modelName, const std::str
 
 	if (resPair.second)
 	{
-		modelPtr->render = true;
+		if (MSM[modelName].solids.size() == 1)
+		{
+			modelPtr->render = true;
+		}
 
 		CheckAndAddToNameTracker(resPair.first->first);
 
