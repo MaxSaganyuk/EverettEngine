@@ -292,9 +292,9 @@ void EverettEngine::SetGizmoVisible(bool value)
 {
 	gizmoVisible = value;
 
-	for (auto& [_, model] : MSM | stdEx::views::antifilter(IsGizmoModelInfo))
+	for (auto& [_, msmInst] : MSM | stdEx::views::antifilter(IsGizmoModelInfo))
 	{
-		model.model.first.lock()->render = gizmoVisible;
+		msmInst.model.first.lock()->render = msmInst.solids.size() && gizmoVisible;
 	}
 }
 
