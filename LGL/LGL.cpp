@@ -20,13 +20,11 @@
 #include "LGLKeyToStringMap.h"
 
 #include "ContextManager.h"
-#define ContextLock ContextManager<GLFWwindow> mux(window, [this](GLFWwindow* context){ glfwMakeContextCurrent(context); });
+#define ContextLock ContextManager<GLFWwindow> mux(window);
 #define HandshakeContextLock \
 PauseRendering(); \
 ContextLock \
 PauseRendering(false);
-std::recursive_mutex ContextManager<GLFWwindow>::rMutex;
-size_t ContextManager<GLFWwindow>::counter = 0;
 
 using namespace LGLStructs;
 
@@ -224,6 +222,8 @@ void LGL::InitOpenGL(int major, int minor)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	ContextManager<GLFWwindow>::SetContextSetter([](GLFWwindow* context){ glfwMakeContextCurrent(context); });
 
 	std::cout << "OpenGL initialized\n";
 }

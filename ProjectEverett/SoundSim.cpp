@@ -6,9 +6,7 @@
 #include <cassert>
 
 #include "ContextManager.h"
-#define ContextLock ContextManager<ALCcontext> mux(context, [this](ALCcontext* context){ alcMakeContextCurrent(context); });
-std::recursive_mutex ContextManager<ALCcontext>::rMutex;
-size_t ContextManager<ALCcontext>::counter = 0;
+#define ContextLock ContextManager<ALCcontext> mux(context);
 
 #include "EverettException.h"
 
@@ -40,6 +38,8 @@ void SoundSim::InitOpenAL()
 	}
 
 	bool res = alcIsExtensionPresent(nullptr, "AL_EXT_float32");
+
+	ContextManager<ALCcontext>::SetContextSetter([](ALCcontext* context){ alcMakeContextCurrent(context); });
 }
 
 void SoundSim::TerminateOpenAL()

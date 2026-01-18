@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+* Despite LGL being C++20 compiled dll, the LGL header must stay C++14 compatible
+*/
+
 #ifdef LGL_EXPORT
 #define LGL_API __declspec(dllexport)
 #else

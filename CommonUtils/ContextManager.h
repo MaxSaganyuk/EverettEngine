@@ -7,11 +7,11 @@
 template<typename Context>
 class ContextManager
 {
-	static std::recursive_mutex rMutex;
-	static size_t counter;
-	std::function<void(Context*)> contextSetter;
+	static inline std::recursive_mutex rMutex;
+	static inline size_t counter{};
+	static inline std::function<void(Context*)> contextSetter;
 public:
-	ContextManager(Context* context, std::function<void(Context*)> contextSetter)
+	ContextManager(Context* context)
 	{
 		this->contextSetter = contextSetter;
 
@@ -31,5 +31,10 @@ public:
 			contextSetter(nullptr);
 		}
 		rMutex.unlock();
+	}
+
+	static void SetContextSetter(std::function<void(Context*)> contextSetter)
+	{
+		ContextManager<Context>::contextSetter = contextSetter;
 	}
 };
