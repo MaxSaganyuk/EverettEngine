@@ -203,7 +203,9 @@ public:
 
 	//Function templates
 	template<typename Type>
-	LGL_API bool SetShaderUniformValue(const std::string& valueName, Type&& value, const std::string& shaderProgramName = "");
+	LGL_API bool SetShaderUniformValue(
+		const std::string& valueName, const Type& value, const std::string& shaderProgramName = ""
+	);
 
 	LGL_API void EnableUniformValueBatchSending(bool value = true);
 	LGL_API void EnableUniformValueHashing(bool value = true);
