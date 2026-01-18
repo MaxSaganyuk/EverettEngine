@@ -13,24 +13,28 @@ class ContextManager
 public:
 	ContextManager(Context* context)
 	{
-		this->contextSetter = contextSetter;
-
-		rMutex.lock();
-		if (!counter)
+		if (contextSetter)
 		{
-			contextSetter(context);
+			rMutex.lock();
+			if (!counter)
+			{
+				contextSetter(context);
+			}
+			++counter;
 		}
-		++counter;
 	}
 
 	~ContextManager()
 	{
-		--counter;
-		if (!counter)
+		if (contextSetter)
 		{
-			contextSetter(nullptr);
+			--counter;
+			if (!counter)
+			{
+				contextSetter(nullptr);
+			}
+			rMutex.unlock();
 		}
-		rMutex.unlock();
 	}
 
 	static void SetContextSetter(std::function<void(Context*)> contextSetter)
