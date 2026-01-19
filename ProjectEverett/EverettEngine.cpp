@@ -687,7 +687,7 @@ bool EverettEngine::CreateSoundImpl(const std::string& path, const std::string& 
 
 		if (resPair.second)
 		{
-			//sounds[soundName].Play();
+			resPair.first->second.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
 			CheckAndAddToNameTracker(resPair.first->first);
 
 			return true;
