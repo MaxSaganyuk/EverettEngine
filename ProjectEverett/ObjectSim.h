@@ -44,6 +44,10 @@ protected:
 
 	ScriptFuncStorage scriptFuncStorage;
 
+	// Callbacks
+	std::function<void()> positionChangeCallback;
+	std::function<void()> rotationChangeCallback;
+
 	static inline stdEx::RelationGraph<ObjectSim*> objectGraph;
 	bool visited; // Utility bool to prevent infinite loops of linked object traversal
 
@@ -93,6 +97,11 @@ public:
 	void AddScriptFunc(const std::string& dllPath, const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc);
 	void ClearScriptFuncMap();
 	std::vector<std::pair<std::string, std::string>> GetTempScriptDLLInfo();
+
+	// Callback setter
+	void SetPositionChangeCallback(std::function<void()> callback);
+	void SetRotationChangeCallback(std::function<void()> callback);
+
 	void ExecuteScriptFunc(const std::string& dllName = "") override;
 	void ExecuteAllScriptFuncs() override;
 	bool IsScriptFuncAdded(const std::string& dllName = "") override;

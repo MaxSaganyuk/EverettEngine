@@ -1,5 +1,7 @@
 #include "SoundSim.h"
 
+#include <OpenAL\alc.h>
+#include <OpenAL\al.h>
 #include <OpenAL\alext.h>
 
 #include <iostream>
@@ -37,6 +39,11 @@ void SoundSim::InitOpenAL()
 		std::cerr << "Cannot get the device\n";
 	}
 
+	if (!CreateContext())
+	{
+		std::cerr << "Failed to create context\n";
+	}
+
 	bool res = alcIsExtensionPresent(nullptr, "AL_EXT_float32");
 
 	ContextManager<ALCcontext>::SetContextSetter([](ALCcontext* context){ alcMakeContextCurrent(context); });
@@ -44,7 +51,17 @@ void SoundSim::InitOpenAL()
 
 void SoundSim::TerminateOpenAL()
 {
-	alcCloseDevice(device);
+	ContextLock
+
+	if (context)
+	{
+		alcDestroyContext(context);
+	}
+	
+	if (device)
+	{
+		alcCloseDevice(device);
+	}
 }
 
 void SoundSim::SetCamera(CameraSim& camera)
@@ -52,11 +69,31 @@ void SoundSim::SetCamera(CameraSim& camera)
 	SoundSim::camera = &camera;
 }
 
+void SoundSim::UpdateCameraPosition()
+{
+	if (soundsCurrentlyPlaying)
+	{
+		ContextLock
+
+		const glm::vec3& listenerPos = SoundSim::camera->GetPositionVectorAddr();
+		alListener3f(AL_POSITION, listenerPos.x, listenerPos.y, listenerPos.z);
+		alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+
+		const glm::vec3& listenerFront = SoundSim::camera->GetFrontVectorAddr();
+		const glm::vec3& listenerUp = SoundSim::camera->GetUpVectorAddr();
+		float cameraOrientation[]{
+			listenerFront.x, listenerFront.y, listenerFront.z,
+			listenerUp.x,    listenerUp.y,    listenerUp.z
+		};
+		alListenerfv(AL_ORIENTATION, cameraOrientation);
+	}
+}
+
 bool SoundSim::CreateContext()
 {
 	context = alcCreateContext(device, nullptr);
 
-	return true;
+	return context;
 }
 
 bool SoundSim::CreateBufferAndSource()
@@ -84,23 +121,25 @@ void SoundSim::Play(bool loop)
 		ThrowExceptionWMessage("Cannot play sound without listener (camera)");
 	}
 
+	if (!currentSoundPlaying)
+	{
+		currentSoundPlaying = true;
+		++soundsCurrentlyPlaying;
+	}
+
 	ContextLock
 
 	alSourcei(sound.source, AL_BUFFER, sound.buffer);
 	alSourcei(sound.source, AL_LOOPING, loop);
 
-	UpdatePositions();
-
 	alSourcePlay(sound.source);
 
-	sound.playStates.playing = true;
-	sound.playStates.paused = false;
-	sound.playStates.looped = loop;
+	sound.playStates.Play(loop);
 }
 
 bool SoundSim::IsPlaying()
 {
-	return sound.playStates.playing;
+	return sound.playStates.IsPlaying();
 }
 
 void SoundSim::Pause()
@@ -109,34 +148,39 @@ void SoundSim::Pause()
 
 	alSourcePause(sound.source);
 
-	sound.playStates.paused = true;
+	sound.playStates.Pause();
 }
 
 bool SoundSim::IsPaused()
 {
-	return sound.playStates.paused;
+	return sound.playStates.IsPaused();
 }
 
 bool SoundSim::IsLooped()
 {
-	return sound.playStates.looped;
+	return sound.playStates.IsLooped();
 }
 
 void SoundSim::Stop()
 {
-	ContextLock
+	if (currentSoundPlaying)
+	{
+		currentSoundPlaying = false;
+		--soundsCurrentlyPlaying;
 
-	alSourcei(sound.source, AL_BUFFER, sound.buffer);
-	alSourceStop(sound.source);
+		ContextLock
 
-	sound.playStates.ResetValues();
+		alSourcei(sound.source, AL_BUFFER, sound.buffer);
+		alSourceStop(sound.source);
+
+		sound.playStates.Stop();
+	}
 }
 
 void SoundSim::SetupSound(WavData&& wavData)
 {
 	sound = std::move(wavData);
 
-	CreateContext();
 	CreateBufferAndSource();
 }
 
@@ -153,49 +197,39 @@ float SoundSim::GetPlaybackSpeed()
 	return sound.playbackSpeed;
 }
 
-void SoundSim::UpdatePositions()
+void SoundSim::UpdateCurrentPlaybackTime()
 {
-	ContextLock
+	if (sound.duration < sound.playStates.GetCurrentTime())
+	{
+		Stop();
+	}
+}
 
-	glm::vec3 pos = sound.pos;
-	alSource3f(sound.source, AL_POSITION, pos.x, pos.y, pos.z);
-	alSource3f(sound.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+void SoundSim::UpdateSoundPosition()
+{
+	UpdateCurrentPlaybackTime();
 
-	glm::vec3& listenerPos = SoundSim::camera->GetPositionVectorAddr();
-	alListener3f(AL_POSITION, listenerPos.x, listenerPos.y, listenerPos.z);
-	alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+	if (sound.playStates.IsPlaying())
+	{
+		ContextLock
 
-	const glm::vec3& listenerFront = SoundSim::camera->GetFrontVectorAddr();
-	const glm::vec3& listenerUp = SoundSim::camera->GetUpVectorAddr();
-	std::vector<float> cameraOrientation {
-		listenerFront.x, listenerFront.y, listenerFront.z,
-		listenerUp.x,    listenerUp.y,    listenerUp.z
-	};
-	alListenerfv(AL_ORIENTATION, cameraOrientation.data());
+		const glm::vec3& currentPos = pos;
+		alSource3f(sound.source, AL_POSITION, currentPos.x, currentPos.y, currentPos.z);
+		alSource3f(sound.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+	}
 }
 
 SoundSim::SoundSim(WavData&& wavData)
 {
+	currentSoundPlaying = false;
 	SetupSound(std::move(wavData));
 }
 
 SoundSim::SoundSim(SoundSim&& otherSoundSim) noexcept
-	: context(otherSoundSim.context), sound(otherSoundSim.sound)
-{
-	otherSoundSim.context = nullptr;
-}
+	: sound(otherSoundSim.sound), currentSoundPlaying(otherSoundSim.currentSoundPlaying)
+{}
 
 std::string SoundSim::GetObjectTypeNameStr()
 {
 	return "Sound";
-}
-
-SoundSim::~SoundSim()
-{
-	ContextLock
-
-	if(context)
-	{ 
-		alcDestroyContext(context);
-	}
 }

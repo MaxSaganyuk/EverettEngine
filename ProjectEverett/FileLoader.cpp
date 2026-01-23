@@ -885,6 +885,7 @@ WavData FileLoader::AudioLoader::GetWavDataFromFile(const std::string& fileName)
 
 		if (wavDataOwn.data)
 		{
+			wavDataOwn.duration = static_cast<double>(wavDataOwn.totalPCMFrameCount) / wavDataOwn.sampleRate;
 			ownerContainer[fileName] = std::move(wavDataOwn);
 		}
 		else

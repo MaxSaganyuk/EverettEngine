@@ -174,6 +174,11 @@ void ObjectSim::SetPositionVector(const glm::vec3& vect)
 {
 	pos = vect;
 
+	if (positionChangeCallback)
+	{
+		positionChangeCallback();
+	}
+
 	ExecuteLinkedObjects(&ObjectSim::SetPositionVector, vect);
 }
 
@@ -249,6 +254,11 @@ void ObjectSim::SetLastPosition()
 {
 	pos = lastPos;
 
+	if (positionChangeCallback)
+	{
+		positionChangeCallback();
+	}
+
 	ExecuteLinkedObjects(&ObjectSim::SetLastPosition);
 }
 
@@ -299,6 +309,11 @@ void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		return;
 	}
 
+	if (positionChangeCallback)
+	{
+		positionChangeCallback();
+	}
+
 	ExecuteLinkedObjects(&ObjectSim::SetPosition, dir, limitAxis);
 }
 
@@ -320,6 +335,11 @@ void ObjectSim::Rotate(const Rotation& toRotate)
 	direction.z = sin(glm::radians(roateRef.GetPitch())) * cos(glm::radians(roateRef.GetYaw()));
 	front = glm::normalize(direction);
 
+	if (rotationChangeCallback)
+	{
+		rotationChangeCallback();
+	}
+
 	ExecuteLinkedObjects(&ObjectSim::Rotate, toRotate);
 }
 
@@ -340,6 +360,16 @@ void ObjectSim::ClearScriptFuncMap()
 std::vector<std::pair<std::string, std::string>> ObjectSim::GetTempScriptDLLInfo()
 {
 	return scriptFuncStorage.GetTempScriptDllNameVect();
+}
+
+void ObjectSim::SetPositionChangeCallback(std::function<void()> callback)
+{
+	positionChangeCallback = callback;
+}
+
+void ObjectSim::SetRotationChangeCallback(std::function<void()> callback)
+{
+	rotationChangeCallback = callback;
 }
 
 void ObjectSim::ExecuteScriptFunc(const std::string& dllName)

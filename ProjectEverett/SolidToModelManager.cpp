@@ -24,8 +24,6 @@ void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
 void SolidToModelManager::ResetAnimationTime()
 {
 	lastAnimationTime = 0.0;
-	startAnimationTime = std::chrono::system_clock::now();
-	currentAnimationTime = startAnimationTime;
 }
 
 bool SolidToModelManager::IsInitialized()
@@ -181,35 +179,26 @@ void SolidToModelManager::PlayAnimation(bool loop)
 {
 	CheckIfInitialized();
 
-	if (!animStates.playing)
+	if (!animStates.IsPlaying())
 	{
 		lastAnimationTime = 0.0;
-		startAnimationTime = std::chrono::system_clock::now();
-	}
-	else if (animStates.paused)
-	{
-		auto requiredDiff = currentAnimationTime - startAnimationTime;
-		currentAnimationTime = std::chrono::system_clock::now();
-		startAnimationTime = currentAnimationTime - requiredDiff;
 	}
 
-	animStates.playing = true;
-	animStates.paused = false;
-	animStates.looped = loop;
+	animStates.Play(loop);
 }
 
 void SolidToModelManager::PauseAnimation()
 {
 	CheckIfInitialized();
 
-	animStates.paused = true;
+	animStates.Pause();
 }
 
 void SolidToModelManager::StopAnimation()
 {
 	CheckIfInitialized();
 
-	animStates.ResetValues();
+	animStates.Stop();
 	ResetAnimationTime();
 }
 
@@ -217,21 +206,21 @@ bool SolidToModelManager::IsAnimationPlaying()
 {
 	CheckIfInitialized();
 
-	return animStates.playing;
+	return animStates.IsPlaying();
 }
 
 bool SolidToModelManager::IsAnimationPaused()
 {
 	CheckIfInitialized();
 
-	return animStates.paused;
+	return animStates.IsPaused();
 }
 
 bool SolidToModelManager::IsAnimationLooped()
 {
 	CheckIfInitialized();
 
-	return animStates.looped;
+	return animStates.IsLooped();
 }
 
 double SolidToModelManager::GetAnimationTimeTicks(double currentTime)
@@ -243,11 +232,10 @@ double SolidToModelManager::GetAnimationTimeTicks(double currentTime)
 
 	double animationTime = std::fmod(timeInTicks, animDuration);
 
-	if (!animStates.looped && animationTime < lastAnimationTime)
+	if (!animStates.IsLooped() && animationTime < lastAnimationTime)
 	{
 		timeInTicks = lastAnimationTime = 0.0;
-		animStates.ResetValues();
-		ResetAnimationTime();
+		animStates.Stop();
 	}
 
 	lastAnimationTime = animationTime;
@@ -259,12 +247,7 @@ double SolidToModelManager::GetCurrentAnimationTime()
 {
 	CheckIfInitialized();
 
-	if (!animStates.paused)
-	{
-		currentAnimationTime = std::chrono::system_clock::now();
-	}
-
-	return GetAnimationTimeTicks(std::chrono::duration<double>(currentAnimationTime - startAnimationTime).count());
+	return GetAnimationTimeTicks(animStates.GetCurrentTime());
 }
 
 void SolidToModelManager::AppendStartingBoneIndex(size_t staringBoneIndex)

@@ -14,7 +14,6 @@ public:
 	virtual bool IsLooped() = 0;
 
 	virtual void Stop() = 0;
-	virtual void UpdatePositions() = 0;
 	virtual void SetPlaybackSpeed(float speed) = 0;
 	virtual float GetPlaybackSpeed() = 0;
 };

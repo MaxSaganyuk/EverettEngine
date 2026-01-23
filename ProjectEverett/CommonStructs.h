@@ -3,37 +3,12 @@
 #include <memory>
 #include <string>
 
-struct PlayerStates
-{
-	bool playing;
-	bool paused;
-	bool looped;
-
-	void ResetValues()
-	{
-		playing = false;
-		paused = true;
-		looped = false;
-	}
-
-	void NullifyValues()
-	{
-		playing = false;
-		paused = false;
-		looped = false;
-	}
-
-	PlayerStates()
-	{
-		ResetValues();
-	}
-};
-
 struct WavDataRaw
 {
 	unsigned int channels{};
 	unsigned int sampleRate{};
 	unsigned long long totalPCMFrameCount{};
+	double duration;
 };
 
 struct WavDataOwner : WavDataRaw
@@ -53,6 +28,7 @@ struct WavData : WavDataRaw
 		channels = wavDataOwner.channels;
 		sampleRate = wavDataOwner.sampleRate;
 		totalPCMFrameCount = wavDataOwner.totalPCMFrameCount;
+		duration = wavDataOwner.duration;
 	}
 
 	operator bool()

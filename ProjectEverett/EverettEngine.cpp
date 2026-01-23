@@ -223,6 +223,8 @@ void EverettEngine::CreateAndSetupMainWindow(
 	mainLGL->SetFramebufferSizeCallback([this](int width, int height) { camera->SetAspect(width, height); });
 
 	SoundSim::SetCamera(*camera);
+	camera->SetPositionChangeCallback(SoundSim::UpdateCameraPosition);
+	camera->SetRotationChangeCallback(SoundSim::UpdateCameraPosition);
 
 	mainLGL->SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
@@ -379,6 +381,14 @@ void EverettEngine::RunRenderWindow()
 		if (MSM.size())
 		{
 			LightUpdater();
+		}
+
+		for (auto& [_, sound] : sounds)
+		{
+			if (sound.IsPlaying())
+			{
+				sound.UpdateSoundPosition();
+			}
 		}
 	};
 

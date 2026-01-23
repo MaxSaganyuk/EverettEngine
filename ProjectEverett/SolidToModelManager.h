@@ -7,7 +7,7 @@
 #include "LGLStructs.h"
 #include "AnimSystem.h"
 
-#include "CommonStructs.h"
+#include "PlaybackManager.h"
 
 class SolidToModelManager
 {
@@ -64,9 +64,7 @@ private:
 	double lastAnimationTime;
 	size_t currentAnimationIndex;
 	std::vector<size_t> startingBoneIndexes;
-	PlayerStates animStates;
-	std::chrono::system_clock::time_point startAnimationTime;
-	std::chrono::system_clock::time_point currentAnimationTime;
+	PlaybackManager animStates;
 
 	std::vector<bool> meshVisibility;
 	

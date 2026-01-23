@@ -1,8 +1,5 @@
 #pragma once
 
-#include <OpenAL\al.h>
-#include <OpenAL\alc.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -15,48 +12,55 @@
 #include "CameraSim.h"
 
 #include "CommonStructs.h"
+#include "PlaybackManager.h"
+
+struct ALCdevice;
+struct ALCcontext;
 
 class SoundSim : public ObjectSim, public ISoundSim
 {
 private:
 	static inline ALCdevice* device = nullptr;
+	static inline ALCcontext* context = nullptr;
 	static inline CameraSim* camera = nullptr;
+	static inline int soundsCurrentlyPlaying = 0;
 
-	ALCcontext* context = nullptr;
+	static bool CreateContext();
 
 	struct SoundInfo : WavData
 	{
-		stdEx::ValWithBackup<glm::vec3> pos;
-
-		PlayerStates playStates;
+		PlaybackManager playStates;
 
 		float playbackSpeed{};
 
-		ALuint buffer{};
-		ALuint source{};
+		unsigned int buffer{};
+		unsigned int source{};
 
 		SoundInfo() = default;
 		SoundInfo(WavData wavData)
 			: WavData(wavData)
 		{
 			playbackSpeed = 1.0f;
-			pos.ResetBackup(&camera->GetPositionVectorAddr());
 		}
 	};
 
 	SoundInfo sound;
+	bool currentSoundPlaying;
 
 	void SetupSound(WavData&& wavData);
-	bool CreateContext();
 	bool CreateBufferAndSource();
 	std::string GetSimInfoForSaveImpl();
+	void UpdateCurrentPlaybackTime();
 public:
 	std::string GetSimInfoToSave(const std::string& soundName);
 	bool SetSimInfoToLoad(std::string_view& line);
 
+	void UpdateSoundPosition();
+
 	static void InitOpenAL();
 	static void TerminateOpenAL();
 	static void SetCamera(CameraSim& camera);
+	static void UpdateCameraPosition();
 	SoundSim() = default;
 	SoundSim(WavData&& wavData);
 	SoundSim(SoundSim&& otherSoundSim) noexcept;
@@ -72,9 +76,6 @@ public:
 	bool IsLooped() override;
 
 	void Stop() override;
-	void UpdatePositions() override;
 	void SetPlaybackSpeed(float speed) override;
 	float GetPlaybackSpeed() override;
-	
-	~SoundSim();
 };

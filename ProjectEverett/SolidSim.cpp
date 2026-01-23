@@ -56,8 +56,8 @@ std::string SolidSim::CollectInfoToSaveFromSTMM()
 	{
 		res += SimSerializer::GetValueToSaveFrom(STMM.animationSpeed);
 		res += SimSerializer::GetValueToSaveFrom(STMM.currentAnimationIndex);
-		res += SimSerializer::GetValueToSaveFrom(STMM.startAnimationTime);
-		res += SimSerializer::GetValueToSaveFrom(STMM.currentAnimationTime);
+		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.startPlaybackTime);
+		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.currentPlaybackTime);
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.playing);
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.paused);
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.looped);
@@ -73,14 +73,14 @@ bool SolidSim::CollectInfoToLoadToSTMM(std::string_view& line)
 
 	if (STMM.IsInitialized())
 	{
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animationSpeed,        1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationIndex, 1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.startAnimationTime,    1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationTime,  1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.playing,    1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused,     1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped,     1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility,        1);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animationSpeed,                 1);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationIndex,          1);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.startPlaybackTime,   1);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.currentPlaybackTime, 1);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.playing,             1);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused,              1);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped,              1);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility,                 1);
 	}
 
 	return res;

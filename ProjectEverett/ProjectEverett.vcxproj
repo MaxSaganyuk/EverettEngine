@@ -182,6 +182,7 @@
     <ClInclude Include="interfaces\IObjectSim.h" />
     <ClInclude Include="interfaces\ISolidSim.h" />
     <ClInclude Include="interfaces\ISoundSim.h" />
+    <ClInclude Include="PlaybackManager.h" />
     <ClInclude Include="RenderLogger.h" />
     <ClInclude Include="ShaderGenerator.h" />
     <ClInclude Include="SimSerializer.h" />
