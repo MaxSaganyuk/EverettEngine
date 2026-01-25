@@ -64,23 +64,25 @@ void SoundSim::TerminateOpenAL()
 	}
 }
 
-void SoundSim::SetCamera(CameraSim& camera)
+void SoundSim::SetCamera(std::weak_ptr<CameraSim> camera)
 {
-	SoundSim::camera = &camera;
+	SoundSim::camera = camera;
 }
 
 void SoundSim::UpdateCameraPosition()
 {
-	if (soundsCurrentlyPlaying)
+	auto cameraPtr = camera.lock();
+
+	if (cameraPtr && soundsCurrentlyPlaying)
 	{
 		ContextLock
 
-		const glm::vec3& listenerPos = SoundSim::camera->GetPositionVectorAddr();
+		const glm::vec3& listenerPos = cameraPtr->GetPositionVectorAddr();
 		alListener3f(AL_POSITION, listenerPos.x, listenerPos.y, listenerPos.z);
 		alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
-		const glm::vec3& listenerFront = SoundSim::camera->GetFrontVectorAddr();
-		const glm::vec3& listenerUp = SoundSim::camera->GetUpVectorAddr();
+		const glm::vec3& listenerFront = cameraPtr->GetFrontVectorAddr();
+		const glm::vec3& listenerUp = cameraPtr->GetUpVectorAddr();
 		float cameraOrientation[]{
 			listenerFront.x, listenerFront.y, listenerFront.z,
 			listenerUp.x,    listenerUp.y,    listenerUp.z
@@ -116,7 +118,7 @@ bool SoundSim::CreateBufferAndSource()
 
 void SoundSim::Play(bool loop)
 {
-	if (!SoundSim::camera)
+	if (!SoundSim::camera.lock())
 	{
 		ThrowExceptionWMessage("Cannot play sound without listener (camera)");
 	}

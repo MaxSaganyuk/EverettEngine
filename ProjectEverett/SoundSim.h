@@ -22,7 +22,7 @@ class SoundSim : public ObjectSim, public ISoundSim
 private:
 	static inline ALCdevice* device = nullptr;
 	static inline ALCcontext* context = nullptr;
-	static inline CameraSim* camera = nullptr;
+	static inline std::weak_ptr<CameraSim> camera;
 	static inline int soundsCurrentlyPlaying = 0;
 
 	static bool CreateContext();
@@ -59,7 +59,7 @@ public:
 
 	static void InitOpenAL();
 	static void TerminateOpenAL();
-	static void SetCamera(CameraSim& camera);
+	static void SetCamera(std::weak_ptr<CameraSim> camera);
 	static void UpdateCameraPosition();
 	SoundSim() = default;
 	SoundSim(WavData&& wavData);

@@ -304,7 +304,8 @@ private:
 
 	std::unique_ptr<LGL> mainLGL;
 
-	std::unique_ptr<CameraSim> camera;
+	std::shared_ptr<CameraSim> camera;
+	
 	std::unique_ptr<WindowHandleHolder> hwndHolder;
 	std::unique_ptr<FileLoader> fileLoader;
 	std::unique_ptr<CommandHandler> cmdHandler;

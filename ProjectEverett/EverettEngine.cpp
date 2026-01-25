@@ -216,13 +216,13 @@ void EverettEngine::CreateAndSetupMainWindow(
 		SetRenderLoggerCallbacks();
 	}
 
-	camera = std::make_unique<CameraSim>(windowWidth, windowHeight);
+	camera = std::make_shared<CameraSim>(windowWidth, windowHeight);
 	camera->SetMode(CameraSim::Mode::Fly);
 	camera->SetGhostMode(true);
 
 	mainLGL->SetFramebufferSizeCallback([this](int width, int height) { camera->SetAspect(width, height); });
 
-	SoundSim::SetCamera(*camera);
+	SoundSim::SetCamera(camera);
 	camera->SetPositionChangeCallback(SoundSim::UpdateCameraPosition);
 	camera->SetRotationChangeCallback(SoundSim::UpdateCameraPosition);
 
