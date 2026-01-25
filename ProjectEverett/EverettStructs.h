@@ -22,15 +22,17 @@ namespace EverettStructs
 
 	struct AssetPaths
 	{
-		//std::unordered_set<std::string> worldPaths;
+		std::unordered_set<std::string> worldPaths;
 		std::unordered_set<std::string> modelPaths;
 		std::unordered_set<std::string> soundPaths;
 		std::unordered_set<std::string> scriptPaths;
 
-		const std::unordered_set<std::string>& operator[](size_t index) const
+		const std::optional<std::reference_wrapper<const std::unordered_set<std::string>>> operator[](size_t index) const
 		{
 			switch (index)
 			{
+			case 0:
+				return worldPaths;
 			case 1:
 				return modelPaths;
 			case 2:
@@ -38,13 +40,13 @@ namespace EverettStructs
 			case 3:
 				return scriptPaths;
 			default:
-				return std::unordered_set<std::string>();
+				return std::nullopt;
 			}
 		}
 
-		static size_t GetAssetTypeAmount()
+		constexpr static size_t GetAssetTypeAmount()
 		{
-			return 4;
+			return sizeof(AssetPaths) / sizeof(std::unordered_set<std::string>);
 		}
 
 		static const std::string GetAssetNameIndex(size_t index)

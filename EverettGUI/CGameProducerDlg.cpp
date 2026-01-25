@@ -139,7 +139,7 @@ void CGameProducerDlg::CopyAssetsToGamePath(const EverettStructs::AssetPaths& as
 {
 	for (int i = 1; i < EverettStructs::AssetPaths::GetAssetTypeAmount(); ++i)
 	{
-		for (auto& path : assetPaths[i])
+		for (auto& path : assetPaths[i].value().get())
 		{
 			AdString fileName = GetFileFromPath(path);
 			std::filesystem::copy(
