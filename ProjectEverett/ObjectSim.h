@@ -99,8 +99,8 @@ public:
 	std::vector<std::pair<std::string, std::string>> GetTempScriptDLLInfo();
 
 	// Callback setter
-	void SetPositionChangeCallback(std::function<void()> callback);
-	void SetRotationChangeCallback(std::function<void()> callback);
+	void SetPositionChangeCallback(std::function<void()> callback) override;
+	void SetRotationChangeCallback(std::function<void()> callback) override;
 
 	void ExecuteScriptFunc(const std::string& dllName = "") override;
 	void ExecuteAllScriptFuncs() override;

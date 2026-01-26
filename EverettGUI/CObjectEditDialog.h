@@ -86,6 +86,77 @@ private:
 	afx_msg void OnScaEditButtonClick();
 	afx_msg void OnRotEditButtonClick();
 
+
+	class PlaybackCallAdapter
+	{
+		CObjectEditDialog& super;
+		ISolidSim* solid = nullptr;
+		ISoundSim* sound = nullptr;
+	public:
+		void Play(bool loop)
+		{
+			solid ? solid->PlayModelAnimation(loop) : sound->Play(loop);
+		}
+
+		void Pause()
+		{
+			solid ? solid->PauseModelAnimation() : sound->Pause();
+		}
+
+		void Stop()
+		{
+			solid ? solid->StopModelAnimation() : sound->Stop();
+		}
+
+		bool IsPlayed()
+		{
+			return solid ? solid->IsModelAnimationPlaying() : sound->IsPlaying();
+		}
+
+		bool IsPaused()
+		{
+			return solid ? solid->IsModelAnimationPaused() : sound->IsPaused();
+		}
+
+		bool IsLooped()
+		{
+			return solid ? solid->IsModelAnimationLooped() : sound->IsLooped();
+		}
+
+		void SetSpeed(double speed)
+		{
+			solid ? solid->SetModelAnimationSpeed(speed) : sound->SetPlaybackSpeed(static_cast<float>(speed));
+		}
+
+		PlaybackCallAdapter(CObjectEditDialog& super, ISolidSim* solid)
+			: super(super), solid(solid)
+		{
+			solid->SetModelAnimationPlaybackCallback([this, &super](bool play, bool pause, bool stop){
+				super.SetPlayerButtons(play, pause, stop);
+			});
+
+			super.SetPlayerButtons(IsPlayed(), IsPaused(), IsLooped());
+		}
+
+		PlaybackCallAdapter(CObjectEditDialog& super, ISoundSim* sound)
+			: super(super), sound(sound)
+		{
+			sound->SetPlaybackCallback([this, &super](bool play, bool pause, bool loop)
+			{
+				super.SetPlayerButtons(play, pause, loop);
+			});
+
+			super.SetPlayerButtons(IsPlayed(), IsPaused(), IsLooped());
+		}
+
+		~PlaybackCallAdapter()
+		{
+			solid ? solid->SetModelAnimationPlaybackCallback(nullptr) : sound->SetPlaybackCallback(nullptr);
+		}
+	};
+
+	std::unique_ptr<PlaybackCallAdapter> playbackCallAdapt;
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 

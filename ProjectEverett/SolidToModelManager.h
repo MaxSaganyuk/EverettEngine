@@ -43,6 +43,7 @@ public:
 	bool IsAnimationPlaying();
 	bool IsAnimationPaused();
 	bool IsAnimationLooped();
+	void SetAnimationPlaybackCallback(std::function<void(bool, bool, bool)> callback);
 
 	double GetCurrentAnimationTime();
 	void AppendStartingBoneIndex(size_t startingBoneIndex);

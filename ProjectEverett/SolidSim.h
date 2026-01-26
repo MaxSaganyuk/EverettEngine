@@ -75,6 +75,7 @@ public:
 	bool IsModelAnimationPlaying() override;
 	bool IsModelAnimationPaused() override;
 	bool IsModelAnimationLooped() override;
+	void SetModelAnimationPlaybackCallback(std::function<void(bool, bool, bool)> callback) override;
 
 	// Animation access; engine only
 	double GetModelCurrentAnimationTime();

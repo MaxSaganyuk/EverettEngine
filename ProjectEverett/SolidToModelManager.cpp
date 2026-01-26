@@ -223,6 +223,11 @@ bool SolidToModelManager::IsAnimationLooped()
 	return animStates.IsLooped();
 }
 
+void SolidToModelManager::SetAnimationPlaybackCallback(std::function<void(bool, bool, bool)> callback)
+{
+	animStates.SetStateChangeCallback(callback);
+}
+
 double SolidToModelManager::GetAnimationTimeTicks(double currentTime)
 {
 	double animDuration = fullModelInfoP->second.lock()->animInfoVect[currentAnimationIndex].animDuration;

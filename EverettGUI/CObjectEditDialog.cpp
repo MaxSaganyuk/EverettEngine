@@ -169,14 +169,14 @@ void CObjectEditDialog::SetupObjectParams()
 				playerComboBox.SetCurSel(static_cast<int>(castedSolidInterface->GetModelAnimation()));
 				playerLoopCheck.EnableWindow(true);
 				playerSpeedEdit.EnableWindow(true);
+
+				playbackCallAdapt = std::make_unique<PlaybackCallAdapter>(*this, castedSolidInterface);
 			}
 		}
-
-		SetPlayerButtons(
-			castedSolidInterface ? castedSolidInterface->GetModelAnimationAmount() > 0 : true,
-			castedSolidInterface ? castedSolidInterface->IsModelAnimationPaused() : castedSoundInterface->IsPaused(),
-			castedSolidInterface ? castedSolidInterface->IsModelAnimationLooped() : castedSoundInterface->IsLooped()
-		);
+		else
+		{
+			playbackCallAdapt = std::make_unique<PlaybackCallAdapter>(*this, castedSoundInterface);
+		}
 	}
 }
 
@@ -272,11 +272,12 @@ void CObjectEditDialog::OnMeshCBSelChange()
 	);
 }
 
-void CObjectEditDialog::SetPlayerButtons(bool play, bool pause, bool stop)
+void CObjectEditDialog::SetPlayerButtons(bool play, bool pause, bool loop)
 {
-	playerPlayButton.EnableWindow(play);
-	playerPauseButton.EnableWindow(pause);
-	playerStopButton.EnableWindow(stop);
+	playerPlayButton.EnableWindow(pause);
+	playerPauseButton.EnableWindow(!pause);
+	playerStopButton.EnableWindow(play);
+	playerLoopCheck.EnableWindow(loop);
 }
 
 void CObjectEditDialog::OnPlayPlayerButtonClick()
@@ -286,34 +287,25 @@ void CObjectEditDialog::OnPlayPlayerButtonClick()
 
 	double playbackSpeed = _tstof(animSpeed);
 
-	castedSolidInterface ? 
-		castedSolidInterface->SetModelAnimationSpeed(_tstof(animSpeed)) : 
-		castedSoundInterface->SetPlaybackSpeed(static_cast<float>(playbackSpeed));
-
 	if (castedSolidInterface)
 	{
 		castedSolidInterface->SetModelAnimation(playerComboBox.GetCurSel());
 	}
 
-	castedSolidInterface ? 
-		castedSolidInterface->PlayModelAnimation(playerLoopCheck.GetCheck()) : 
-		castedSoundInterface->Play(playerLoopCheck.GetCheck());
-
-	SetPlayerButtons(true, true, true);
+	playbackCallAdapt->SetSpeed(playbackSpeed);
+	playbackCallAdapt->Play(playerLoopCheck.GetCheck());
 }
 
 
 void CObjectEditDialog::OnPausePlayerButtonClick()
 {
-	castedSolidInterface ? castedSolidInterface->PauseModelAnimation() : castedSoundInterface->Pause();
-	SetPlayerButtons(true, false, true);
+	playbackCallAdapt->Pause();
 }
 
 
 void CObjectEditDialog::OnStopPlayerButtonClick()
 {
-	castedSolidInterface ? castedSolidInterface->StopModelAnimation() : castedSoundInterface->Stop();
-	SetPlayerButtons(true, false, false);
+	playbackCallAdapt->Stop();
 }
 
 

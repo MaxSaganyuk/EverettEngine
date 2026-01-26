@@ -308,6 +308,11 @@ bool SolidSim::IsModelAnimationLooped()
 	return STMM.IsAnimationLooped();
 }
 
+void SolidSim::SetModelAnimationPlaybackCallback(std::function<void(bool, bool, bool)> callback)
+{
+	STMM.SetAnimationPlaybackCallback(callback);
+}
+
 double SolidSim::GetModelCurrentAnimationTime()
 {
 	return STMM.GetCurrentAnimationTime();

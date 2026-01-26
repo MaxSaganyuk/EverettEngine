@@ -42,6 +42,7 @@ public:
 	virtual bool IsModelAnimationPlaying() = 0;
 	virtual bool IsModelAnimationPaused() = 0;
 	virtual bool IsModelAnimationLooped() = 0;
+	virtual void SetModelAnimationPlaybackCallback(std::function<void(bool, bool, bool)> callback) = 0;
 
 	virtual bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) = 0;
 };

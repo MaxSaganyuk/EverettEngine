@@ -1,15 +1,21 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 
 class PlaybackManager
 {
+public:
+	using StateChangeCallback = std::function<void(bool, bool, bool)>;
+private:
 	bool playing;
 	bool paused;
 	bool looped;
 
 	std::chrono::system_clock::time_point startPlaybackTime;
 	std::chrono::system_clock::time_point currentPlaybackTime;
+
+	StateChangeCallback stateChangeCallback;
 
 	friend class SolidSim;
 
@@ -25,6 +31,11 @@ public:
 		paused = true;
 		looped = false;
 		ResetPlaybackTime();
+
+		if (stateChangeCallback)
+		{
+			stateChangeCallback(playing, paused, looped);
+		}
 	}
 
 	void NullifyValues()
@@ -32,6 +43,11 @@ public:
 		playing = false;
 		paused = false;
 		looped = false;
+
+		if (stateChangeCallback)
+		{
+			stateChangeCallback(playing, paused, looped);
+		}
 	}
 
 	void ResetPlaybackTime()
@@ -55,11 +71,21 @@ public:
 		playing = true;
 		paused = false;
 		looped = loop;
+
+		if (stateChangeCallback)
+		{
+			stateChangeCallback(playing, paused, looped);
+		}
 	}
 
 	void Pause()
 	{
 		paused = true;
+
+		if (stateChangeCallback)
+		{
+			stateChangeCallback(playing, paused, looped);
+		}
 	}
 
 	void Stop()
@@ -67,17 +93,17 @@ public:
 		ResetValues();
 	}
 
-	bool IsPlaying()
+	bool IsPlaying() const
 	{
 		return playing;
 	}
 
-	bool IsPaused()
+	bool IsPaused() const
 	{
 		return paused;
 	}
 
-	bool IsLooped()
+	bool IsLooped() const
 	{
 		return looped;
 	}
@@ -90,5 +116,10 @@ public:
 		}
 
 		return std::chrono::duration<double>(currentPlaybackTime - startPlaybackTime).count();
+	}
+
+	void SetStateChangeCallback(StateChangeCallback callback)
+	{
+		stateChangeCallback = callback;
 	}
 };

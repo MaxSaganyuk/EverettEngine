@@ -78,4 +78,6 @@ public:
 	void Stop() override;
 	void SetPlaybackSpeed(float speed) override;
 	float GetPlaybackSpeed() override;
+
+	void SetPlaybackCallback(std::function<void(bool, bool, bool)> callback) override;
 };
