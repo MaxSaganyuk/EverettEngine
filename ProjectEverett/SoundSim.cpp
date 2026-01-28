@@ -71,9 +71,9 @@ void SoundSim::SetCamera(std::weak_ptr<CameraSim> camera)
 
 void SoundSim::UpdateCameraPosition()
 {
-	auto cameraPtr = camera.lock();
+	CameraSim* cameraPtr = nullptr;
 
-	if (cameraPtr && soundsCurrentlyPlaying)
+	if (soundsCurrentlyPlaying && (cameraPtr = camera.lock().get()))
 	{
 		ContextLock
 
@@ -137,6 +137,7 @@ void SoundSim::Play(bool loop)
 	alSourcePlay(sound.source);
 
 	sound.playStates.Play(loop);
+	UpdateCameraPosition();
 }
 
 bool SoundSim::IsPlaying()
