@@ -151,7 +151,10 @@ private:
 
 		~PlaybackCallAdapter()
 		{
-			solid ? solid->SetModelAnimationPlaybackCallback(nullptr) : sound->SetPlaybackCallback(nullptr);
+			if (super.m_nModalResult == IDOK || super.m_nModalResult == IDCANCEL)
+			{
+				solid ? solid->SetModelAnimationPlaybackCallback(nullptr) : sound->SetPlaybackCallback(nullptr);
+			}
 		}
 	};
 
