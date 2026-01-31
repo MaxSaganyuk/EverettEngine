@@ -277,7 +277,7 @@ void CObjectEditDialog::SetPlayerButtons(bool play, bool pause, bool loop)
 	playerPlayButton.EnableWindow(pause);
 	playerPauseButton.EnableWindow(!pause);
 	playerStopButton.EnableWindow(play);
-	playerLoopCheck.EnableWindow(loop);
+	playerLoopCheck.SetCheck(loop);
 }
 
 void CObjectEditDialog::OnPlayPlayerButtonClick()
