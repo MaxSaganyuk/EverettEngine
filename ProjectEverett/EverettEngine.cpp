@@ -374,8 +374,6 @@ void EverettEngine::RunRenderWindow()
 			mainLGL->SetShaderUniformValue("Bones", finalTransforms, defaultShaderProgram);
 		}
 		animSystem->ResetFinalTransforms();
-
-		camera->SetPosition(CameraSim::Direction::Nowhere);
 		camera->ExecuteAllScriptFuncs();
 
 		if (MSM.size())

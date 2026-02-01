@@ -20,8 +20,7 @@ public:
 		Left,
 		Right,
 		Up,
-		Down,
-		Nowhere
+		Down
 	};
 
 	struct Rotation : public glm::vec3
@@ -53,6 +52,7 @@ public:
 
 	Linkable virtual void SetPositionVector(const glm::vec3& vect) = 0;
 	Linkable virtual void SetScaleVector(const glm::vec3& vect) = 0;
+	Linkable virtual void SetRotationVector(const Rotation& vect) = 0;
 
 	virtual const glm::vec3& GetUpVectorAddr() = 0;
 	virtual const glm::vec3& GetFrontVectorAddr() = 0;

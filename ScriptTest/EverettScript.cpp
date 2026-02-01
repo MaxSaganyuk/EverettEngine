@@ -1,5 +1,7 @@
 #include "EverettScript.h"
 
+#include <memory>
+
 class InternalState
 {
 public:
@@ -23,6 +25,55 @@ public:
 };
 
 InternalState interState;
+
+class TestCharHolder
+{
+	ISolidSim* testCharSolid;
+	bool moving{};
+
+public:
+	void SetSolidSim(ISolidSim* testCharSolid)
+	{
+		this->testCharSolid = testCharSolid;
+		this->testCharSolid->EnableAutoModelUpdates();
+	}
+
+	void Go(float rotation)
+	{
+		if (testCharSolid)
+		{
+			if (!moving)
+			{
+				testCharSolid->SetRotationVector({ 0.0f, rotation, 0.0f });
+				testCharSolid->PlayModelAnimation(true);
+			}
+
+			moving = true;
+			testCharSolid->SetPosition(IObjectSim::Direction::Forward);
+		}
+	}
+
+	void Stop()
+	{
+		if (testCharSolid)
+		{
+			if (moving)
+			{
+				testCharSolid->StopModelAnimation();
+			}
+
+			moving = false;
+		}
+	}
+
+	void Reset()
+	{
+		testCharSolid = nullptr;
+	}
+};
+
+TestCharHolder testChar;
+
 
 CameraScriptLoop()
 {
@@ -59,6 +110,51 @@ ScriptObjectInit(Spot0, ILightSim)
 	interState.lightInter = &objectSpot0;
 }
 
+ScriptObjectInit(TestChar, ISolidSim)
+{
+	testChar.SetSolidSim(&objectTestChar);
+}
+
+ScriptKeybindPressed(I)
+{
+	testChar.Go(0.0f);
+}
+
+ScriptKeybindPressed(J)
+{
+	testChar.Go(glm::pi<float>() / 2.0f);
+}
+
+ScriptKeybindPressed(K)
+{
+	testChar.Go(glm::pi<float>());
+}
+
+ScriptKeybindPressed(L)
+{
+	testChar.Go(-glm::pi<float>() / 2.0f);
+}
+
+ScriptKeybindReleased(I)
+{
+	testChar.Stop();
+}
+
+ScriptKeybindReleased(J)
+{
+	testChar.Stop();
+}
+
+ScriptKeybindReleased(K)
+{
+	testChar.Stop();
+}
+
+ScriptKeybindReleased(L)
+{
+	testChar.Stop();
+}
+
 ScriptKeybindReleased(T)
 {
 	interState.animCharInter->SetModelAnimationSpeed(interState.animCharInter->GetModelAnimationSpeed() + 0.1);
@@ -76,4 +172,5 @@ ScriptKeybindPressed(P)
 ScriptCleanUp()
 {
 	interState.Reset();
+	testChar.Reset();
 }

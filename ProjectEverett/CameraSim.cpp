@@ -21,7 +21,7 @@ CameraSim::CameraSim(
 	lastX = static_cast<float>(windowHeight);
 	lastY = static_cast<float>(windowWidth);
 
-	sensitivity = 0.1f;
+	sensitivity = 0.001f;
 
 	mode = Mode::Fly;
 
@@ -90,14 +90,18 @@ glm::mat4& CameraSim::GetProjectionMatrixAddr()
 	return projection;
 }
 
-void CameraSim::SetPosition(Direction dir)
+void CameraSim::UpdateViewMatrix()
 {
 	const glm::vec3& pos = ObjectSim::GetPositionVectorAddr();
 	const glm::vec3& front = ObjectSim::GetFrontVectorAddr();
 
-	SolidSim::SetPosition(dir, { 1.0f, static_cast<float>(mode == Mode::Fly), 1.0f });
-
 	view = glm::lookAt(pos, pos + front, GetUpVectorAddr());
+}
+
+void CameraSim::SetPosition(Direction dir)
+{
+	SolidSim::SetPosition(dir, { 1.0f, static_cast<float>(mode == Mode::Fly), 1.0f });
+	UpdateViewMatrix();
 }
 
 void CameraSim::Rotate(float xpos, float ypos)
@@ -111,7 +115,8 @@ void CameraSim::Rotate(float xpos, float ypos)
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
 
-	SolidSim::Rotate({ xoffset, yoffset, 0.0f });
+	SolidSim::Rotate({ yoffset, -xoffset, 0.0f });
+	UpdateViewMatrix();
 }
 
 void CameraSim::Zoom(float xpos, float ypos)

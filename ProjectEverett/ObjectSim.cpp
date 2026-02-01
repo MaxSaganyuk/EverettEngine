@@ -18,6 +18,18 @@ void ObjectSim::ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... 
 	visited = false;
 }
 
+void ObjectSim::UpdateFrontVector()
+{
+	CheckRotationLimits();
+
+	glm::vec3 direction;
+	const Rotation& roateRef = rotate;
+	direction.x = cos(roateRef.GetPitch()) * sin(roateRef.GetYaw());
+	direction.y = sin(roateRef.GetPitch());
+	direction.z = cos(roateRef.GetPitch()) * cos(roateRef.GetYaw());
+	front = glm::normalize(direction);
+}
+
 ObjectSim::ObjectSim(
 	const glm::vec3& pos,
 	const glm::vec3& scale,
@@ -189,6 +201,20 @@ void ObjectSim::SetScaleVector(const glm::vec3& vect)
 	ExecuteLinkedObjects(&ObjectSim::SetScaleVector, vect);
 }
 
+void ObjectSim::SetRotationVector(const Rotation& vect)
+{
+	rotate = vect;
+
+	UpdateFrontVector();
+
+	if (rotationChangeCallback)
+	{
+		rotationChangeCallback();
+	}
+
+	ExecuteLinkedObjects(&ObjectSim::SetRotationVector, vect);
+}
+
 const glm::vec3& ObjectSim::GetFrontVectorAddr()
 {
 	return front;
@@ -269,7 +295,7 @@ void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		return;
 	}
 
-	if (!lastBlocker && dir != Direction::Nowhere)
+	if (!lastBlocker)
 	{
 		lastBlocker = true;
 		lastDir = dir;
@@ -302,8 +328,6 @@ void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 	case Direction::Down:
 		pos -= glm::abs(correctedSpeed * glm::normalize(front * up));
 		break;
-	case Direction::Nowhere:
-		return;
 	default:
 		ThrowExceptionWMessage("Undefined direction");
 		return;
@@ -326,14 +350,7 @@ void ObjectSim::LimitRotations(const Rotation& min, const Rotation& max)
 
 void ObjectSim::Rotate(const Rotation& toRotate)
 {
-	CheckRotationLimits();
-
-	glm::vec3 direction;
-	const Rotation& roateRef = rotate;
-	direction.x = cos(glm::radians(roateRef.GetPitch())) * cos(glm::radians(roateRef.GetYaw()));
-	direction.y = sin(glm::radians(roateRef.GetYaw()));
-	direction.z = sin(glm::radians(roateRef.GetPitch())) * cos(glm::radians(roateRef.GetYaw()));
-	front = glm::normalize(direction);
+	UpdateFrontVector();
 
 	if (rotationChangeCallback)
 	{

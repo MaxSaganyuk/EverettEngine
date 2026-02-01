@@ -19,6 +19,8 @@ private:
 	Mode mode;
 
 	std::string GetSimInfoToSaveImpl();
+
+	void UpdateViewMatrix();
 public:
 	CameraSim(
 		const int windowWidth,

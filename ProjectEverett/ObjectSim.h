@@ -16,6 +16,8 @@ class ObjectSim : virtual public IObjectSim
 private:
 	template<typename MemberFuncType, typename... ParamTypes>
 	void ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... values);
+
+	void UpdateFrontVector();
 protected:
 	static inline float renderDeltaTime = 1.0f;
 
@@ -69,6 +71,7 @@ public:
 
 	void SetPositionVector(const glm::vec3& vect) override;
 	void SetScaleVector(const glm::vec3& vect) override;
+	void SetRotationVector(const Rotation& vect) override;
 		
 	const glm::vec3& GetFrontVectorAddr() override;
 	const glm::vec3& GetUpVectorAddr() override;
