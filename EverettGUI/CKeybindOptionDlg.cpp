@@ -21,7 +21,7 @@ CKeybindOptionDlg::CKeybindOptionDlg(
 	DLLLoaderCommon(
 		IDD_DIALOG5,
 		selectedScriptDllInfo,
-		[this](const std::string& dllName) { return engineRef.IsKeyScriptSet(keyName, dllName); },
+		[this](const std::string& dllName) { return !keyName.empty() && engineRef.IsKeyScriptSet(keyName, dllName); },
 		[this](const std::string& dllName, const std::string& dllPath) { 
 			engineRef.SetScriptToKey(keyName, holdableCheck.GetCheck(), dllName, dllPath); 
 		},
@@ -30,7 +30,7 @@ CKeybindOptionDlg::CKeybindOptionDlg(
 	), 
 	engineRef(engine), keyName("")
 {
-
+	BlockScriptButtons();
 }
 
 BOOL CKeybindOptionDlg::OnInitDialog()
@@ -87,6 +87,7 @@ void CKeybindOptionDlg::SetEditToKeyName()
 	keyName = EverettEngine::ConvertKeyTo(engineRef.PollForLastKeyPressed());
 	SendMessage(BringEverettGuiBack);
 	keyNameEdit.SetWindowTextW(keyName);
+	BlockScriptButtons(false);
 }
 
 LRESULT CKeybindOptionDlg::OnBringEverettGuiBack(WPARAM wParam, LPARAM lParam)

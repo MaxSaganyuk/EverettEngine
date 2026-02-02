@@ -26,13 +26,20 @@ DLLLoaderCommon::DLLLoaderCommon(
 	selectedScriptDllInfo(selectedScriptDllInfo), 
 	isScriptSetFunc(isScriptSetFunc), 
 	setScriptFunc(setScriptFunc), 
-	unsetScriptFunc(unsetScriptFunc)
+	unsetScriptFunc(unsetScriptFunc),
+	blockButtons(false)
 {
 
 }
 
 DLLLoaderCommon::~DLLLoaderCommon()
 {
+}
+
+void DLLLoaderCommon::BlockScriptButtons(bool value)
+{
+	blockButtons = value;
+	UpdateScriptButtons();
 }
 
 void DLLLoaderCommon::FillComboBoxWithScriptInfo()
@@ -45,11 +52,14 @@ void DLLLoaderCommon::FillComboBoxWithScriptInfo()
 
 void DLLLoaderCommon::UpdateScriptButtons()
 {
-	bool isObjectScriptSet = isScriptSetFunc(selectedScriptDllInfo[dllComboBox.GetCurSel()].second);
+	if (!(selectedScriptDllInfo.empty() || blockButtons))
+	{
+		bool isObjectScriptSet = isScriptSetFunc(selectedScriptDllInfo[dllComboBox.GetCurSel()].second);
 
-	scriptRunIndicator.SetCheck(isObjectScriptSet);
-	loadScriptButton.EnableWindow(!isObjectScriptSet);
-	unloadScriptButton.EnableWindow(isObjectScriptSet);
+		scriptRunIndicator.SetCheck(isObjectScriptSet);
+		loadScriptButton.EnableWindow(!isObjectScriptSet);
+		unloadScriptButton.EnableWindow(isObjectScriptSet);
+	}
 }
 
 BOOL DLLLoaderCommon::OnInitDialog()
@@ -60,8 +70,6 @@ BOOL DLLLoaderCommon::OnInitDialog()
 	{
 		FillComboBoxWithScriptInfo();
 		dllComboBox.SetCurSel(0);
-		loadScriptButton.EnableWindow(true);
-		scriptRunIndicator.SetCheck(isScriptSetFunc(selectedScriptDllInfo[0].second));
 		UpdateScriptButtons();
 	}
 

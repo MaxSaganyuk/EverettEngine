@@ -987,7 +987,9 @@ bool EverettEngine::IsObjectScriptSet(
 	const std::string& dllName
 )
 {
-	return GetObjectFromMap(objectType, subtypeName, objectName)->IsScriptFuncRunnable(dllName);
+	ObjectSim* object = GetObjectFromMap(objectType, subtypeName, objectName);
+	
+	return object && object->IsScriptFuncRunnable(dllName);
 }
 
 void EverettEngine::SetScriptToKey(
@@ -1067,9 +1069,14 @@ bool EverettEngine::IsKeyScriptSet(
 	const std::string& dllName
 )
 {
-	auto& [holdable, pressedFunc, releasedFunc] = keyScriptFuncMap[keyName];
+	if (keyScriptFuncMap.contains(keyName))
+	{
+		auto& [holdable, pressedFunc, releasedFunc] = keyScriptFuncMap[keyName];
 
-	return pressedFunc.IsScriptFuncRunnable(dllName) || releasedFunc.IsScriptFuncRunnable(dllName);
+		return pressedFunc.IsScriptFuncRunnable(dllName) || releasedFunc.IsScriptFuncRunnable(dllName);
+	}
+
+	return false;
 }
 
 std::string EverettEngine::CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder)

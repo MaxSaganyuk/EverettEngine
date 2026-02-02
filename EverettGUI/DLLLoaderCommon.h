@@ -40,6 +40,9 @@ public:
 	BOOL OnInitDialog();
 protected:
 	DECLARE_MESSAGE_MAP()
+
+	void UpdateScriptButtons();
+	void BlockScriptButtons(bool value = true);
 private:
 	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo;
 
@@ -53,8 +56,9 @@ private:
 	CComboBox dllComboBox;
 	CButton scriptRunIndicator;
 
+	bool blockButtons;
+
 	void FillComboBoxWithScriptInfo();
-	void UpdateScriptButtons();
 
 	afx_msg void OnBrowseScriptButton();
 	afx_msg void OnLoadScriptButtonClick();
