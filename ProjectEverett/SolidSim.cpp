@@ -129,9 +129,9 @@ void SolidSim::SetType(SolidType type)
 	this->type = type;
 }
 
-void SolidSim::SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis)
+void SolidSim::SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects)
 {
-	ObjectSim::SetPosition(dir, limitAxis);
+	ObjectSim::SetPosition(dir, limitAxis, executeLinkedObjects);
 
 	if (type == SolidType::Static && lastBlocker)
 	{
@@ -147,7 +147,7 @@ void SolidSim::SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis)
 	}
 }
 
-void SolidSim::Rotate(const Rotation& toRotate)
+void SolidSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 {
 	if (type == SolidType::Static && lastBlocker)
 	{
@@ -166,7 +166,7 @@ void SolidSim::Rotate(const Rotation& toRotate)
 		}
 	}
 
-	ObjectSim::Rotate(toRotate);
+	ObjectSim::Rotate(toRotate, executeLinkedObjects);
 }
 
 bool SolidSim::CheckForCollision(const SolidSim& solid1, const SolidSim& solid2)

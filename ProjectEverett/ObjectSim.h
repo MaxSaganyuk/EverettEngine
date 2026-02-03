@@ -52,6 +52,7 @@ protected:
 
 	static inline stdEx::RelationGraph<ObjectSim*> objectGraph;
 	bool visited; // Utility bool to prevent infinite loops of linked object traversal
+	bool objectLinkingEnabled;
 
 public:
 	ObjectSim(
@@ -66,12 +67,12 @@ public:
 	static std::string GetObjectTypeNameStr();
 	static void SetRenderDeltaTime(float deltaTime);
 
-	void InvertMovement(bool value = true) override;
+	void InvertMovement(bool value = true, bool executeLinkedObjects = true) override;
 	bool IsMovementInverted() override;
 
-	void SetPositionVector(const glm::vec3& vect) override;
-	void SetScaleVector(const glm::vec3& vect) override;
-	void SetRotationVector(const Rotation& vect) override;
+	void SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
+	void SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
+	void SetRotationVector(const Rotation& vect, bool executeLinkedObjects = true) override;
 		
 	const glm::vec3& GetFrontVectorAddr() override;
 	const glm::vec3& GetUpVectorAddr() override;
@@ -79,23 +80,25 @@ public:
 	glm::vec3& GetPositionVectorAddr() override;
 	glm::vec3& GetScaleVectorAddr() override;
 
-	void SetMovementSpeed(float speed) override;
+	void SetMovementSpeed(float speed, bool executeLinkedObjects = true) override;
 	float GetMovementSpeed() override;
 
-	void SetGhostMode(bool val) override;
+	void SetGhostMode(bool val, bool executeLinkedObjects = true) override;
 	bool IsGhostMode() const override;
 
-	void DisableDirection(Direction dir) override;
-	void EnableDirection(Direction dir) override;
-	void EnableAllDirections() override;
+	void DisableDirection(Direction dir, bool executeLinkedObjects = true) override;
+	void EnableDirection(Direction dir, bool executeLinkedObjects = true) override;
+	void EnableAllDirections(bool executeLinkedObjects = true) override;
 	size_t GetAmountOfDisabledDirs() override;
 	Direction GetLastDirection() override;
 
-	void SetLastPosition() override;
-	void SetPosition(Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }) override;
+	void SetLastPosition(bool executeLinkedObjects = true) override;
+	void SetPosition(
+		Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
+	) override;
 
-	void LimitRotations(const Rotation& min, const Rotation& max) override;
-	void Rotate(const Rotation& toRotate) override;
+	void LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects = true) override;
+	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;
 
 	void AddScriptFunc(const std::string& dllPath, const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc);
 	void ClearScriptFuncMap();
@@ -111,4 +114,5 @@ public:
 	bool IsScriptFuncRunnable(const std::string& dllName = "") override;
 
 	void LinkObject(IObjectSim& otherObject) override;
+	void EnableObjectLinking(bool val = true) override;
 };

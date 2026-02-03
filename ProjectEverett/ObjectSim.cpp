@@ -36,7 +36,7 @@ ObjectSim::ObjectSim(
 	const glm::vec3& front,
 	const float speed
 )
-	: front(front), pos(pos), scale(scale), speed(speed), rotate({}), visited(false)
+	: front(front), pos(pos), scale(scale), speed(speed), rotate({}), visited(false), objectLinkingEnabled(true)
 {
 	rotationLimits = {
 		{-fullRotation, -fullRotation, -fullRotation},
@@ -93,6 +93,7 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	res += SimSerializer::GetValueToSaveFrom(disabledDirs);
 	res += SimSerializer::GetValueToSaveFrom(rotationLimits);
 	res += SimSerializer::GetValueToSaveFrom(scriptFuncStorage.GetAddedScriptDLLs());
+	res += SimSerializer::GetValueToSaveFrom(objectLinkingEnabled);
 
 	return res;
 }
@@ -114,6 +115,7 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs,                            1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits,                          1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect, 2);
+	res = res && SimSerializer::SetValueToLoadFrom(line, objectLinkingEnabled,                    5);
 
 	return res;
 }
@@ -148,9 +150,14 @@ void ObjectSim::CheckRotationLimits()
 }
 
 
-void ObjectSim::SetGhostMode(bool val)
+void ObjectSim::SetGhostMode(bool val, bool executeLinkedObjects)
 {
 	ghostMode = val;
+
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::SetGhostMode, val, true);
+	}
 }
 
 bool ObjectSim::IsGhostMode() const
@@ -158,11 +165,14 @@ bool ObjectSim::IsGhostMode() const
 	return ghostMode;
 }
 
-void ObjectSim::SetMovementSpeed(float speed)
+void ObjectSim::SetMovementSpeed(float speed, bool executeLinkedObjects)
 {
 	this->speed = speed;
 
-	ExecuteLinkedObjects(&ObjectSim::SetMovementSpeed, speed);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::SetMovementSpeed, speed, true);
+	}
 }
 
 float ObjectSim::GetMovementSpeed()
@@ -170,11 +180,14 @@ float ObjectSim::GetMovementSpeed()
 	return speed;
 }
 
-void ObjectSim::InvertMovement(bool value)
+void ObjectSim::InvertMovement(bool value, bool executeLinkedObjects)
 {
 	speed = (value ? (-1) : 1) * speed;
 
-	ExecuteLinkedObjects(&ObjectSim::InvertMovement, value);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::InvertMovement, value, true);
+	}
 }
 
 bool ObjectSim::IsMovementInverted()
@@ -182,7 +195,7 @@ bool ObjectSim::IsMovementInverted()
 	return speed < 0.0f;
 }
 
-void ObjectSim::SetPositionVector(const glm::vec3& vect)
+void ObjectSim::SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects)
 {
 	pos = vect;
 
@@ -191,17 +204,23 @@ void ObjectSim::SetPositionVector(const glm::vec3& vect)
 		positionChangeCallback();
 	}
 
-	ExecuteLinkedObjects(&ObjectSim::SetPositionVector, vect);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::SetPositionVector, vect, true);
+	}
 }
 
-void ObjectSim::SetScaleVector(const glm::vec3& vect)
+void ObjectSim::SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects)
 {
 	scale = vect;
 
-	ExecuteLinkedObjects(&ObjectSim::SetScaleVector, vect);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::SetScaleVector, vect, true);
+	}
 }
 
-void ObjectSim::SetRotationVector(const Rotation& vect)
+void ObjectSim::SetRotationVector(const Rotation& vect, bool executeLinkedObjects)
 {
 	rotate = vect;
 
@@ -212,7 +231,10 @@ void ObjectSim::SetRotationVector(const Rotation& vect)
 		rotationChangeCallback();
 	}
 
-	ExecuteLinkedObjects(&ObjectSim::SetRotationVector, vect);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::SetRotationVector, vect, true);
+	}
 }
 
 const glm::vec3& ObjectSim::GetFrontVectorAddr()
@@ -235,28 +257,37 @@ glm::vec3& ObjectSim::GetScaleVectorAddr()
 	return scale;
 }
 
-void ObjectSim::DisableDirection(Direction dir)
+void ObjectSim::DisableDirection(Direction dir, bool executeLinkedObjects)
 {
 	disabledDirs[dir] = true;
 
-	ExecuteLinkedObjects(&ObjectSim::DisableDirection, dir);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::DisableDirection, dir, true);
+	}
 }
 
-void ObjectSim::EnableDirection(Direction dir)
+void ObjectSim::EnableDirection(Direction dir, bool executeLinkedObjects)
 {
 	disabledDirs[dir] = false;
 
-	ExecuteLinkedObjects(&ObjectSim::EnableDirection, dir);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::EnableDirection, dir, true);
+	}
 }
 
-void ObjectSim::EnableAllDirections()
+void ObjectSim::EnableAllDirections(bool executeLinkedObjects)
 {
 	for (size_t i = 0; i < realDirectionAmount; ++i)
 	{
 		disabledDirs[static_cast<Direction>(i)] = false;
 	}
 
-	ExecuteLinkedObjects(&ObjectSim::EnableAllDirections);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::EnableAllDirections, true);
+	}
 }
 
 size_t ObjectSim::GetAmountOfDisabledDirs()
@@ -276,7 +307,7 @@ ObjectSim::Direction ObjectSim::GetLastDirection()
 	return lastDir;
 }
 
-void ObjectSim::SetLastPosition()
+void ObjectSim::SetLastPosition(bool executeLinkedObjects)
 {
 	pos = lastPos;
 
@@ -285,10 +316,13 @@ void ObjectSim::SetLastPosition()
 		positionChangeCallback();
 	}
 
-	ExecuteLinkedObjects(&ObjectSim::SetLastPosition);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::SetLastPosition, true);
+	}
 }
 
-void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
+void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects)
 {
 	if (disabledDirs[dir])
 	{
@@ -338,17 +372,23 @@ void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis)
 		positionChangeCallback();
 	}
 
-	ExecuteLinkedObjects(&ObjectSim::SetPosition, dir, limitAxis);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::SetPosition, dir, limitAxis, true);
+	}
 }
 
-void ObjectSim::LimitRotations(const Rotation& min, const Rotation& max)
+void ObjectSim::LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects)
 {
 	rotationLimits = { min, max };
 
-	ExecuteLinkedObjects(&ObjectSim::LimitRotations, min, max);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::LimitRotations, min, max, true);
+	}
 }
 
-void ObjectSim::Rotate(const Rotation& toRotate)
+void ObjectSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 {
 	UpdateFrontVector();
 
@@ -357,7 +397,10 @@ void ObjectSim::Rotate(const Rotation& toRotate)
 		rotationChangeCallback();
 	}
 
-	ExecuteLinkedObjects(&ObjectSim::Rotate, toRotate);
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::Rotate, toRotate, true);
+	}
 }
 
 void ObjectSim::AddScriptFunc(
@@ -412,4 +455,9 @@ bool ObjectSim::IsScriptFuncRunnable(const std::string& dllName)
 void ObjectSim::LinkObject(IObjectSim& otherObject)
 {
 	objectGraph.AddElements(this, dynamic_cast<ObjectSim*>(&otherObject), stdEx::RelationType::LeftToRight);
+}
+
+void ObjectSim::EnableObjectLinking(bool val)
+{
+	objectLinkingEnabled = val;
 }

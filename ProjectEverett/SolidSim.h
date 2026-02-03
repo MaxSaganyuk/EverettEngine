@@ -41,8 +41,8 @@ public:
 	glm::mat4& GetModelMatrixAddr() override;
 	void ForceModelUpdate() override;
 	void SetType(SolidType type) override;
-	void SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis) override;
-	void Rotate(const Rotation& toRotate) override;
+	void SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects = true) override;
+	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;
 
 	void EnableAutoModelUpdates(bool value = true) override;
 	
