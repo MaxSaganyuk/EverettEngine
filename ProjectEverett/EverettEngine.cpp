@@ -229,7 +229,7 @@ void EverettEngine::CreateAndSetupMainWindow(
 	mainLGL->SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
 	cursorCaptureCallback =
-		[this](double xpos, double ypos) { camera->Rotate(static_cast<float>(xpos), static_cast<float>(ypos)); };
+		[this](double xpos, double ypos) { camera->RotateByMousePos(static_cast<float>(xpos), static_cast<float>(ypos)); };
 	mainLGL->SetCursorPositionCallback(cursorCaptureCallback);
 
 	mainLGL->SetScrollCallback(
@@ -278,7 +278,8 @@ void EverettEngine::SetDefaultWASDControls(bool value)
 		mainLGL->SetInteractable(
 			walkingDirections[i],
 			true,
-			value ? [this, i]() { camera->SetPosition(static_cast<CameraSim::Direction>(i)); } : std::function<void()>(nullptr)
+			value ? 
+			[this, i]() { camera->MoveInDirection(static_cast<CameraSim::Direction>(i)); } : std::function<void()>(nullptr)
 		);
 	}
 }

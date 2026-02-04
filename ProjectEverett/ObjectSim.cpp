@@ -322,7 +322,7 @@ void ObjectSim::SetLastPosition(bool executeLinkedObjects)
 	}
 }
 
-void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects)
+void ObjectSim::MoveInDirection(Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects)
 {
 	if (disabledDirs[dir])
 	{
@@ -374,7 +374,24 @@ void ObjectSim::SetPosition(Direction dir, const glm::vec3& limitAxis, bool exec
 
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
-		ExecuteLinkedObjects(&ObjectSim::SetPosition, dir, limitAxis, true);
+		ExecuteLinkedObjects(&ObjectSim::MoveInDirection, dir, limitAxis, true);
+	}
+}
+
+void ObjectSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& limitAxis, bool executeLinkedObjects)
+{
+	float correctedSpeed = speed * renderDeltaTime;
+
+	pos += correctedSpeed * axis * limitAxis;
+
+	if (positionChangeCallback)
+	{
+		positionChangeCallback();
+	}
+
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::MoveByAxis, axis, limitAxis, executeLinkedObjects);
 	}
 }
 

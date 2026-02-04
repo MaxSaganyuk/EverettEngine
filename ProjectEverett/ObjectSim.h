@@ -93,8 +93,11 @@ public:
 	Direction GetLastDirection() override;
 
 	void SetLastPosition(bool executeLinkedObjects = true) override;
-	void SetPosition(
+	void MoveInDirection(
 		Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
+	) override;
+	void MoveByAxis(
+		const glm::vec3& axis, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) override;
 
 	void LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects = true) override;

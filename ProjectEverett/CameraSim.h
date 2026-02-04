@@ -17,6 +17,7 @@ private:
 	float lastY;
 
 	Mode mode;
+	glm::vec3 cameraAxisLimit; // Depends on the mode, no need to save
 
 	std::string GetSimInfoToSaveImpl();
 
@@ -39,11 +40,17 @@ public:
 
 	void SetAspect(const int windowWidth, const int windowHeight);
 
-	glm::mat4& GetViewMatrixAddr() override;
-	glm::mat4& GetProjectionMatrixAddr() override;
+	glm::mat4& GetViewMatrixAddr();
+	glm::mat4& GetProjectionMatrixAddr();
 
-	void SetPosition(Direction dir) override;
-	void Rotate(float xpos, float ypos) override;
-	void Zoom(float xpos, float ypos) override;
+	void RotateByMousePos(float xpos, float ypos);
+	void Zoom(float xpos, float ypos);
+
+	void MoveInDirection(
+		Direction dir, const glm::vec3& axisToLimit = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
+	) override;
+	void MoveByAxis(
+		const glm::vec3& axis, const glm::vec3& axisToLimit = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
+	) override;
 	void SetMode(Mode mode) override;
 };

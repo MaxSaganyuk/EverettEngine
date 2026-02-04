@@ -11,7 +11,7 @@ void ImplCamera(ICameraSim& camera);                                            
                                                                                    \
 extern "C" __declspec(dllexport) void Camera(void* camera)                         \
 {                                                                                  \
-    ImplCamera(*dynamic_cast<ICameraSim*>(reinterpret_cast<ISolidSim*>(camera)));  \
+    ImplCamera(*dynamic_cast<ICameraSim*>(reinterpret_cast<IObjectSim*>(camera))); \
 }                                                                                  \
                                                                                    \
 void ImplCamera(ICameraSim& camera)                                                \

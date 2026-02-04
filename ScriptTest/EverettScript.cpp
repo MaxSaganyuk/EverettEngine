@@ -25,11 +25,13 @@ public:
 };
 
 InternalState interState;
+ICameraSim* cameraSim = nullptr;
 
 class TestCharHolder
 {
 	ISolidSim* testCharSolid;
 	bool moving{};
+	bool linkedToCamera{};
 
 public:
 	void SetSolidSim(ISolidSim* testCharSolid)
@@ -38,18 +40,31 @@ public:
 		this->testCharSolid->EnableAutoModelUpdates();
 	}
 
-	void Go(float rotation)
+	void LinkCharToCamera(ICameraSim* camera)
+	{
+		if (!testCharSolid) return;
+
+		if (!linkedToCamera)
+		{
+			testCharSolid->LinkObject(*camera);
+		}
+
+		linkedToCamera = !linkedToCamera;
+		testCharSolid->EnableObjectLinking(linkedToCamera);
+	}
+
+	void Go(float rotation, float movementByX, float movementByZ)
 	{
 		if (testCharSolid)
 		{
 			if (!moving)
 			{
-				testCharSolid->SetRotationVector({ 0.0f, rotation, 0.0f });
+				testCharSolid->SetRotationVector({ 0.0f, rotation, 0.0f }, false);
 				testCharSolid->PlayModelAnimation(true);
 			}
 
 			moving = true;
-			testCharSolid->SetPosition(IObjectSim::Direction::Forward);
+			testCharSolid->MoveByAxis({ movementByX, 0.0f, movementByZ });
 		}
 	}
 
@@ -77,9 +92,10 @@ TestCharHolder testChar;
 
 CameraScriptLoop()
 {
-	if (interState.charInter)
+	if (!cameraSim)
 	{
-		interState.charInter->Rotate({ 0.0f, 2.0f, 0.0f });
+		cameraSim = &camera;
+		cameraSim->EnableAutoModelUpdates();
 	}
 }
 
@@ -117,22 +133,22 @@ ScriptObjectInit(TestChar, ISolidSim)
 
 ScriptKeybindPressed(I)
 {
-	testChar.Go(0.0f);
+	testChar.Go(0.0f, 0.0f, 1.0f);
 }
 
 ScriptKeybindPressed(J)
 {
-	testChar.Go(glm::pi<float>() / 2.0f);
+	testChar.Go(glm::pi<float>() / 2.0f, 1.0f, 0.0f);
 }
 
 ScriptKeybindPressed(K)
 {
-	testChar.Go(glm::pi<float>());
+	testChar.Go(glm::pi<float>(), 0.0f, -1.0f);
 }
 
 ScriptKeybindPressed(L)
 {
-	testChar.Go(-glm::pi<float>() / 2.0f);
+	testChar.Go(-glm::pi<float>() / 2.0f, -1.0f, 0.0f);
 }
 
 ScriptKeybindReleased(I)
@@ -155,22 +171,17 @@ ScriptKeybindReleased(L)
 	testChar.Stop();
 }
 
-ScriptKeybindReleased(T)
+ScriptKeybindPressed(C)
 {
-	interState.animCharInter->SetModelAnimationSpeed(interState.animCharInter->GetModelAnimationSpeed() + 0.1);
-}
-
-ScriptKeybindPressed(P)
-{
-	if (interState.animCharInter)
+	if (cameraSim)
 	{
-		interState.animCharInter->IsModelAnimationPaused() ?
-			interState.animCharInter->PlayModelAnimation(true) : interState.animCharInter->PauseModelAnimation();
+		testChar.LinkCharToCamera(cameraSim);
 	}
 }
 
 ScriptCleanUp()
 {
+	cameraSim = nullptr;
 	interState.Reset();
 	testChar.Reset();
 }

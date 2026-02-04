@@ -129,15 +129,33 @@ void SolidSim::SetType(SolidType type)
 	this->type = type;
 }
 
-void SolidSim::SetPosition(ObjectSim::Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects)
+void SolidSim::MoveInDirection(ObjectSim::Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects)
 {
-	ObjectSim::SetPosition(dir, limitAxis, executeLinkedObjects);
+	ObjectSim::MoveInDirection(dir, limitAxis, executeLinkedObjects);
 
 	if (type == SolidType::Static && lastBlocker)
 	{
 		ResetModelMatrix();
 	}
 	else 
+	{
+		const glm::vec3& posRef = pos;
+
+		model[3].x = posRef.x;
+		model[3].y = posRef.y;
+		model[3].z = posRef.z;
+	}
+}
+
+void SolidSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& limitAxis, bool executeLinkedObjects)
+{
+	ObjectSim::MoveByAxis(axis, limitAxis, executeLinkedObjects);
+
+	if (type == SolidType::Static && lastBlocker)
+	{
+		ResetModelMatrix();
+	}
+	else
 	{
 		const glm::vec3& posRef = pos;
 

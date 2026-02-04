@@ -70,8 +70,11 @@ public:
 	virtual Direction GetLastDirection() = 0;
 
 	Linkable virtual void SetLastPosition(bool executeLinkedObjects = true) = 0;
-	Linkable virtual void SetPosition(
+	Linkable virtual void MoveInDirection(
 		Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
+	) = 0;
+	Linkable virtual void MoveByAxis(
+		const glm::vec3& axis, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) = 0;
 
 	Linkable virtual void LimitRotations(

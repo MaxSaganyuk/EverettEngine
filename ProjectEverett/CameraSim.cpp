@@ -23,7 +23,7 @@ CameraSim::CameraSim(
 
 	sensitivity = 0.001f;
 
-	mode = Mode::Fly;
+	SetMode(Mode::Fly);
 
 	SolidSim::LimitRotations(
 		{ -fullRotation, -90.0f, -fullRotation },
@@ -98,13 +98,19 @@ void CameraSim::UpdateViewMatrix()
 	view = glm::lookAt(pos, pos + front, GetUpVectorAddr());
 }
 
-void CameraSim::SetPosition(Direction dir)
+void CameraSim::MoveInDirection(Direction dir, const glm::vec3& axisToLimit, bool executeLinkedObjects)
 {
-	SolidSim::SetPosition(dir, { 1.0f, static_cast<float>(mode == Mode::Fly), 1.0f });
+	SolidSim::MoveInDirection(dir, cameraAxisLimit, executeLinkedObjects);
 	UpdateViewMatrix();
 }
 
-void CameraSim::Rotate(float xpos, float ypos)
+void CameraSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& axisToLimit, bool executeLinkedObjects)
+{
+	SolidSim::MoveByAxis(axis, cameraAxisLimit, executeLinkedObjects);
+	UpdateViewMatrix();
+}
+
+void CameraSim::RotateByMousePos(float xpos, float ypos)
 {
 	float xoffset = xpos - lastX;
 	float yoffset = lastY - ypos;
@@ -130,4 +136,5 @@ void CameraSim::Zoom(float xpos, float ypos)
 void CameraSim::SetMode(Mode mode)
 {
 	this->mode = mode;
+	cameraAxisLimit = { 1.0f, static_cast<float>(mode == Mode::Fly), 1.0f };
 }
