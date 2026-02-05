@@ -96,7 +96,7 @@ void DLLLoaderCommon::OnBrowseScriptButton()
 		selectedScriptDllInfo.push_back(std::pair<std::string, std::string>{ pathStr, fileStr });
 		dllComboBox.AddString(fileStr);
 		dllComboBox.SetCurSel(static_cast<int>(selectedScriptDllInfo.size() - 1));
-		loadScriptButton.EnableWindow(true);
+		UpdateScriptButtons();
 	}
 }
 
