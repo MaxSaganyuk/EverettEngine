@@ -22,9 +22,9 @@
 #include "ContextManager.h"
 #define ContextLock ContextManager<GLFWwindow> mux(window);
 #define HandshakeContextLock \
-PauseRendering(); \
+PauseRenderingInternal(); \
 ContextLock \
-PauseRendering(false);
+PauseRenderingInternal(false);
 
 using namespace LGLStructs;
 
@@ -76,6 +76,7 @@ LGL::LGL()
 	currentVAOToRender = {};
 	window = nullptr;
 	pauseRendering = false;
+	externalRenderPauseActive = false;
 	stopRendering = false;
 	uniformHasher = std::make_unique<LGLUniformHasher>();
 	batchUniformVals = true;
@@ -573,6 +574,20 @@ void LGL::StopRenderingCycle()
 }
 
 void LGL::PauseRendering(bool value)
+{
+	externalRenderPauseActive = value;
+	PauseRenderingImpl(value);
+}
+
+void LGL::PauseRenderingInternal(bool value)
+{
+	if (value || !externalRenderPauseActive)
+	{
+		PauseRenderingImpl(value);
+	}
+}
+
+void LGL::PauseRenderingImpl(bool value)
 {
 	pauseRendering = value;
 

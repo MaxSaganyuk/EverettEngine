@@ -263,6 +263,8 @@ private:
 	void ProcessInput();
 	void Render();
 	void RenderText();
+	void PauseRenderingImpl(bool value);
+	void PauseRenderingInternal(bool value = true);
 
 	int windowWidth;
 	int windowHeight;
@@ -271,6 +273,7 @@ private:
 
 	bool useVSync; // Passed value is not bool, but will do for on/off switch
 	bool pauseRendering;
+	bool externalRenderPauseActive;
 	bool stopRendering;
 	std::mutex pauserMux;
 	std::condition_variable pauser;
