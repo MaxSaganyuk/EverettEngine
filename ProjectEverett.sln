@@ -13,7 +13,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScriptTest", "ScriptTest\Sc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EverettPlayer", "EverettPlayer\EverettPlayer.vcxproj", "{9EA80335-A513-4282-B5E3-289F249FAB5E}"
 	ProjectSection(ProjectDependencies) = postProject
-		{47640FFF-3F95-4025-B220-C656D88E3ECB} = {47640FFF-3F95-4025-B220-C656D88E3ECB}
 		{6783A4C1-7394-4F38-986D-C19B32944CEE} = {6783A4C1-7394-4F38-986D-C19B32944CEE}
 	EndProjectSection
 EndProject
