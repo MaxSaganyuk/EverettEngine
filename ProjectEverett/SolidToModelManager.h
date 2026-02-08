@@ -8,17 +8,16 @@
 #include "AnimSystem.h"
 
 #include "PlaybackManager.h"
+#include "FullModelInfoType.h"
 
 class SolidToModelManager
 {
 public:
-	using FullModelInfo = std::pair<std::weak_ptr<LGLStructs::ModelInfo>, std::weak_ptr<AnimSystem::ModelAnim>>;
-
 	SolidToModelManager();
 
 	bool IsInitialized();
 
-	void InitializeSTMM(FullModelInfo& fullModelInfoRef);
+	void InitializeSTMM(std::weak_ptr<FullModelInfo> fullModelInfoRef);
 
 	std::vector<std::string> GetMeshNames();
 	size_t GetMeshAmount();
@@ -69,5 +68,5 @@ private:
 
 	std::vector<bool> meshVisibility;
 	
-	FullModelInfo* fullModelInfoP;
+	std::weak_ptr<FullModelInfo> fullModelInfoP;
 };

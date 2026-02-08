@@ -4,10 +4,10 @@
 SolidToModelManager::SolidToModelManager() 
 	: initialized(false) {}
 
-void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
+void SolidToModelManager::InitializeSTMM(std::weak_ptr<FullModelInfo> fullModelInfoRef)
 {
-	fullModelInfoP = &fullModelInfoRef;
-	meshVisibility.resize(fullModelInfoP->first.lock()->meshes.size());
+	fullModelInfoP = fullModelInfoRef;
+	meshVisibility.resize(fullModelInfoP.lock()->first.lock()->meshes.size());
 	std::fill(meshVisibility.begin(), meshVisibility.end(), true);
 	currentAnimationIndex = 0;
 	lastAnimationTime = 0.0;
@@ -35,9 +35,9 @@ std::vector<std::string> SolidToModelManager::GetMeshNames()
 {
 	CheckIfInitialized();
 
-	if (fullModelInfoP)
+	if (fullModelInfoP.lock())
 	{
-		return fullModelInfoP->first.lock()->GetMeshNames();
+		return fullModelInfoP.lock()->first.lock()->GetMeshNames();
 	}
 
 	return std::vector<std::string>();
@@ -47,7 +47,7 @@ size_t SolidToModelManager::GetMeshAmount()
 {
 	CheckIfInitialized();
 
-	return fullModelInfoP->first.lock()->meshes.size();
+	return fullModelInfoP.lock()->first.lock()->meshes.size();
 }
 
 void SolidToModelManager::SetAllMeshVisibility(bool value)
@@ -84,10 +84,7 @@ void SolidToModelManager::SetMeshVisibility(const std::string& name, bool value)
 {
 	CheckIfInitialized();
 
-	if (fullModelInfoP)
-	{
-		meshVisibility[GetIndexByName(name, GetMeshNames())] = value;
-	}
+	meshVisibility[GetIndexByName(name, GetMeshNames())] = value;
 }
 
 bool SolidToModelManager::GetMeshVisibility(size_t index)
@@ -108,7 +105,7 @@ float SolidToModelManager::GetMeshShininess(size_t index)
 {
 	CheckIfInitialized();
 
-	return fullModelInfoP->first.lock()->meshes[index].mesh.shininess;
+	return fullModelInfoP.lock()->first.lock()->meshes[index].mesh.shininess;
 }
 
 float SolidToModelManager::GetMeshShininess(const std::string& name)
@@ -124,7 +121,7 @@ std::vector<std::string> SolidToModelManager::GetAnimationNames()
 
 	std::vector<std::string> res;
 
-	for (auto& animInfo : fullModelInfoP->second.lock()->animInfoVect)
+	for (auto& animInfo : fullModelInfoP.lock()->second.lock()->animInfoVect)
 	{
 		res.push_back(animInfo.animName);
 	}
@@ -136,7 +133,7 @@ size_t SolidToModelManager::GetAnimationAmount()
 {
 	CheckIfInitialized();
 
-	return fullModelInfoP->second.lock()->animInfoVect.size();
+	return fullModelInfoP.lock()->second.lock()->animInfoVect.size();
 }
 
 void SolidToModelManager::SetAnimation(size_t index)
@@ -230,10 +227,12 @@ void SolidToModelManager::SetAnimationPlaybackCallback(std::function<void(bool, 
 
 double SolidToModelManager::GetAnimationTimeTicks(double currentTime)
 {
-	double animDuration = fullModelInfoP->second.lock()->animInfoVect[currentAnimationIndex].animDuration;
+	auto fullModelInfo = fullModelInfoP.lock();
+
+	double animDuration = fullModelInfo->second.lock()->animInfoVect[currentAnimationIndex].animDuration;
 
 	double timeInTicks = 
-		currentTime * animationSpeed * fullModelInfoP->second.lock()->animInfoVect[currentAnimationIndex].ticksPerSecond;
+		currentTime * animationSpeed * fullModelInfo->second.lock()->animInfoVect[currentAnimationIndex].ticksPerSecond;
 
 	double animationTime = std::fmod(timeInTicks, animDuration);
 
@@ -271,6 +270,6 @@ size_t SolidToModelManager::GetCurrentStartingBoneIndex()
 
 void SolidToModelManager::CheckIfInitialized()
 {
-	CheckAndThrowExceptionWMessage(initialized, "SolidToModelManager is uninitialized");
+	CheckAndThrowExceptionWMessage(initialized && !fullModelInfoP.expired(), "SolidToModelManager is uninitialized");
 }
 

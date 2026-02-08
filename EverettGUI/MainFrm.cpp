@@ -196,39 +196,31 @@ bool CMainFrame::LoadObjectNamesToTree()
 	using ObjectTypes = EverettEngine::ObjectTypes;
 
 	MFCTreeManager& mfcTree = mainWindow->GetObjectTree();
-	std::vector<std::string> objectNames;
 
-	for (size_t i = static_cast<size_t>(ObjectTypes::Solid); i < static_cast<size_t>(ObjectTypes::_SIZE); ++i)
+	for (auto& modelName : engine.GetCreatedModelNames())
 	{
-		ObjectTypes currentObjectType = static_cast<ObjectTypes>(i);
-		objectNames = engine.GetNamesByObject(currentObjectType);
+		mfcTree.AddModelToTree(modelName);
 
-		AdString subTypeName = "";
-		for (auto& objectName : objectNames)
+		for (auto& solidName : engine.GetCreatedSolidNames(modelName))
 		{
-			bool subType = objectName[0] == '.';
-			if (subType)
-			{
-				subTypeName = objectName.substr(1, std::string::npos);
-			}
-
-			switch (currentObjectType)
-			{
-			case ObjectTypes::Solid:
-				subType ? mfcTree.AddModelToTree(subTypeName) : mfcTree.AddSolidToTree(subTypeName, objectName);
-				break;
-			case ObjectTypes::Light:
-				if (!subType)
-				{
-					mfcTree.AddLightToTree(subTypeName, objectName);
-				}
-				break;
-			case ObjectTypes::Sound:
-				mfcTree.AddSoundToTree(objectName);
-				break;
-			}
+			mfcTree.AddSolidToTree(modelName, solidName);
 		}
 	}
+
+	auto lightTypeNames = EverettEngine::GetLightTypeList();
+	for (size_t lightType = 0; lightType < static_cast<size_t>(EverettEngine::LightTypes::_SIZE); ++lightType)
+	{
+		for (auto& lightName : engine.GetCreatedLightNames(static_cast<EverettEngine::LightTypes>(lightType)))
+		{
+			mfcTree.AddLightToTree(lightTypeNames[lightType], lightName);
+		}
+	}
+
+	for (auto& soundName : engine.GetCreatedSoundNames())
+	{
+		mfcTree.AddSoundToTree(soundName);
+	}
+
 
 	return true;
 }
@@ -326,10 +318,10 @@ void CMainFrame::OnLoadModel()
 void CMainFrame::OnPlaceSolid()
 {
 	CPlaceObjectDialog placeSolidDlg(
+		engine,
 		L"Solid", 
 		L"Model", 
-		nameCheckFunc,
-		engine.GetCreatedModels()
+		nameCheckFunc
 	);
 
 	if (placeSolidDlg.DoModal() == IDOK)
@@ -342,10 +334,10 @@ void CMainFrame::OnPlaceSolid()
 void CMainFrame::OnPlaceLight()
 {
 	CPlaceObjectDialog placeLightDlg(
+		engine,
 		L"Light", 
 		L"Light type",
-		nameCheckFunc,
-		engine.GetLightTypeList()
+		nameCheckFunc
 	);
 
 	if (placeLightDlg.DoModal() == IDOK)

@@ -39,6 +39,8 @@
 
 #include "ShaderGenerator.h"
 
+#include "FullModelInfoType.h"
+
 using namespace EverettStructs;
 
 //#define BONE_TEST
@@ -61,36 +63,27 @@ using namespace EverettStructs;
 
 using ObjectInfoNames = SimSerializer::ObjectInfoNames;
 
-struct EverettEngine::ObjectTypeInfo
+EverettEngine::ModelSolidInfo::ModelSolidInfo()
 {
-	ObjectTypes nameEnum;
-	std::string nameStr;
-	std::type_index pureType;
-};
+	model = std::make_shared<FullModelInfo>();
+}
 
-struct EverettEngine::ModelSolidInfo
+EverettEngine::ModelSolidInfo::~ModelSolidInfo()
 {
-	std::string modelPath;
-	SolidToModelManager::FullModelInfo model;
-	std::map<std::string, SolidSim> solids;
+	auto modelPtr = model->first.lock();
 
-	~ModelSolidInfo()
+	if (modelPtr)
 	{
-		auto modelPtr = model.first.lock();
+		modelPtr->render = false;
+		modelPtr->modelBehaviour = nullptr;
+		modelPtr->generalMeshBehaviour = nullptr;
 
-		if (modelPtr)
+		for (auto& mesh : modelPtr->meshes)
 		{
-			modelPtr->render = false;
-			modelPtr->modelBehaviour = nullptr;
-			modelPtr->generalMeshBehaviour = nullptr;
-
-			for (auto& mesh : modelPtr->meshes)
-			{
-				mesh.behaviour.ResetValue();
-			}
+			mesh.behaviour.ResetValue();
 		}
 	}
-};
+}
 
 EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 {
@@ -297,7 +290,7 @@ void EverettEngine::SetGizmoVisible(bool value)
 
 	for (auto& [_, msmInst] : MSM | stdEx::views::antifilter(IsGizmoModelInfo))
 	{
-		msmInst.model.first.lock()->render = msmInst.solids.size() && gizmoVisible;
+		msmInst.model->first.lock()->render = msmInst.solids.size() && gizmoVisible;
 	}
 }
 
@@ -456,12 +449,12 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		return true;
 	}
 
-	auto resPair = MSM.emplace(name, std::move(ModelSolidInfo{}));
+	auto resPair = MSM.emplace(name, ModelSolidInfo{});
 	
 	std::string pathToUse = CheckIfRelativePathToUse(path, "models");
 
-	std::weak_ptr<LGLStructs::ModelInfo>& newModel = MSM[name].model.first;
-	std::weak_ptr<AnimSystem::ModelAnim>& newModelAnim = MSM[name].model.second;
+	std::weak_ptr<LGLStructs::ModelInfo>& newModel = MSM[name].model->first;
+	std::weak_ptr<AnimSystem::ModelAnim>& newModelAnim = MSM[name].model->second;
 	MSM[name].modelPath = pathToUse;
 
 	if (!fileLoader->modelLoader.LoadModel(pathToUse, name, newModel, newModelAnim))
@@ -482,8 +475,8 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		// Existence of the lambda implies existence of the model
 		auto& model = MSM[name];
 		auto& [modelPath, modelInfo, solidInfo] = model;
-		auto modelPtr = model.model.first.lock();
-		auto modelAnimPtr = model.model.second.lock();
+		auto modelPtr = model.model->first.lock();
+		auto modelAnimPtr = model.model->second.lock();
 
 		bool animationless = modelAnimPtr->animInfoVect.empty();
 		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(modelPtr->isTextureless));
@@ -570,8 +563,8 @@ bool EverettEngine::CreateSolidImpl(
 		return true;
 	}
 
-	auto modelPtr = MSM[modelName].model.first.lock();
-	auto modelAnimPtr = MSM[modelName].model.second.lock();
+	auto modelPtr = MSM[modelName].model->first.lock();
+	auto modelAnimPtr = MSM[modelName].model->second.lock();
 
 	SolidSim newSolid(camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
 	newSolid.SetBackwardsModelAccess(MSM[modelName].model);
@@ -754,7 +747,7 @@ bool EverettEngine::DeleteSolid(const std::string& solidName)
 			modelInfo.solids.erase(solidName);
 			if (!modelInfo.solids.size())
 			{
-				modelInfo.model.first.lock()->render = false;
+				modelInfo.model->first.lock()->render = false;
 			}
 
 			res = true;
@@ -1552,43 +1545,6 @@ void EverettEngine::HidePathsInWorldFile(
 	hidenFile.close();
 }
 
-template<typename Sim>
-std::vector<std::string> EverettEngine::GetNameList(const std::map<std::string, Sim>& sims)
-{
-	std::vector<std::string> names;
-	names.reserve(sims.size());
-
-	for (auto& sim : sims)
-	{
-		names.push_back(sim.first);
-	}
-
-	return names;
-}
-
-std::vector<std::string> EverettEngine::GetCreatedModels(bool getFullPaths)
-{
-	std::vector<std::string> createdModels;
-
-	for (const auto& model : MSM | std::views::filter(IsGizmoModelInfo))
-	{
-		createdModels.push_back(getFullPaths ? model.second.modelPath : model.first);
-	}
-
-	return createdModels;
-}
-
-std::vector<std::string> EverettEngine::GetAllObjectTypeNames()
-{
-	std::vector<std::string> objectNames;
-
-	for (auto& objectNamePair : objectTypes)
-	{
-		objectNames.push_back(objectNamePair.nameStr);
-	}
-
-	return objectNames;
-}
 std::string EverettEngine::GetObjectTypeToName(ObjectTypes objectType)
 {
 	for (auto& objectNamePair : objectTypes)
@@ -1652,56 +1608,6 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectPureTypeToName(std::type_inde
 	}
 
 	ThrowExceptionWMessage("Nonexistent type");
-}
-
-std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType)
-{
-	switch (objType)
-	{
-	case ObjectTypes::Solid:
-		return GetSolidList();
-	case ObjectTypes::Light:
-		return GetLightList();
-	case ObjectTypes::Sound:
-		return GetSoundList();
-	default:
-		ThrowExceptionWMessage("Unreachable");
-	}
-}
-
-std::vector<std::string> EverettEngine::GetSolidList()
-{
-	std::vector<std::string> solidNames;
-
-	for (const auto& model : MSM | std::views::filter(IsGizmoModelInfo))
-	{
-		solidNames.push_back('.' + model.first);
-		std::vector<std::string> modelSolidNames = GetNameList(model.second.solids);
-		solidNames.insert(solidNames.end(), modelSolidNames.begin(), modelSolidNames.end());
-	}
-
-	return solidNames;
-}
-
-std::vector<std::string> EverettEngine::GetLightList()
-{
-	std::vector<std::string> lightNames;
-
-	std::vector<std::string> lightTypes = LightSim::GetLightTypeNames();
-
-	for (auto& light : lights)
-	{
-		lightNames.push_back('.' + lightTypes[static_cast<int>(light.first)]);
-		std::vector<std::string> lightSolidNames = GetNameList(light.second);
-		lightNames.insert(lightNames.end(), lightSolidNames.begin(), lightSolidNames.end());
-	}
-
-	return lightNames;
-}
-
-std::vector<std::string> EverettEngine::GetSoundList()
-{
-	return GetNameList(sounds);
 }
 
 std::vector<std::string> EverettEngine::GetLightTypeList()

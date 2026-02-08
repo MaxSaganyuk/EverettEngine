@@ -5,6 +5,7 @@
 #include "EverettGUI.h"
 #include "afxdialogex.h"
 #include "CPlaceObjectDialog.h"
+#include "EverettEngine.h"
 
 #include "CommonStrEdits.h"
 #include "NameEditChecker.h"
@@ -14,18 +15,18 @@
 IMPLEMENT_DYNAMIC(CPlaceObjectDialog, CDialogEx)
 
 CPlaceObjectDialog::CPlaceObjectDialog(
+	EverettEngine& engineRef,
 	const AdString& objectTypeName, 
 	const AdString& sourceObjectTypeName,
 	NameCheckFunc nameCheckFunc,
-	const std::vector<std::string>& objectNameList, 
 	CWnd* pParent
 )
 	: 
 	CDialogEx(IDD_DIALOG2, pParent), 
+	engineRef(engineRef),
 	objectTypeName(objectTypeName), 
 	sourceObjectTypeName(sourceObjectTypeName), 
 	nameCheckFunc(nameCheckFunc),
-	objectNameList(objectNameList),
 	chosenIndex(-1)
 {
 }
@@ -42,9 +43,19 @@ BOOL CPlaceObjectDialog::OnInitDialog()
 	choiceLabel.SetWindowTextW(L"Choose " + sourceObjectTypeName + L':');
 	nameLabel.SetWindowTextW(objectTypeName + L" name:");
 
-	for (auto& object : objectNameList)
+	if (objectTypeName == "Solid")
 	{
-		objectChoice.AddString(AdString(object));
+		for (auto& object : engineRef.GetCreatedModelNames())
+		{
+			objectChoice.AddString(AdString(object));
+		}
+	}
+	else
+	{
+		for (auto& object : engineRef.GetLightTypeList())
+		{
+			objectChoice.AddString(AdString(object));
+		}
 	}
 
 	placeObjectButton.EnableWindow(false);

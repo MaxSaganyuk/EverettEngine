@@ -9,6 +9,8 @@
 #include <string>
 #include <functional>
 
+#include "FullModelInfoType.h"
+
 #include "SolidToModelManager.h"
 
 #include "interfaces/ISolidSim.h"
@@ -49,7 +51,7 @@ public:
 	
 	// Solid to model access section
 	// Mesh access; avalible through interface
-	void SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model);
+	void SetBackwardsModelAccess(std::weak_ptr<FullModelInfo> model);
 	std::vector<std::string> GetModelMeshNames() override;
 	size_t GetMeshAmount() override;
 	void SetAllMeshVisibility(bool value) override;

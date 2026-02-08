@@ -19,6 +19,7 @@
 #include <chrono>
 #include <typeindex>
 #include <optional>
+#include <ranges>
 
 #include "UnorderedPtrMap.h"
 
@@ -43,6 +44,7 @@ class ScriptFuncStorage;
 class AnimSystem;
 class RenderLogger;
 class CustomOutput;
+class FullModelInfo;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -61,7 +63,8 @@ public:
 	{
 		Direction,
 		Point,
-		Spot
+		Spot,
+		_SIZE
 	};
 
 	enum class ObjectTypes
@@ -163,11 +166,39 @@ public:
 	EVERETT_API std::vector<std::string> GetModelInDirList(const std::string& path);
 	EVERETT_API std::vector<std::string> GetSoundInDirList(const std::string& path);
 
-	EVERETT_API std::vector<std::string> GetCreatedModels(bool getFullPaths = false);
-	EVERETT_API std::vector<std::string> GetNamesByObject(ObjectTypes objType);
 	EVERETT_API static std::vector<std::string> GetLightTypeList();
 
-	EVERETT_API static std::vector<std::string> GetAllObjectTypeNames();
+	EVERETT_API auto GetCreatedModelNames()
+	{
+		return MSM | std::views::filter(IsGizmoModelInfo) | std::views::keys;
+	}
+
+	EVERETT_API auto GetCreatedModelPaths() const
+	{
+		return MSM | std::views::filter(IsGizmoModelInfo) |
+			std::views::values | std::views::transform(&ModelSolidInfo::modelPath);
+	}
+
+	EVERETT_API auto GetCreatedSolidNames(const std::string& modelName) const
+	{
+		return MSM.at(modelName).solids | std::views::keys;
+	}
+
+	EVERETT_API auto GetCreatedLightNames(LightTypes lightType) const
+	{
+		return lights.at(lightType) | std::views::keys;
+	}
+
+	EVERETT_API auto GetCreatedSoundNames() const
+	{
+		return sounds | std::views::keys;
+	}
+
+	EVERETT_API static auto GetAllObjectTypeNames()
+	{
+		return objectTypes | std::views::transform(&ObjectTypeInfo::nameStr);
+	}
+
 	EVERETT_API static std::string GetObjectTypeToName(ObjectTypes objectType);
 	EVERETT_API static ObjectTypes GetObjectTypeToName(const std::string& objectName);
 
@@ -206,7 +237,12 @@ private:
 	bool gizmoVisible = false;
 	bool gizmoEnabled = false;
 
-	struct ObjectTypeInfo;
+	struct ObjectTypeInfo
+	{
+		ObjectTypes nameEnum;
+		std::string nameStr;
+		std::type_index pureType;
+	};
 
 	static inline const std::string saveFileType = ".esav";
 	std::string defaultShaderProgram;
@@ -219,7 +255,19 @@ private:
 
 	std::function<void(double, double)> cursorCaptureCallback;
 
-	struct ModelSolidInfo;
+	struct ModelSolidInfo
+	{
+		std::string modelPath;
+		std::shared_ptr<FullModelInfo> model;
+		std::map<std::string, SolidSim> solids;
+
+		ModelSolidInfo();
+		ModelSolidInfo(ModelSolidInfo&&) noexcept = default;
+		~ModelSolidInfo();
+
+		ModelSolidInfo(const ModelSolidInfo&) = delete;
+		ModelSolidInfo& operator=(const ModelSolidInfo&) = delete;
+	};
 
 	using ModelSolidsMap = std::unordered_map<std::string, ModelSolidInfo>;
 
@@ -266,9 +314,6 @@ private:
 
 	std::string CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder);
 
-	template<typename Sim>
-	std::vector<std::string> GetNameList(const std::map<std::string, Sim>& sims);
-
 	std::vector<std::string> GetObjectsInDirList(const std::string& path, const std::vector<std::string>& fileTypes);
 
 	struct ObjectTypeInfo;
@@ -278,10 +323,6 @@ private:
 	static std::type_index GetObjectPureTypeToName(ObjectTypes objectType);
 	static std::type_index GetObjectPureTypeToName(const std::string& objectName);
 	static ObjectTypes GetObjectPureTypeToName(std::type_index objectType);
-
-	std::vector<std::string> GetSolidList();
-	std::vector<std::string> GetLightList();
-	std::vector<std::string> GetSoundList();
 
 	template<typename Sim>
 	void SaveObjectsToFile(std::fstream& file);
@@ -348,4 +389,6 @@ private:
 	    int lastKeyPressedID;
 		bool isValidKeyPress;
 	};
+public:
+	using ModelSolidMapElement = ModelSolidsMap::value_type;
 };

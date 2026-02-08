@@ -221,7 +221,7 @@ void SolidSim::SetAllMeshVisibility(bool value)
 	STMM.SetAllMeshVisibility(value);
 }
 
-void SolidSim::SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model)
+void SolidSim::SetBackwardsModelAccess(std::weak_ptr<FullModelInfo> model)
 {
 	STMM.InitializeSTMM(model);
 }

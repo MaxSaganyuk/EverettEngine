@@ -7,6 +7,8 @@
 
 #include "AdString.h"
 
+class EverettEngine;
+
 // CPlaceObjectDialog dialog
 
 class CPlaceObjectDialog : public CDialogEx
@@ -16,10 +18,10 @@ class CPlaceObjectDialog : public CDialogEx
 
 public:
 	CPlaceObjectDialog(
+		EverettEngine& engineRef,
 		const AdString& objectTypeName, 
 		const AdString& sourceObjectTypeName,
 		NameCheckFunc nameCheckFunc,
-		const std::vector<std::string>& objectNameList = {},
 		CWnd* pParent = nullptr
 	);   // standard constructor
 	virtual ~CPlaceObjectDialog();
@@ -35,7 +37,7 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 private:
-	std::vector<std::string> objectNameList;
+	EverettEngine& engineRef;
 	AdString objectTypeName;
 	AdString sourceObjectTypeName;
 	size_t chosenIndex;
