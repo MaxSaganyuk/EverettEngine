@@ -1,0 +1,3 @@
+[submodule "CommonUtils/stdEx"]
+	path = CommonUtils/stdEx
+	url = https://github.com/MaxSaganyuk/stdEx
