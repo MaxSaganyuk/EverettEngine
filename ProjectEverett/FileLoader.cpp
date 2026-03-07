@@ -639,7 +639,12 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 {
 	bool success = false;
 
-	HMODULE dllHandle = LoadLibraryA(dllPath.c_str());
+	HMODULE dllHandle = GetModuleHandleA(dllPath.c_str());
+
+	if (!dllHandle)
+	{
+		dllHandle = LoadLibraryA(dllPath.c_str());
+	}
 
 	if (dllHandle)
 	{
