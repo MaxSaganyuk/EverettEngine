@@ -117,15 +117,6 @@ class FileLoader
 	{
 		std::recursive_mutex scriptWrapperLock;
 
-		bool GetScriptFuncFromDLLImpl(
-			const std::string& dllPath,
-			const std::string& funcName,
-			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
-		);
-		void SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle);
-
-		constexpr static char cleanUpFuncName[] = "CleanUp";
-
 		struct ScriptDLLInfo
 		{
 			HMODULE dllHandle;
@@ -135,6 +126,17 @@ class FileLoader
 
 		using ScriptDLLPath = std::string;
 		using ScriptMap = std::map<ScriptDLLPath, ScriptDLLInfo>;
+
+		bool GetScriptFuncFromDLLImpl(
+			const std::string& dllPath,
+			const std::string& funcName,
+			ScriptDLLInfo& dllInfo,
+			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
+		);
+		void SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo);
+		void UnloadScriptDLL(ScriptDLLInfo& dllInfo);
+
+		constexpr static char cleanUpFuncName[] = "CleanUp";
 
 		ScriptMap dllHandleMap;
 	public:
