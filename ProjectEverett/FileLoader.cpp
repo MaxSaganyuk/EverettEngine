@@ -633,6 +633,16 @@ void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE 
 	}
 }
 
+bool FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
+{
+	if (dllHandleMap.contains(dllPath))
+	{
+		return dllHandleMap.at(dllPath).dllHandle;
+	}
+
+	return false;
+}
+
 bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 	const std::string& dllPath,
 	const std::string& funcName,

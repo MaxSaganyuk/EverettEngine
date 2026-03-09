@@ -973,6 +973,16 @@ void EverettEngine::SetScriptToObjectImpl(
 	}
 }
 
+bool EverettEngine::IsDLLLoaded(const std::string& dllPath)
+{
+	if (fileLoader)
+	{
+		return fileLoader->dllLoader.IsDLLLoaded(dllPath);
+	}
+
+	return false;
+}
+
 void EverettEngine::UnsetScript(const std::string& dllPath)
 {
 	if(fileLoader)

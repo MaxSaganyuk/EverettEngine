@@ -142,6 +142,7 @@ class FileLoader
 		ScriptMap dllHandleMap;
 	public:
 		void FreeDllData();
+		bool IsDLLLoaded(const std::string& dllPath);
 		bool GetScriptFuncFromDLL(
 			const std::string& dllPath,
 			const std::string& funcName,

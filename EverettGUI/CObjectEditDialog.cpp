@@ -23,6 +23,7 @@ CObjectEditDialog::CObjectEditDialog(
 	DLLLoaderCommon(
 		IDD_DIALOG4, 
 		selectedScriptDllInfo, 
+		[this](const std::string& dllPath) { return engineRef.IsDLLLoaded(dllPath); },
 		[this](const std::string& dllName) { 
 			return engineRef.IsObjectScriptSet(objectType, subtypeName, objectName, dllName); 
 		},
@@ -30,6 +31,7 @@ CObjectEditDialog::CObjectEditDialog(
 			engineRef.SetScriptToObject(objectType, subtypeName, objectName, dllName, dllPath); 
 		},
 		[this](const std::string& dllPath) { engineRef.UnsetScript(dllPath); },
+		false,
 		pParent
 	),
 	engineRef(engine), 

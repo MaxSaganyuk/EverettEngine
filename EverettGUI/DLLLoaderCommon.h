@@ -16,6 +16,9 @@ public:
 	// Function wrappers to be passed will include every other variable except for directly
 	// dll related info in lambda capture
 
+	// Should accept dll path
+	using IsDLLLoadedFunc = std::function<bool(const std::string&)>;
+
 	// Should accept dll name
 	using IsScriptSetFunc = std::function<bool(const std::string&)>;
 	
@@ -28,9 +31,11 @@ public:
 	DLLLoaderCommon(
 		int dialogID,
 		std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
+		IsDLLLoadedFunc isDllLoadedFunc,
 		IsScriptSetFunc isScriptSetFunc,
 		SetScriptFunc setScriptFunc,
 		UnsetScriptFunc unsetScriptFunc,
+		bool blockLoadButton = false,
 		CWnd* pParent = nullptr
 	);
 	virtual ~DLLLoaderCommon();
@@ -42,10 +47,11 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 	void UpdateScriptButtons();
-	void BlockScriptButtons(bool value = true);
+	void BlockLoadScriptButton(bool value = true);
 private:
 	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo;
 
+	IsDLLLoadedFunc isDllLoadedFunc;
 	IsScriptSetFunc isScriptSetFunc;
 	SetScriptFunc setScriptFunc;
 	UnsetScriptFunc unsetScriptFunc;
@@ -56,7 +62,10 @@ private:
 	CComboBox dllComboBox;
 	CButton scriptRunIndicator;
 
-	bool blockButtons;
+	bool blockLoadButton;
+
+	constexpr static char LoadDLLStr[] = "Load DLL";
+	constexpr static char BindFuncStr[] = "Bind Func";
 
 	void FillComboBoxWithScriptInfo();
 

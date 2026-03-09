@@ -17,28 +17,26 @@ END_MESSAGE_MAP()
 DLLLoaderCommon::DLLLoaderCommon(
 	int dialogID,
 	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
+	IsDLLLoadedFunc isDllLoadedFunc,
 	IsScriptSetFunc isScriptSetFunc,
 	SetScriptFunc setScriptFunc,
 	UnsetScriptFunc unsetScriptFunc,
+	bool blockLoadButton,
 	CWnd* pParent
 ) :
 	CDialogEx(dialogID, pParent), 
 	selectedScriptDllInfo(selectedScriptDllInfo), 
+	isDllLoadedFunc(isDllLoadedFunc),
 	isScriptSetFunc(isScriptSetFunc), 
 	setScriptFunc(setScriptFunc), 
 	unsetScriptFunc(unsetScriptFunc),
-	blockButtons(false)
-{
+	blockLoadButton(blockLoadButton) {}
 
-}
+DLLLoaderCommon::~DLLLoaderCommon() {}
 
-DLLLoaderCommon::~DLLLoaderCommon()
+void DLLLoaderCommon::BlockLoadScriptButton(bool value)
 {
-}
-
-void DLLLoaderCommon::BlockScriptButtons(bool value)
-{
-	blockButtons = value;
+	blockLoadButton = value;
 	UpdateScriptButtons();
 }
 
@@ -52,13 +50,20 @@ void DLLLoaderCommon::FillComboBoxWithScriptInfo()
 
 void DLLLoaderCommon::UpdateScriptButtons()
 {
-	if (!(selectedScriptDllInfo.empty() || blockButtons))
+	if (!selectedScriptDllInfo.empty())
 	{
 		bool isObjectScriptSet = isScriptSetFunc(selectedScriptDllInfo[dllComboBox.GetCurSel()].second);
+		bool isDllLoadedSet = isDllLoadedFunc(selectedScriptDllInfo[dllComboBox.GetCurSel()].first);
+
+		if (!blockLoadButton)
+		{
+			loadScriptButton.EnableWindow(!isObjectScriptSet);
+		}
+
+		loadScriptButton.SetWindowTextW(CString(isDllLoadedSet ? BindFuncStr : LoadDLLStr));
 
 		scriptRunIndicator.SetCheck(isObjectScriptSet);
-		loadScriptButton.EnableWindow(!isObjectScriptSet);
-		unloadScriptButton.EnableWindow(isObjectScriptSet);
+		unloadScriptButton.EnableWindow(isDllLoadedSet);
 	}
 }
 
