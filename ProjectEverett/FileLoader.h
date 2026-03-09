@@ -128,13 +128,14 @@ class FileLoader
 		using ScriptMap = std::map<ScriptDLLPath, ScriptDLLInfo>;
 
 		bool GetScriptFuncFromDLLImpl(
-			const std::string& dllPath,
 			const std::string& funcName,
 			ScriptDLLInfo& dllInfo,
 			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
 		);
 		void SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo);
 		void UnloadScriptDLL(ScriptDLLInfo& dllInfo);
+		bool ReloadScriptFuncsFromDLL(ScriptDLLInfo& dllInfo, const std::string& funcToSkip);
+		std::string GetDLLNameFromDLLPath(const std::string& dllPath);
 
 		constexpr static char cleanUpFuncName[] = "CleanUp";
 

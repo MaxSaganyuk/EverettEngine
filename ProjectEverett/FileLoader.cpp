@@ -27,6 +27,7 @@
 
 #include "EverettStructs.h"
 #include "EverettException.h"
+#include "OutputUtils.h"
 
 void ConvertFromAssimpToGLM(const aiMatrix4x4& assimpMatrix, glm::mat4& glmMatrix)
 {
@@ -616,6 +617,7 @@ bool FileLoader::ModelLoader::LoadModel(
 void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo)
 {
 	dllInfo.dllHandle = dllHandle;
+	std::cout << "Loaded " << GetDLLNameFromDLLPath(dllPath) << '\n';
 
 	if (!dllInfo.cleanUpFunc)
 	{
@@ -648,27 +650,16 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 
 	if (dllHandle)
 	{
-		success = true;
 		ScriptDLLInfo* dllInfo = nullptr;
 
 		if (dllHandleMap.contains(dllPath))
 		{
 			dllInfo = &dllHandleMap.at(dllPath);
 
-			if (dllHandle != dllHandleMap[dllPath].dllHandle)
+			if (dllHandle != dllInfo->dllHandle)
 			{
 				SetNewDLLHandle(dllPath, dllHandle, *dllInfo);
-
-				for (auto& [currentFuncName, func] : dllInfo->scriptFuncMap)
-				{
-					if (funcName != currentFuncName)
-					{
-						success &= GetScriptFuncFromDLLImpl(
-							dllPath, currentFuncName, *dllInfo, scriptFuncWeakPtr
-						);
-					}
-				}
-
+				OutputUtils::LogOrError(ReloadScriptFuncsFromDLL(*dllInfo, funcName), "Reload status");
 			}
 		}
 		else
@@ -677,15 +668,34 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 			SetNewDLLHandle(dllPath, dllHandle, *dllInfo);
 		}
 
-		success &= GetScriptFuncFromDLLImpl(dllPath, funcName, *dllInfo, scriptFuncWeakPtr);
+		success = GetScriptFuncFromDLLImpl(funcName, *dllInfo, scriptFuncWeakPtr);
+	}
+	else
+	{
+		std::cerr << "Failed to load " << GetDLLNameFromDLLPath(dllPath) << '\n';
 	}
 
 	return success;
 
 }
 
+bool FileLoader::DLLLoader::ReloadScriptFuncsFromDLL(ScriptDLLInfo& dllInfo, const std::string& funcToSkip)
+{
+	bool success = true;
+	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> placeholder;
+
+	for (auto& [currentFuncName, _] : dllInfo.scriptFuncMap)
+	{
+		if (funcToSkip != currentFuncName)
+		{
+			success &= GetScriptFuncFromDLLImpl(currentFuncName, dllInfo, placeholder);
+		}
+	}
+
+	return success;
+}
+
 bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
-	const std::string& dllPath,
 	const std::string& funcName,
 	ScriptDLLInfo& dllInfo,
 	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
@@ -715,8 +725,12 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
 			*currentScriptWrapperFunc = scriptFunc;
 		}
 
+		std::cout << "Successfully loaded " << funcName << " function\n";
+
 		return true;
 	}
+
+	std::cerr << "Failed to load " << funcName << " function\n";
 
 	return false;
 }
@@ -724,6 +738,7 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
 void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
 {
 	UnloadScriptDLL(dllHandleMap.at(dllPath));
+	std::cout << "Unloaded " << GetDLLNameFromDLLPath(dllPath) << '\n';
 }
 
 void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
@@ -749,6 +764,11 @@ void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
 	}
 }
 
+std::string FileLoader::DLLLoader::GetDLLNameFromDLLPath(const std::string& dllPath)
+{
+	return dllPath.substr(dllPath.rfind('\\') + 1, std::string::npos);
+}
+
 std::vector<std::pair<std::string, std::string>> FileLoader::DLLLoader::GetLoadedScriptDlls()
 {
 	std::vector<std::pair<std::string, std::string>> loadedDlls;
@@ -756,7 +776,7 @@ std::vector<std::pair<std::string, std::string>> FileLoader::DLLLoader::GetLoade
 
 	for (auto& [dllPath, dllInfo] : dllHandleMap)
 	{
-		loadedDlls.push_back({ dllPath, dllPath.substr(dllPath.rfind('\\') + 1, std::string::npos) });
+		loadedDlls.push_back({ dllPath, GetDLLNameFromDLLPath(dllPath) });
 	}
 
 	return loadedDlls;
