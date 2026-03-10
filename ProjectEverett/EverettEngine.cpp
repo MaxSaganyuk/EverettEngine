@@ -389,6 +389,9 @@ void EverettEngine::RunRenderWindow()
 				sound.UpdateSoundPosition();
 			}
 		}
+
+		logOutput->ExecuteManualCallbacks();
+		errorOutput->ExecuteManualCallbacks();
 	};
 
 	mainLGL->RunRenderingCycle(additionalFuncs);
@@ -1887,8 +1890,12 @@ void EverettEngine::SetRenderLoggerCallbacks(bool value)
 		if (value)
 		{
 			logger->CreateLogMessage("Trigger render text shader load and custom output buffer set");
-			logOutput->SetEndlineCallback("RenderLogger", [this](const std::string& str) { logger->CreateLogMessage(str); });
-			errorOutput->SetEndlineCallback("RenderLogger", [this](const std::string& str) { logger->CreateErrorMessage(str); });
+			logOutput->SetEndlineCallback(
+				"RenderLogger", [this](const std::string& str) { logger->CreateLogMessage(str); }, true
+			);
+			errorOutput->SetEndlineCallback(
+				"RenderLogger", [this](const std::string& str) { logger->CreateErrorMessage(str); }, true
+			);
 		}
 		else
 		{

@@ -43,6 +43,5 @@ private:
 	RenderTextDeleteFunc deleteFunc;
 
 	size_t counter;
-	//std::vector<std::string> pureMessageCollection; Output to file additionally needed as well
 	std::list<std::pair<size_t, LGLStructs::TextInfo>> renderMessageCollection;
 };

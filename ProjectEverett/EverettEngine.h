@@ -337,7 +337,7 @@ private:
 
 	std::unique_ptr<CustomOutput> logOutput;
 	std::unique_ptr<CustomOutput> errorOutput;
-	std::vector<std::string> logStrings;
+	std::list<std::string> logStrings;
 
 	class LastKeyPressPoll
 	{
