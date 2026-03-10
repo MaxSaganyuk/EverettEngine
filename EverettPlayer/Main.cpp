@@ -11,29 +11,37 @@ struct Config
 {
 	int windowWidth = 800;
 	int windowHeight = 600;
-	std::string windowTitle;
-	std::string startSave;
-	bool fullscreenForce;
-	bool debugText;
-	bool defaultWASD;
+	std::string windowTitle = "";
+	std::string startSave; // must have start save
+	bool fullscreenForce = false;
+	bool debugText = false;
+	bool defaultWASD = false;
 };
 
-void ReadConfigFile(Config& config)
+bool ReadConfigFile(Config& config)
 {
-	stdEx::map<std::string, int> expectedKeys;
+	bool success = false;
 
-	expectedKeys.emplace("WindowWidth",     0);
-	expectedKeys.emplace("WindowHeight",    1);
-	expectedKeys.emplace("WindowTitle",     2);
-	expectedKeys.emplace("StartSave",       3);
-	expectedKeys.emplace("FullscreenForce", 4);
-	expectedKeys.emplace("DebugText",       5);
-	expectedKeys.emplace("DefaultWASD",     6);
-;
-	expectedKeys.SetDefaultValue(-1);
-
-	std::fstream file("config.ini", std::ios::in);
 	std::string line;
+	std::fstream file("config.ini", std::ios::in);
+
+	if (!file.is_open())
+	{
+		return false;
+	}
+
+	stdEx::map<std::string, int> expectedKeys;
+	int indexer = 0;
+
+	expectedKeys.emplace("WindowWidth",     indexer++);
+	expectedKeys.emplace("WindowHeight",    indexer++);
+	expectedKeys.emplace("WindowTitle",     indexer++);
+	expectedKeys.emplace("StartSave",       indexer++);
+	expectedKeys.emplace("FullscreenForce", indexer++);
+	expectedKeys.emplace("DebugText",       indexer++);
+	expectedKeys.emplace("DefaultWASD",     indexer++);
+
+	expectedKeys.SetDefaultValue(-1);
 
 	while (!file.eof())
 	{
@@ -56,6 +64,7 @@ void ReadConfigFile(Config& config)
 				break;
 			case 3:
 				config.startSave = value;
+				success = true;
 				break;
 			case 4:
 				config.fullscreenForce = std::stoi(value);
@@ -69,36 +78,39 @@ void ReadConfigFile(Config& config)
 			}
 		}
 	}
+
+	return success;
 }
 
 int main(int argc, char* argv[])
 {
 	Config config;
 
-	ReadConfigFile(config);
-
-	try
+	if (ReadConfigFile(config))
 	{
-		EverettEngine engine;
-
-		engine.CreateAndSetupMainWindow(
-			config.windowWidth, 
-			config.windowHeight, 
-			config.windowTitle, 
-			config.fullscreenForce, 
-			config.debugText
-		);
-		
-		if (config.defaultWASD)
+		try
 		{
-			engine.SetDefaultWASDControls();
+			EverettEngine engine;
+
+			engine.CreateAndSetupMainWindow(
+				config.windowWidth,
+				config.windowHeight,
+				config.windowTitle,
+				config.fullscreenForce,
+				config.debugText
+			);
+
+			if (config.defaultWASD)
+			{
+				engine.SetDefaultWASDControls();
+			}
+
+			engine.LoadDataFromFile(config.startSave);
+			engine.RunRenderWindow();
 		}
-		
-		engine.LoadDataFromFile(config.startSave);
-		engine.RunRenderWindow();
-	}
-	catch (const EverettException&)
-	{
-		std::terminate();
+		catch (const EverettException&)
+		{
+			std::terminate();
+		}
 	}
 }
