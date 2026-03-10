@@ -146,7 +146,8 @@ class FileLoader
 		bool GetScriptFuncFromDLL(
 			const std::string& dllPath,
 			const std::string& funcName,
-			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
+			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr,
+			bool& reloadExecuted
 		);
 		void UnloadScriptDLL(const std::string& dllPath);
 		std::vector<std::pair<std::string, std::string>> GetLoadedScriptDlls();

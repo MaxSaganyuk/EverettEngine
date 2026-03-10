@@ -300,6 +300,11 @@ private:
 	void SetRenderLoggerCallbacks(bool value = true);
 	std::string GetDateTimeStr();
 
+	template<typename FunctionType, typename... Params>
+	void ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values);
+	template<typename Sim, typename FunctionType, typename... Params>
+	void ExecuteFuncForAllSimObjectsFor(std::map<std::string, Sim>& container, FunctionType func, Params&&... values);
+
 	// Ranges predicates
 	static bool IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement);
 

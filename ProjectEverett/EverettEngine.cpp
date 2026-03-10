@@ -950,6 +950,8 @@ void EverettEngine::SetScriptToObjectImpl(
 	const std::string& dllName
 )
 {
+	bool reloadExecuted = false;
+
 	if (fileLoader && object)
 	{
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncWeakPtr;
@@ -958,18 +960,23 @@ void EverettEngine::SetScriptToObjectImpl(
 		fileLoader->dllLoader.GetScriptFuncFromDLL(
 			dllPathToUse,
 			objectName,
-			scriptFuncWeakPtr
+			scriptFuncWeakPtr,
+			reloadExecuted
 		);
 
 		if (scriptFuncWeakPtr.lock())
 		{
 			object->AddScriptFunc(dllPathToUse, dllName, scriptFuncWeakPtr);
 		}
+	}
 
-		if (object->IsScriptFuncAdded(dllName))
-		{
-			object->ExecuteScriptFunc(dllName);
-		}
+	if (reloadExecuted)
+	{
+		ExecuteFuncForAllSimObjects(&ObjectSim::ExecuteScriptFunc, dllName);
+	}
+	else
+	{
+		object->ExecuteScriptFunc(dllName);
 	}
 }
 
@@ -1010,6 +1017,8 @@ void EverettEngine::SetScriptToKey(
 	const std::string& dllName
 )
 {
+	bool reloadExecuted = false;
+
 	if (fileLoader && !keyName.empty())
 	{
 		bool isPressedExist = false;
@@ -1027,8 +1036,8 @@ void EverettEngine::SetScriptToKey(
 
 		// Using bitwise or to avoid short-circuiting second call
 		bool anyFuncAdded = 
-			fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress) | 
-			fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease);
+			fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress, reloadExecuted) |
+		fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease, reloadExecuted);
 
 		if (anyFuncAdded)
 		{
@@ -1073,6 +1082,11 @@ void EverettEngine::SetScriptToKey(
 			}
 		}
 	}
+
+	if (reloadExecuted)
+	{
+		ExecuteFuncForAllSimObjects(&ObjectSim::ExecuteScriptFunc, dllName);
+	}
 }
 
 bool EverettEngine::IsKeyScriptSet(
@@ -1088,6 +1102,48 @@ bool EverettEngine::IsKeyScriptSet(
 	}
 
 	return false;
+}
+
+template<typename ClassType, typename MemberFunc, typename... Params>
+concept ConfirmMemberOf = requires(ClassType object, MemberFunc memberFunc, Params&&... values)
+{
+	(object.*memberFunc)(std::forward<Params>(values)...);
+};
+
+template<typename FunctionType, typename... Params>
+void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values)
+{
+	static_assert(ConfirmMemberOf<ObjectSim, FunctionType, Params...>, "Must accept ObjectSim or derived member func");
+
+	if constexpr (ConfirmMemberOf<SolidSim, FunctionType, Params...>)
+	{
+		for (auto& [_, currentMSM] : MSM)
+		{
+			ExecuteFuncForAllSimObjectsFor(currentMSM.solids, func, std::forward<Params>(values)...);
+		}
+	}
+	if constexpr (ConfirmMemberOf<LightSim, FunctionType, Params...>)
+	{
+		for (auto& [_, lightsOfThisType] : lights)
+		{
+			ExecuteFuncForAllSimObjectsFor(lightsOfThisType, func, std::forward<Params>(values)...);
+		}
+	}
+	if constexpr (ConfirmMemberOf<SoundSim, FunctionType, Params...>)
+	{
+		ExecuteFuncForAllSimObjectsFor(sounds, func, std::forward<Params>(values)...);
+	}
+}
+
+template<typename Sim, typename FunctionType, typename... Params>
+void EverettEngine::ExecuteFuncForAllSimObjectsFor(
+	std::map<std::string, Sim>& container, FunctionType func, Params&&... values
+)
+{
+	for (auto& [_, sim] : container)
+	{
+		(sim.*func)(std::forward<Params>(values)...);
+	}
 }
 
 std::string EverettEngine::CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder)

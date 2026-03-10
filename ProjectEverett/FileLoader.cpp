@@ -646,7 +646,8 @@ bool FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
 bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 	const std::string& dllPath,
 	const std::string& funcName,
-	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
+	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr,
+	bool& reloadExecuted
 )
 {
 	bool success = false;
@@ -670,6 +671,7 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 			{
 				SetNewDLLHandle(dllPath, dllHandle, *dllInfo);
 				OutputUtils::LogOrError(ReloadScriptFuncsFromDLL(*dllInfo, funcName), "Reload status");
+				reloadExecuted = true;
 			}
 		}
 		else
