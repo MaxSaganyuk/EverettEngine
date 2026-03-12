@@ -39,6 +39,7 @@ CObjectEditDialog::CObjectEditDialog(
 	subtypeName(selectedNodes.size() > 1 ? selectedNodes[1].second : ""),
 	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
 	currentObjectInterface(*engineRef.GetObjectInterface(objectType, subtypeName, objectName)),
+	castedCameraInterface(nullptr),
 	castedSolidInterface(nullptr),
 	castedLightInterface(nullptr),
 	castedSoundInterface(nullptr)
@@ -90,9 +91,10 @@ CString CObjectEditDialog::GenerateTitle()
 
 void CObjectEditDialog::SetupObjectParams()
 {
-	bool isSolid = objectType == EverettEngine::ObjectTypes::Solid;
-	bool isLight = objectType == EverettEngine::ObjectTypes::Light;
-	bool isSound = objectType == EverettEngine::ObjectTypes::Sound;
+	bool isCamera = objectType == EverettEngine::ObjectTypes::Camera;
+	bool isSolid  = objectType == EverettEngine::ObjectTypes::Solid;
+	bool isLight  = objectType == EverettEngine::ObjectTypes::Light;
+	bool isSound  = objectType == EverettEngine::ObjectTypes::Sound;
 
 	propText.ShowWindow(isSolid || isLight);
 	if (isSolid || isLight)
@@ -122,17 +124,22 @@ void CObjectEditDialog::SetupObjectParams()
 	playerLoopCheck.EnableWindow(false);
 	playerSpeedEdit.EnableWindow(false);
 
-	if (isSolid)
+	switch (objectType)
 	{
-		castedSolidInterface = dynamic_cast<ISolidSim*>(&currentObjectInterface);
-	}
-	else if (isLight)
-	{
-		castedLightInterface = dynamic_cast<ILightSim*>(&currentObjectInterface);
-	}
-	else
-	{
-		castedSoundInterface = dynamic_cast<ISoundSim*>(&currentObjectInterface);
+	case EverettEngine::ObjectTypes::Camera:
+		castedCameraInterface = dynamic_cast<ICameraSim*>(&currentObjectInterface);
+		break;
+	case EverettEngine::ObjectTypes::Solid:
+		castedSolidInterface  = dynamic_cast<ISolidSim*>(&currentObjectInterface);
+		break;
+	case EverettEngine::ObjectTypes::Light:
+		castedLightInterface  = dynamic_cast<ILightSim*>(&currentObjectInterface);
+		break;
+	case EverettEngine::ObjectTypes::Sound:
+		castedSoundInterface  = dynamic_cast<ISoundSim*>(&currentObjectInterface);
+		break;
+	default:
+		throw std::runtime_error("Unreachable");
 	}
 
 	if (isSolid || isSound)
@@ -320,7 +327,7 @@ void CObjectEditDialog::StartObjectMoveDlg(CObjectMoveDialog::ObjectTransformTyp
 	CObjectMoveDialog moveDlg(
 		engineRef,
 		currentObjectInterface,
-		castedSolidInterface != nullptr,
+		castedSolidInterface || castedCameraInterface,
 		transType
 	);
 

@@ -98,6 +98,12 @@ void CameraSim::UpdateViewMatrix()
 	view = glm::lookAt(pos, pos + front, GetUpVectorAddr());
 }
 
+void CameraSim::ForceModelUpdate()
+{
+	SolidSim::ForceModelUpdate();
+	UpdateViewMatrix();
+}
+
 void CameraSim::MoveInDirection(Direction dir, const glm::vec3& axisToLimit, bool executeLinkedObjects)
 {
 	SolidSim::MoveInDirection(dir, cameraAxisLimit, executeLinkedObjects);

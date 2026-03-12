@@ -51,6 +51,7 @@ private:
 
 	AdString chosenObjectName;
 	IObjectSim& currentObjectInterface;
+	ICameraSim* castedCameraInterface;
 	ISolidSim* castedSolidInterface;
 	ILightSim* castedLightInterface;
 	ISoundSim* castedSoundInterface;

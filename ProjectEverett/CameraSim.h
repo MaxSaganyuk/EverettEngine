@@ -46,6 +46,8 @@ public:
 	void RotateByMousePos(float xpos, float ypos);
 	void Zoom(float xpos, float ypos);
 
+	void ForceModelUpdate() override;
+
 	void MoveInDirection(
 		Direction dir, const glm::vec3& axisToLimit = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) override;
