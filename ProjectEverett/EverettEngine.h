@@ -173,7 +173,8 @@ public:
 	EVERETT_API static ObjectTypes GetObjectTypeToName(const std::string& objectName);
 
 	// Must be called on separate thread
-	EVERETT_API int PollForLastKeyPressed();
+	EVERETT_API int PollForLastKeyPressed(); // -2 is abort code
+	EVERETT_API void AbortKeyPressWait();
 
 	EVERETT_API static std::string ConvertKeyTo(int keyId);
 	EVERETT_API static int         ConvertKeyTo(const std::string& keyName);
@@ -343,10 +344,13 @@ private:
 	{
 	public:
 		LastKeyPressPoll();
+		
+		void Reset();
 
 		void KeyPressCallback(int key, int scancode, int action, int mods);
 		void WaitForKeyPress();
 		int GetLastKeyPressedID();
+		void StopWaiting(int keyID);
 
 	private:
 		std::mutex mux;
@@ -354,4 +358,6 @@ private:
 	    int lastKeyPressedID;
 		bool isValidKeyPress;
 	};
+
+	LastKeyPressPoll lastKeyPressPoll;
 };

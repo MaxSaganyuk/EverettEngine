@@ -419,10 +419,10 @@ void EverettEngine::SetModelPath(const std::string& modelPath)
 
 int EverettEngine::PollForLastKeyPressed()
 {
-	LastKeyPressPoll lastKeyPressPoll;
+	lastKeyPressPoll.Reset();
 
 	mainLGL->SetKeyPressCallback(
-		[&lastKeyPressPoll](int key, int scancode, int action, int mods) { 
+		[this](int key, int scancode, int action, int mods) { 
 			lastKeyPressPoll.KeyPressCallback(key, scancode, action, mods); 
 		}
 	);
@@ -436,6 +436,10 @@ int EverettEngine::PollForLastKeyPressed()
 	return lastKeyPressPoll.GetLastKeyPressedID();
 }
 
+void EverettEngine::AbortKeyPressWait()
+{
+	lastKeyPressPoll.StopWaiting(-2);
+}
 
 std::string EverettEngine::ConvertKeyTo(int keyId)
 {
@@ -1935,6 +1939,11 @@ std::string EverettEngine::GetAvailableObjectName(const std::string& name)
 
 EverettEngine::LastKeyPressPoll::LastKeyPressPoll()
 {
+	Reset();
+}
+
+void EverettEngine::LastKeyPressPoll::Reset()
+{
 	lastKeyPressedID = -1;
 	isValidKeyPress = false;
 }
@@ -1943,10 +1952,15 @@ void EverettEngine::LastKeyPressPoll::KeyPressCallback(int key, int scancode, in
 {
 	if (action)
 	{
-		lastKeyPressedID = key;
-		isValidKeyPress = true;
-		cv.notify_one();
+		StopWaiting(key);
 	}
+}
+
+void EverettEngine::LastKeyPressPoll::StopWaiting(int keyID)
+{
+	lastKeyPressedID = keyID;
+	isValidKeyPress = true;
+	cv.notify_one();
 }
 
 void EverettEngine::LastKeyPressPoll::WaitForKeyPress()

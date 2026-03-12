@@ -43,6 +43,12 @@ BOOL CKeybindOptionDlg::OnInitDialog()
 
 CKeybindOptionDlg::~CKeybindOptionDlg()
 {
+	if (pollForKeyPressThread)
+	{
+		engineRef.AbortKeyPressWait();
+		pollForKeyPressThread->detach();
+	}
+
 	ResetPollForKeyPressThread();
 }
 
@@ -50,7 +56,6 @@ void CKeybindOptionDlg::ResetPollForKeyPressThread()
 {
 	if (pollForKeyPressThread)
 	{
-		pollForKeyPressThread->join();
 		pollForKeyPressThread.reset();
 	}
 }
@@ -78,15 +83,23 @@ void CKeybindOptionDlg::OnKeybindInterClick()
 	engineRef.ForceFocusOnWindow("LGL");
 	
 	ResetPollForKeyPressThread();
-	pollForKeyPressThread = std::make_unique<std::thread>([this]() { SetEditToKeyName(); });
+	pollForKeyPressThread = std::make_unique<std::jthread>([this]() { SetEditToKeyName(); });
 }
 
 void CKeybindOptionDlg::SetEditToKeyName()
 {
-	keyName = EverettEngine::ConvertKeyTo(engineRef.PollForLastKeyPressed());
-	SendMessage(BringEverettGuiBack);
-	keyNameEdit.SetWindowTextW(keyName);
-	BlockLoadScriptButton(false);
+	keybindInterButton.EnableWindow(false);
+
+	int keyID = engineRef.PollForLastKeyPressed();
+
+	if (keyID != -2)
+	{
+		keyName = EverettEngine::ConvertKeyTo(keyID);
+		SendMessage(BringEverettGuiBack);
+		keyNameEdit.SetWindowTextW(keyName);
+		BlockLoadScriptButton(false);
+		keybindInterButton.EnableWindow(true);
+	}
 }
 
 LRESULT CKeybindOptionDlg::OnBringEverettGuiBack(WPARAM wParam, LPARAM lParam)

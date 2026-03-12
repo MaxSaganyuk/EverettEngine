@@ -44,7 +44,7 @@ private:
 	CEdit keyNameEdit;
 	CButton keybindInterButton;
 	CButton holdableCheck;
-	std::unique_ptr<std::thread> pollForKeyPressThread;
+	std::unique_ptr<std::jthread> pollForKeyPressThread;
 
 	AdString keyName;
 
