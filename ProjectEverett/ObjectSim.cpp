@@ -18,32 +18,18 @@ void ObjectSim::ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... 
 	visited = false;
 }
 
-void ObjectSim::UpdateFrontVector()
-{
-	CheckRotationLimits();
-
-	glm::vec3 direction;
-	const Rotation& roateRef = rotate;
-	direction.x = cos(roateRef.GetPitch()) * sin(roateRef.GetYaw());
-	direction.y = sin(roateRef.GetPitch());
-	direction.z = cos(roateRef.GetPitch()) * cos(roateRef.GetYaw());
-	front = glm::normalize(direction);
-}
-
 ObjectSim::ObjectSim(
 	const glm::vec3& pos,
 	const glm::vec3& scale,
-	const glm::vec3& front,
 	const float speed
 )
-	: front(front), pos(pos), scale(scale), speed(speed), rotate({}), visited(false), objectLinkingEnabled(true)
+	: pos(pos), scale(scale), speed(speed), visited(false), objectLinkingEnabled(true), 
+	  orient({1.0f, 0.0f, 0.0f, 0.0f})
 {
 	rotationLimits = {
 		{-fullRotation, -fullRotation, -fullRotation},
 		{ fullRotation,  fullRotation,  fullRotation}
 	};
-
-	up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	lastPos = pos;
 
@@ -81,11 +67,11 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	std::string res = "";
 
 	res += SimSerializer::GetValueToSaveFrom(scale);
-	res += SimSerializer::GetValueToSaveFrom(front);
-	res += SimSerializer::GetValueToSaveFrom(up);
+	res += SimSerializer::GetValueToSaveFrom(glm::vec3{});
+	res += SimSerializer::GetValueToSaveFrom(glm::vec3{});
 	res += SimSerializer::GetValueToSaveFrom(pos);
 	res += SimSerializer::GetValueToSaveFrom(lastPos);
-	res += SimSerializer::GetValueToSaveFrom(rotate);
+	res += SimSerializer::GetValueToSaveFrom(glm::vec3{});
 	res += SimSerializer::GetValueToSaveFrom(lastBlocker);
 	res += SimSerializer::GetValueToSaveFrom(speed);
 	res += SimSerializer::GetValueToSaveFrom(ghostMode);
@@ -94,6 +80,7 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	res += SimSerializer::GetValueToSaveFrom(rotationLimits);
 	res += SimSerializer::GetValueToSaveFrom(scriptFuncStorage.GetAddedScriptDLLs());
 	res += SimSerializer::GetValueToSaveFrom(objectLinkingEnabled);
+	res += SimSerializer::GetValueToSaveFrom(orient);
 
 	return res;
 }
@@ -101,13 +88,15 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = true;
+	glm::vec3 legacyCompatibilityVect;
+	Rotation legacyRotationVect;
 
 	res = res && SimSerializer::SetValueToLoadFrom(line, scale,                                   1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, front,                                   1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, up,                                      1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, pos,                                     1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, lastPos,                                 1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, rotate,                                  1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyRotationVect,                      1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, lastBlocker,                             1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, speed,                                   1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, ghostMode,                               1);
@@ -116,39 +105,20 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits,                          1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect, 2);
 	res = res && SimSerializer::SetValueToLoadFrom(line, objectLinkingEnabled,                    5);
+	res = res && SimSerializer::SetValueToLoadFrom(line, orient,                                  6);
+
+	if (!legacyRotationVect.Zeroed())
+	{
+		RotateImpl(legacyRotationVect);
+	}
 
 	return res;
 }
 
 void ObjectSim::CheckRotationLimits()
 {
-	auto CheckRotation = [](float& toCheck, float min, float max)
-	{
-		if (toCheck > fullRotation)
-		{
-			toCheck = 0.0f;
-		}
-		if (toCheck < -fullRotation)
-		{
-			toCheck = 0.0f;
-		}
-
-		if (toCheck > max)
-		{
-			toCheck = max;
-		}
-		else if (toCheck < min)
-		{
-			toCheck = min;
-		}
-	};
-
-	for (int i = 0; i < 3; ++i)
-	{
-		CheckRotation(rotate[i], rotationLimits.first[i], rotationLimits.second[i]);
-	}
+	// TODO: rotation recalculation 
 }
-
 
 void ObjectSim::SetGhostMode(bool val, bool executeLinkedObjects)
 {
@@ -220,11 +190,9 @@ void ObjectSim::SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects)
 	}
 }
 
-void ObjectSim::SetRotationVector(const Rotation& vect, bool executeLinkedObjects)
+void ObjectSim::SetOrientation(const glm::quat& quat, bool executeLinkedObjects)
 {
-	rotate = vect;
-
-	UpdateFrontVector();
+	orient = quat;
 
 	if (rotationChangeCallback)
 	{
@@ -233,18 +201,20 @@ void ObjectSim::SetRotationVector(const Rotation& vect, bool executeLinkedObject
 
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
-		ExecuteLinkedObjects(&ObjectSim::SetRotationVector, vect, true);
+		ExecuteLinkedObjects(&ObjectSim::SetOrientation, quat, true);
 	}
 }
 
-const glm::vec3& ObjectSim::GetFrontVectorAddr()
+glm::vec3 ObjectSim::GetFrontVector()
 {
-	return front;
+	const glm::quat& oreintRef = orient;
+	return oreintRef * worldFront;
 }
 
-const glm::vec3& ObjectSim::GetUpVectorAddr()
+glm::vec3 ObjectSim::GetUpVector()
 {
-	return up;
+	const glm::quat& oreintRef = orient;
+	return oreintRef * worldUp;
 }
 
 glm::vec3& ObjectSim::GetPositionVectorAddr()
@@ -255,6 +225,11 @@ glm::vec3& ObjectSim::GetPositionVectorAddr()
 glm::vec3& ObjectSim::GetScaleVectorAddr()
 {
 	return scale;
+}
+
+glm::quat& ObjectSim::GetOrientationAddr()
+{
+	return orient;
 }
 
 void ObjectSim::DisableDirection(Direction dir, bool executeLinkedObjects)
@@ -345,22 +320,22 @@ void ObjectSim::MoveInDirection(Direction dir, const glm::vec3& limitAxis, bool 
 	switch (dir)
 	{
 	case Direction::Forward:
-		pos += correctedSpeed * front * limitAxis;
+		pos += correctedSpeed * GetFrontVector() * limitAxis;
 		break;
 	case Direction::Backward:
-		pos -= correctedSpeed * front * limitAxis;
+		pos -= correctedSpeed * GetFrontVector() * limitAxis;
 		break;
 	case Direction::Left:
-		pos -= correctedSpeed * glm::normalize(glm::cross(front, up));
+		pos -= correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
 		break;
 	case Direction::Right:
-		pos += correctedSpeed * glm::normalize(glm::cross(front, up));
+		pos += correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
 		break;
 	case Direction::Up:
-		pos += glm::abs(correctedSpeed * glm::normalize(front * up));
+		pos += glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
 		break;
 	case Direction::Down:
-		pos -= glm::abs(correctedSpeed * glm::normalize(front * up));
+		pos -= glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
 		break;
 	default:
 		ThrowExceptionWMessage("Undefined direction");
@@ -405,9 +380,22 @@ void ObjectSim::LimitRotations(const Rotation& min, const Rotation& max, bool ex
 	}
 }
 
+void ObjectSim::RotateImpl(const Rotation& toRotate)
+{
+	glm::quat pitch = glm::angleAxis(toRotate.GetPitch(), worldRight);
+	glm::quat yaw   = glm::angleAxis(toRotate.GetYaw(),   worldUp);
+	glm::quat roll  = glm::angleAxis(toRotate.GetRoll(),  worldFront);
+
+	glm::quat& orientRef = orient;
+	orient = glm::normalize(pitch * yaw * roll * orientRef);
+}
+
 void ObjectSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 {
-	UpdateFrontVector();
+	if (!toRotate.Zeroed())
+	{
+		RotateImpl(toRotate);
+	}
 
 	if (rotationChangeCallback)
 	{

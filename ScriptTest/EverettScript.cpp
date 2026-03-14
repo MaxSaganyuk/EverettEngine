@@ -53,18 +53,18 @@ public:
 		testCharSolid->EnableObjectLinking(linkedToCamera);
 	}
 
-	void Go(float rotation, float movementByX, float movementByZ)
+	void Go(float rotation)
 	{
 		if (testCharSolid)
 		{
 			if (!moving)
 			{
-				testCharSolid->SetRotationVector({ 0.0f, rotation, 0.0f }, false);
+				testCharSolid->SetOrientation(glm::angleAxis(rotation, IObjectSim::worldUp), false);
 				testCharSolid->PlayModelAnimation(true);
 			}
 
 			moving = true;
-			testCharSolid->MoveByAxis({ movementByX, 0.0f, movementByZ });
+			testCharSolid->MoveByAxis({ glm::sin(rotation), 0.0f, glm::cos(rotation) });
 		}
 	}
 
@@ -133,22 +133,22 @@ ScriptObjectInit(TestChar, ISolidSim)
 
 ScriptKeybindPressed(I)
 {
-	testChar.Go(0.0f, 0.0f, 1.0f);
+	testChar.Go(0.0f);
 }
 
 ScriptKeybindPressed(J)
 {
-	testChar.Go(glm::pi<float>() / 2.0f, 1.0f, 0.0f);
+	testChar.Go(glm::pi<float>() / 2.0f);
 }
 
 ScriptKeybindPressed(K)
 {
-	testChar.Go(glm::pi<float>(), 0.0f, -1.0f);
+	testChar.Go(glm::pi<float>());
 }
 
 ScriptKeybindPressed(L)
 {
-	testChar.Go(-glm::pi<float>() / 2.0f, -1.0f, 0.0f);
+	testChar.Go(-glm::pi<float>() / 2.0f);
 }
 
 ScriptKeybindReleased(I)

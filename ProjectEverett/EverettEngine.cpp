@@ -341,6 +341,7 @@ bool EverettEngine::CreateGizmoSolid(
 		SolidSim& gizmoSolid = MSM[gizmoModelName].solids[gizmoSolidName];
 		gizmoSolid.GetPositionVectorAddr() = relatedObject.GetPositionVectorAddr();
 		gizmoSolid.GetScaleVectorAddr() = { 0.25f, 0.25f, 0.25f };
+		gizmoSolid.SetOrientation(camera->GetOrientationAddr());
 		gizmoSolid.ForceModelUpdate();
 		gizmoSolid.EnableAutoModelUpdates();
 
@@ -580,7 +581,7 @@ bool EverettEngine::CreateSolidImpl(
 	auto modelPtr = MSM[modelName].model.first.lock();
 	auto modelAnimPtr = MSM[modelName].model.second.lock();
 
-	SolidSim newSolid(camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
+	SolidSim newSolid(camera->GetPositionVectorAddr() + camera->GetFrontVector());
 	newSolid.SetBackwardsModelAccess(MSM[modelName].model);
 
 	for (auto& animInfo : modelAnimPtr->animInfoVect)
@@ -657,13 +658,13 @@ bool EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lig
 		LightSim{
 			static_cast<LightSim::LightTypes>(lightType),
 			camera->GetPositionVectorAddr(),
-			glm::vec3(1.0f, 1.0f, 1.0f),
-			camera->GetFrontVectorAddr()
+			glm::vec3(1.0f, 1.0f, 1.0f)
 		}
 	);
 
 	if (resPair.second)
 	{
+		resPair.first->second.SetOrientation(camera->GetOrientationAddr());
 		CheckAndAddToNameTracker(resPair.first->first);
 
 		return true;
@@ -703,7 +704,7 @@ bool EverettEngine::CreateSoundImpl(const std::string& path, const std::string& 
 
 		if (resPair.second)
 		{
-			resPair.first->second.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVectorAddr());
+			resPair.first->second.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVector());
 			CheckAndAddToNameTracker(resPair.first->first);
 
 			return true;
@@ -920,7 +921,7 @@ void EverettEngine::LightUpdater()
 			lightShaderValueNames[static_cast<int>(LightTypes::Spot)].first,
 			index++,
 			lightShaderValueNames[static_cast<int>(LightTypes::Spot)].second,
-			light.GetPositionVectorAddr(), glm::vec3(light.GetFrontVectorAddr()),
+			light.GetPositionVectorAddr(), light.GetFrontVector(),
 			light.GetColorVectorAddr(), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
 			atten.linear, atten.quadratic, glm::cos(glm::radians(12.5f)),
 			glm::cos(glm::radians(17.5f))

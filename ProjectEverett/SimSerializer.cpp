@@ -165,6 +165,19 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::mat4& mat)
 	return PackValue(res);
 }
 
+std::string SimSerializer::GetValueToSaveFrom(const glm::quat& quat)
+{
+	std::string res = "";
+
+	for (size_t i = 0; i < quat.length(); ++i)
+	{
+		res += std::to_string(quat[i]) + ' ';
+	}
+	res.pop_back();
+
+	return PackValue(res);
+}
+
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::mat4& mat, int requiredVersion)
 {
 	ValidateVersionCheck(requiredVersion)
@@ -190,6 +203,32 @@ bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::mat4& mat, i
 	}
 
 	return AssertAndReturn(i == (mat.length() * mat[0].length()));
+}
+
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::quat& quat, int requiredVersion)
+{
+	ValidateVersionCheck(requiredVersion)
+
+	std::string values;
+
+	UnpackValue(line, values);
+
+	std::string value = "";
+	size_t i = 0;
+
+	for (auto c : values)
+	{
+		if (c == ' ')
+		{
+			quat[i++] = FundamentalConvert<float>::Convert(value);
+			value = "";
+			continue;
+		}
+
+		value += c;
+	}
+
+	return AssertAndReturn(i == quat.length());
 }
 
 std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs)

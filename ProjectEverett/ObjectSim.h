@@ -17,7 +17,7 @@ private:
 	template<typename MemberFuncType, typename... ParamTypes>
 	void ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... values);
 
-	void UpdateFrontVector();
+	void RotateImpl(const Rotation& toRotate);
 protected:
 	static inline float renderDeltaTime = 1.0f;
 
@@ -29,10 +29,8 @@ protected:
 
 	ValueObserver<glm::vec3> pos;
 	ValueObserver<glm::vec3> scale;
-	ValueObserver<Rotation>  rotate;
+	ValueObserver<glm::quat> orient;
 
-	glm::vec3 front;
-	glm::vec3 up;
 	glm::vec3 lastPos;
 	bool lastBlocker;
 	float speed;
@@ -58,7 +56,6 @@ public:
 	ObjectSim(
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
 		const glm::vec3& scale = glm::vec3(1.0f, 1.0f, 1.0f),
-		const glm::vec3& front = glm::vec3(0.0f, 0.0f, 1.0f),
 		const float speed = 1.0f
 	);
 	~ObjectSim();
@@ -72,13 +69,14 @@ public:
 
 	void SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
 	void SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
-	void SetRotationVector(const Rotation& vect, bool executeLinkedObjects = true) override;
+	void SetOrientation(const glm::quat& vect, bool executeLinkedObjects = true) override;
 		
-	const glm::vec3& GetFrontVectorAddr() override;
-	const glm::vec3& GetUpVectorAddr() override;
+	glm::vec3 GetFrontVector() override;
+	glm::vec3 GetUpVector() override;
 
 	glm::vec3& GetPositionVectorAddr() override;
 	glm::vec3& GetScaleVectorAddr() override;
+	glm::quat& GetOrientationAddr() override;
 
 	void SetMovementSpeed(float speed, bool executeLinkedObjects = true) override;
 	float GetMovementSpeed() override;

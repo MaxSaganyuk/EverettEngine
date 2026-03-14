@@ -63,7 +63,7 @@ private:
 		UnsetCritical
 	};
 
-	constexpr static inline int latestSerializerVersion = 5;
+	constexpr static inline int latestSerializerVersion = 6;
 	static inline int usedVersion = -1;
 	static VersionValidationState ValidateVersion(int requiredVersion);
 	static bool SetUsedVersion(int usedVersionToSet);
@@ -130,8 +130,10 @@ public:
 	// GLM
 	static std::string GetValueToSaveFrom(const glm::vec3& vec);
 	static std::string GetValueToSaveFrom(const glm::mat4& mat);
-	static bool SetValueToLoadFrom(std::string_view& line, glm::vec3& vec, int requiredVersion);
-	static bool SetValueToLoadFrom(std::string_view& line, glm::mat4& mat, int requiredVersion);
+	static std::string GetValueToSaveFrom(const glm::quat& quat);
+	static bool SetValueToLoadFrom(std::string_view& line, glm::vec3& vec,  int requiredVersion);
+	static bool SetValueToLoadFrom(std::string_view& line, glm::mat4& mat,  int requiredVersion);
+	static bool SetValueToLoadFrom(std::string_view& line, glm::quat& quat, int requiredVersion);
 
 	// Special cases
 	static std::string GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);

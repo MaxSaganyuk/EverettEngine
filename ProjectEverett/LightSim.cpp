@@ -21,14 +21,13 @@ LightSim::LightSim(
 	LightTypes lightType,
 	const glm::vec3& pos,
 	const glm::vec3& scale,
-	const glm::vec3& front,
 	const float speed,
 	const float range
 ) : 
 	lightType(lightType),
 	lightRange(static_cast<int>(range)),
 	color({0.5f, 0.5f, 0.5f}),
-	ObjectSim(pos, scale, front, speed)
+	ObjectSim(pos, scale, speed)
 {
 }
 

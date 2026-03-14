@@ -194,7 +194,7 @@ void CObjectEditDialog::UpdateParams()
 	SetObjectParams({
 		currentObjectInterface.GetPositionVectorAddr(),
 		currentObjectInterface.GetScaleVectorAddr(),
-		currentObjectInterface.GetFrontVectorAddr()
+		currentObjectInterface.GetFrontVector()
 	});
 }
 

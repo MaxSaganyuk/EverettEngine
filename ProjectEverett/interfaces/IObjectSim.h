@@ -32,6 +32,8 @@ public:
 		float GetYaw() const   { return y; };
 		float GetRoll() const  { return z; };
 
+		bool Zeroed() const { return (x + y + z) == 0.0f; }
+
 		Rotation& operator+=(const Rotation& toRotate)
 		{
 			x += toRotate.x;
@@ -42,7 +44,11 @@ public:
 		}
 	};
 
-	constexpr static float fullRotation = 360.0f;
+	constexpr static float fullRotation = 2.0f * glm::pi<float>();
+
+	constexpr static inline const glm::vec3 worldRight{ 1, 0, 0 };
+	constexpr static inline const glm::vec3 worldUp   { 0, 1, 0 };
+	constexpr static inline const glm::vec3 worldFront{ 0, 0, 1 };
 
 	Linkable virtual void InvertMovement(bool value = true, bool executeLinkedObjects = true) = 0;
 	virtual bool IsMovementInverted() = 0;
@@ -52,13 +58,14 @@ public:
 
 	Linkable virtual void SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects = true) = 0;
-	Linkable virtual void SetRotationVector(const Rotation& vect, bool executeLinkedObjects = true) = 0;
+	Linkable virtual void SetOrientation(const glm::quat& quat, bool executeLinkedObjects = true) = 0;
 
-	virtual const glm::vec3& GetUpVectorAddr() = 0;
-	virtual const glm::vec3& GetFrontVectorAddr() = 0;
+	virtual glm::vec3 GetUpVector() = 0;
+	virtual glm::vec3 GetFrontVector() = 0;
 
 	virtual glm::vec3& GetPositionVectorAddr() = 0;
 	virtual glm::vec3& GetScaleVectorAddr() = 0;
+	virtual glm::quat& GetOrientationAddr() = 0;
 
 	Linkable virtual void SetGhostMode(bool val, bool executeLinkedObjects = true) = 0;
 	virtual bool IsGhostMode() const = 0;

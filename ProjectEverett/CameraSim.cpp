@@ -5,11 +5,10 @@ CameraSim::CameraSim(
 	const int windowHeight,
 	const glm::vec3& pos,
 	const glm::vec3& scale,
-	const glm::vec3& front,
 	const float fov,
 	const float speed
 )
-	: SolidSim(pos, scale, front, speed),
+	: SolidSim(pos, scale, speed),
 	  windowHeight(windowHeight), 
 	  windowWidth(windowWidth), 
 	  fov(fov)
@@ -26,8 +25,8 @@ CameraSim::CameraSim(
 	SetMode(Mode::Fly);
 
 	SolidSim::LimitRotations(
-		{ -fullRotation, -90.0f, -fullRotation },
-		{  fullRotation,  90.0f,  fullRotation}
+		{ -fullRotation, -fullRotation / 4, -fullRotation},
+		{  fullRotation,  fullRotation / 4,  fullRotation}
 	);
 
 	SolidSim::SetType(SolidType::Dynamic);
@@ -92,10 +91,9 @@ glm::mat4& CameraSim::GetProjectionMatrixAddr()
 
 void CameraSim::UpdateViewMatrix()
 {
-	const glm::vec3& pos = ObjectSim::GetPositionVectorAddr();
-	const glm::vec3& front = ObjectSim::GetFrontVectorAddr();
+	const glm::vec3& pos = GetPositionVectorAddr();
 
-	view = glm::lookAt(pos, pos + front, GetUpVectorAddr());
+	view = glm::lookAt(pos, pos + GetFrontVector(), GetUpVector());
 }
 
 void CameraSim::ForceModelUpdate()
@@ -127,7 +125,21 @@ void CameraSim::RotateByMousePos(float xpos, float ypos)
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
 
-	SolidSim::Rotate({ yoffset, -xoffset, 0.0f });
+	glm::quat& orientRef = orient;
+
+	glm::quat yaw = glm::angleAxis(-xoffset, worldUp);
+	orientRef = yaw * orientRef;
+	glm::vec3 right = orientRef * worldRight;
+	glm::quat pitch = glm::angleAxis(-yoffset, right);
+	glm::quat orientTest = pitch * orientRef;
+
+	if (glm::abs(glm::dot(orientTest * worldFront, worldUp)) < 0.99f)
+	{
+		orientRef = orientTest;
+	}
+
+	orient = glm::normalize(orientRef);
+	SolidSim::Rotate({});
 	UpdateViewMatrix();
 }
 

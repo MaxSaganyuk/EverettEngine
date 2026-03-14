@@ -11,13 +11,10 @@ void SolidSim::ResetModelMatrix()
 
 	const glm::vec3& posRef = pos;
 	const glm::vec3& scaleRef = scale;
+	const glm::quat& orientRef = orient;
 
 	model = glm::translate(model, posRef);
-	// gimbal lock will happen, will rewrite to use quaternions later
-	for (int i = 0; i < 3; ++i)
-	{
-		model = glm::rotate(model, rotate[i], { i == 0, i == 1, i == 2 });
-	}
+	model *= glm::mat4_cast(orientRef);
 	model = glm::scale(model, scaleRef);
 }
 
@@ -28,16 +25,15 @@ void SolidSim::EnableAutoModelUpdates(bool value)
 
 	pos.SetCallback(resetModelMatrixWrapper);
 	scale.SetCallback(resetModelMatrixWrapper);
-	rotate.SetCallback(resetModelMatrixWrapper);
+	orient.SetCallback(resetModelMatrixWrapper);
 }
 
 SolidSim::SolidSim(
 	const glm::vec3& pos,
 	const glm::vec3& scale,
-	const glm::vec3& front,
 	const float speed
 )
-	: ObjectSim(pos, scale, front, speed)
+	: ObjectSim(pos, scale, speed)
 {
 	ResetModelMatrix();
 	type = SolidType::Static;
@@ -167,24 +163,13 @@ void SolidSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& limitAxis, boo
 
 void SolidSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 {
-	if (type == SolidType::Static && lastBlocker)
-	{
-		rotate += toRotate;
-		ResetModelMatrix();
-	}
-	else 
-	{
-		for (int i = 0; i <3; ++i)
-		{
-			if (toRotate[i])
-			{
-				model = glm::rotate(model, renderDeltaTime * toRotate[i], { i == 0, i == 1, i == 2 });
-				rotate[i] += toRotate[i];
-			}
-		}
-	}
-
 	ObjectSim::Rotate(toRotate, executeLinkedObjects);
+
+	if (type != SolidType::Static)
+	{
+		const glm::quat& orientRef = orient;
+		model *= glm::mat4_cast(renderDeltaTime * orientRef);
+	}
 }
 
 bool SolidSim::CheckForCollision(const SolidSim& solid1, const SolidSim& solid2)
@@ -216,6 +201,7 @@ size_t SolidSim::GetMeshAmount()
 {
 	return STMM.GetMeshAmount();
 }
+
 void SolidSim::SetAllMeshVisibility(bool value)
 {
 	STMM.SetAllMeshVisibility(value);
