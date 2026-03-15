@@ -83,6 +83,8 @@ public:
 		bool enableLogger = true
 	);
 
+	EVERETT_API void SetDebugLogVisible(bool value = true);
+
 	EVERETT_API void SetShaderPath(const std::string& shaderPath);
 	EVERETT_API void SetFontPath(const std::string& fontPath);
 	EVERETT_API void SetModelPath(const std::string& modelPath);

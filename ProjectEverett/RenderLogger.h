@@ -26,6 +26,8 @@ public:
 
 	void CreateLogMessage(const std::string& str);
 	void CreateErrorMessage(const std::string& str);
+
+	void EnableRender(bool value = true);
 private:
 	void CreateMessage(const std::string& str, const std::function<void()>& behaviourToUse);
 

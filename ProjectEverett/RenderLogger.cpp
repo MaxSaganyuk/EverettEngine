@@ -67,3 +67,11 @@ glm::vec3 RenderLogger::GetCurrentTextPosition()
 
 	return currentTextPos;
 }
+
+void RenderLogger::EnableRender(bool value)
+{
+	for (auto& [_, message] : renderMessageCollection)
+	{
+		message.render = value;
+	}
+}

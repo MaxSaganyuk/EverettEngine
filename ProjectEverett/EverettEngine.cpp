@@ -270,6 +270,14 @@ void EverettEngine::CreateAndSetupMainWindow(
 	mainLGL->EnableUniformValueHashing(ENABLE_OPTIMIZATIONS);
 }
 
+void EverettEngine::SetDebugLogVisible(bool value)
+{
+	if (logger)
+	{
+		logger->EnableRender(value);
+	}
+}
+
 void EverettEngine::SetDefaultWASDControls(bool value)
 {
 	std::string walkingDirections = "WSAD";
