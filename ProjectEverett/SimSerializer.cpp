@@ -3,11 +3,11 @@
 
 using namespace std::chrono;
 
-#define ValidateVersionCheck(version) \
-auto versionValidation = ValidateVersion(requiredVersion);            \
-if (versionValidation > VersionValidationState::NewerValid)           \
-{                                                                     \
-	return versionValidation == VersionValidationState::OlderInvalid; \
+#define ValidateVersionCheck(version, deprecated)                      \
+auto versionValidation = ValidateVersion(version, deprecated);         \
+if (versionValidation > VersionValidationState::NewerValid)            \
+{                                                                      \
+	return versionValidation != VersionValidationState::UnsetCritical; \
 } 
 
 std::string SimSerializer::PackValue(const std::string& value)
@@ -33,10 +33,15 @@ bool SimSerializer::AssertAndReturn(bool evaluation)
 	return evaluation;
 }
 
-SimSerializer::VersionValidationState SimSerializer::ValidateVersion(int requiredVersion)
+SimSerializer::VersionValidationState SimSerializer::ValidateVersion(int requiredVersion, int deprecatedAt)
 {
 	if (usedVersion != -1)
 	{
+		if (deprecatedAt && usedVersion >= deprecatedAt)
+		{
+			return VersionValidationState::DeprecatedInvalid;
+		}
+
 		if (usedVersion == requiredVersion)
 		{
 			return VersionValidationState::ExactValid;
@@ -101,9 +106,9 @@ std::string SimSerializer::GetValueToSaveFrom(const std::string& str)
 	return PackValue(str);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion, int deprecatedAt)
 {
-	ValidateVersionCheck(requiredVersion)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	UnpackValue(line, str, false);
 
@@ -123,9 +128,9 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::vec3& vec)
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::vec3& vec, int requiredVersion)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::vec3& vec, int requiredVersion, int deprecatedAt)
 {
-	ValidateVersionCheck(requiredVersion)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	std::string values;
 
@@ -178,9 +183,9 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::quat& quat)
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::mat4& mat, int requiredVersion)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::mat4& mat, int requiredVersion, int deprecatedAt)
 {
-	ValidateVersionCheck(requiredVersion)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	std::string values;
 
@@ -205,9 +210,9 @@ bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::mat4& mat, i
 	return AssertAndReturn(i == (mat.length() * mat[0].length()));
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::quat& quat, int requiredVersion)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::quat& quat, int requiredVersion, int deprecatedAt)
 {
-	ValidateVersionCheck(requiredVersion)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	std::string values;
 
@@ -247,10 +252,10 @@ std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSi
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
 	std::unordered_map<IObjectSim::Direction, bool>& disabledDirs,
-	int requiredVersion
+	int requiredVersion, int deprecatedAt
 )
 {
-	ValidateVersionCheck(requiredVersion)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	std::string values;
 
@@ -304,10 +309,10 @@ std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotati
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
 	std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits,
-	int requiredVersion
+	int requiredVersion, int deprecatedAt
 )
 {
-	ValidateVersionCheck(requiredVersion)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	std::string values;
 
@@ -362,9 +367,11 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::string>& ve
 	return PackValue(res);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::vector<std::string>& vectorStr, int requiredVersion)
+bool SimSerializer::SetValueToLoadFrom(
+	std::string_view& line, std::vector<std::string>& vectorStr, int requiredVersion, int deprecatedAt
+)
 {
-	ValidateVersionCheck(requiredVersion)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	std::string values;
 
@@ -415,10 +422,10 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::pair<std::s
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
 	std::vector<std::pair<std::string, std::string>>& vectorPairStr, 
-	int requiredVersion
+	int requiredVersion, int deprecatedAt
 )
 {
-	ValidateVersionCheck(requiredVersion)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	std::string values;
 
@@ -461,10 +468,10 @@ std::string SimSerializer::GetValueToSaveFrom(const std::chrono::system_clock::t
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
 	std::chrono::system_clock::time_point& timePoint, 
-	int requiredVersion
+	int requiredVersion, int deprecatedAt
 )
 {
-	ValidateVersionCheck(requiredVersion)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	std::string value;
 

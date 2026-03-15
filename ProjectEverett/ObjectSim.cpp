@@ -67,11 +67,8 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	std::string res = "";
 
 	res += SimSerializer::GetValueToSaveFrom(scale);
-	res += SimSerializer::GetValueToSaveFrom(glm::vec3{});
-	res += SimSerializer::GetValueToSaveFrom(glm::vec3{});
 	res += SimSerializer::GetValueToSaveFrom(pos);
 	res += SimSerializer::GetValueToSaveFrom(lastPos);
-	res += SimSerializer::GetValueToSaveFrom(glm::vec3{});
 	res += SimSerializer::GetValueToSaveFrom(lastBlocker);
 	res += SimSerializer::GetValueToSaveFrom(speed);
 	res += SimSerializer::GetValueToSaveFrom(ghostMode);
@@ -92,11 +89,11 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	Rotation legacyRotationVect;
 
 	res = res && SimSerializer::SetValueToLoadFrom(line, scale,                                   1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
 	res = res && SimSerializer::SetValueToLoadFrom(line, pos,                                     1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, lastPos,                                 1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyRotationVect,                      1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyRotationVect,                      1, 7);
 	res = res && SimSerializer::SetValueToLoadFrom(line, lastBlocker,                             1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, speed,                                   1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, ghostMode,                               1);
