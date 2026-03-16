@@ -77,6 +77,7 @@ bool SolidSim::CollectInfoToLoadToSTMM(std::string_view& line)
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused,              1);
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped,              1);
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility,                 1);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.modelDefaultColor,              8);
 	}
 
 	return res;
@@ -250,6 +251,16 @@ float SolidSim::GetModelMeshShininess(size_t index)
 std::vector<std::string> SolidSim::GetModelAnimationNames()
 {
 	return STMM.GetAnimationNames();
+}
+
+glm::vec4 SolidSim::GetModelDefaultColor()
+{
+	return STMM.GetModelDefaultColor();
+}
+
+void SolidSim::SetModelDefaultColor(const glm::vec4& color)
+{
+	STMM.SetModelDefaultColor(color);
 }
 
 size_t SolidSim::GetModelAnimationAmount()

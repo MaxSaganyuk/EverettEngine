@@ -113,12 +113,6 @@ EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 	}
 };
 
-EverettEngine::GizmoInfo EverettEngine::gizmoInfo =
-{
-	{ EverettEngine::ObjectTypes::Light, {"lightGizmo", "lightBox.glb"} },
-	{ EverettEngine::ObjectTypes::Sound, {"soundGizmo", "soundBox.glb"} }
-};
-
 std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 {
 	{EverettEngine::ObjectTypes::Camera, CameraSim::GetObjectTypeNameStr(), typeid(CameraSim)},
@@ -296,7 +290,7 @@ void EverettEngine::EnableGizmoCreation()
 {
 	gizmoEnabled = true;
 	gizmoVisible = true;
-	LoadGizmoModels();
+	LoadGizmoModel();
 }
 
 void EverettEngine::SetGizmoVisible(bool value)
@@ -309,40 +303,20 @@ void EverettEngine::SetGizmoVisible(bool value)
 	}
 }
 
-void EverettEngine::LoadGizmoModels()
+void EverettEngine::LoadGizmoModel()
 {
-	for (auto& [gizmoModelName, gizmoModelPath] : GetGizmoModelPaths())
-	{
-		CreateModel(gizmoModelPath, gizmoModelName);
-	}
-}
+	CreateModel(FileLoader::GetCurrentDir() + '\\' + modelPath + '\\' + gizmoModelFile, gizmoModelName);
 
-std::vector<std::pair<std::string, std::string>> EverettEngine::GetGizmoModelPaths()
-{
-	std::vector<std::pair<std::string, std::string>> gizmoPaths;
-
-	for (size_t i = 0; i < static_cast<int>(ObjectTypes::_SIZE); ++i)
-	{
-		ObjectTypes objectType = static_cast<ObjectTypes>(i);
-		if (gizmoInfo.contains(objectType))
-		{
-			gizmoPaths.push_back({ 
-				gizmoInfo[objectType].first, 
-				FileLoader::GetCurrentDir() + '\\' + modelPath + '\\' + gizmoInfo[objectType].second 
-			});
-		}
-	}
-
-	return gizmoPaths;
+	MSM[gizmoModelName].model.first.lock()->lineMode = true;
 }
 
 bool EverettEngine::CreateGizmoSolid(
-	const std::string& gizmoModelName,
 	const std::string& relatedObjModelName,
-	ObjectSim& relatedObject
+	ObjectSim& relatedObject,
+	const glm::vec4& gizmoColor
 )
 {
-	std::string gizmoSolidName = relatedObjModelName + "Gizmo";
+	std::string gizmoSolidName = relatedObjModelName + gizmoModelName;
 	
 	if (CreateSolidImpl(gizmoModelName, gizmoSolidName, true, gizmoVisible))
 	{
@@ -352,6 +326,7 @@ bool EverettEngine::CreateGizmoSolid(
 		gizmoSolid.SetOrientation(camera->GetOrientationAddr());
 		gizmoSolid.ForceModelUpdate();
 		gizmoSolid.EnableAutoModelUpdates();
+		gizmoSolid.SetModelDefaultColor(gizmoColor);
 
 		relatedObject.LinkObject(gizmoSolid);
 
@@ -537,6 +512,11 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 					);
 				}
 
+				if (modelPtr->isTextureless)
+				{
+					LGLUtils::SetShaderUniformArrayAt(*mainLGL, "defaultColors", index, solid.GetModelDefaultColor());
+				}
+
 				++index;
 			}
 			nextStartSolidIndex = index;
@@ -648,7 +628,7 @@ bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 	
 	if (res && gizmoEnabled)
 	{
-		res = CreateGizmoSolid(gizmoInfo[ObjectTypes::Light].first, lightName, lights[lightType][lightName]);
+		res = CreateGizmoSolid(lightName, lights[lightType][lightName], lightGizmoColor);
 	}
 
 	return res;
@@ -687,7 +667,7 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 
 	if (res && gizmoEnabled)
 	{
-		res = CreateGizmoSolid(gizmoInfo[ObjectTypes::Sound].first, soundName, sounds[soundName]);
+		res = CreateGizmoSolid(soundName, sounds[soundName], soundGizmoColor);
 	}
 
 	return res;
@@ -804,7 +784,7 @@ bool EverettEngine::DeleteLight(const std::string& lightName)
 
 	if (gizmoEnabled)
 	{
-		DeleteSolid(lightName + "Gizmo");
+		DeleteSolid(lightName + gizmoModelName);
 	}
 
 	mainLGL->PauseRendering(false);
@@ -830,7 +810,7 @@ bool EverettEngine::DeleteSound(const std::string& soundName)
 
 	if (gizmoEnabled)
 	{
-		DeleteSolid(soundName + "Gizmo");
+		DeleteSolid(soundName + gizmoModelName);
 	}
 
 	mainLGL->PauseRendering(false);
@@ -1334,7 +1314,7 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 
 	if (gizmoEnabled)
 	{
-		LoadGizmoModels();
+		LoadGizmoModel();
 	}
 
 	mainLGL->PauseRendering(false);
@@ -1437,7 +1417,7 @@ void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<s
 		ApplySimInfoFromLine<LightSim>(line, objectInfo, res);
 		if (gizmoEnabled)
 		{
-			CreateGizmoSolid(gizmoInfo[ObjectTypes::Light].first, lightName, lights[lightType][lightName]);
+			CreateGizmoSolid(lightName, lights[lightType][lightName], lightGizmoColor);
 		}
 	}
 
@@ -1454,7 +1434,7 @@ void EverettEngine::LoadSoundFromLine(std::string_view& line, const std::array<s
 		ApplySimInfoFromLine<SoundSim>(line, objectInfo, res);
 		if (gizmoEnabled)
 		{
-			CreateGizmoSolid(gizmoInfo[ObjectTypes::Sound].first, soundName, sounds[soundName]);
+			CreateGizmoSolid(soundName, sounds[soundName], soundGizmoColor);
 		}
 	}
 
@@ -1498,10 +1478,7 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 	AssetPaths loadedFiles = GetPathsFromWorldFile(pathToUse);
 	if (gizmoEnabled)
 	{
-		for (auto& [_, gizmoModelPath] : GetGizmoModelPaths())
-		{
-			loadedFiles.modelPaths.insert(gizmoModelPath);
-		}
+		LoadGizmoModel();
 	}
 
 	std::getline(file, lineLoader);
@@ -1932,8 +1909,7 @@ void EverettEngine::CreateLogReport()
 
 bool EverettEngine::IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement)
 {
-	return MSMelement.first != gizmoInfo[ObjectTypes::Light].first && 
-		MSMelement.first != gizmoInfo[ObjectTypes::Sound].first;
+	return MSMelement.first != gizmoModelName;
 }
 
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)

@@ -231,16 +231,16 @@ private:
 	using LightCollection = std::map<LightTypes, std::map<std::string, LightSim>>;
 	using SoundCollection = std::map<std::string, SoundSim>;
 
-	using GizmoInfo = std::map<ObjectTypes, std::pair<std::string, std::string>>;
+	constexpr static char gizmoModelFile[] = "box.glb";
+	constexpr static char gizmoModelName[] = "Gizmo";
+	constexpr static glm::vec4 lightGizmoColor = { 1.0f, 1.0f, 0.0f, 1.0f };
+	constexpr static glm::vec4 soundGizmoColor = { 0.0f, 0.0f, 1.0f, 1.0f };
 
-	static GizmoInfo gizmoInfo;
-
-	std::vector<std::pair<std::string, std::string>> GetGizmoModelPaths();
-	void LoadGizmoModels();
+	void LoadGizmoModel();
 	bool CreateGizmoSolid(
-		const std::string& gizmoModelName, 
 		const std::string& relatedObjModelName, 
-		ObjectSim& relatedObject
+		ObjectSim& relatedObject,
+		const glm::vec4& gizmoColor
 	);
 
 	bool CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader);

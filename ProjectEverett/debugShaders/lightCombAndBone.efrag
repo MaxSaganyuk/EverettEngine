@@ -70,6 +70,11 @@ uniform SpotLight spotLights[LIGHT_MAX_AMOUNT];
 
 uniform int textureless;
 
+uniform int solidIndex;
+
+#genDefine SOLID_AMOUNT 1
+uniform vec4 defaultColors[SOLID_AMOUNT];
+
 vec3 AmbientLight(vec3 normal)
 {
     vec3 amb = (ambient * vec3(texture(material.diffuse, TexCoords)));
@@ -145,7 +150,7 @@ void main()
 {
     if(textureless == 1)
     {
-        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        FragColor = defaultColors[solidIndex];
         return;
     }
 

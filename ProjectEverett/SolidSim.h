@@ -47,7 +47,7 @@ public:
 	void EnableAutoModelUpdates(bool value = true) override;
 	
 	// Solid to model access section
-	// Mesh access; avalible through interface
+	// Mesh access; available through interface
 	void SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model);
 	std::vector<std::string> GetModelMeshNames() override;
 	size_t GetMeshAmount() override;
@@ -61,7 +61,11 @@ public:
 	float GetModelMeshShininess(const std::string& name);
 	float GetModelMeshShininess(size_t index);
 
-	// Animation access; avalible through interface
+	// Model access; available through interface
+	glm::vec4 GetModelDefaultColor();
+	void SetModelDefaultColor(const glm::vec4& color);
+
+	// Animation access; available through interface
 	std::vector<std::string> GetModelAnimationNames() override;
 	size_t GetModelAnimationAmount() override;
 	void SetModelAnimation(size_t index) override;

@@ -467,6 +467,7 @@ void LGL::Render()
 
 void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 {
+	bool lineModeActive = false;
 	std::array<int, Texture::GetTextureTypeAmount()> textureTypesToUnbind;
 	std::fill(textureTypesToUnbind.begin(), textureTypesToUnbind.end(), false);
 
@@ -510,6 +511,12 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 				if (currentVAO.meshInfo->render)
 				{
+					if (lineModeActive != currentVAO.meshInfo->lineMode)
+					{
+						lineModeActive = currentVAO.meshInfo->lineMode;
+						GLSafeExecute(glPolygonMode, GL_FRONT_AND_BACK, lineModeActive ? GL_LINE : GL_FILL);
+					}
+
 					currentVAOToRender = currentVAO;
 
 					SetCurrentShaderProg(currentVAO.meshInfo->shaderProgram);
@@ -551,6 +558,12 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			}
 
 			currentVAOToRender = {};
+		}
+
+		if (lineModeActive)
+		{
+			lineModeActive = false;
+			GLSafeExecute(glPolygonMode, GL_FRONT_AND_BACK, GL_FILL);
 		}
 
 		RenderText();

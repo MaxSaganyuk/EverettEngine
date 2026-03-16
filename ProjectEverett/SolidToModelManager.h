@@ -30,6 +30,9 @@ public:
 	float GetMeshShininess(size_t index);
 	float GetMeshShininess(const std::string& name);
 
+	void SetModelDefaultColor(const glm::vec4& color);
+	glm::vec4 GetModelDefaultColor();
+
 	std::vector<std::string> GetAnimationNames();
 	size_t GetAnimationAmount();
 	void SetAnimation(size_t index);
@@ -68,6 +71,7 @@ private:
 	PlaybackManager animStates;
 
 	std::vector<bool> meshVisibility;
+	glm::vec4 modelDefaultColor;
 	
 	FullModelInfo* fullModelInfoP;
 };

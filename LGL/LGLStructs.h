@@ -219,25 +219,28 @@ namespace LGLStructs
 	{
 		Mesh mesh;
 		std::string meshName;
-		stdEx::ValWithBackup<bool> isDynamic;
 		stdEx::ValWithBackup<bool> render;
+		stdEx::ValWithBackup<bool> lineMode;
+		stdEx::ValWithBackup<bool> isDynamic;
 		stdEx::ValWithBackup<std::string> shaderProgram;
 		stdEx::ValWithBackup<std::function<void(int)>> behaviour;
 
 		MeshInfo(
-			const Mesh& mesh, 
-			const std::string& meshName, 
-			bool& render, 
-			bool& isDynamic, 
-			std::string& shaderProgram, 
+			const Mesh& mesh,
+			const std::string& meshName,
+			bool& render,
+			bool& lineMode,
+			bool& isDynamic,
+			std::string& shaderProgram,
 			std::function<void(int)>& behaviour
 		)
 		: 
 			mesh(mesh), 
 			meshName(meshName), 
-			render(&render), 
+			render(&render),
+			lineMode(&lineMode),
 			isDynamic(&isDynamic), 
-			shaderProgram(&shaderProgram), 
+			shaderProgram(&shaderProgram),
 			behaviour(&behaviour) 
 		{}
 
@@ -247,6 +250,7 @@ namespace LGLStructs
 	{
 		std::vector<MeshInfo> meshes;
 		bool render;
+		bool lineMode;
 		bool isDynamic;
 		std::string shaderProgram;
 		std::function<void()> modelBehaviour;
@@ -257,6 +261,7 @@ namespace LGLStructs
 		ModelInfo()
 		{
 			render = true;
+			lineMode = false;
 			isDynamic = false;
 			shaderProgram = "0";
 			modelBehaviour = nullptr;
@@ -265,7 +270,9 @@ namespace LGLStructs
 
 		void AddMesh(const Mesh& mesh, const std::string meshName)
 		{
-			meshes.emplace_back(MeshInfo(mesh, meshName, render, isDynamic, shaderProgram, generalMeshBehaviour));
+			meshes.emplace_back(
+				MeshInfo(mesh, meshName, render, lineMode, isDynamic, shaderProgram, generalMeshBehaviour)
+			);
 		}
 
 		std::vector<std::string> GetMeshNames()

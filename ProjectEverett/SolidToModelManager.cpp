@@ -104,6 +104,21 @@ bool SolidToModelManager::GetMeshVisibility(const std::string& name)
 	return meshVisibility[GetIndexByName(name, GetMeshNames())];
 }
 
+
+void SolidToModelManager::SetModelDefaultColor(const glm::vec4& color)
+{
+	CheckIfInitialized();
+
+	modelDefaultColor = color;
+}
+
+glm::vec4 SolidToModelManager::GetModelDefaultColor()
+{
+	CheckIfInitialized();
+
+	return modelDefaultColor;
+}
+
 float SolidToModelManager::GetMeshShininess(size_t index)
 {
 	CheckIfInitialized();

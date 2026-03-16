@@ -128,7 +128,48 @@ std::string SimSerializer::GetValueToSaveFrom(const glm::vec3& vec)
 	return PackValue(res);
 }
 
+std::string SimSerializer::GetValueToSaveFrom(const glm::vec4& vec)
+{
+	std::string res = "";
+
+	for (size_t i = 0; i < vec.length(); ++i)
+	{
+		res += std::to_string(vec[i]) + ' ';
+	}
+	res.pop_back();
+
+	return PackValue(res);
+}
+
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, glm::vec3& vec, int requiredVersion, int deprecatedAt)
+{
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
+
+	std::string values;
+
+	UnpackValue(line, values);
+
+	std::string value = "";
+	size_t i = 0;
+
+	for (auto c : values)
+	{
+		if (c == ' ')
+		{
+			vec[i++] = FundamentalConvert<float>::Convert(value);
+			value = "";
+			continue;
+		}
+
+		value += c;
+	}
+
+	return AssertAndReturn(i == vec.length());
+}
+
+bool SimSerializer::SetValueToLoadFrom(
+	std::string_view& line, glm::vec4& vec, int requiredVersion, int deprecatedAt
+)
 {
 	ValidateVersionCheck(requiredVersion, deprecatedAt)
 

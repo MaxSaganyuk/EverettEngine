@@ -64,7 +64,7 @@ private:
 		UnsetCritical
 	};
 
-	constexpr static inline int latestSerializerVersion = 7;
+	constexpr static inline int latestSerializerVersion = 8;
 	static inline int usedVersion = -1;
 	static VersionValidationState ValidateVersion(int requiredVersion, int deprecatedAt);
 	static bool SetUsedVersion(int usedVersionToSet);
@@ -131,10 +131,13 @@ public:
 	static bool SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion, int deprecatedAt = 0);
 
 	// GLM
+	// TODO: Generalize with templates
 	static std::string GetValueToSaveFrom(const glm::vec3& vec);
+	static std::string GetValueToSaveFrom(const glm::vec4& vec);
 	static std::string GetValueToSaveFrom(const glm::mat4& mat);
 	static std::string GetValueToSaveFrom(const glm::quat& quat);
 	static bool SetValueToLoadFrom(std::string_view& line, glm::vec3& vec,  int requiredVersion, int deprecatedAt = 0);
+	static bool SetValueToLoadFrom(std::string_view& line, glm::vec4& vec, int requiredVersion, int deprecatedAt = 0);
 	static bool SetValueToLoadFrom(std::string_view& line, glm::mat4& mat,  int requiredVersion, int deprecatedAt = 0);
 	static bool SetValueToLoadFrom(std::string_view& line, glm::quat& quat, int requiredVersion, int deprecatedAt = 0);
 
