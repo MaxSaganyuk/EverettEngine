@@ -13,12 +13,8 @@
 #include "glm/gtc/type_ptr.hpp"
 
 #include "interfaces/IObjectSim.h"
+#include "ConceptUtils.h"
 
-template<typename FundamentalType>
-concept OnlyFundamental = std::is_fundamental_v<FundamentalType>;
-
-template<typename EnumType>
-concept OnlyEnums = std::is_enum_v<EnumType>;
 
 class SimSerializer
 {
@@ -131,15 +127,11 @@ public:
 	static bool SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion, int deprecatedAt = 0);
 
 	// GLM
-	// TODO: Generalize with templates
-	static std::string GetValueToSaveFrom(const glm::vec3& vec);
-	static std::string GetValueToSaveFrom(const glm::vec4& vec);
-	static std::string GetValueToSaveFrom(const glm::mat4& mat);
-	static std::string GetValueToSaveFrom(const glm::quat& quat);
-	static bool SetValueToLoadFrom(std::string_view& line, glm::vec3& vec,  int requiredVersion, int deprecatedAt = 0);
-	static bool SetValueToLoadFrom(std::string_view& line, glm::vec4& vec, int requiredVersion, int deprecatedAt = 0);
-	static bool SetValueToLoadFrom(std::string_view& line, glm::mat4& mat,  int requiredVersion, int deprecatedAt = 0);
-	static bool SetValueToLoadFrom(std::string_view& line, glm::quat& quat, int requiredVersion, int deprecatedAt = 0);
+	template<OnlyGLMs GLMType>
+	static std::string GetValueToSaveFrom(const GLMType& cont);
+
+	template<OnlyGLMs GLMType>
+	static bool SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion, int depricatedAt = 0);
 
 	// Special cases
 	static std::string GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
@@ -265,6 +257,50 @@ bool SimSerializer::SetValueToLoadFrom(
 
 	return AssertAndReturn(i == vector.size());
 }
+
+template<OnlyGLMs GLMType>
+std::string SimSerializer::GetValueToSaveFrom(const GLMType& cont)
+{
+	std::string res = "";
+	const typename GLMType::value_type* ptr = glm::value_ptr(cont);
+
+	for (size_t i = 0; i < sizeof(GLMType) / sizeof(typename GLMType::value_type); ++i)
+	{
+		res += std::to_string(*(ptr + i)) + ' ';
+	}
+	res.pop_back();
+
+	return PackValue(res);
+}
+
+template<OnlyGLMs GLMType>
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion, int depricatedAt)
+{
+	ValidateVersionCheck(requiredVersion, depricatedAt)
+
+	std::string values;
+
+	UnpackValue(line, values);
+
+	std::string value = "";
+	typename GLMType::value_type* ptr = glm::value_ptr(cont);
+	size_t i = 0;
+
+	for (auto c : values)
+	{
+		if (c == ' ')
+		{
+			*(ptr + i++) = FundamentalConvert<typename GLMType::value_type>::Convert(value);
+			value = "";
+			continue;
+		}
+
+		value += c;
+	}
+
+	return AssertAndReturn(i == sizeof(GLMType) / sizeof(typename GLMType::value_type));
+}
+
 #else
 
 template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool>>

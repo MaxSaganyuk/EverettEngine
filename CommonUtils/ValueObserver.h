@@ -54,6 +54,16 @@ public:
 		ExecuteCallback();
 	}
 
+	Type& GetValue()
+	{
+		return value;
+	}
+
+	const Type& GetValue() const
+	{
+		return value;
+	}
+
 	operator Type&()
 	{
 		return value;

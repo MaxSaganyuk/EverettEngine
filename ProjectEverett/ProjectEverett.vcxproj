@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClInclude Include="AnimSystem.h" />
     <ClInclude Include="CommonStructs.h" />
+    <ClInclude Include="ConceptUtils.h" />
     <ClInclude Include="CustomOutput.h" />
     <ClInclude Include="EverettEngine.h" />
     <ClInclude Include="EverettException.h" />

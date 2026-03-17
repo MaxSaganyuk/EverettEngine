@@ -58,6 +58,7 @@ std::string SolidSim::CollectInfoToSaveFromSTMM()
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.paused);
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.looped);
 		res += SimSerializer::GetValueToSaveFrom(STMM.meshVisibility);
+		res += SimSerializer::GetValueToSaveFrom(STMM.modelDefaultColor);
 	}
 
 	return res;

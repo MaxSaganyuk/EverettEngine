@@ -66,8 +66,8 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 {
 	std::string res = "";
 
-	res += SimSerializer::GetValueToSaveFrom(scale);
-	res += SimSerializer::GetValueToSaveFrom(pos);
+	res += SimSerializer::GetValueToSaveFrom(scale.GetValue());
+	res += SimSerializer::GetValueToSaveFrom(pos.GetValue());
 	res += SimSerializer::GetValueToSaveFrom(lastPos);
 	res += SimSerializer::GetValueToSaveFrom(lastBlocker);
 	res += SimSerializer::GetValueToSaveFrom(speed);
@@ -77,7 +77,7 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	res += SimSerializer::GetValueToSaveFrom(rotationLimits);
 	res += SimSerializer::GetValueToSaveFrom(scriptFuncStorage.GetAddedScriptDLLs());
 	res += SimSerializer::GetValueToSaveFrom(objectLinkingEnabled);
-	res += SimSerializer::GetValueToSaveFrom(orient);
+	res += SimSerializer::GetValueToSaveFrom(orient.GetValue());
 
 	return res;
 }
@@ -86,14 +86,14 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = true;
 	glm::vec3 legacyCompatibilityVect;
-	Rotation legacyRotationVect;
+	glm::vec3 legacyRotationVectGetter{};
 
-	res = res && SimSerializer::SetValueToLoadFrom(line, scale,                                   1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, scale.GetValue(),                        1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
-	res = res && SimSerializer::SetValueToLoadFrom(line, pos,                                     1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, pos.GetValue(), 1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, lastPos,                                 1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyRotationVect,                      1, 7);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyRotationVectGetter,                1, 7);
 	res = res && SimSerializer::SetValueToLoadFrom(line, lastBlocker,                             1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, speed,                                   1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, ghostMode,                               1);
@@ -102,7 +102,9 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits,                          1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect, 2);
 	res = res && SimSerializer::SetValueToLoadFrom(line, objectLinkingEnabled,                    5);
-	res = res && SimSerializer::SetValueToLoadFrom(line, orient,                                  6);
+	res = res && SimSerializer::SetValueToLoadFrom(line, orient.GetValue(),                       6);
+
+	Rotation legacyRotationVect = legacyRotationVectGetter;
 
 	if (!legacyRotationVect.Zeroed())
 	{

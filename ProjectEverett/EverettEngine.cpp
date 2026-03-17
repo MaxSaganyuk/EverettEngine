@@ -38,6 +38,7 @@
 #include "SolidToModelManager.h"
 
 #include "ShaderGenerator.h"
+#include "ConceptUtils.h"
 
 using namespace EverettStructs;
 
@@ -1099,12 +1100,6 @@ bool EverettEngine::IsKeyScriptSet(
 
 	return false;
 }
-
-template<typename ClassType, typename MemberFunc, typename... Params>
-concept ConfirmMemberOf = requires(ClassType object, MemberFunc memberFunc, Params&&... values)
-{
-	(object.*memberFunc)(std::forward<Params>(values)...);
-};
 
 template<typename FunctionType, typename... Params>
 void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values)
