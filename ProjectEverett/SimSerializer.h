@@ -14,33 +14,24 @@
 
 #include "interfaces/IObjectSim.h"
 #include "ConceptUtils.h"
-
+#include "EverettException.h"
 
 class SimSerializer
 {
 private:
-	template<typename Type>
-	struct FundamentalConvert;
+	constexpr static size_t ConverterBufferSize = 1024;
+	static inline char ConverterBuffer[ConverterBufferSize];
 
-	#define FundamentalConvertSet(Type, Func)         \
-	template<>                                        \
-	struct FundamentalConvert<Type>                   \
-	{                                                 \
-		static Type Convert(const std::string& value) \
-		{                                             \
-			return std::##Func(value);                \
-		}                                             \
-	};                                                    
+	template<typename>
+	static bool FromString(const std::string_view str);
+	template<typename>
+	static std::string ToString(const bool value);
 
-	FundamentalConvertSet(bool, stoi)
-	FundamentalConvertSet(int, stoi)
-	FundamentalConvertSet(long, stol)
-	FundamentalConvertSet(long long, stoll)
-	FundamentalConvertSet(unsigned long, stoul)
-	FundamentalConvertSet(unsigned long long, stoull)
-	FundamentalConvertSet(float, stof)
-	FundamentalConvertSet(double, stod)
-	FundamentalConvertSet(long double, stold)
+	template<OnlyFundamentalNotBool Type>
+	static Type FromString(const std::string_view str);
+
+	template<OnlyFundamentalNotBool Type>
+	static std::string ToString(const Type value);
 
 	#define ValidateVersionCheck(version, deprecated)                      \
 	auto versionValidation = ValidateVersion(version, deprecated);         \
@@ -160,10 +151,51 @@ public:
 };
 
 #ifdef _HAS_CXX20
+
+template<OnlyFundamentalNotBool Type>
+Type SimSerializer::FromString(const std::string_view str)
+{
+	Type value{};
+
+	auto [_, errorCode] = std::from_chars(str.data(), str.data() + str.size(), value);
+
+	CheckAndThrowExceptionWMessage(
+		static_cast<bool>(errorCode == std::errc()),
+		"Failed to get from string during deserialization, error: " + std::to_string(static_cast<int>(errorCode))
+	);
+
+	return value;
+}
+
+template<OnlyFundamentalNotBool Type>
+std::string SimSerializer::ToString(const Type value)
+{
+	auto [lineEndPtr, errorCode] = std::to_chars(ConverterBuffer, ConverterBuffer + ConverterBufferSize, value);
+
+	CheckAndThrowExceptionWMessage(
+		static_cast<bool>(errorCode == std::errc()),
+		"Failed to get from value during serialization, error: " + std::to_string(static_cast<int>(errorCode))
+	);
+
+	return std::string(ConverterBuffer, lineEndPtr);
+}
+
+template<typename>
+bool SimSerializer::FromString(const std::string_view str)
+{
+	return FromString<int>(str);
+}
+
+template<typename>
+std::string SimSerializer::ToString(const bool value)
+{
+	return ToString(static_cast<int>(value));
+}
+
 template<OnlyFundamental FundamentalType>
 std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 {
-	return PackValue(std::to_string(f));
+	return PackValue(ToString<FundamentalType>(f));
 }
 
 template<OnlyFundamental FundamentalType>
@@ -177,7 +209,7 @@ bool SimSerializer::SetValueToLoadFrom(
 
 	UnpackValue(line, value, false);
 
-	f = FundamentalConvert<FundamentalType>::Convert(value);
+	f = FromString<FundamentalType>(value);
 
 	return true;
 }
@@ -185,7 +217,7 @@ bool SimSerializer::SetValueToLoadFrom(
 template<OnlyEnums EnumType>
 std::string SimSerializer::GetValueToSaveFrom(EnumType e)
 {
-	return PackValue(std::to_string(static_cast<int>(e)));
+	return PackValue(ToString(static_cast<int>(e)));
 }
 
 template<OnlyEnums EnumType>
@@ -198,7 +230,7 @@ bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int 
 
 	UnpackValue(line, value, false);
 
-	preEnumValue = FundamentalConvert<int>::Convert(value);
+	preEnumValue = FromString<int>(value);
 	e = static_cast<EnumType>(preEnumValue);
 
 	return true;
@@ -207,11 +239,11 @@ bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int 
 template<OnlyFundamental FundamentalType>
 std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>& vector)
 {
-	std::string res = "";
+	std::string res;
 
 	for (const auto iter : vector)
 	{
-		res += std::to_string(iter) + ' ';
+		res += ToString<FundamentalType>(iter) + ' ';
 	}
 	if (res.size() > 1)
 	{
@@ -232,7 +264,7 @@ bool SimSerializer::SetValueToLoadFrom(
 
 	UnpackValue(line, values);
 
-	std::string value = "";
+	std::string value;
 	size_t i = 0;
 
 	for (auto c : values)
@@ -241,14 +273,14 @@ bool SimSerializer::SetValueToLoadFrom(
 		{
 			if (i >= vector.size())
 			{
-				vector.push_back(FundamentalConvert<FundamentalType>::Convert(value));
+				vector.push_back(FromString<FundamentalType>(value));
 			}
 			else
 			{
-				vector[i] = FundamentalConvert<FundamentalType>::Convert(value);
+				vector[i] = FromString<FundamentalType>(value);
 			}
 			++i;
-			value = "";
+			value.clear();
 			continue;
 		}
 
@@ -266,7 +298,7 @@ std::string SimSerializer::GetValueToSaveFrom(const GLMType& cont)
 
 	for (size_t i = 0; i < sizeof(GLMType) / sizeof(typename GLMType::value_type); ++i)
 	{
-		res += std::to_string(*(ptr + i)) + ' ';
+		res += ToString(*(ptr + i)) + ' ';
 	}
 	res.pop_back();
 
@@ -274,15 +306,15 @@ std::string SimSerializer::GetValueToSaveFrom(const GLMType& cont)
 }
 
 template<OnlyGLMs GLMType>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion, int depricatedAt)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion, int deprecatedAt)
 {
-	ValidateVersionCheck(requiredVersion, depricatedAt)
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
 
 	std::string values;
 
 	UnpackValue(line, values);
 
-	std::string value = "";
+	std::string value;
 	typename GLMType::value_type* ptr = glm::value_ptr(cont);
 	size_t i = 0;
 
@@ -290,8 +322,8 @@ bool SimSerializer::SetValueToLoadFrom(std::string_view& line, GLMType& cont, in
 	{
 		if (c == ' ')
 		{
-			*(ptr + i++) = FundamentalConvert<typename GLMType::value_type>::Convert(value);
-			value = "";
+			*(ptr + i++) = FromString<typename GLMType::value_type>(value);
+			value.clear();
 			continue;
 		}
 

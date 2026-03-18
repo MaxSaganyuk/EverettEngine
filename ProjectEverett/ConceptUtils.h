@@ -7,6 +7,9 @@
 template<typename FundamentalType>
 concept OnlyFundamental = std::is_fundamental_v<FundamentalType>;
 
+template<typename FundamentalType>
+concept OnlyFundamentalNotBool = std::is_fundamental_v<FundamentalType> && !std::is_same_v<FundamentalType, bool>;
+
 template<typename EnumType>
 concept OnlyEnums = std::is_enum_v<EnumType>;
 
