@@ -82,5 +82,5 @@ void CSaveLoadDlg::OnBrowseButtonClick()
 
 void CSaveLoadDlg::OnFileNameEditChanged()
 {
-	okButton.EnableWindow(!MFCUtilities::EditIsEmpty(fileNameEdit));
+	okButton.EnableWindow(!MFCUtilities::EditsAnyEmpty({ &filePathEdit, &fileNameEdit }));
 }

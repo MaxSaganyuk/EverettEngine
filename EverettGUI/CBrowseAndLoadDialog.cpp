@@ -151,6 +151,8 @@ void CBrowseAndLoadDialog::OnObjectSelection()
 
 	nameEdit.SetWindowTextW(GetChosenName());
 	loadModelButton.EnableWindow(curSelExists);
+
+	UpdateOkButton();
 }
 
 AdString CBrowseAndLoadDialog::GetChosenPath()
@@ -177,7 +179,12 @@ void CBrowseAndLoadDialog::OnNameEditChanged()
 {
 	NameEditChecker::CheckAndEditName(nameEdit, nameWarning);
 
-	AdString nameStr;
-	nameEdit.GetWindowTextW(nameStr);
-	loadModelButton.EnableWindow(!nameStr.empty());
+	nameEdit.GetWindowTextW(name);
+
+	UpdateOkButton();
+}
+
+void CBrowseAndLoadDialog::UpdateOkButton()
+{
+	loadModelButton.EnableWindow(!(name.empty() || filename.empty()));
 }

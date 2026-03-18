@@ -34,6 +34,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	void UpdateObjectChoice(const AdString& filePath);
+	void UpdateOkButton();
 
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedButton1();

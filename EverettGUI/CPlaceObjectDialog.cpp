@@ -113,6 +113,8 @@ void CPlaceObjectDialog::OnModelChoiceChange()
 	AdString modelStdStrChecked = nameCheckFunc(chosenObject);
 
 	nameEdit.SetWindowTextW(modelStdStrChecked);
+
+	UpdateOkButton();
 }
 
 
@@ -124,5 +126,10 @@ void CPlaceObjectDialog::OnNameEditChanged()
 	//nameEdit.GetWindowTextW(nameStr);
 	//placeObjectButton.EnableWindow(chosenIndex != -1 && !nameStr.empty());
 
-	placeObjectButton.EnableWindow(!MFCUtilities::EditIsEmpty(nameEdit));
+	UpdateOkButton();
+}
+
+void CPlaceObjectDialog::UpdateOkButton()
+{
+	placeObjectButton.EnableWindow(!(objectChoice.GetCurSel() || MFCUtilities::EditIsEmpty(nameEdit)));
 }
