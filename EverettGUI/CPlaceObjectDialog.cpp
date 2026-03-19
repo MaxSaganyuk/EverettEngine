@@ -114,7 +114,7 @@ void CPlaceObjectDialog::OnModelChoiceChange()
 
 	nameEdit.SetWindowTextW(modelStdStrChecked);
 
-	UpdateOkButton();
+	UpdateOKButton();
 }
 
 
@@ -126,10 +126,10 @@ void CPlaceObjectDialog::OnNameEditChanged()
 	//nameEdit.GetWindowTextW(nameStr);
 	//placeObjectButton.EnableWindow(chosenIndex != -1 && !nameStr.empty());
 
-	UpdateOkButton();
+	UpdateOKButton();
 }
 
-void CPlaceObjectDialog::UpdateOkButton()
+void CPlaceObjectDialog::UpdateOKButton()
 {
-	placeObjectButton.EnableWindow(!(objectChoice.GetCurSel() || MFCUtilities::EditIsEmpty(nameEdit)));
+	placeObjectButton.EnableWindow(!(objectChoice.GetCurSel() == -1 || MFCUtilities::EditIsEmpty(nameEdit)));
 }

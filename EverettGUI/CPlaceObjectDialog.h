@@ -56,7 +56,7 @@ private:
 	afx_msg void OnModelChoiceChange();
 	afx_msg void OnNameEditChanged();
 
-	void UpdateOkButton();
+	void UpdateOKButton();
 public:
 	size_t   GetChosenIndex();
 	AdString GetChosenObject();
