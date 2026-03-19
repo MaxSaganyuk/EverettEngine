@@ -105,6 +105,13 @@ bool SolidToModelManager::GetMeshVisibility(const std::string& name)
 }
 
 
+glm::vec3 SolidToModelManager::GetAutoScaleVector()
+{
+	CheckIfInitialized();
+
+	return fullModelInfoP->first.lock()->GetAutoScaleForModel();
+}
+
 void SolidToModelManager::SetModelDefaultColor(const glm::vec4& color)
 {
 	CheckIfInitialized();

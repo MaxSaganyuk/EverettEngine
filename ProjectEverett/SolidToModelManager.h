@@ -30,6 +30,8 @@ public:
 	float GetMeshShininess(size_t index);
 	float GetMeshShininess(const std::string& name);
 
+	glm::vec3 GetAutoScaleVector();
+
 	void SetModelDefaultColor(const glm::vec4& color);
 	glm::vec4 GetModelDefaultColor();
 

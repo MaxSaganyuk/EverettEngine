@@ -76,6 +76,7 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SPEED_TEXT, playerSpeedText);
 	DDX_Control(pDX, IDC_EDIT11, playerSpeedEdit);
 	DDX_Control(pDX, IDC_BUTTON12, colorEditButton);
+	DDX_Control(pDX, IDC_BUTTON13, autoScaleButton);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -102,6 +103,8 @@ void CObjectEditDialog::SetupObjectParams()
 		AdString text = isSolid ? L"Model" : L"Light";
 		propText.SetWindowTextW(text + L" properties");
 	}
+
+	autoScaleButton.ShowWindow(isSolid);
 
 	meshComboBox.ShowWindow (isSolid);
 	meshVisCheck.ShowWindow (isSolid);
@@ -222,6 +225,7 @@ BEGIN_MESSAGE_MAP(CObjectEditDialog, DLLLoaderCommon)
 	ON_BN_CLICKED(IDC_BUTTON9, &CObjectEditDialog::OnScaEditButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON10, &CObjectEditDialog::OnRotEditButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON12, &CObjectEditDialog::OnColorEditButtonClick)
+	ON_BN_CLICKED(IDC_BUTTON13, &CObjectEditDialog::OnAutoScaleButtonClicked)
 END_MESSAGE_MAP()
 
 
@@ -366,5 +370,15 @@ void CObjectEditDialog::OnColorEditButtonClick()
 		{
 			colorVectorAddr[i] = colorRaw[i];
 		}
+	}
+}
+
+void CObjectEditDialog::OnAutoScaleButtonClicked()
+{
+	if (castedSolidInterface)
+	{
+		castedSolidInterface->InvokeAutoScale();
+		castedSolidInterface->ForceModelUpdate();
+		UpdateParams();
 	}
 }

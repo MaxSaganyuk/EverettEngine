@@ -58,6 +58,8 @@ private:
 
 	CStatic propText;
 
+	CButton autoScaleButton;
+
 	// Model property objects
 	CStatic meshText;
 	CComboBox meshComboBox;
@@ -167,4 +169,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnColorEditButtonClick();
+	afx_msg void OnAutoScaleButtonClicked();
 };

@@ -62,6 +62,9 @@ public:
 	float GetModelMeshShininess(size_t index);
 
 	// Model access; available through interface
+	void InvokeAutoScale() override;
+
+	// Model access; engine only
 	glm::vec4 GetModelDefaultColor();
 	void SetModelDefaultColor(const glm::vec4& color);
 

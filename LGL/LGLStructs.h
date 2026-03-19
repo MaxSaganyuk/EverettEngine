@@ -244,6 +244,19 @@ namespace LGLStructs
 			behaviour(&behaviour) 
 		{}
 
+		std::pair<glm::vec3, glm::vec3> GetMinAndMaxOfMesh()
+		{
+			glm::vec3 min(FLT_MAX);
+			glm::vec3 max(FLT_MIN);
+
+			for (auto& vert : mesh.vert)
+			{
+				min = glm::min(min, vert.Position);
+				max = glm::max(max, vert.Position);
+			}
+
+			return { min, max };
+		}
 	};
 	
 	struct ModelInfo
@@ -320,6 +333,26 @@ namespace LGLStructs
 					break;
 				}
 			}
+		}
+
+		glm::vec3 GetAutoScaleForModel()
+		{
+			glm::vec3 min(FLT_MAX);
+			glm::vec3 max(FLT_MIN);
+
+			for (auto& mesh : meshes)
+			{
+				auto minMaxPosOfMesh = mesh.GetMinAndMaxOfMesh();
+
+				min = glm::min(min, minMaxPosOfMesh.first);
+				max = glm::max(max, minMaxPosOfMesh.second);
+			}
+
+			glm::vec3 size = max - min;
+			float maxExtent = glm::max(size.x, glm::max(size.y, size.z));
+			float scale = 1.0f / maxExtent;
+
+			return glm::vec3(scale);
 		}
 
 		ModelInfo& operator=(const ModelInfo& modelInfo)
