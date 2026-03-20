@@ -247,7 +247,7 @@ namespace LGLStructs
 		std::pair<glm::vec3, glm::vec3> GetMinAndMaxOfMesh()
 		{
 			glm::vec3 min(FLT_MAX);
-			glm::vec3 max(FLT_MIN);
+			glm::vec3 max(-FLT_MAX);
 
 			for (auto& vert : mesh.vert)
 			{
@@ -338,7 +338,7 @@ namespace LGLStructs
 		glm::vec3 GetAutoScaleForModel()
 		{
 			glm::vec3 min(FLT_MAX);
-			glm::vec3 max(FLT_MIN);
+			glm::vec3 max(-FLT_MAX);
 
 			for (auto& mesh : meshes)
 			{
