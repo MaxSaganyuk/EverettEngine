@@ -324,7 +324,7 @@ bool EverettEngine::CreateGizmoSolid(
 		SolidSim& gizmoSolid = MSM[gizmoModelName].solids[gizmoSolidName];
 		gizmoSolid.GetPositionVectorAddr() = relatedObject.GetPositionVectorAddr();
 		gizmoSolid.GetScaleVectorAddr() = { 0.25f, 0.25f, 0.25f };
-		gizmoSolid.SetOrientation(camera->GetOrientationAddr());
+		gizmoSolid.SetOrientation(relatedObject.GetOrientationAddr());
 		gizmoSolid.ForceModelUpdate();
 		gizmoSolid.EnableAutoModelUpdates();
 		gizmoSolid.SetModelDefaultColor(gizmoColor);
