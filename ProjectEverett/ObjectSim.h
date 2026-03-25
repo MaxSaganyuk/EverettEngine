@@ -35,8 +35,6 @@ protected:
 	bool lastBlocker;
 	float speed;
 
-	bool ghostMode;
-
 	Direction lastDir;
 
 	std::unordered_map<Direction, bool> disabledDirs;
@@ -80,9 +78,6 @@ public:
 
 	void SetMovementSpeed(float speed, bool executeLinkedObjects = true) override;
 	float GetMovementSpeed() override;
-
-	void SetGhostMode(bool val, bool executeLinkedObjects = true) override;
-	bool IsGhostMode() const override;
 
 	void DisableDirection(Direction dir, bool executeLinkedObjects = true) override;
 	void EnableDirection(Direction dir, bool executeLinkedObjects = true) override;

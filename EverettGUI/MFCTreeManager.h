@@ -47,6 +47,7 @@ public:
 	void AddSolidToTree(const AdString& modelName, const AdString& solidName);
 	void AddLightToTree(const AdString& lightType, const AdString& lightName);
 	void AddSoundToTree(const AdString& soundName);
+	void AddColliderToTree(const AdString& colliderName);
 
 	void SetObjectTypes();
 

@@ -59,6 +59,7 @@ private:
 	void OnPlaceSolid();
 	void OnPlaceLight();
 	void OnPlaceSound();
+	void OnPlaceCollider();
 	void OnCameraOptions();
 	void OnKeybindOptions();
 	void OnGameProduce();

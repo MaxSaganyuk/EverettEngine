@@ -88,7 +88,4 @@ public:
 	double GetModelCurrentAnimationTime();
 	void AppendModelStartingBoneIndex(size_t startingBoneIndex);
 	size_t GetModelCurrentStartingBoneIndex();
-	
-	static bool CheckForCollision(const SolidSim& solid1, const SolidSim& solid2);
-	bool CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2) override;
 };

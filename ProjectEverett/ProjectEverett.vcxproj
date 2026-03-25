@@ -171,6 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AnimSystem.h" />
+    <ClInclude Include="ColliderSim.h" />
     <ClInclude Include="CommonStructs.h" />
     <ClInclude Include="ConceptUtils.h" />
     <ClInclude Include="CustomOutput.h" />
@@ -181,6 +182,7 @@
     <ClInclude Include="CameraSim.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="interfaces\ICameraSim.h" />
+    <ClInclude Include="interfaces\IColliderSim.h" />
     <ClInclude Include="interfaces\ILightSim.h" />
     <ClInclude Include="interfaces\IObjectSim.h" />
     <ClInclude Include="interfaces\ISolidSim.h" />
@@ -202,6 +204,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AnimSystem.cpp" />
+    <ClCompile Include="ColliderSim.cpp" />
     <ClCompile Include="EverettEngine.cpp" />
     <ClCompile Include="EverettException.cpp" />
     <ClCompile Include="FileLoader.cpp" />

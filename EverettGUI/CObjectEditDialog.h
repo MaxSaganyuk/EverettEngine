@@ -55,6 +55,7 @@ private:
 	ISolidSim* castedSolidInterface;
 	ILightSim* castedLightInterface;
 	ISoundSim* castedSoundInterface;
+	IColliderSim* castedColliderInterface;
 
 	CStatic propText;
 

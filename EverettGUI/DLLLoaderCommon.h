@@ -48,19 +48,19 @@ protected:
 
 	void UpdateScriptButtons();
 	void BlockLoadScriptButton(bool value = true);
-private:
-	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo;
 
-	IsDLLLoadedFunc isDllLoadedFunc;
-	IsScriptSetFunc isScriptSetFunc;
-	SetScriptFunc setScriptFunc;
-	UnsetScriptFunc unsetScriptFunc;
+	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo;
 
 	CButton scriptBrowseButton;
 	CButton loadScriptButton;
 	CButton unloadScriptButton;
 	CComboBox dllComboBox;
 	CButton scriptRunIndicator;
+private:
+	IsDLLLoadedFunc isDllLoadedFunc;
+	IsScriptSetFunc isScriptSetFunc;
+	SetScriptFunc setScriptFunc;
+	UnsetScriptFunc unsetScriptFunc;
 
 	bool blockLoadButton;
 

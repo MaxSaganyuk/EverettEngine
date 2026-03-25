@@ -38,6 +38,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_BUTTON32771, &CMainFrame::OnPlaceSolid)
 	ON_COMMAND(ID_BUTTON32772, &CMainFrame::OnPlaceLight)
 	ON_COMMAND(ID_BUTTON32773, &CMainFrame::OnPlaceSound)
+	ON_COMMAND(ID_BUTTON32779, &CMainFrame::OnPlaceCollider)
 	ON_COMMAND(ID_BUTTON32774, &CMainFrame::OnCameraOptions)
 	ON_COMMAND(ID_BUTTON32775, &CMainFrame::OnKeybindOptions)
 	ON_COMMAND(ID_BUTTON32778, &CMainFrame::OnGameProduce)
@@ -226,6 +227,9 @@ bool CMainFrame::LoadObjectNamesToTree()
 			case ObjectTypes::Sound:
 				mfcTree.AddSoundToTree(objectName);
 				break;
+			case ObjectTypes::Collider:
+				mfcTree.AddColliderToTree(objectName);
+				break;
 			}
 		}
 	}
@@ -370,6 +374,22 @@ void CMainFrame::OnPlaceSound()
 	{
 		engine.CreateSound(placeSoundDlg.GetChosenPathAndFilename(), placeSoundDlg.GetChosenName());
 		mainWindow->GetObjectTree().AddSoundToTree(placeSoundDlg.GetChosenName());
+	}
+}
+
+void CMainFrame::OnPlaceCollider()
+{
+	CPlaceObjectDialog placeColliderDlg(
+		L"Collider",
+		L"Collider type",
+		nameCheckFunc,
+		{ "Box" }
+	);
+
+	if (placeColliderDlg.DoModal() == IDOK)
+	{
+		engine.CreateCollider(placeColliderDlg.GetNewObjectName());
+		mainWindow->GetObjectTree().AddColliderToTree(placeColliderDlg.GetNewObjectName());
 	}
 }
 

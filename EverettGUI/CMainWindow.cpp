@@ -190,6 +190,9 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 		case ObjectTypes::Sound:
 			deleterFunc = [this](const std::string& soundName) { return engineP->DeleteSound(soundName); };
 			break;
+		case ObjectTypes::Collider:
+			deleterFunc = [this](const std::string& colliderName) { return engineP->DeleteCollider(colliderName); };
+			break;
 		default:
 			assert(false && "unreachable");
 		}

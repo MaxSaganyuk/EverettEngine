@@ -42,7 +42,8 @@ CObjectEditDialog::CObjectEditDialog(
 	castedCameraInterface(nullptr),
 	castedSolidInterface(nullptr),
 	castedLightInterface(nullptr),
-	castedSoundInterface(nullptr)
+	castedSoundInterface(nullptr),
+	castedColliderInterface(nullptr)
 {
 }
 
@@ -92,10 +93,11 @@ CString CObjectEditDialog::GenerateTitle()
 
 void CObjectEditDialog::SetupObjectParams()
 {
-	bool isCamera = objectType == EverettEngine::ObjectTypes::Camera;
-	bool isSolid  = objectType == EverettEngine::ObjectTypes::Solid;
-	bool isLight  = objectType == EverettEngine::ObjectTypes::Light;
-	bool isSound  = objectType == EverettEngine::ObjectTypes::Sound;
+	bool isCamera   = objectType == EverettEngine::ObjectTypes::Camera;
+	bool isSolid    = objectType == EverettEngine::ObjectTypes::Solid;
+	bool isLight    = objectType == EverettEngine::ObjectTypes::Light;
+	bool isSound    = objectType == EverettEngine::ObjectTypes::Sound;
+	bool isCollider = objectType == EverettEngine::ObjectTypes::Collider;
 
 	propText.ShowWindow(isSolid || isLight);
 	if (isSolid || isLight)
@@ -130,16 +132,19 @@ void CObjectEditDialog::SetupObjectParams()
 	switch (objectType)
 	{
 	case EverettEngine::ObjectTypes::Camera:
-		castedCameraInterface = dynamic_cast<ICameraSim*>(&currentObjectInterface);
+		castedCameraInterface   = dynamic_cast<ICameraSim*>(&currentObjectInterface);
 		break;
 	case EverettEngine::ObjectTypes::Solid:
-		castedSolidInterface  = dynamic_cast<ISolidSim*>(&currentObjectInterface);
+		castedSolidInterface    = dynamic_cast<ISolidSim*>(&currentObjectInterface);
 		break;
 	case EverettEngine::ObjectTypes::Light:
-		castedLightInterface  = dynamic_cast<ILightSim*>(&currentObjectInterface);
+		castedLightInterface    = dynamic_cast<ILightSim*>(&currentObjectInterface);
 		break;
 	case EverettEngine::ObjectTypes::Sound:
-		castedSoundInterface  = dynamic_cast<ISoundSim*>(&currentObjectInterface);
+		castedSoundInterface    = dynamic_cast<ISoundSim*>(&currentObjectInterface);
+		break;
+	case EverettEngine::ObjectTypes::Collider:
+		castedColliderInterface = dynamic_cast<IColliderSim*>(&currentObjectInterface);
 		break;
 	default:
 		throw std::runtime_error("Unreachable");

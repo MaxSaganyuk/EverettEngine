@@ -111,6 +111,12 @@
     <ClInclude Include="ConceptUtils.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="ColliderSim.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="interfaces\IColliderSim.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SolidSim.cpp">
@@ -162,6 +168,9 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="EverettException.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderSim.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

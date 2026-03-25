@@ -67,9 +67,6 @@ public:
 	virtual glm::vec3& GetScaleVectorAddr() = 0;
 	virtual glm::quat& GetOrientationAddr() = 0;
 
-	Linkable virtual void SetGhostMode(bool val, bool executeLinkedObjects = true) = 0;
-	virtual bool IsGhostMode() const = 0;
-
 	Linkable virtual void DisableDirection(Direction dir, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void EnableDirection(Direction dir, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void EnableAllDirections(bool executeLinkedObjects = true) = 0;

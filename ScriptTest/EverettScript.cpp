@@ -1,35 +1,14 @@
 #include "EverettScript.h"
 
-#include <memory>
+#include <iostream>
 
-class InternalState
-{
-public:
-	InternalState()
-	{
-		Reset();
-	}
-
-	void Reset()
-	{
-		charInterRunning = false;
-		charInter = nullptr;
-		lightInter = nullptr;
-		animCharInter = nullptr;
-	}
-
-	bool charInterRunning;
-	ISolidSim* charInter;
-	ILightSim* lightInter;
-	ISolidSim* animCharInter;
-};
-
-InternalState interState;
 ICameraSim* cameraSim = nullptr;
+IColliderSim* blockCollider = nullptr;
 
 class TestCharHolder
 {
 	ISolidSim* testCharSolid;
+	IColliderSim* testCharCollider;
 	bool moving{};
 	bool linkedToCamera{};
 
@@ -38,18 +17,43 @@ public:
 	{
 		this->testCharSolid = testCharSolid;
 		this->testCharSolid->EnableAutoModelUpdates();
+
+		if (testCharCollider)
+		{
+			testCharSolid->LinkObject(*testCharCollider);
+		}
+	}
+
+	void SetColliderSim(IColliderSim* testCharCollider)
+	{
+		this->testCharCollider = testCharCollider;
+
+		if (testCharSolid)
+		{
+			testCharSolid->LinkObject(*testCharCollider);
+		}
+	}
+
+	void SetupBlockCollision(IColliderSim* blockCollider)
+	{
+		if (testCharSolid && testCharCollider)
+		{
+			testCharCollider->AddBindedCollisionCallback(*blockCollider, [this]() { testCharSolid->SetLastPosition(); });
+		}
 	}
 
 	void LinkCharToCamera(ICameraSim* camera)
 	{
 		if (!testCharSolid) return;
 
+		std::cout << "Camera link to char";
 		if (!linkedToCamera)
 		{
 			testCharSolid->LinkObject(*camera);
 		}
 
 		linkedToCamera = !linkedToCamera;
+		std::cout << linkedToCamera ? " on\n" : " off\n";
 		testCharSolid->EnableObjectLinking(linkedToCamera);
 	}
 
@@ -99,36 +103,19 @@ CameraScriptLoop()
 	}
 }
 
-ScriptObjectInit(Rise1, ISolidSim)
-{
-	interState.charInter = &objectRise1;
-	interState.charInter->SetAllMeshVisibility(true);
-
-	for (size_t i = 20; i < 30; ++i)
-	{
-		interState.charInter->SetModelMeshVisibility(i, false);
-	}
-}
-
-ScriptObjectInit(stickAnimTest, ISolidSim)
-{
-	interState.animCharInter = &objectstickAnimTest;
-}
-
-ScriptObjectInit(stickAnimTest1, ISolidSim)
-{
-	objectstickAnimTest1.SetModelAnimation(0);
-	objectstickAnimTest1.PlayModelAnimation();
-}
-
-ScriptObjectInit(Spot0, ILightSim)
-{
-	interState.lightInter = &objectSpot0;
-}
-
 ScriptObjectInit(TestChar, ISolidSim)
 {
 	testChar.SetSolidSim(&objectTestChar);
+}
+
+ScriptObjectInit(TestCharBox, IColliderSim)
+{
+	testChar.SetColliderSim(&objectTestCharBox);
+}
+
+ScriptObjectInit(BlockBox, IColliderSim)
+{
+	blockCollider = &objectBlockBox;
 }
 
 ScriptKeybindPressed(I)
@@ -179,9 +166,14 @@ ScriptKeybindPressed(C)
 	}
 }
 
+// TODO: This is a temp workaround. Rewrite loading system to have expected sequencing of Init calls 
+ScriptKeybindPressed(V)
+{
+	testChar.SetupBlockCollision(blockCollider);
+}
+
 ScriptCleanUp()
 {
 	cameraSim = nullptr;
-	interState.Reset();
 	testChar.Reset();
 }

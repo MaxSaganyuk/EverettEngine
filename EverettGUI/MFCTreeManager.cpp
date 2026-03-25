@@ -112,6 +112,11 @@ void MFCTreeManager::AddSoundToTree(const AdString& soundName)
 	rootNodes["Sound"]->AddNode("Sound", soundName);
 }
 
+void MFCTreeManager::AddColliderToTree(const AdString& colliderName)
+{
+	rootNodes["Collider"]->AddNode("Collider", colliderName);
+}
+
 MFCTreeManager::MFCTreeManagerNode* MFCTreeManager::FindNodeByItem(HTREEITEM item)
 {
 	for (auto& node : rootNodes)
@@ -165,4 +170,5 @@ void MFCTreeManager::ClearNonRootNodes()
 		lightNodes.second->ClearAllNextNodes();
 	}
 	rootNodes["Sound"]->ClearAllNextNodes();
+	rootNodes["Collider"]->ClearAllNextNodes();
 }

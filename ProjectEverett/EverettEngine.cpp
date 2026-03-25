@@ -13,6 +13,7 @@
 #include "SolidSim.h"
 #include "CameraSim.h"
 #include "SoundSim.h"
+#include "ColliderSim.h"
 
 #include "FileLoader.h"
 
@@ -116,10 +117,11 @@ EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 
 std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 {
-	{EverettEngine::ObjectTypes::Camera, CameraSim::GetObjectTypeNameStr(), typeid(CameraSim)},
-	{EverettEngine::ObjectTypes::Solid,  SolidSim::GetObjectTypeNameStr(),  typeid(SolidSim)},
-	{EverettEngine::ObjectTypes::Light,  LightSim::GetObjectTypeNameStr(),  typeid(LightSim)},
-	{EverettEngine::ObjectTypes::Sound,  SoundSim::GetObjectTypeNameStr(),  typeid(SoundSim)}
+	{EverettEngine::ObjectTypes::Camera,   CameraSim::GetObjectTypeNameStr(),   typeid(CameraSim)},
+	{EverettEngine::ObjectTypes::Solid,    SolidSim::GetObjectTypeNameStr(),    typeid(SolidSim)},
+	{EverettEngine::ObjectTypes::Light,    LightSim::GetObjectTypeNameStr(),    typeid(LightSim)},
+	{EverettEngine::ObjectTypes::Sound,    SoundSim::GetObjectTypeNameStr(),    typeid(SoundSim)},
+	{EverettEngine::ObjectTypes::Collider, ColliderSim::GetObjectTypeNameStr(), typeid(ColliderSim)}
 };
 
 std::vector<std::string> EverettEngine::lightTypes = LightSim::GetLightTypeNames();
@@ -213,7 +215,6 @@ void EverettEngine::CreateAndSetupMainWindow(
 
 	camera = std::make_shared<CameraSim>(windowWidth, windowHeight);
 	camera->SetMode(CameraSim::Mode::Fly);
-	camera->SetGhostMode(true);
 
 	mainLGL->SetFramebufferSizeCallback([this](int width, int height) { camera->SetAspect(width, height); });
 
@@ -323,11 +324,21 @@ bool EverettEngine::CreateGizmoSolid(
 	{
 		SolidSim& gizmoSolid = MSM[gizmoModelName].solids[gizmoSolidName];
 		gizmoSolid.GetPositionVectorAddr() = relatedObject.GetPositionVectorAddr();
-		gizmoSolid.GetScaleVectorAddr() = { 0.25f, 0.25f, 0.25f };
+		gizmoSolid.GetScaleVectorAddr() = relatedObject.GetScaleVectorAddr();
 		gizmoSolid.SetOrientation(relatedObject.GetOrientationAddr());
 		gizmoSolid.ForceModelUpdate();
 		gizmoSolid.EnableAutoModelUpdates();
 		gizmoSolid.SetModelDefaultColor(gizmoColor);
+
+		ColliderSim* collider = dynamic_cast<ColliderSim*>(&relatedObject);
+
+		if (collider)
+		{
+			collider->AddAnyCollisionCallback(
+				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColorCollided); },
+				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColor); }
+			);
+		}
 
 		relatedObject.LinkObject(gizmoSolid);
 
@@ -352,6 +363,8 @@ void EverettEngine::RunRenderWindow()
 	auto additionalFuncs = [this]() {
 		currentStartSolidIndex = 0;
 		nextStartSolidIndex = 0;
+
+		ColliderSim::ExecuteBroadCollisionCheck();
 
 		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();
 
@@ -653,6 +666,7 @@ bool EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lig
 
 	if (resPair.second)
 	{
+		resPair.first->second.SetScaleVector(glm::vec3{ 0.25 });
 		resPair.first->second.SetOrientation(camera->GetOrientationAddr());
 		CheckAndAddToNameTracker(resPair.first->first);
 
@@ -694,10 +708,45 @@ bool EverettEngine::CreateSoundImpl(const std::string& path, const std::string& 
 		if (resPair.second)
 		{
 			resPair.first->second.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVector());
+			resPair.first->second.SetScaleVector(glm::vec3{ 0.25 });
 			CheckAndAddToNameTracker(resPair.first->first);
 
 			return true;
 		}
+	}
+
+	return false;
+}
+
+bool EverettEngine::CreateCollider(const std::string& colliderName)
+{
+	bool res = CreateColliderImpl(colliderName);
+
+	if (res && gizmoEnabled)
+	{
+		res = CreateGizmoSolid(colliderName, colliders[colliderName], colliderGizmoColor);
+	}
+
+	return res;
+}
+
+bool EverettEngine::CreateColliderImpl(const std::string& colliderName)
+{
+	if (colliders.contains(colliderName))
+	{
+		return true;
+	}
+
+	auto resPair = colliders.emplace(
+		colliderName, ColliderSim{ camera->GetPositionVectorAddr() + camera->GetFrontVector() }
+	);
+
+	if (resPair.second)
+	{
+		resPair.first->second.AppendToSortedVectorOfColliders();
+		CheckAndAddToNameTracker(resPair.first->first);
+
+		return true;
 	}
 
 	return false;
@@ -819,6 +868,31 @@ bool EverettEngine::DeleteSound(const std::string& soundName)
 	return res;
 }
 
+bool EverettEngine::DeleteCollider(const std::string& colliderName)
+{
+	bool res = false;
+
+	mainLGL->PauseRendering();
+
+	auto iter = colliders.find(colliderName);
+
+	if (iter != colliders.end())
+	{
+		allNameTracker.erase(&iter->first);
+		colliders[colliderName].DeleteFromSortedVectorOfColliders();
+		colliders.erase(colliderName);
+
+		res = true;
+	}
+
+	if (gizmoEnabled)
+	{
+		DeleteSolid(colliderName + gizmoModelName);
+	}
+
+	return res;
+}
+
 glm::vec3& EverettEngine::GetAmbientLightVectorAddr()
 {
 	return LightSim::SGetAmbientLightColorVectorAddr();
@@ -873,6 +947,12 @@ ICameraSim* EverettEngine::GetCameraInterface()
 	return dynamic_cast<ICameraSim*>(GetObjectFromMap(ObjectTypes::Camera, "", ""));
 }
 
+IColliderSim* EverettEngine::GetColliderInterface(
+	const std::string& colliderName
+)
+{
+	return dynamic_cast<IColliderSim*>(GetObjectFromMap(ObjectTypes::Collider, "", colliderName));
+}
 
 void EverettEngine::LightUpdater()
 {
@@ -1124,6 +1204,10 @@ void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... v
 	{
 		ExecuteFuncForAllSimObjectsFor(sounds, func, std::forward<Params>(values)...);
 	}
+	if constexpr (ConfirmMemberOf<ColliderSim, FunctionType, Params...>)
+	{
+		ExecuteFuncForAllSimObjectsFor(colliders, func, std::forward<Params>(values)...);
+	}
 }
 
 template<typename Sim, typename FunctionType, typename... Params>
@@ -1217,6 +1301,9 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 	case EverettEngine::ObjectTypes::Sound:
 		object = dynamic_cast<ObjectSim*>(&sounds[objectName]);
 		break;
+	case EverettEngine::ObjectTypes::Collider:
+		object = dynamic_cast<ObjectSim*>(&colliders[objectName]);
+		break;
 	default:
 		break;
 	}
@@ -1228,6 +1315,8 @@ template<typename Sim>
 void EverettEngine::SaveObjectsToFile(std::fstream& file)
 {
 	// Shame there's no constexpr switch
+	static_assert(std::is_base_of_v<ObjectSim, Sim>);
+
 	if constexpr (std::is_same_v<Sim, CameraSim>)
 	{
 		file << camera->GetSimInfoToSave("");
@@ -1259,9 +1348,12 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 			file << sound.GetSimInfoToSave(soundName);
 		}
 	}
-	else
+	else if constexpr (std::is_same_v<Sim, ColliderSim>)
 	{
-		static_assert(true && "Unacceptable type");
+		for (auto& [colliderName, collider] : colliders)
+		{
+			file << collider.GetSimInfoToSave(colliderName);
+		}
 	}
 }
 
@@ -1291,6 +1383,7 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 	MSM.clear();
 	lights.clear();
 	sounds.clear();
+	colliders.clear();
 
 	keyScriptFuncMap.clear();
 	allNameTracker.clear();
@@ -1327,6 +1420,7 @@ bool EverettEngine::SaveDataToFile(const std::string& filePath)
 	SaveObjectsToFile<SolidSim>(file);
 	SaveObjectsToFile<LightSim>(file);
 	SaveObjectsToFile<SoundSim>(file);
+	SaveObjectsToFile<ColliderSim>(file);
 
 	for (auto& keybindPair : keyScriptFuncMap)
 	{
@@ -1436,6 +1530,23 @@ void EverettEngine::LoadSoundFromLine(std::string_view& line, const std::array<s
 	CheckAndThrowExceptionWMessage(res, "Sound creation from file failed");
 }
 
+void EverettEngine::LoadColliderFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
+{
+	bool res = false;
+	std::string colliderName = objectInfo[ObjectInfoNames::ObjectName];
+
+	if (CreateColliderImpl(colliderName))
+	{
+		ApplySimInfoFromLine<ColliderSim>(line, objectInfo, res);
+		if (gizmoEnabled)
+		{
+			CreateGizmoSolid(colliderName, colliders[colliderName], colliderGizmoColor);
+		}
+	}
+
+	CheckAndThrowExceptionWMessage(res, "Sound creation from file failed");
+}
+
 void EverettEngine::LoadKeybindsFromLine(std::string_view& line)
 {
 	size_t objectInfoAmount = std::count(line.begin(), line.end(), '*');
@@ -1514,6 +1625,9 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 			case EverettEngine::ObjectTypes::Sound:
 				LoadSoundFromLine(line, objectInfo);
 				break;
+			case EverettEngine::ObjectTypes::Collider:
+				LoadColliderFromLine(line, objectInfo);
+				break;
 			default:
 				ThrowExceptionWMessage("Unreachable");
 			}
@@ -1552,6 +1666,7 @@ AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 			{
 			case EverettEngine::ObjectTypes::Camera:
 			case EverettEngine::ObjectTypes::Light:
+			case EverettEngine::ObjectTypes::Collider:
 				break;
 			case EverettEngine::ObjectTypes::Solid:
 				assetPaths.modelPaths.insert(objectInfo[ObjectInfoNames::Path]);
@@ -1718,6 +1833,8 @@ std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType)
 		return GetLightList();
 	case ObjectTypes::Sound:
 		return GetSoundList();
+	case ObjectTypes::Collider:
+		return GetColliderList();
 	default:
 		ThrowExceptionWMessage("Unreachable");
 	}
@@ -1756,6 +1873,11 @@ std::vector<std::string> EverettEngine::GetLightList()
 std::vector<std::string> EverettEngine::GetSoundList()
 {
 	return GetNameList(sounds);
+}
+
+std::vector<std::string> EverettEngine::GetColliderList()
+{
+	return GetNameList(colliders);
 }
 
 std::vector<std::string> EverettEngine::GetLightTypeList()

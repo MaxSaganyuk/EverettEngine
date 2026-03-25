@@ -174,31 +174,6 @@ void SolidSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 	}
 }
 
-bool SolidSim::CheckForCollision(const SolidSim& solid1, const SolidSim& solid2)
-{
-	if (solid1.IsGhostMode() || solid2.IsGhostMode())
-	{
-		return false;
-	}
-
-	bool res = true;
-
-	for (int i = 0; i <3; ++i)
-	{
-		res = ((solid1.pos[i] + solid1.scale[i] / 2) - (solid2.pos[i] - solid2.scale[i] / 2)) > 0.0f &&
-			  ((solid1.pos[i] - solid1.scale[i] / 2) - (solid2.pos[i] + solid2.scale[i] / 2)) < 0.0f;
-
-		if (!res) break;
-	}
-
-	return res;
-}
-
-bool SolidSim::CheckForCollision(const ISolidSim& solid1, const ISolidSim& solid2)
-{
-	return CheckForCollision(solid1, solid2);
-}
-
 size_t SolidSim::GetMeshAmount()
 {
 	return STMM.GetMeshAmount();

@@ -27,6 +27,7 @@
 #include "interfaces/ILightSim.h"
 #include "interfaces/ISoundSim.h"
 #include "interfaces/ICameraSim.h"
+#include "interfaces/IColliderSim.h"
 
 #include "EverettStructs.h"
 
@@ -36,6 +37,7 @@ class CameraSim;
 class SolidSim;
 class LightSim;
 class SoundSim;
+class ColliderSim;
 class CommandHandler;
 class LGL;
 class WindowHandleHolder;
@@ -70,6 +72,7 @@ public:
 		Solid,
 		Light,
 		Sound,
+		Collider,
 		_SIZE
 	};
 
@@ -108,11 +111,13 @@ public:
 	EVERETT_API bool CreateSolid(const std::string& modelName, const std::string& solidName);
 	EVERETT_API bool CreateLight(const std::string& lightName, LightTypes lightType);
 	EVERETT_API bool CreateSound(const std::string& path, const std::string& soundName);
+	EVERETT_API bool CreateCollider(const std::string& colliderName);
 
 	EVERETT_API bool DeleteModel(const std::string& modelName);
 	EVERETT_API bool DeleteSolid(const std::string& solidName);
 	EVERETT_API bool DeleteLight(const std::string& lightName);
 	EVERETT_API bool DeleteSound(const std::string& soundName);
+	EVERETT_API bool DeleteCollider(const std::string& colliderName);
 
 	EVERETT_API glm::vec3& GetAmbientLightVectorAddr(); 
 
@@ -131,6 +136,9 @@ public:
 	);
 	EVERETT_API ISoundSim* GetSoundInterface(
 		const std::string& soundName
+	);
+	EVERETT_API IColliderSim* GetColliderInterface(
+		const std::string& colliderName
 	);
 	EVERETT_API ICameraSim* GetCameraInterface();
 
@@ -228,13 +236,16 @@ private:
 	using ModelSolidsMap = std::unordered_map<std::string, ModelSolidInfo>;
 
 	using LightShaderValueNames = std::vector<std::pair<std::string, std::vector<std::string>>>;
-	using LightCollection = std::map<LightTypes, std::map<std::string, LightSim>>;
-	using SoundCollection = std::map<std::string, SoundSim>;
+	using LightCollection    = std::map<LightTypes, std::map<std::string, LightSim>>;
+	using SoundCollection    = std::map<std::string, SoundSim>;
+	using ColliderCollection = std::map<std::string, ColliderSim>;
 
 	constexpr static char gizmoModelFile[] = "box.glb";
 	constexpr static char gizmoModelName[] = "Gizmo";
-	constexpr static glm::vec4 lightGizmoColor = { 1.0f, 1.0f, 0.0f, 1.0f };
-	constexpr static glm::vec4 soundGizmoColor = { 0.0f, 0.0f, 1.0f, 1.0f };
+	constexpr static glm::vec4 lightGizmoColor            = { 1.0f, 1.0f, 0.0f, 1.0f };
+	constexpr static glm::vec4 soundGizmoColor            = { 0.0f, 0.0f, 1.0f, 1.0f };
+	constexpr static glm::vec4 colliderGizmoColor         = { 0.0f, 1.0f, 0.0f, 1.0f };
+	constexpr static glm::vec4 colliderGizmoColorCollided = { 1.0f, 0.0f, 0.0f, 1.0f };
 
 	void LoadGizmoModel();
 	bool CreateGizmoSolid(
@@ -249,6 +260,7 @@ private:
 	);
 	bool CreateLightImpl(const std::string& lightName, LightTypes lightType);
 	bool CreateSoundImpl(const std::string& path, const std::string& soundName);
+	bool CreateColliderImpl(const std::string& colliderName);
 	void GenerateShader();
 
 	size_t GetCreatedSolidAmount();
@@ -286,6 +298,7 @@ private:
 	std::vector<std::string> GetSolidList();
 	std::vector<std::string> GetLightList();
 	std::vector<std::string> GetSoundList();
+	std::vector<std::string> GetColliderList();
 
 	template<typename Sim>
 	void SaveObjectsToFile(std::fstream& file);
@@ -297,6 +310,7 @@ private:
 	void LoadSolidFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
+	void LoadColliderFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadKeybindsFromLine(std::string_view& line);
 
 	void SetLogCallback(bool value = true);
@@ -324,6 +338,7 @@ private:
 	ModelSolidsMap MSM;
 	LightCollection lights;
 	SoundCollection sounds;
+	ColliderCollection colliders;
 
 	static LightShaderValueNames lightShaderValueNames;
 	static std::vector<ObjectTypeInfo> objectTypes;

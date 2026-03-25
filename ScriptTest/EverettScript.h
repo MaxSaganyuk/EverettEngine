@@ -5,6 +5,7 @@
 #include "ICameraSim.h"
 #include "ILightSim.h"
 #include "ISoundSim.h"
+#include "IColliderSim.h"
 
 #define CameraScriptLoop()                                                         \
 void ImplCamera(ICameraSim& camera);                                               \

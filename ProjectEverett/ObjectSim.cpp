@@ -34,7 +34,6 @@ ObjectSim::ObjectSim(
 	lastPos = pos;
 
 	lastBlocker = false;
-	ghostMode = false;
 
 	for (size_t i = 0; i < realDirectionAmount; ++i)
 	{
@@ -71,7 +70,6 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	res += SimSerializer::GetValueToSaveFrom(lastPos);
 	res += SimSerializer::GetValueToSaveFrom(lastBlocker);
 	res += SimSerializer::GetValueToSaveFrom(speed);
-	res += SimSerializer::GetValueToSaveFrom(ghostMode);
 	res += SimSerializer::GetValueToSaveFrom(lastDir);
 	res += SimSerializer::GetValueToSaveFrom(disabledDirs);
 	res += SimSerializer::GetValueToSaveFrom(rotationLimits);
@@ -85,6 +83,7 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = true;
+	bool legacyCompatibilityBool{};
 	glm::vec3 legacyCompatibilityVect;
 	glm::vec3 legacyRotationVectGetter{};
 
@@ -96,7 +95,7 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyRotationVectGetter,                1, 7);
 	res = res && SimSerializer::SetValueToLoadFrom(line, lastBlocker,                             1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, speed,                                   1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, ghostMode,                               1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityBool,                 1, 8);
 	res = res && SimSerializer::SetValueToLoadFrom(line, lastDir,                                 1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs,                            1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits,                          1);
@@ -117,21 +116,6 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 void ObjectSim::CheckRotationLimits()
 {
 	// TODO: rotation recalculation 
-}
-
-void ObjectSim::SetGhostMode(bool val, bool executeLinkedObjects)
-{
-	ghostMode = val;
-
-	if (objectLinkingEnabled && executeLinkedObjects)
-	{
-		ExecuteLinkedObjects(&ObjectSim::SetGhostMode, val, true);
-	}
-}
-
-bool ObjectSim::IsGhostMode() const
-{
-	return ghostMode;
 }
 
 void ObjectSim::SetMovementSpeed(float speed, bool executeLinkedObjects)

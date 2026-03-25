@@ -59,9 +59,10 @@ private:
 
 	static inline std::map<EverettEngine::ObjectTypes, int> validSubnodeAmount
 	{
-		{EverettEngine::ObjectTypes::Solid, 2 },
-		{EverettEngine::ObjectTypes::Light, 2 },
-		{EverettEngine::ObjectTypes::Sound, 1 }
+		{EverettEngine::ObjectTypes::Solid,    2},
+		{EverettEngine::ObjectTypes::Light,    2},
+		{EverettEngine::ObjectTypes::Sound,    1},
+		{EverettEngine::ObjectTypes::Collider, 1}
 	};
 
 	CButton showGizmoCheck;
