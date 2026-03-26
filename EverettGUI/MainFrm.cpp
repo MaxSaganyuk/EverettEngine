@@ -123,7 +123,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	mainWindow->SetEverettEngineRef(engine);
 
 	mainWindow->ShowWindow(SW_SHOW);
-	SetWindowPos(nullptr, 0, 0, 440, 600, 0);
+	SetWindowPos(nullptr, 0, 0, mainWindowWidth, mainWindowHeight, 0);
 
 	SetActiveView(mainWindow);
 	BringWindowToTop();

@@ -51,6 +51,9 @@ protected:
 	bool LoadObjectNamesToTree();
 
 private:
+	constexpr static int mainWindowWidth  = 475;
+	constexpr static int mainWindowHeight = 600;
+
 	void OnLoadSave(bool load, std::function<bool(const std::string&)> loadSaveFunc);
 	void OnLoad();
 	void OnSave();
