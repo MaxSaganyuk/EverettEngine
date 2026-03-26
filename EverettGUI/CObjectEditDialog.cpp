@@ -78,6 +78,7 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT11, playerSpeedEdit);
 	DDX_Control(pDX, IDC_BUTTON12, colorEditButton);
 	DDX_Control(pDX, IDC_BUTTON13, autoScaleButton);
+	DDX_Control(pDX, IDC_BUTTON10, rotationEditButton);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -98,6 +99,14 @@ void CObjectEditDialog::SetupObjectParams()
 	bool isLight    = objectType == EverettEngine::ObjectTypes::Light;
 	bool isSound    = objectType == EverettEngine::ObjectTypes::Sound;
 	bool isCollider = objectType == EverettEngine::ObjectTypes::Collider;
+
+	// TODO: Remove after implementing rotated collider checks correctly
+	rotationEditButton.EnableWindow(!isCollider);
+	for (int i = 0; i <3; ++i)
+	{
+		objectInfoEdits[2][i].EnableWindow(!isCollider);
+	}
+	//
 
 	propText.ShowWindow(isSolid || isLight);
 	if (isSolid || isLight)

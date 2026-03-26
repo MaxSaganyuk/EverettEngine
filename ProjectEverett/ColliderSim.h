@@ -35,6 +35,12 @@ public:
 	std::string GetSimInfoToSave(const std::string& colliderName);
 	bool SetSimInfoToLoad(std::string_view& line);
 
+	// TODO: Implement math for narrow collision check for rotated colliders, for now
+	// rotations for colliders are not allowed
+	glm::quat& GetOrientationAddr() override;
+	void SetOrientation(const glm::quat& quat, bool executeLinkedObjects = true) override {};
+	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override {};
+	//
 private:
 	enum Axis
 	{

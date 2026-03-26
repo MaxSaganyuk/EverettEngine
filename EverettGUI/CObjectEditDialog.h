@@ -59,6 +59,7 @@ private:
 
 	CStatic propText;
 
+	CButton rotationEditButton;
 	CButton autoScaleButton;
 
 	// Model property objects

@@ -32,6 +32,13 @@ bool ColliderSim::SetSimInfoToLoad(std::string_view& line)
 	return res;
 }
 
+glm::quat& ColliderSim::GetOrientationAddr()
+{
+	static glm::quat placeholderOrient{};
+
+	return placeholderOrient;
+}
+
 ColliderSim::CollisionSet ColliderSim::SetDifference(
 	const CollisionSet& firstSet, const CollisionSet& secondSet
 )
