@@ -16,6 +16,7 @@ public:
 		const glm::vec3& scale = glm::vec3(1.0f, 1.0f, 1.0f),
 		float speed = 1.0f
 	);
+	~ColliderSim();
 
 	static std::string GetObjectTypeNameStr();
 

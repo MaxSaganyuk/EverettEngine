@@ -737,13 +737,10 @@ bool EverettEngine::CreateColliderImpl(const std::string& colliderName)
 		return true;
 	}
 
-	auto resPair = colliders.emplace(
-		colliderName, ColliderSim{ camera->GetPositionVectorAddr() + camera->GetFrontVector() }
-	);
+	auto resPair = colliders.try_emplace(colliderName, camera->GetPositionVectorAddr() + camera->GetFrontVector());
 
 	if (resPair.second)
 	{
-		resPair.first->second.AppendToSortedVectorOfColliders();
 		CheckAndAddToNameTracker(resPair.first->first);
 
 		return true;
@@ -879,7 +876,6 @@ bool EverettEngine::DeleteCollider(const std::string& colliderName)
 	if (iter != colliders.end())
 	{
 		allNameTracker.erase(&iter->first);
-		colliders[colliderName].DeleteFromSortedVectorOfColliders();
 		colliders.erase(colliderName);
 
 		res = true;

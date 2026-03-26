@@ -7,7 +7,15 @@ ColliderSim::ColliderSim(
 	const glm::vec3& scale,
 	float speed
 )
-	: ObjectSim(pos, scale, speed), isCollided(false), isActive(true) {}
+	: ObjectSim(pos, scale, speed), isCollided(false), isActive(true) 
+{
+	AppendToSortedVectorOfColliders();
+}
+
+ColliderSim::~ColliderSim()
+{
+	DeleteFromSortedVectorOfColliders();
+}
 
 std::string ColliderSim::GetObjectTypeNameStr()
 {
