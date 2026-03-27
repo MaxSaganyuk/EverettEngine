@@ -58,8 +58,8 @@ void ShaderGenerator::ProcessPreSources()
 							valueName = valueName.substr(0, valueName.find(' '));
 						}
 
-						lineToSubstMap[fileIndex].emplace(
-							lineIndex, LineToSubstInfo{ customKeyWordIndex, valueName, defaultSubstitute }
+						lineToSubstMap[fileIndex].try_emplace(
+							lineIndex, customKeyWordIndex, valueName, defaultSubstitute
 						);
 					}
 				}

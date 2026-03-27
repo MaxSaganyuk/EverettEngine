@@ -11,7 +11,7 @@ void ScriptFuncStorage::AddScriptFunc(
 	ScriptFuncWeakPtr scriptFunc
 )
 {
-	scriptFuncMap.emplace(dllName, std::pair<std::string, ScriptFuncWeakPtr>{ dllPath, scriptFunc });
+	scriptFuncMap.try_emplace(dllName, dllPath, scriptFunc);
 	lastExecutedScriptDll = dllName;
 }
 

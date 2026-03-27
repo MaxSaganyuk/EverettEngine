@@ -583,25 +583,28 @@ bool EverettEngine::CreateSolidImpl(
 	auto modelPtr = MSM[modelName].model.first.lock();
 	auto modelAnimPtr = MSM[modelName].model.second.lock();
 
-	SolidSim newSolid(camera->GetPositionVectorAddr() + camera->GetFrontVector());
-	newSolid.SetBackwardsModelAccess(MSM[modelName].model);
+	auto [iter, success] = MSM[modelName].solids.try_emplace(
+		solidName, camera->GetPositionVectorAddr() + camera->GetFrontVector()
+	);
 
-	for (auto& animInfo : modelAnimPtr->animInfoVect)
-	{
-		newSolid.AppendModelStartingBoneIndex(animSystem->GetTotalBoneAmount());
-		animSystem->IncrementTotalBoneAmount(*modelAnimPtr);
-	}
+	if(success)
+	{ 
+		SolidSim& newSolid = iter->second;
 
-	auto resPair = MSM[modelName].solids.emplace(solidName, std::move(newSolid));
+		newSolid.SetBackwardsModelAccess(MSM[modelName].model);
 
-	if (resPair.second)
-	{
+		for (auto& animInfo : modelAnimPtr->animInfoVect)
+		{
+			newSolid.AppendModelStartingBoneIndex(animSystem->GetTotalBoneAmount());
+			animSystem->IncrementTotalBoneAmount(*modelAnimPtr);
+		}
+
 		if (forceVisible)
 		{
 			modelPtr->render = true;
 		}
 
-		CheckAndAddToNameTracker(resPair.first->first);
+		CheckAndAddToNameTracker(solidName);
 
 		if (regenerateShader)
 		{
@@ -655,20 +658,20 @@ bool EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lig
 		return true;
 	}
 
-	auto resPair = lights[lightType].emplace(
+	auto [iter, success] = lights[lightType].try_emplace(
 		lightName,
-		LightSim{
-			static_cast<LightSim::LightTypes>(lightType),
-			camera->GetPositionVectorAddr(),
-			glm::vec3(1.0f, 1.0f, 1.0f)
-		}
+		static_cast<LightSim::LightTypes>(lightType),
+		camera->GetPositionVectorAddr(),
+		glm::vec3(1.0f, 1.0f, 1.0f)
 	);
 
-	if (resPair.second)
+	if (success)
 	{
-		resPair.first->second.SetScaleVector(glm::vec3{ 0.25 });
-		resPair.first->second.SetOrientation(camera->GetOrientationAddr());
-		CheckAndAddToNameTracker(resPair.first->first);
+		LightSim& newLight = iter->second;
+
+		newLight.SetScaleVector(glm::vec3{ 0.25 });
+		newLight.SetOrientation(camera->GetOrientationAddr());
+		CheckAndAddToNameTracker(lightName);
 
 		return true;
 	}
@@ -700,16 +703,18 @@ bool EverettEngine::CreateSoundImpl(const std::string& path, const std::string& 
 
 	if (wavData)
 	{
-		auto resPair = sounds.emplace(
+		auto [iter, success] = sounds.try_emplace(
 			soundName,
-			SoundSim{ std::move(wavData) }
+			std::move(wavData)
 		);
 
-		if (resPair.second)
+		if (success)
 		{
-			resPair.first->second.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVector());
-			resPair.first->second.SetScaleVector(glm::vec3{ 0.25 });
-			CheckAndAddToNameTracker(resPair.first->first);
+			SoundSim& newSound = iter->second;
+
+			newSound.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVector());
+			newSound.SetScaleVector(glm::vec3{ 0.25 });
+			CheckAndAddToNameTracker(soundName);
 
 			return true;
 		}
@@ -737,11 +742,11 @@ bool EverettEngine::CreateColliderImpl(const std::string& colliderName)
 		return true;
 	}
 
-	auto resPair = colliders.try_emplace(colliderName, camera->GetPositionVectorAddr() + camera->GetFrontVector());
+	auto [iter, success] = colliders.try_emplace(colliderName, camera->GetPositionVectorAddr() + camera->GetFrontVector());
 
-	if (resPair.second)
+	if (success)
 	{
-		CheckAndAddToNameTracker(resPair.first->first);
+		CheckAndAddToNameTracker(colliderName);
 
 		return true;
 	}
