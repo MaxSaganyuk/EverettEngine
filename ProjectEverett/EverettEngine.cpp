@@ -382,14 +382,6 @@ void EverettEngine::RunRenderWindow()
 			LightUpdater();
 		}
 
-		for (auto& [_, sound] : sounds)
-		{
-			if (sound.IsPlaying())
-			{
-				sound.UpdateSoundPosition();
-			}
-		}
-
 		logOutput->ExecuteManualCallbacks();
 		errorOutput->ExecuteManualCallbacks();
 	};

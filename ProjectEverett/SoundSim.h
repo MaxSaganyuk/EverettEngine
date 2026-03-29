@@ -55,7 +55,7 @@ public:
 	std::string GetSimInfoToSave(const std::string& soundName);
 	bool SetSimInfoToLoad(std::string_view& line);
 
-	void UpdateSoundPosition();
+	void UpdatePosition() override;
 
 	static void InitOpenAL();
 	static void TerminateOpenAL();

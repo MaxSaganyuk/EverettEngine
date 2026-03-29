@@ -208,13 +208,15 @@ void SoundSim::UpdateCurrentPlaybackTime()
 	}
 }
 
-void SoundSim::UpdateSoundPosition()
+void SoundSim::UpdatePosition()
 {
-	UpdateCurrentPlaybackTime();
+	ObjectSim::UpdatePosition();
 
 	if (sound.playStates.IsPlaying())
 	{
 		ContextLock
+
+		UpdateCurrentPlaybackTime();
 
 		const glm::vec3& currentPos = pos;
 		alSource3f(sound.source, AL_POSITION, currentPos.x, currentPos.y, currentPos.z);
