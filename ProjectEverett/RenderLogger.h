@@ -1,9 +1,7 @@
 #pragma once
 
 #include "LGLStructs.h"
-
-#include <iostream>
-#include <memory>
+#include "stdEx/utilityEx.h"
 
 class RenderLogger
 {
@@ -35,7 +33,7 @@ private:
 	void ScrollMessages();
 
 	glm::vec3 startTextPos;
-	int maxAmountOfMessages; 
+	constexpr static int maxAmountOfMessages = 10; 
 
 	const LGLStructs::GlyphInfo& glyphs;
 	std::string shader;
@@ -45,5 +43,5 @@ private:
 	RenderTextDeleteFunc deleteFunc;
 
 	size_t counter;
-	std::list<std::pair<size_t, LGLStructs::TextInfo>> renderMessageCollection;
+	stdEx::RingBuffer<std::pair<size_t, LGLStructs::TextInfo>, maxAmountOfMessages> renderMessageCollection;
 };

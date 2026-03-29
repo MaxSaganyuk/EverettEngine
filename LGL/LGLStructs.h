@@ -408,8 +408,10 @@ namespace LGLStructs
 		glm::vec3 position;
 		bool render;
 		std::string shaderProgram;
-		const GlyphInfo& glyphInfo;
+		const GlyphInfo* glyphInfo;
 		std::function<void()> behaviour;
+
+		TextInfo() = default;
 
 		TextInfo(
 			const std::string& text,
@@ -423,7 +425,7 @@ namespace LGLStructs
 			position(position),
 			render(render),
 			shaderProgram(shaderProgram),
-			glyphInfo(glyphInfo),
+			glyphInfo(&glyphInfo),
 			behaviour(behaviour)
 		{}
 	};

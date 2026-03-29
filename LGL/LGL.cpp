@@ -412,7 +412,7 @@ void LGL::RenderText()
 
 		for (auto c : text.second->text)
 		{
-			const LGLStructs::GlyphTexture& glyph = text.second->glyphInfo.glyphs.at(c);
+			const LGLStructs::GlyphTexture& glyph = text.second->glyphInfo->glyphs.at(c);
 
 			float xpos = pos.x + glyph.bitmap_left * pos.z;
 			float ypos = pos.y - (glyph.height - glyph.bitmap_top) * pos.z;
@@ -426,7 +426,7 @@ void LGL::RenderText()
 			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        }, { 1.0f, 1.0f }});
 			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos + hpos }, { 1.0f, 0.0f }});           
 
-			GLSafeExecute(glBindTexture, GL_TEXTURE_2D, collectionToCharTextures[text.second->glyphInfo.fontName][c]);
+			GLSafeExecute(glBindTexture, GL_TEXTURE_2D, collectionToCharTextures[text.second->glyphInfo->fontName][c]);
 
 			GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, renderTextVBO);
 
@@ -778,17 +778,22 @@ void LGL::CreateModel(const std::string& modelName, std::weak_ptr<LGLStructs::Mo
 
 void LGL::CreateText(const std::string& textLabel, LGLStructs::TextInfo& text)
 {
+	if (!text.glyphInfo)
+	{
+		return;
+	}
+
 	if (!renderTextVOCreated)
 	{
 		CreateRenderTextVO();
 		renderTextVOCreated = true;
 	}
 	LoadAndCompileShader(text.shaderProgram);
-	if (collectionToCharTextures.find(text.glyphInfo.fontName) == collectionToCharTextures.end())
+	if (collectionToCharTextures.find(text.glyphInfo->fontName) == collectionToCharTextures.end())
 	{
-		for (auto& charTexture : text.glyphInfo.glyphs)
+		for (auto& charTexture : text.glyphInfo->glyphs)
 		{
-			ConfigueGlyphTexture(text.glyphInfo.fontName, charTexture.second);
+			ConfigueGlyphTexture(text.glyphInfo->fontName, charTexture.second);
 		}
 	}
 

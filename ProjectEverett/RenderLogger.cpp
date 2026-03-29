@@ -1,7 +1,5 @@
 #include "RenderLogger.h"
 
-#include <thread>
-
 RenderLogger::RenderLogger(
 	const float windowWidth,
 	const float windowHeight,
@@ -22,7 +20,6 @@ RenderLogger::RenderLogger(
 	counter(0)
 {
 	startTextPos = { 20.0f, windowHeight - 25.0f, 1.0f };
-	maxAmountOfMessages = static_cast<int>(windowHeight / 60.0f);
 }
 
 
@@ -38,40 +35,40 @@ void RenderLogger::CreateErrorMessage(const std::string& str)
 
 void RenderLogger::CreateMessage(const std::string& str, const std::function<void()>& behaviourToUse)
 {
-	if (renderMessageCollection.size() == maxAmountOfMessages)
+	if (renderMessageCollection.GetCurrentSize() == maxAmountOfMessages)
 	{
 		ScrollMessages();
 	}
 
-	renderMessageCollection.push_back(
+	renderMessageCollection.PushBack(
 		{ counter++, { str, GetCurrentTextPosition(), true, shader, glyphs, behaviourToUse} }
 	);
-	createFunc(std::to_string(renderMessageCollection.back().first), renderMessageCollection.back().second);
+	createFunc(std::to_string(renderMessageCollection.GetBack().first), renderMessageCollection.GetBack().second);
 }
 
 void RenderLogger::ScrollMessages()
 {
-	deleteFunc(std::to_string(renderMessageCollection.front().first));
-	renderMessageCollection.pop_front();
+	deleteFunc(std::to_string(renderMessageCollection.GetFront().first));
+	renderMessageCollection.PopFront();
 
-	for (auto& message : renderMessageCollection)
+	for (size_t i = 0; i < renderMessageCollection.GetCurrentSize(); ++i)
 	{
-		message.second.position.y += 15.0f;
+		renderMessageCollection[i].second.position.y += 15.0f;
 	}
 }
 
 glm::vec3 RenderLogger::GetCurrentTextPosition()
 {
 	glm::vec3 currentTextPos = startTextPos;
-	currentTextPos.y -= renderMessageCollection.size() * 15.0f;
+	currentTextPos.y -= renderMessageCollection.GetCurrentSize() * 15.0f;
 
 	return currentTextPos;
 }
 
 void RenderLogger::EnableRender(bool value)
 {
-	for (auto& [_, message] : renderMessageCollection)
+	for (size_t i = 0; i < renderMessageCollection.GetCurrentSize(); ++i)
 	{
-		message.render = value;
+		renderMessageCollection[i].second.render = value;
 	}
 }
