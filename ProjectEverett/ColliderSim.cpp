@@ -22,6 +22,15 @@ std::string ColliderSim::GetObjectTypeNameStr()
 	return "Collider";
 }
 
+std::string ColliderSim::GetSimInfoToSaveImpl()
+{
+	std::string res = ObjectSim::GetSimInfoToSaveImpl();
+
+	res += SimSerializer::GetValueToSaveFrom(isActive);
+
+	return res;
+}
+
 std::string ColliderSim::GetSimInfoToSave(const std::string& colliderName)
 {
 	std::string info = GetObjectTypeNameStr() + "**" + colliderName + '*';

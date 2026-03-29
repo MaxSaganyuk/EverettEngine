@@ -70,6 +70,8 @@ private:
 	);
 
 	static void CleanBindedCollisionCallbacksFrom(ColliderSim* colliderToRemove);
+
+	std::string GetSimInfoToSaveImpl();
  
 	bool isActive;
 
