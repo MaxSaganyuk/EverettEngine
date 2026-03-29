@@ -366,6 +366,8 @@ void EverettEngine::RunRenderWindow()
 
 		ColliderSim::ExecuteBroadCollisionCheck();
 
+		ExecuteFuncForAllSimObjects(&ObjectSim::UpdatePosition);
+
 		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();
 
 		if (!finalTransforms.empty())
@@ -1187,6 +1189,13 @@ void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... v
 {
 	static_assert(ConfirmMemberOf<ObjectSim, FunctionType, Params...>, "Must accept ObjectSim or derived member func");
 
+	if constexpr (ConfirmMemberOf<CameraSim, FunctionType, Params...>)
+	{
+		if (camera)
+		{
+			((*camera).*func)(std::forward<Params>(values)...);
+		}
+	}
 	if constexpr (ConfirmMemberOf<SolidSim, FunctionType, Params...>)
 	{
 		for (auto& [_, currentMSM] : MSM)

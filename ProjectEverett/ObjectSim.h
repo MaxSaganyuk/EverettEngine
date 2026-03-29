@@ -32,10 +32,8 @@ protected:
 	ValueObserver<glm::quat> orient;
 
 	glm::vec3 lastPos;
-	bool lastBlocker;
+	glm::vec3 accumPos;
 	float speed;
-
-	Direction lastDir;
 
 	std::unordered_map<Direction, bool> disabledDirs;
 	std::pair<Rotation, Rotation> rotationLimits;
@@ -62,6 +60,8 @@ public:
 	static std::string GetObjectTypeNameStr();
 	static void SetRenderDeltaTime(float deltaTime);
 
+	virtual void UpdatePosition();
+
 	void InvertMovement(bool value = true, bool executeLinkedObjects = true) override;
 	bool IsMovementInverted() override;
 
@@ -83,7 +83,6 @@ public:
 	void EnableDirection(Direction dir, bool executeLinkedObjects = true) override;
 	void EnableAllDirections(bool executeLinkedObjects = true) override;
 	size_t GetAmountOfDisabledDirs() override;
-	Direction GetLastDirection() override;
 
 	void SetLastPosition(bool executeLinkedObjects = true) override;
 	void MoveInDirection(

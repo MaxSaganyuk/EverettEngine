@@ -24,7 +24,7 @@ ObjectSim::ObjectSim(
 	const float speed
 )
 	: pos(pos), scale(scale), speed(speed), visited(false), objectLinkingEnabled(true), 
-	  orient({1.0f, 0.0f, 0.0f, 0.0f})
+	  orient({1.0f, 0.0f, 0.0f, 0.0f}), accumPos({})
 {
 	rotationLimits = {
 		{-fullRotation, -fullRotation, -fullRotation},
@@ -32,8 +32,6 @@ ObjectSim::ObjectSim(
 	};
 
 	lastPos = pos;
-
-	lastBlocker = false;
 
 	for (size_t i = 0; i < realDirectionAmount; ++i)
 	{
@@ -68,9 +66,7 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	res += SimSerializer::GetValueToSaveFrom(scale.GetValue());
 	res += SimSerializer::GetValueToSaveFrom(pos.GetValue());
 	res += SimSerializer::GetValueToSaveFrom(lastPos);
-	res += SimSerializer::GetValueToSaveFrom(lastBlocker);
 	res += SimSerializer::GetValueToSaveFrom(speed);
-	res += SimSerializer::GetValueToSaveFrom(lastDir);
 	res += SimSerializer::GetValueToSaveFrom(disabledDirs);
 	res += SimSerializer::GetValueToSaveFrom(rotationLimits);
 	res += SimSerializer::GetValueToSaveFrom(scriptFuncStorage.GetAddedScriptDLLs());
@@ -86,6 +82,7 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	bool legacyCompatibilityBool{};
 	glm::vec3 legacyCompatibilityVect;
 	glm::vec3 legacyRotationVectGetter{};
+	Direction legacyCompatibilityDir{};
 
 	res = res && SimSerializer::SetValueToLoadFrom(line, scale.GetValue(),                        1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
@@ -93,10 +90,10 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, pos.GetValue(), 1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, lastPos,                                 1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyRotationVectGetter,                1, 7);
-	res = res && SimSerializer::SetValueToLoadFrom(line, lastBlocker,                             1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityBool,                 1, 10);
 	res = res && SimSerializer::SetValueToLoadFrom(line, speed,                                   1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityBool,                 1, 8);
-	res = res && SimSerializer::SetValueToLoadFrom(line, lastDir,                                 1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityDir,                  1, 10);
 	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs,                            1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits,                          1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect, 2);
@@ -260,9 +257,16 @@ size_t ObjectSim::GetAmountOfDisabledDirs()
 	return amount;
 }
 
-ObjectSim::Direction ObjectSim::GetLastDirection()
+void ObjectSim::UpdatePosition()
 {
-	return lastDir;
+	lastPos = pos;
+	pos += accumPos;
+	accumPos = {};
+
+	if (positionChangeCallback)
+	{
+		positionChangeCallback();
+	}
 }
 
 void ObjectSim::SetLastPosition(bool executeLinkedObjects)
@@ -287,47 +291,31 @@ void ObjectSim::MoveInDirection(Direction dir, const glm::vec3& limitAxis, bool 
 		return;
 	}
 
-	if (!lastBlocker)
-	{
-		lastBlocker = true;
-		lastDir = dir;
-		lastPos = pos;
-	}
-	else
-	{
-		lastBlocker = false;
-	}
-
 	float correctedSpeed = speed * renderDeltaTime;
 
 	switch (dir)
 	{
 	case Direction::Forward:
-		pos += correctedSpeed * GetFrontVector() * limitAxis;
+		accumPos += correctedSpeed * GetFrontVector() * limitAxis;
 		break;
 	case Direction::Backward:
-		pos -= correctedSpeed * GetFrontVector() * limitAxis;
+		accumPos -= correctedSpeed * GetFrontVector() * limitAxis;
 		break;
 	case Direction::Left:
-		pos -= correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
+		accumPos -= correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
 		break;
 	case Direction::Right:
-		pos += correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
+		accumPos += correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
 		break;
 	case Direction::Up:
-		pos += glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
+		accumPos += glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
 		break;
 	case Direction::Down:
-		pos -= glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
+		accumPos -= glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
 		break;
 	default:
 		ThrowExceptionWMessage("Undefined direction");
 		return;
-	}
-
-	if (positionChangeCallback)
-	{
-		positionChangeCallback();
 	}
 
 	if (objectLinkingEnabled && executeLinkedObjects)
@@ -340,12 +328,7 @@ void ObjectSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& limitAxis, bo
 {
 	float correctedSpeed = speed * renderDeltaTime;
 
-	pos += correctedSpeed * axis * limitAxis;
-
-	if (positionChangeCallback)
-	{
-		positionChangeCallback();
-	}
+	accumPos += correctedSpeed * axis * limitAxis;
 
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{

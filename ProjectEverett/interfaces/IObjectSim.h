@@ -71,7 +71,6 @@ public:
 	Linkable virtual void EnableDirection(Direction dir, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void EnableAllDirections(bool executeLinkedObjects = true) = 0;
 	virtual size_t GetAmountOfDisabledDirs() = 0;
-	virtual Direction GetLastDirection() = 0;
 
 	Linkable virtual void SetLastPosition(bool executeLinkedObjects = true) = 0;
 	Linkable virtual void MoveInDirection(

@@ -34,14 +34,15 @@ public:
 
 	static std::string GetObjectTypeNameStr();
 
+	void UpdatePosition() override;
+
 	std::string GetSimInfoToSave(const std::string& modelSolidName);
 	bool SetSimInfoToLoad(std::string_view& line);
 
 	glm::mat4& GetModelMatrixAddr() override;
 	void ForceModelUpdate() override;
 	void SetType(SolidType type) override;
-	void MoveInDirection(Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects = true) override;
-	void MoveByAxis(const glm::vec3& axis, const glm::vec3& limitAxis, bool executeLinkedObjects = true) override;
+
 	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;
 
 	void EnableAutoModelUpdates(bool value = true) override;
