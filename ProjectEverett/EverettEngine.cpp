@@ -589,9 +589,11 @@ bool EverettEngine::CreateSolidImpl(
 		solidName, camera->GetPositionVectorAddr() + camera->GetFrontVector()
 	);
 
-	if(success)
+	if (success)
 	{ 
-		SolidSim& newSolid = iter->second;
+		// We use solidNameRef to add to tracker exactly because we need reference to a string
+		// which maps are storing, not simply the string
+		auto& [solidNameRef, newSolid] = *iter;
 
 		newSolid.SetBackwardsModelAccess(MSM[modelName].model);
 
@@ -606,7 +608,7 @@ bool EverettEngine::CreateSolidImpl(
 			modelPtr->render = true;
 		}
 
-		CheckAndAddToNameTracker(solidName);
+		CheckAndAddToNameTracker(solidNameRef);
 
 		if (regenerateShader)
 		{
@@ -669,11 +671,11 @@ bool EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lig
 
 	if (success)
 	{
-		LightSim& newLight = iter->second;
+		auto& [lightNameRef, newLight] = *iter;
 
 		newLight.SetScaleVector(glm::vec3{ 0.25 });
 		newLight.SetOrientation(camera->GetOrientationAddr());
-		CheckAndAddToNameTracker(lightName);
+		CheckAndAddToNameTracker(lightNameRef);
 
 		return true;
 	}
@@ -712,11 +714,11 @@ bool EverettEngine::CreateSoundImpl(const std::string& path, const std::string& 
 
 		if (success)
 		{
-			SoundSim& newSound = iter->second;
+			auto& [soundNameRef, newSound] = *iter;
 
 			newSound.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVector());
 			newSound.SetScaleVector(glm::vec3{ 0.25 });
-			CheckAndAddToNameTracker(soundName);
+			CheckAndAddToNameTracker(soundNameRef);
 
 			return true;
 		}
@@ -748,7 +750,9 @@ bool EverettEngine::CreateColliderImpl(const std::string& colliderName)
 
 	if (success)
 	{
-		CheckAndAddToNameTracker(colliderName);
+		auto& [colliderNameRef, _] = *iter;
+
+		CheckAndAddToNameTracker(colliderNameRef);
 
 		return true;
 	}
