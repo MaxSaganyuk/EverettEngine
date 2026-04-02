@@ -7,15 +7,18 @@
 #include "ISoundSim.h"
 #include "IColliderSim.h"
 
-#define CameraScriptLoop()                                                         \
-void ImplCamera(ICameraSim& camera);                                               \
+#define MainScriptLoop()                                                           \
+extern "C" __declspec(dllexport) void Main()                                       \
+
+#define CameraObjectInit()                                                         \
+void ImplCamera(ICameraSim& objectCamera);                                         \
                                                                                    \
-extern "C" __declspec(dllexport) void Camera(void* camera)                         \
+extern "C" __declspec(dllexport) void Camera(void* object)                         \
 {                                                                                  \
-    ImplCamera(*dynamic_cast<ICameraSim*>(reinterpret_cast<IObjectSim*>(camera))); \
+    ImplCamera(*dynamic_cast<ICameraSim*>(reinterpret_cast<IObjectSim*>(object))); \
 }                                                                                  \
                                                                                    \
-void ImplCamera(ICameraSim& camera)                                                \
+void ImplCamera(ICameraSim& objectCamera)                                          \
 
 #define ScriptObjectInit(name, objectType)                                         \
 void Impl##name(objectType& object##name);                                         \
@@ -48,11 +51,4 @@ extern "C" __declspec(dllexport) void Key##keyname##Released(void* placeholder) 
 void ImplKey##keyname##Released()                                                  \
 
 #define ScriptCleanUp()                                                            \
-void CleanUpImpl();                                                                \
-                                                                                   \
 extern "C" __declspec(dllexport) void CleanUp()                                    \
-{                                                                                  \
-    CleanUpImpl();                                                                 \
-}                                                                                  \
-                                                                                   \
-void CleanUpImpl()                                                                 \

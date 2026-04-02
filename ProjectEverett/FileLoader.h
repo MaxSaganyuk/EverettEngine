@@ -121,6 +121,7 @@ class FileLoader
 		{
 			HMODULE dllHandle;
 			ScriptFuncStorage::ScriptFuncMainMap scriptFuncMap;
+			std::function<void()> mainFunc;
 			std::function<void()> cleanUpFunc;
 		};
 
@@ -137,6 +138,7 @@ class FileLoader
 		bool ReloadScriptFuncsFromDLL(ScriptDLLInfo& dllInfo, const std::string& funcToSkip);
 		std::string GetDLLNameFromDLLPath(const std::string& dllPath);
 
+		constexpr static char mainScriptFuncName[] = "Main";
 		constexpr static char cleanUpFuncName[] = "CleanUp";
 
 		ScriptMap dllHandleMap;
@@ -151,6 +153,7 @@ class FileLoader
 		);
 		void UnloadScriptDLL(const std::string& dllPath);
 		std::vector<std::pair<std::string, std::string>> GetLoadedScriptDlls();
+		void ExecuteAllMainScriptFuncs();
 	};
 
 	class FontLoader

@@ -150,7 +150,7 @@ EverettEngine::EverettEngine()
 	animSystem = std::make_unique<AnimSystem>();
 	cmdHandler = std::make_unique<CommandHandler>();
 	hwndHolder = std::make_unique<WindowHandleHolder>();
-
+		
 	ObjectSim::InitializeObjectGraph();
 }
 
@@ -375,7 +375,6 @@ void EverettEngine::RunRenderWindow()
 			mainLGL->SetShaderUniformValue("Bones", finalTransforms, defaultShaderProgram);
 		}
 		animSystem->ResetFinalTransforms();
-		camera->ExecuteAllScriptFuncs();
 
 		if (MSM.size())
 		{
@@ -384,6 +383,8 @@ void EverettEngine::RunRenderWindow()
 
 		logOutput->ExecuteManualCallbacks();
 		errorOutput->ExecuteManualCallbacks();
+
+		fileLoader->dllLoader.ExecuteAllMainScriptFuncs();
 	};
 
 	mainLGL->RunRenderingCycle(additionalFuncs);

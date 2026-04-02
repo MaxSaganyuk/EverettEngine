@@ -619,17 +619,30 @@ void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE 
 	dllInfo.dllHandle = dllHandle;
 	std::cout << "Loaded " << GetDLLNameFromDLLPath(dllPath) << '\n';
 
-	if (!dllInfo.cleanUpFunc)
-	{
-		using CleanUpFuncType = void(*)();
-		CleanUpFuncType cleanUpFunc = reinterpret_cast<CleanUpFuncType>(
-			GetProcAddress(dllInfo.dllHandle, cleanUpFuncName)
-		);
+	using ParamlessFuncType = void(*)();
 
-		if (cleanUpFunc)
-		{
-			dllInfo.cleanUpFunc = cleanUpFunc;
-		}
+	ParamlessFuncType mainFunc = reinterpret_cast<ParamlessFuncType>(
+		GetProcAddress(dllInfo.dllHandle, mainScriptFuncName)
+	);
+
+	if (mainFunc)
+	{
+		std::cout << "Loaded main script func\n";
+		dllInfo.mainFunc = mainFunc;
+	}
+
+	ParamlessFuncType cleanUpFunc = reinterpret_cast<ParamlessFuncType>(
+		GetProcAddress(dllInfo.dllHandle, cleanUpFuncName)
+	);
+
+	if (cleanUpFunc)
+	{
+		std::cout << "Loaded cleanup script func\n";
+		dllInfo.cleanUpFunc = cleanUpFunc;
+	}
+	else
+	{
+		std::cerr << "Cleanup script does not exist\n";
 	}
 }
 
@@ -772,6 +785,7 @@ void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
 
 		FreeLibrary(dllInfo.dllHandle);
 		dllInfo.dllHandle = nullptr;
+		dllInfo.mainFunc = nullptr;
 		dllInfo.cleanUpFunc = nullptr;
 	}
 }
@@ -802,6 +816,17 @@ void FileLoader::DLLLoader::FreeDllData()
 	}
 
 	dllHandleMap.clear();
+}
+
+void FileLoader::DLLLoader::ExecuteAllMainScriptFuncs()
+{
+	for (auto& [_, dllInfo] : dllHandleMap)
+	{
+		if (dllInfo.mainFunc)
+		{
+			dllInfo.mainFunc();
+		}
+	}
 }
 
 FileLoader::FontLoader::FontLoader()

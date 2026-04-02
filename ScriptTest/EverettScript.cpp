@@ -95,14 +95,10 @@ public:
 
 TestCharHolder testChar;
 
-
-CameraScriptLoop()
+CameraObjectInit()
 {
-	if (!cameraSim)
-	{
-		cameraSim = &camera;
-		cameraSim->EnableAutoModelUpdates();
-	}
+	cameraSim = &objectCamera;
+	cameraSim->EnableAutoModelUpdates();
 }
 
 ScriptObjectInit(TestChar, ISolidSim)
