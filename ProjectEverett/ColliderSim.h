@@ -25,12 +25,7 @@ public:
 	void AppendToSortedVectorOfColliders();
 	void DeleteFromSortedVectorOfColliders();
 
-	void AddAnyCollisionCallback(
-		std::function<void()> collisionStart, std::function<void()> collisionStop = nullptr
-	) override;
-	void AddBindedCollisionCallback(
-		IColliderSim& otherCollider, std::function<void()> collisionStart, std::function<void()> collisionStop = nullptr
-	) override;
+	void AddCollisionCallback(const CollisionCallbackOptions& collisionOpts) override;
 	void SetColliderActive(bool value = true) override;
 
 	std::string GetSimInfoToSave(const std::string& colliderName);
@@ -48,10 +43,8 @@ private:
 		X, Y, Z
 	};
 
-	struct CollisionCallback
+	struct CollisionCallback : public CollisionCallbackOptions
 	{
-		std::function<void()> callbackStart;
-		std::function<void()> callbackStop;
 		bool started{};
 	};
 
@@ -79,7 +72,7 @@ private:
 	std::vector<CollisionCallback> anyCollisionCallbacks;
 	std::unordered_map<IColliderSim*, std::vector<CollisionCallback>> bindedCollisionCallbacks;
 
-	static inline std::vector<bool> generalCollisionState;
+	static inline std::vector<bool> lastGeneralCollisionState;
 	static inline CollisionSet lastCollisionState;
 
 	constexpr static Axis axisToSortBy = Axis::X;

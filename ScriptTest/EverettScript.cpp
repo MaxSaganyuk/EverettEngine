@@ -38,7 +38,9 @@ public:
 	{
 		if (testCharSolid && testCharCollider)
 		{
-			testCharCollider->AddBindedCollisionCallback(*blockCollider, [this]() { testCharSolid->SetLastPosition(); });
+			testCharCollider->AddCollisionCallback(
+				{ [this]() { testCharSolid->SetLastPosition(); }, nullptr, blockCollider, true }
+			);
 		}
 	}
 

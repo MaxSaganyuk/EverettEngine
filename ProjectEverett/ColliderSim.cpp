@@ -73,8 +73,8 @@ void ColliderSim::ExecuteBroadCollisionCheck()
 {
 	size_t amountOfColliders = collidersByAxis.size();
 
+	std::vector<bool> currentGeneralCollisonState(amountOfColliders, false);
 	CollisionSet currentCollisionState;
-	std::fill(generalCollisionState.begin(), generalCollisionState.end(), false);
 
 	for (size_t i = 0; i < amountOfColliders; ++i)
 	{
@@ -90,10 +90,10 @@ void ColliderSim::ExecuteBroadCollisionCheck()
 					std::swap(collidersByAxis[i], collidersByAxis[j]);
 				}
 
-				if (ExecuteNarrowCollisionCheck(*collidersByAxis[i], *collidersByAxis[j]))
+				if (collidersByAxis[i]->isActive && ExecuteNarrowCollisionCheck(*collidersByAxis[i], *collidersByAxis[j]))
 				{
-					generalCollisionState[i] = true;
-					generalCollisionState[j] = true;
+					currentGeneralCollisonState[i] = true;
+					currentGeneralCollisonState[j] = true;
 					currentCollisionState.insert({ i, j });
 				}
 			}
@@ -103,7 +103,8 @@ void ColliderSim::ExecuteBroadCollisionCheck()
 			}
 		}
 
-		if (!generalCollisionState[i] && collidersByAxis[i]->isCollided)
+		collidersByAxis[i]->isCollided = false;
+		if (lastGeneralCollisionState[i] && !currentGeneralCollisonState[i])
 		{
 			ExecuteEndAnyCallbacksFor(*collidersByAxis[i]);
 		}
@@ -120,13 +121,14 @@ void ColliderSim::ExecuteBroadCollisionCheck()
 		}
 	}
 
+	lastGeneralCollisionState = currentGeneralCollisonState;
 	lastCollisionState = currentCollisionState;
 }
 
 void ColliderSim::AppendToSortedVectorOfColliders()
 {
 	collidersByAxis.emplace_back(this);
-	generalCollisionState.emplace_back(false);
+	lastGeneralCollisionState.emplace_back(false);
 	ResortCollidersByXPos();
 }
 
@@ -134,26 +136,28 @@ void ColliderSim::DeleteFromSortedVectorOfColliders()
 {
 	CleanBindedCollisionCallbacksFrom(this);
 	std::erase(collidersByAxis, this);
-	generalCollisionState.resize(generalCollisionState.size() - 1);
+	lastGeneralCollisionState.resize(lastGeneralCollisionState.size() - 1);
 }
 
-void ColliderSim::AddAnyCollisionCallback(std::function<void()> collisionStart, std::function<void()> collisionStop)
+void ColliderSim::AddCollisionCallback(const CollisionCallbackOptions& collisionOpts)
 {
-	anyCollisionCallbacks.push_back({ collisionStart, collisionStop });
-}
+	if (!collisionOpts.collisionStart && !collisionOpts.collisionStop) return;
 
-void ColliderSim::AddBindedCollisionCallback(
-	IColliderSim& otherCollider, std::function<void()> collisionStart, std::function<void()> collisionStop
-)
-{
-	auto iter = bindedCollisionCallbacks.find(&otherCollider);
-
-	if (iter == bindedCollisionCallbacks.end())
+	if (!collisionOpts.colliderToBindTo)
 	{
-		bindedCollisionCallbacks.emplace(&otherCollider, std::vector<CollisionCallback>{});
+		anyCollisionCallbacks.push_back({ collisionOpts });
 	}
+	else
+	{
+		auto iter = bindedCollisionCallbacks.find(collisionOpts.colliderToBindTo);
 
-	bindedCollisionCallbacks[&otherCollider].push_back({ collisionStart, collisionStop });
+		if (iter == bindedCollisionCallbacks.end())
+		{
+			bindedCollisionCallbacks.emplace(collisionOpts.colliderToBindTo, std::vector<CollisionCallback>{});
+		}
+
+		bindedCollisionCallbacks[collisionOpts.colliderToBindTo].push_back({ collisionOpts });
+	}
 }
 
 void ColliderSim::SetColliderActive(bool value)
@@ -197,7 +201,18 @@ bool ColliderSim::ExecuteNarrowCollisionCheck(ColliderSim& firstCollider, Collid
 
 void ColliderSim::ExecuteStartCallbacksFor(ColliderSim& colliderToExe, ColliderSim& bindedCollider)
 {
-	colliderToExe.isCollided = true;
+	if (!colliderToExe.isCollided)
+	{
+		for (auto& anyCollisionCallback : colliderToExe.anyCollisionCallbacks)
+		{
+			if (anyCollisionCallback.collisionStart &&
+				(anyCollisionCallback.holdable || !anyCollisionCallback.started))
+			{
+				anyCollisionCallback.started = true;
+				anyCollisionCallback.collisionStart();
+			}
+		}
+	}
 
 	auto iter = colliderToExe.bindedCollisionCallbacks.find(&bindedCollider);
 
@@ -205,24 +220,28 @@ void ColliderSim::ExecuteStartCallbacksFor(ColliderSim& colliderToExe, ColliderS
 	{
 		for (auto& bindedCollisionCallback : iter->second)
 		{
-			bindedCollisionCallback.started = true;
-			bindedCollisionCallback.callbackStart();
+			if (bindedCollisionCallback.collisionStart && 
+			    (bindedCollisionCallback.holdable || !bindedCollisionCallback.started))
+			{
+				bindedCollisionCallback.started = true;
+				bindedCollisionCallback.collisionStart();
+			}
 		}
 	}
 
-	for (auto& anyCollisionCallbackStruct : colliderToExe.anyCollisionCallbacks)
-	{
-		anyCollisionCallbackStruct.callbackStart();
-	}
+	colliderToExe.isCollided = true;
 }
 
 void ColliderSim::ExecuteEndAnyCallbacksFor(ColliderSim& colliderToExe)
 {
-	colliderToExe.isCollided = false;
-
-	for (auto& anyCollisionCallbackStruct : colliderToExe.anyCollisionCallbacks)
+	for (auto& anyCollisionCallback : colliderToExe.anyCollisionCallbacks)
 	{
-		anyCollisionCallbackStruct.callbackStop();
+		anyCollisionCallback.started = false;
+
+		if (anyCollisionCallback.collisionStop)
+		{
+			anyCollisionCallback.collisionStop();
+		}
 	}
 }
 
@@ -234,9 +253,9 @@ void ColliderSim::ExecuteEndBindedCallbacksFor(ColliderSim& firstCollider, Colli
 		{
 			bindedCollisionCallback.started = false;
 
-			if (bindedCollisionCallback.callbackStop)
+			if (bindedCollisionCallback.collisionStop)
 			{
-				bindedCollisionCallback.callbackStop();
+				bindedCollisionCallback.collisionStop();
 			}
 		}
 	}

@@ -334,10 +334,10 @@ bool EverettEngine::CreateGizmoSolid(
 
 		if (collider)
 		{
-			collider->AddAnyCollisionCallback(
+			collider->AddCollisionCallback({
 				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColorCollided); },
 				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColor); }
-			);
+			});
 		}
 
 		relatedObject.LinkObject(gizmoSolid);
