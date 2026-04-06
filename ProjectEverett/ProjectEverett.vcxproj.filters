@@ -117,6 +117,9 @@
     <ClInclude Include="interfaces\IColliderSim.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="StringCast.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SolidSim.cpp">

@@ -13,7 +13,7 @@
 #include "CPlaceObjectDialog.h"
 #include "CLoadingDialog.h"
 #include "CObjectEditDialog.h"
-#include "CKeybindOptionDlg.h"
+#include "CDLLLoaderDlg.h"
 #include "CGameProducerDlg.h"
 
 #include "MainFrm.h"
@@ -40,7 +40,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_BUTTON32773, &CMainFrame::OnPlaceSound)
 	ON_COMMAND(ID_BUTTON32779, &CMainFrame::OnPlaceCollider)
 	ON_COMMAND(ID_BUTTON32774, &CMainFrame::OnCameraOptions)
-	ON_COMMAND(ID_BUTTON32775, &CMainFrame::OnKeybindOptions)
+	ON_COMMAND(ID_BUTTON32775, &CMainFrame::OnScriptOptions)
 	ON_COMMAND(ID_BUTTON32778, &CMainFrame::OnGameProduce)
 END_MESSAGE_MAP()
 
@@ -202,27 +202,25 @@ bool CMainFrame::LoadObjectNamesToTree()
 	for (size_t i = static_cast<size_t>(ObjectTypes::Solid); i < static_cast<size_t>(ObjectTypes::_SIZE); ++i)
 	{
 		ObjectTypes currentObjectType = static_cast<ObjectTypes>(i);
-		objectNames = engine.GetNamesByObject(currentObjectType);
+		objectNames = engine.GetNamesByObject(currentObjectType, true);
 
 		AdString subTypeName = "";
-		for (auto& objectName : objectNames)
+		for (auto objectName : objectNames)
 		{
-			bool subType = objectName[0] == '.';
-			if (subType)
+			if (objectName.find('.') != std::string::npos)
 			{
-				subTypeName = objectName.substr(1, std::string::npos);
+				subTypeName = objectName.substr(0, objectName.find('.'));
+				objectName = objectName.substr(objectName.find('.') + 1, std::string::npos);
 			}
 
 			switch (currentObjectType)
 			{
 			case ObjectTypes::Solid:
-				subType ? mfcTree.AddModelToTree(subTypeName) : mfcTree.AddSolidToTree(subTypeName, objectName);
+				mfcTree.AddModelToTree(subTypeName);
+				mfcTree.AddSolidToTree(subTypeName, objectName);
 				break;
 			case ObjectTypes::Light:
-				if (!subType)
-				{
-					mfcTree.AddLightToTree(subTypeName, objectName);
-				}
+				mfcTree.AddLightToTree(subTypeName, objectName);
 				break;
 			case ObjectTypes::Sound:
 				mfcTree.AddSoundToTree(objectName);
@@ -400,11 +398,11 @@ void CMainFrame::OnCameraOptions()
 	objectEditDlg.DoModal();
 }
 
-void CMainFrame::OnKeybindOptions()
+void CMainFrame::OnScriptOptions()
 {
-	CKeybindOptionDlg keybindDlg(engine, mainWindow->GetSelectedScriptDllInfo());
+	CDLLLoaderDlg dllLoaderDlg(mainWindow->GetSelectedScriptDllInfo(), engine);
 
-	keybindDlg.DoModal();
+	dllLoaderDlg.DoModal();
 }
 
 void CMainFrame::OnGameProduce()

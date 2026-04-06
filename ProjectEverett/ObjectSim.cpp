@@ -69,7 +69,6 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	res += SimSerializer::GetValueToSaveFrom(speed);
 	res += SimSerializer::GetValueToSaveFrom(disabledDirs);
 	res += SimSerializer::GetValueToSaveFrom(rotationLimits);
-	res += SimSerializer::GetValueToSaveFrom(scriptFuncStorage.GetAddedScriptDLLs());
 	res += SimSerializer::GetValueToSaveFrom(objectLinkingEnabled);
 	res += SimSerializer::GetValueToSaveFrom(orient.GetValue());
 
@@ -83,6 +82,7 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	glm::vec3 legacyCompatibilityVect;
 	glm::vec3 legacyRotationVectGetter{};
 	Direction legacyCompatibilityDir{};
+	std::vector<std::pair<std::string, std::string>> legacyCompatVectOfPairs{};
 
 	res = res && SimSerializer::SetValueToLoadFrom(line, scale.GetValue(),                        1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
@@ -96,7 +96,7 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityDir,                  1, 10);
 	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs,                            1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits,                          1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, scriptFuncStorage.tempScriptDllNameVect, 2);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatVectOfPairs,                 2, 11);
 	res = res && SimSerializer::SetValueToLoadFrom(line, objectLinkingEnabled,                    5);
 	res = res && SimSerializer::SetValueToLoadFrom(line, orient.GetValue(),                       6);
 
@@ -386,11 +386,6 @@ void ObjectSim::AddScriptFunc(
 void ObjectSim::ClearScriptFuncMap()
 {
 	scriptFuncStorage.ClearScriptFuncMap();
-}
-
-std::vector<std::pair<std::string, std::string>> ObjectSim::GetTempScriptDLLInfo()
-{
-	return scriptFuncStorage.GetTempScriptDllNameVect();
 }
 
 void ObjectSim::SetPositionChangeCallback(std::function<void()> callback)

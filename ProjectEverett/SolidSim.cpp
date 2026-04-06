@@ -166,9 +166,9 @@ void SolidSim::SetAllMeshVisibility(bool value)
 	STMM.SetAllMeshVisibility(value);
 }
 
-void SolidSim::SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model)
+void SolidSim::SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model, const std::string& modelName)
 {
-	STMM.InitializeSTMM(model);
+	STMM.InitializeSTMM(model, modelName);
 }
 
 std::vector<std::string> SolidSim::GetModelMeshNames()
@@ -214,6 +214,11 @@ void SolidSim::InvokeAutoScale()
 std::vector<std::string> SolidSim::GetModelAnimationNames()
 {
 	return STMM.GetAnimationNames();
+}
+
+std::string SolidSim::GetModelName()
+{
+	return STMM.GetModelName();
 }
 
 glm::vec4 SolidSim::GetModelDefaultColor()

@@ -123,15 +123,12 @@ public:
 
 	EVERETT_API IObjectSim* GetObjectInterface(
 		ObjectTypes objectType,
-		const std::string& subtypeName,
 		const std::string& objectName
 	);
 	EVERETT_API ISolidSim* GetSolidInterface(
-		const std::string& modelName,
 		const std::string& solidName
 	);
 	EVERETT_API ILightSim* GetLightInterface(
-		const std::string& lightTypeName,
 		const std::string& lightName
 	);
 	EVERETT_API ISoundSim* GetSoundInterface(
@@ -142,31 +139,12 @@ public:
 	);
 	EVERETT_API ICameraSim* GetCameraInterface();
 
-	EVERETT_API void SetScriptToObject(
-		ObjectTypes objectType, 
-		const std::string& subtypeName, 
-		const std::string& objectName, 
-		const std::string& dllPath,
-		const std::string& dllName
-	);
+	EVERETT_API void SetupScriptDLL(const std::string& dllPath);
 	EVERETT_API bool IsObjectScriptSet(
 		ObjectTypes objectType,
-		const std::string& subtypeName,
 		const std::string& objectName,
 		const std::string& dllName
 	);
-
-	EVERETT_API void SetScriptToKey(
-		const std::string& keyName,
-		bool holdable,
-		const std::string& dllPath,
-		const std::string& dllName
-	);
-	EVERETT_API bool IsKeyScriptSet(
-		const std::string& keyName,
-		const std::string& dllName
-	);
-
 	EVERETT_API bool IsDLLLoaded(const std::string& dllPath);
 	EVERETT_API void UnsetScript(const std::string& dllPath);
 	EVERETT_API std::vector<std::pair<std::string, std::string>> GetLoadedScriptDLLs();
@@ -175,16 +153,13 @@ public:
 	EVERETT_API std::vector<std::string> GetSoundInDirList(const std::string& path);
 
 	EVERETT_API std::vector<std::string> GetCreatedModels(bool getFullPaths = false);
-	EVERETT_API std::vector<std::string> GetNamesByObject(ObjectTypes objType);
+	// If getAdditionalInfo is set to true - list of solids will include model names, lights will include light type
+	EVERETT_API std::vector<std::string> GetNamesByObject(ObjectTypes objType, bool getAdditionalInfo = false);
 	EVERETT_API static std::vector<std::string> GetLightTypeList();
 
 	EVERETT_API static std::vector<std::string> GetAllObjectTypeNames();
 	EVERETT_API static std::string GetObjectTypeToName(ObjectTypes objectType);
 	EVERETT_API static ObjectTypes GetObjectTypeToName(const std::string& objectName);
-
-	// Must be called on separate thread
-	EVERETT_API int PollForLastKeyPressed(); // -2 is abort code
-	EVERETT_API void AbortKeyPressWait();
 
 	EVERETT_API static std::string ConvertKeyTo(int keyId);
 	EVERETT_API static int         ConvertKeyTo(const std::string& keyName);
@@ -233,12 +208,13 @@ private:
 
 	struct ModelSolidInfo;
 
-	using ModelSolidsMap = std::unordered_map<std::string, ModelSolidInfo>;
-
 	using LightShaderValueNames = std::vector<std::pair<std::string, std::vector<std::string>>>;
-	using LightCollection    = std::map<LightTypes, std::map<std::string, LightSim>>;
-	using SoundCollection    = std::map<std::string, SoundSim>;
-	using ColliderCollection = std::map<std::string, ColliderSim>;
+
+	using ModelCollection    = std::unordered_map<std::string, ModelSolidInfo>; 
+	using SolidCollection    = std::unordered_map<std::string, SolidSim>;
+	using LightCollection    = std::unordered_map<std::string, LightSim>;
+	using SoundCollection    = std::unordered_map<std::string, SoundSim>;
+	using ColliderCollection = std::unordered_map<std::string, ColliderSim>;
 
 	constexpr static char gizmoModelFile[] = "box.glb";
 	constexpr static char gizmoModelName[] = "Gizmo";
@@ -247,12 +223,17 @@ private:
 	constexpr static glm::vec4 colliderGizmoColor         = { 0.0f, 1.0f, 0.0f, 1.0f };
 	constexpr static glm::vec4 colliderGizmoColorCollided = { 1.0f, 0.0f, 0.0f, 1.0f };
 
+	SolidCollection::iterator DeleteSolidImpl(SolidCollection::iterator solidIter);
+
 	void LoadGizmoModel();
 	bool CreateGizmoSolid(
 		const std::string& relatedObjModelName, 
 		ObjectSim& relatedObject,
 		const glm::vec4& gizmoColor
 	);
+
+	void DeleteSolidsByModel(const std::string& modelName);
+	void RemoveSolidPtrFromModel(const std::string& modelName, SolidSim* solidPtr);
 
 	bool CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader);
 	bool CreateSolidImpl(
@@ -263,19 +244,28 @@ private:
 	bool CreateColliderImpl(const std::string& colliderName);
 	void GenerateShader();
 
-	size_t GetCreatedSolidAmount();
-
 	void LightUpdater();
 
 	ObjectSim* GetObjectFromMap(
 		ObjectTypes objectType,
-		const std::string& subtypeName,
 		const std::string& objectName
 	);
 
-	void SetScriptToObjectImpl(
-		ObjectSim* object,
+	template<typename Sim>
+	ObjectSim* GetObjectFromTheMap(std::unordered_map<std::string, Sim>& simMap, const std::string& objectName);
+
+	void SetScriptToObject(
+		ObjectTypes objectType,
 		const std::string& objectName,
+		std::string_view rawFuncName,
+		const std::string& dllPath,
+		const std::string& dllName
+	);
+	void SetScriptToKey(
+		const std::string& keyName,
+		std::string_view pressedFuncName,
+		std::string_view releasedFuncName,
+		bool holdable,
 		const std::string& dllPath,
 		const std::string& dllName
 	);
@@ -283,7 +273,7 @@ private:
 	std::string CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder);
 
 	template<typename Sim>
-	std::vector<std::string> GetNameList(const std::map<std::string, Sim>& sims);
+	std::vector<std::string> GetNameList(const std::unordered_map<std::string, Sim>& sims);
 
 	std::vector<std::string> GetObjectsInDirList(const std::string& path, const std::vector<std::string>& fileTypes);
 
@@ -295,8 +285,8 @@ private:
 	static std::type_index GetObjectPureTypeToName(const std::string& objectName);
 	static ObjectTypes GetObjectPureTypeToName(std::type_index objectType);
 
-	std::vector<std::string> GetSolidList();
-	std::vector<std::string> GetLightList();
+	std::vector<std::string> GetSolidList(bool getModelNames);
+	std::vector<std::string> GetLightList(bool getLightTypes);
 	std::vector<std::string> GetSoundList();
 	std::vector<std::string> GetColliderList();
 
@@ -311,7 +301,7 @@ private:
 	void LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadColliderFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
-	void LoadKeybindsFromLine(std::string_view& line);
+	void LoadScriptDLLsFromLine(std::string_view& line);
 
 	void SetLogCallback(bool value = true);
 	void SetRenderLoggerCallbacks(bool value = true);
@@ -320,10 +310,7 @@ private:
 	template<typename FunctionType, typename... Params>
 	void ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values);
 	template<typename Sim, typename FunctionType, typename... Params>
-	void ExecuteFuncForAllSimObjectsFor(std::map<std::string, Sim>& container, FunctionType func, Params&&... values);
-
-	// Ranges predicates
-	static bool IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement);
+	void ExecuteFuncForAllSimObjectsFor(std::unordered_map<std::string, Sim>& container, FunctionType func, Params&&... values);
 
 	std::unique_ptr<LGL> mainLGL;
 
@@ -335,7 +322,8 @@ private:
 	std::unique_ptr<AnimSystem> animSystem;
 	std::unique_ptr<RenderLogger> logger;
 
-	ModelSolidsMap MSM;
+	ModelCollection models;
+	SolidCollection solids;
 	LightCollection lights;
 	SoundCollection sounds;
 	ColliderCollection colliders;
@@ -356,25 +344,4 @@ private:
 	std::unique_ptr<CustomOutput> logOutput;
 	std::unique_ptr<CustomOutput> errorOutput;
 	std::list<std::string> logStrings;
-
-	class LastKeyPressPoll
-	{
-	public:
-		LastKeyPressPoll();
-		
-		void Reset();
-
-		void KeyPressCallback(int key, int scancode, int action, int mods);
-		void WaitForKeyPress();
-		int GetLastKeyPressedID();
-		void StopWaiting(int keyID);
-
-	private:
-		std::mutex mux;
-		std::condition_variable cv;
-	    int lastKeyPressedID;
-		bool isValidKeyPress;
-	};
-
-	LastKeyPressPoll lastKeyPressPoll;
 };

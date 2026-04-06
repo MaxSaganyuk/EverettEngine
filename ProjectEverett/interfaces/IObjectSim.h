@@ -85,10 +85,7 @@ public:
 	) = 0;
 	Linkable virtual void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) = 0;
 
-	virtual void ExecuteScriptFunc(const std::string& dllName = "") = 0;
-	virtual void ExecuteAllScriptFuncs() = 0;
 	virtual bool IsScriptFuncAdded(const std::string& dllName = "") = 0;
-	virtual bool IsScriptFuncRunnable(const std::string& dllName = "") = 0;
 
 	virtual void SetPositionChangeCallback(std::function<void()> callback) = 0;
 	virtual void SetRotationChangeCallback(std::function<void()> callback) = 0;

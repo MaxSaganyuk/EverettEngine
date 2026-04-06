@@ -6,12 +6,12 @@
 
 #include "EverettEngine.h"
 
-#include "DLLLoaderCommon.h"
+#include "AdString.h"
 #include "CObjectMoveDialog.h"
 
 // CObjectEditDialog dialog
 
-class CObjectEditDialog : public DLLLoaderCommon
+class CObjectEditDialog : public CDialogEx
 {
 	DECLARE_DYNAMIC(CObjectEditDialog)
 
@@ -43,6 +43,7 @@ private:
 
 	EverettEngine& engineRef;
 
+	std::vector<std::pair<AdString, AdString>> selectedScriptDllInfo;
 	std::array<std::array<CEdit, 3>, 3> objectInfoEdits;
 
 	EverettEngine::ObjectTypes objectType;
@@ -61,6 +62,9 @@ private:
 
 	CButton rotationEditButton;
 	CButton autoScaleButton;
+
+	CComboBox dllCombobox;
+	CButton scriptRunCheck;
 
 	// Model property objects
 	CStatic meshText;
@@ -172,4 +176,5 @@ protected:
 public:
 	afx_msg void OnColorEditButtonClick();
 	afx_msg void OnAutoScaleButtonClicked();
+	afx_msg void OnDllComboBoxCheck();
 };

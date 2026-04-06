@@ -29,6 +29,12 @@ LightSim::LightSim(
 	color({0.5f, 0.5f, 0.5f}),
 	ObjectSim(pos, scale, speed)
 {
+	++amountOfLightsByType[lightType];
+}
+
+LightSim::~LightSim()
+{
+	--amountOfLightsByType[lightType];
 }
 
 std::string LightSim::GetObjectTypeNameStr()
@@ -65,6 +71,15 @@ bool LightSim::SetSimInfoToLoad(std::string_view& line)
 	return res;
 }
 
+LightSim::LightTypes LightSim::GetLightType()
+{
+	return lightType;
+}
+
+size_t LightSim::GetAmountOfLightsByType(LightTypes lightType)
+{
+	return amountOfLightsByType[lightType];
+}
 
 LightSim::Attenuation LightSim::GetAttenuation(int range)
 {

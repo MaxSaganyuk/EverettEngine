@@ -64,7 +64,7 @@ private:
 	void OnPlaceSound();
 	void OnPlaceCollider();
 	void OnCameraOptions();
-	void OnKeybindOptions();
+	void OnScriptOptions();
 	void OnGameProduce();
 	EverettEngine engine;
 	CMainWindow* mainWindow; // not owner

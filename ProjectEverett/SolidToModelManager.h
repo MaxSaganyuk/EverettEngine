@@ -18,7 +18,9 @@ public:
 
 	bool IsInitialized();
 
-	void InitializeSTMM(FullModelInfo& fullModelInfoRef);
+	void InitializeSTMM(FullModelInfo& fullModelInfoRef, const std::string& modelName);
+
+	std::string GetModelName();
 
 	std::vector<std::string> GetMeshNames();
 	size_t GetMeshAmount();
@@ -66,6 +68,7 @@ private:
 
 	bool initialized;
 
+	std::string modelName;
 	double animationSpeed;
 	double lastAnimationTime;
 	size_t currentAnimationIndex;

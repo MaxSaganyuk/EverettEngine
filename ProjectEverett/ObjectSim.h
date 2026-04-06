@@ -97,16 +97,16 @@ public:
 
 	void AddScriptFunc(const std::string& dllPath, const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc);
 	void ClearScriptFuncMap();
-	std::vector<std::pair<std::string, std::string>> GetTempScriptDLLInfo();
 
 	// Callback setter
 	void SetPositionChangeCallback(std::function<void()> callback) override;
 	void SetRotationChangeCallback(std::function<void()> callback) override;
 
-	void ExecuteScriptFunc(const std::string& dllName = "") override;
-	void ExecuteAllScriptFuncs() override;
 	bool IsScriptFuncAdded(const std::string& dllName = "") override;
-	bool IsScriptFuncRunnable(const std::string& dllName = "") override;
+
+	void ExecuteScriptFunc(const std::string& dllName = "");
+	void ExecuteAllScriptFuncs();
+	bool IsScriptFuncRunnable(const std::string& dllName = "");
 
 	void LinkObject(IObjectSim& otherObject) override;
 	void EnableObjectLinking(bool val = true) override;

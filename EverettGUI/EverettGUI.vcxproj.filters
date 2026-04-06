@@ -57,10 +57,7 @@
     <ClInclude Include="CObjectEditDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CKeybindOptionDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DLLLoaderCommon.h">
+    <ClInclude Include="CDLLLoaderDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NameEditChecker.h">
@@ -116,10 +113,7 @@
     <ClCompile Include="CObjectEditDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CKeybindOptionDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DLLLoaderCommon.cpp">
+    <ClCompile Include="CDLLLoaderDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NameEditChecker.cpp">

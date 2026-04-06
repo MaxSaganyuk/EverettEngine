@@ -9,6 +9,7 @@
 #include <string>
 #include <functional>
 #include <mutex>
+#include <typeindex>
 
 #include "interfaces/ISolidSim.h"
 #include "ScriptFuncStorage.h"
@@ -115,18 +116,54 @@ class FileLoader
 
 	class DLLLoader
 	{
+	public:
+		struct SimFuncNameInfo
+		{
+			std::string_view rawFuncName;
+			std::string objectName;
+			std::string interfaceTypeName;
+		};
+
+		struct KeybindFuncNameInfo
+		{
+			std::string_view rawPressedFuncName;
+			std::string_view rawReleasedFuncName;
+			bool holdable{};
+		};
+
+		using SimScriptFuncNameMultimap = std::multimap<size_t, SimFuncNameInfo>;
+		using KeybindScriptFuncNameMap = std::unordered_map<std::string, KeybindFuncNameInfo>;
+	private:
 		std::recursive_mutex scriptWrapperLock;
 
 		struct ScriptDLLInfo
 		{
 			HMODULE dllHandle;
 			ScriptFuncStorage::ScriptFuncMainMap scriptFuncMap;
+			std::vector<std::string_view> rawScriptFuncNames;
 			std::function<void()> mainFunc;
 			std::function<void()> cleanUpFunc;
 		};
 
 		using ScriptDLLPath = std::string;
 		using ScriptMap = std::map<ScriptDLLPath, ScriptDLLInfo>;
+
+		bool LoadDLL(const std::string& dllPath);
+
+		std::vector<std::string_view> GetRawScriptFuncNamesFromHandle(HMODULE handle);
+
+		template<typename MultimapType>
+		MultimapType GetScriptFuncNamesFromDLL(const std::string& dllPath, char indicatorChar);
+		
+		constexpr static char SimIndicator = 'S';
+		constexpr static char KeybindIndicator = 'K';
+		constexpr static char SeparatorChar = '_';
+		constexpr static short SeparatorAmountInScriptFuncs = 4;
+		using SeparatorArray = std::array<size_t, SeparatorAmountInScriptFuncs>;
+
+		bool GetSeparatorPoints(std::string_view rawName, SeparatorArray& separatorPoints);
+		void ParseRawNameFor(std::string_view rawName, SimScriptFuncNameMultimap& scriptFuncNameMap);
+		void ParseRawNameFor(std::string_view rawName, KeybindScriptFuncNameMap& scriptFuncNameMap);
 
 		bool GetScriptFuncFromDLLImpl(
 			const std::string& funcName,
@@ -135,21 +172,20 @@ class FileLoader
 		);
 		void SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo);
 		void UnloadScriptDLL(ScriptDLLInfo& dllInfo);
-		bool ReloadScriptFuncsFromDLL(ScriptDLLInfo& dllInfo, const std::string& funcToSkip);
-		std::string GetDLLNameFromDLLPath(const std::string& dllPath);
 
 		constexpr static char mainScriptFuncName[] = "Main";
 		constexpr static char cleanUpFuncName[] = "CleanUp";
 
 		ScriptMap dllHandleMap;
 	public:
+		SimScriptFuncNameMultimap GetSimScriptFuncNamesFromDll(const std::string& dllPath);
+		KeybindScriptFuncNameMap GetKeybindScriptFuncNamesFromDll(const std::string& dllPath);
 		void FreeDllData();
 		bool IsDLLLoaded(const std::string& dllPath);
 		bool GetScriptFuncFromDLL(
 			const std::string& dllPath,
 			const std::string& funcName,
-			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr,
-			bool& reloadExecuted
+			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
 		);
 		void UnloadScriptDLL(const std::string& dllPath);
 		std::vector<std::pair<std::string, std::string>> GetLoadedScriptDlls();
@@ -194,6 +230,7 @@ public:
 
 	static std::string GetCurrentDir();
 	static bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);
+	static std::string GetFileFromPath(const std::string& dllPath);
 
 	void DeleteAllAbsentAssets(const EverettStructs::AssetPaths& assetPaths = {});
 

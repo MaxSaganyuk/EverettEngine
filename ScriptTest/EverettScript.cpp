@@ -13,50 +13,36 @@ class TestCharHolder
 	bool linkedToCamera{};
 
 public:
-	void SetSolidSim(ISolidSim* testCharSolid)
+	void SetSolidSim(ISolidSim& testCharSolid)
 	{
-		this->testCharSolid = testCharSolid;
+		this->testCharSolid = &testCharSolid;
 		this->testCharSolid->EnableAutoModelUpdates();
-
-		if (testCharCollider)
-		{
-			testCharSolid->LinkObject(*testCharCollider);
-		}
 	}
 
-	void SetColliderSim(IColliderSim* testCharCollider)
+	void SetColliderSim(IColliderSim& testCharCollider)
 	{
-		this->testCharCollider = testCharCollider;
-
-		if (testCharSolid)
-		{
-			testCharSolid->LinkObject(*testCharCollider);
-		}
+		this->testCharCollider = &testCharCollider;
+		testCharSolid->LinkObject(testCharCollider);
 	}
 
-	void SetupBlockCollision(IColliderSim* blockCollider)
+	void SetupBlockCollision(IColliderSim& blockCollider)
 	{
-		if (testCharSolid && testCharCollider)
-		{
-			testCharCollider->AddCollisionCallback(
-				{ [this]() { testCharSolid->SetLastPosition(); }, nullptr, blockCollider, true }
-			);
-		}
+		testCharCollider->AddCollisionCallback(
+			{ [this]() { testCharSolid->SetLastPosition(); }, nullptr, &blockCollider, true }
+		);
 	}
 
-	void LinkCharToCamera(ICameraSim* camera)
+	void LinkCharToCamera(ICameraSim& camera)
 	{
-		if (!testCharSolid) return;
-
 		std::cout << "Camera link to char";
 		if (!linkedToCamera)
 		{
-			testCharSolid->LinkObject(*camera);
+			testCharCollider->LinkObject(camera);
 		}
 
 		linkedToCamera = !linkedToCamera;
 		std::cout << linkedToCamera ? " on\n" : " off\n";
-		testCharSolid->EnableObjectLinking(linkedToCamera);
+		testCharCollider->EnableObjectLinking(linkedToCamera);
 	}
 
 	void Go(float rotation)
@@ -90,6 +76,7 @@ public:
 	void Reset()
 	{
 		testCharSolid = nullptr;
+		testCharCollider = nullptr;
 	}
 };
 
@@ -103,35 +90,36 @@ CameraObjectInit()
 
 ScriptObjectInit(TestChar, ISolidSim)
 {
-	testChar.SetSolidSim(&objectTestChar);
+	testChar.SetSolidSim(objectTestChar);
 }
 
 ScriptObjectInit(TestCharBox, IColliderSim)
 {
-	testChar.SetColliderSim(&objectTestCharBox);
+	testChar.SetColliderSim(objectTestCharBox);
 }
 
 ScriptObjectInit(BlockBox, IColliderSim)
 {
 	blockCollider = &objectBlockBox;
+	testChar.SetupBlockCollision(objectBlockBox);
 }
 
-ScriptKeybindPressed(I)
+ScriptKeybindPressed(I, 1)
 {
 	testChar.Go(0.0f);
 }
 
-ScriptKeybindPressed(J)
+ScriptKeybindPressed(J, 1)
 {
 	testChar.Go(glm::pi<float>() / 2.0f);
 }
 
-ScriptKeybindPressed(K)
+ScriptKeybindPressed(K, 1)
 {
 	testChar.Go(glm::pi<float>());
 }
 
-ScriptKeybindPressed(L)
+ScriptKeybindPressed(L, 1)
 {
 	testChar.Go(-glm::pi<float>() / 2.0f);
 }
@@ -156,22 +144,17 @@ ScriptKeybindReleased(L)
 	testChar.Stop();
 }
 
-ScriptKeybindPressed(C)
+ScriptKeybindPressed(C, 0)
 {
 	if (cameraSim)
 	{
-		testChar.LinkCharToCamera(cameraSim);
+		testChar.LinkCharToCamera(*cameraSim);
 	}
-}
-
-// TODO: This is a temp workaround. Rewrite loading system to have expected sequencing of Init calls 
-ScriptKeybindPressed(V)
-{
-	testChar.SetupBlockCollision(blockCollider);
 }
 
 ScriptCleanUp()
 {
 	cameraSim = nullptr;
+	blockCollider = nullptr;
 	testChar.Reset();
 }

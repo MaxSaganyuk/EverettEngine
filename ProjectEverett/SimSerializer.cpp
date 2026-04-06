@@ -77,12 +77,12 @@ bool SimSerializer::SetUsedVersion(int usedVersionToSet)
 bool SimSerializer::GetVersionFromLine(std::string_view& line)
 {
 	std::string numberStr = std::string(line.substr(line.find("*") + 1));
-	return SetUsedVersion(FromString<int>(numberStr));
+	return SetUsedVersion(StringCast::FromString<int>(numberStr));
 }
 
 std::string SimSerializer::GetLatestVersionStr()
 {
-	return "Version*" + ToString(latestSerializerVersion) + '\n';
+	return "Version*" + StringCast::ToString(latestSerializerVersion) + '\n';
 }
 
 void SimSerializer::GetObjectInfo(std::string_view& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo)
@@ -120,7 +120,10 @@ std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSi
 
 	for (auto& disabledDir : disabledDirs)
 	{
-		res += (ToString(static_cast<int>(disabledDir.first)) + ' ' + ToString(static_cast<int>(disabledDir.second))) + ' ';
+		res += (StringCast::ToString(static_cast<int>(disabledDir.first)) + 
+			' ' + 
+			StringCast::ToString(static_cast<int>(disabledDir.second))) + 
+			' ';
 	}
 	res.pop_back();
 
@@ -149,11 +152,11 @@ bool SimSerializer::SetValueToLoadFrom(
 		{
 			if (!(i % 2))
 			{
-				currentDirection = static_cast<IObjectSim::Direction>(FromString<int>(value));
+				currentDirection = static_cast<IObjectSim::Direction>(StringCast::FromString<int>(value));
 			}
 			else
 			{
-				disabledDirs.emplace(currentDirection, FromString<int>(value));
+				disabledDirs.emplace(currentDirection, StringCast::FromString<int>(value));
 			}
 
 			++i;
@@ -173,11 +176,11 @@ std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotati
 
 	for (size_t i = 0; i < rotationLimits.first.length(); ++i)
 	{
-		res += ToString(rotationLimits.first[i]) + ' ';
+		res += StringCast::ToString(rotationLimits.first[i]) + ' ';
 	}
 	for (size_t i = 0; i < rotationLimits.second.length(); ++i)
 	{
-		res += ToString(rotationLimits.second[i]) + ' ';
+		res += StringCast::ToString(rotationLimits.second[i]) + ' ';
 	}
 	res.pop_back();
 
@@ -204,7 +207,7 @@ bool SimSerializer::SetValueToLoadFrom(
 	{
 		if (c == ' ')
 		{
-			currentRotation[i % 3] = FromString<float>(value);
+			currentRotation[i % 3] = StringCast::FromString<float>(value);
 
 			if (!((i + 1) % 3))
 			{
@@ -340,7 +343,7 @@ bool SimSerializer::SetValueToLoadFrom(
 std::string SimSerializer::GetValueToSaveFrom(const std::chrono::system_clock::time_point timePoint)
 {
 	long long timeCount = duration_cast<milliseconds>(timePoint.time_since_epoch()).count();
-	return PackValue(ToString(timeCount));
+	return PackValue(StringCast::ToString(timeCount));
 }
 
 bool SimSerializer::SetValueToLoadFrom(
@@ -355,7 +358,7 @@ bool SimSerializer::SetValueToLoadFrom(
 
 	UnpackValue(line, value);
 
-	long long timeCount = FromString<long long>(value);
+	long long timeCount = StringCast::FromString<long long>(value);
 	timePoint = system_clock::time_point(milliseconds(timeCount));
 
 	return true;

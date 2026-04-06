@@ -9,7 +9,8 @@ public:
 	{
 		Direction,
 		Point,
-		Spot
+		Spot,
+		_SIZE
 	};
 
 	struct Attenuation

@@ -4,9 +4,10 @@
 SolidToModelManager::SolidToModelManager() 
 	: initialized(false) {}
 
-void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
+void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef, const std::string& modelName)
 {
 	fullModelInfoP = &fullModelInfoRef;
+	this->modelName = modelName;
 	meshVisibility.resize(fullModelInfoP->first.lock()->meshes.size());
 	std::fill(meshVisibility.begin(), meshVisibility.end(), true);
 	currentAnimationIndex = 0;
@@ -19,6 +20,11 @@ void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef)
 	{
 		animStates.NullifyValues();
 	}
+}
+
+std::string SolidToModelManager::GetModelName()
+{
+	return modelName;
 }
 
 void SolidToModelManager::ResetAnimationTime()

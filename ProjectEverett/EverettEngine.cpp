@@ -67,6 +67,7 @@ struct EverettEngine::ObjectTypeInfo
 {
 	ObjectTypes nameEnum;
 	std::string nameStr;
+	std::string interfaceNameStr;
 	std::type_index pureType;
 };
 
@@ -74,7 +75,7 @@ struct EverettEngine::ModelSolidInfo
 {
 	std::string modelPath;
 	SolidToModelManager::FullModelInfo model;
-	std::map<std::string, SolidSim> solids;
+	std::unordered_set<SolidSim*> relatedSolids;
 
 	~ModelSolidInfo()
 	{
@@ -115,20 +116,23 @@ EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 	}
 };
 
+#define ToStr(str) #str
+
 std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 {
-	{EverettEngine::ObjectTypes::Camera,   CameraSim::GetObjectTypeNameStr(),   typeid(CameraSim)},
-	{EverettEngine::ObjectTypes::Solid,    SolidSim::GetObjectTypeNameStr(),    typeid(SolidSim)},
-	{EverettEngine::ObjectTypes::Light,    LightSim::GetObjectTypeNameStr(),    typeid(LightSim)},
-	{EverettEngine::ObjectTypes::Sound,    SoundSim::GetObjectTypeNameStr(),    typeid(SoundSim)},
-	{EverettEngine::ObjectTypes::Collider, ColliderSim::GetObjectTypeNameStr(), typeid(ColliderSim)}
+	{EverettEngine::ObjectTypes::Camera,   CameraSim::GetObjectTypeNameStr(), ToStr(ICameraSim), typeid(CameraSim)},
+	{EverettEngine::ObjectTypes::Solid,    SolidSim::GetObjectTypeNameStr(), ToStr(ISolidSim), typeid(SolidSim)},
+	{EverettEngine::ObjectTypes::Light,    LightSim::GetObjectTypeNameStr(), ToStr(ILightSim), typeid(LightSim)},
+	{EverettEngine::ObjectTypes::Sound,    SoundSim::GetObjectTypeNameStr(), ToStr(ISolidSim), typeid(SoundSim)},
+	{EverettEngine::ObjectTypes::Collider, ColliderSim::GetObjectTypeNameStr(), ToStr(IColliderSim), typeid(ColliderSim)}
 };
+
+#undef ToStr
 
 std::vector<std::string> EverettEngine::lightTypes = LightSim::GetLightTypeNames();
 
 struct EverettEngine::KeyScriptFuncInfo
 {
-	bool holdable = false;
 	ScriptFuncStorage pressedFuncs;
 	ScriptFuncStorage releasedFuncs;
 };
@@ -299,17 +303,15 @@ void EverettEngine::SetGizmoVisible(bool value)
 {
 	gizmoVisible = value;
 
-	for (auto& [_, msmInst] : MSM | stdEx::views::antifilter(IsGizmoModelInfo))
-	{
-		msmInst.model.first.lock()->render = msmInst.solids.size() && gizmoVisible;
-	}
+	ModelSolidInfo& gizmoModel = models[gizmoModelName];
+	gizmoModel.model.first.lock()->render = gizmoModel.relatedSolids.size() && gizmoVisible;
 }
 
 void EverettEngine::LoadGizmoModel()
 {
 	CreateModel(FileLoader::GetCurrentDir() + '\\' + modelPath + '\\' + gizmoModelFile, gizmoModelName);
 
-	MSM[gizmoModelName].model.first.lock()->lineMode = true;
+	models[gizmoModelName].model.first.lock()->lineMode = true;
 }
 
 bool EverettEngine::CreateGizmoSolid(
@@ -322,7 +324,7 @@ bool EverettEngine::CreateGizmoSolid(
 	
 	if (CreateSolidImpl(gizmoModelName, gizmoSolidName, true, gizmoVisible))
 	{
-		SolidSim& gizmoSolid = MSM[gizmoModelName].solids[gizmoSolidName];
+		SolidSim& gizmoSolid = solids[gizmoSolidName];
 		gizmoSolid.GetPositionVectorAddr() = relatedObject.GetPositionVectorAddr();
 		gizmoSolid.GetScaleVectorAddr() = relatedObject.GetScaleVectorAddr();
 		gizmoSolid.SetOrientation(relatedObject.GetOrientationAddr());
@@ -376,7 +378,7 @@ void EverettEngine::RunRenderWindow()
 		}
 		animSystem->ResetFinalTransforms();
 
-		if (MSM.size())
+		if (models.size())
 		{
 			LightUpdater();
 		}
@@ -410,30 +412,6 @@ void EverettEngine::SetModelPath(const std::string& modelPath)
 	this->modelPath = modelPath;
 }
 
-int EverettEngine::PollForLastKeyPressed()
-{
-	lastKeyPressPoll.Reset();
-
-	mainLGL->SetKeyPressCallback(
-		[this](int key, int scancode, int action, int mods) { 
-			lastKeyPressPoll.KeyPressCallback(key, scancode, action, mods); 
-		}
-	);
-	mainLGL->SetCursorPositionCallback(nullptr);
-	
-	lastKeyPressPoll.WaitForKeyPress();
-
-	mainLGL->SetKeyPressCallback(nullptr);
-	mainLGL->SetCursorPositionCallback(cursorCaptureCallback);
-
-	return lastKeyPressPoll.GetLastKeyPressedID();
-}
-
-void EverettEngine::AbortKeyPressWait()
-{
-	lastKeyPressPoll.StopWaiting(-2);
-}
-
 std::string EverettEngine::ConvertKeyTo(int keyId)
 {
 	return LGL::ConvertKeyTo(keyId);
@@ -446,27 +424,27 @@ int EverettEngine::ConvertKeyTo(const std::string& keyName)
 
 bool EverettEngine::CreateModel(const std::string& path, const std::string& name)
 {
-	return CreateModelImpl(path, name, !MSM.size());
+	return CreateModelImpl(path, name, !models.size());
 }
 
 bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader)
 {
-	if (MSM.find(name) != MSM.end())
+	if (models.contains(name))
 	{
 		return true;
 	}
 
-	auto resPair = MSM.emplace(name, std::move(ModelSolidInfo{}));
+	auto resPair = models.emplace(name, std::move(ModelSolidInfo{}));
 	
 	std::string pathToUse = CheckIfRelativePathToUse(path, "models");
 
-	std::weak_ptr<LGLStructs::ModelInfo>& newModel = MSM[name].model.first;
-	std::weak_ptr<AnimSystem::ModelAnim>& newModelAnim = MSM[name].model.second;
-	MSM[name].modelPath = pathToUse;
+	std::weak_ptr<LGLStructs::ModelInfo>& newModel = models[name].model.first;
+	std::weak_ptr<AnimSystem::ModelAnim>& newModelAnim = models[name].model.second;
+	models[name].modelPath = pathToUse;
 
 	if (!fileLoader->modelLoader.LoadModel(pathToUse, name, newModel, newModelAnim))
 	{
-		MSM.erase(name);
+		models.erase(name);
 		return false;
 	}
 
@@ -480,8 +458,8 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 	newModelPtr->modelBehaviour = [this, name]()
 	{
 		// Existence of the lambda implies existence of the model
-		auto& model = MSM[name];
-		auto& [modelPath, modelInfo, solidInfo] = model;
+		auto& model = models[name];
+		auto& [modelPath, modelInfo, relatedSolids] = model;
 		auto modelPtr = model.model.first.lock();
 		auto modelAnimPtr = model.model.second.lock();
 
@@ -491,8 +469,10 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 		if (!animationless)
 		{
-			for (auto& [solidName, solid] : solidInfo)
+			for (auto& solidPtr : relatedSolids)
 			{
+				SolidSim& solid = *solidPtr;
+
 				if (solid.IsModelAnimationPlaying())
 				{
 					animSystem->ProcessAnimations(
@@ -505,11 +485,13 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 			}
 		}
 
-		if (!model.solids.empty())
+		if (!model.relatedSolids.empty())
 		{
 			size_t index = currentStartSolidIndex = nextStartSolidIndex;
-			for (auto& [solidName, solid] : model.solids)
+			for (auto& solidPtr : model.relatedSolids)
 			{
+				SolidSim& solid = *solidPtr;
+
 				glm::mat4& modelMatrix = solid.GetModelMatrixAddr();
 
 				LGLUtils::SetShaderUniformArrayAt(*mainLGL, "models", index, modelMatrix);
@@ -535,11 +517,13 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 	newModelPtr->generalMeshBehaviour = [this, name](int meshIndex)
 	{
 		// Existence of the lambda implies existence of the model
-		auto& model = MSM[name];
+		auto& model = models[name];
 
 		size_t index = currentStartSolidIndex;
-		for (auto& [solidName, solid] : model.solids)
+		for (auto& solidPtr : model.relatedSolids)
 		{
+			SolidSim& solid = *solidPtr;
+
 			mainLGL->SetShaderUniformValue("solidIndex", static_cast<int>(index));
 			mainLGL->SetShaderUniformValue("meshVisibility", static_cast<int>(solid.GetModelMeshVisibility(meshIndex)));
 			mainLGL->SetShaderUniformValue(
@@ -570,15 +554,15 @@ bool EverettEngine::CreateSolidImpl(
 	const std::string& modelName, const std::string& solidName, bool regenerateShader, bool forceVisible
 )
 {
-	if (MSM[modelName].solids.find(solidName) != MSM[modelName].solids.end())
+	if (solids.contains(solidName))
 	{
 		return true;
 	}
 
-	auto modelPtr = MSM[modelName].model.first.lock();
-	auto modelAnimPtr = MSM[modelName].model.second.lock();
+	auto modelPtr = models[modelName].model.first.lock();
+	auto modelAnimPtr = models[modelName].model.second.lock();
 
-	auto [iter, success] = MSM[modelName].solids.try_emplace(
+	auto [iter, success] = solids.try_emplace(
 		solidName, camera->GetPositionVectorAddr() + camera->GetFrontVector()
 	);
 
@@ -588,7 +572,7 @@ bool EverettEngine::CreateSolidImpl(
 		// which maps are storing, not simply the string
 		auto& [solidNameRef, newSolid] = *iter;
 
-		newSolid.SetBackwardsModelAccess(MSM[modelName].model);
+		newSolid.SetBackwardsModelAccess(models[modelName].model, modelName);
 
 		for (auto& animInfo : modelAnimPtr->animInfoVect)
 		{
@@ -608,6 +592,8 @@ bool EverettEngine::CreateSolidImpl(
 			GenerateShader();
 		}
 
+		models[modelName].relatedSolids.insert(&newSolid);
+
 		return true;
 	}
 
@@ -618,7 +604,7 @@ void EverettEngine::GenerateShader()
 {
 	ShaderGenerator shaderGen;
 	size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
-	size_t totalSolidAmount = GetCreatedSolidAmount();
+	size_t totalSolidAmount = solids.size();
 
 	std::string filePath = FileLoader::GetCurrentDir() + '\\' + shaderPath + '\\' + defaultShaderProgram;
 
@@ -642,7 +628,7 @@ bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 	
 	if (res && gizmoEnabled)
 	{
-		res = CreateGizmoSolid(lightName, lights[lightType][lightName], lightGizmoColor);
+		res = CreateGizmoSolid(lightName, lights[lightName], lightGizmoColor);
 	}
 
 	return res;
@@ -650,12 +636,12 @@ bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 
 bool EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lightType)
 {
-	if (lights[lightType].find(lightName) != lights[lightType].end())
+	if (lights.contains(lightName))
 	{
 		return true;
 	}
 
-	auto [iter, success] = lights[lightType].try_emplace(
+	auto [iter, success] = lights.try_emplace(
 		lightName,
 		static_cast<LightSim::LightTypes>(lightType),
 		camera->GetPositionVectorAddr(),
@@ -753,28 +739,46 @@ bool EverettEngine::CreateColliderImpl(const std::string& colliderName)
 	return false;
 }
 
+void EverettEngine::DeleteSolidsByModel(const std::string& modelName)
+{
+	for (auto iter = solids.begin(); iter != solids.end();)
+	{
+		if (iter->second.GetModelName() == modelName)
+		{
+			iter = DeleteSolidImpl(iter);
+		}
+		else
+		{
+			++iter;
+		}
+	}
+}
+
+void EverettEngine::RemoveSolidPtrFromModel(const std::string& modelName, SolidSim* solidPtr)
+{
+	auto iter = models.find(modelName);
+	
+	if (iter != models.end())
+	{
+		iter->second.relatedSolids.erase(solidPtr);
+	}
+}
+
 bool EverettEngine::DeleteModel(const std::string& modelName)
 {
 	bool res = false;
 
 	mainLGL->PauseRendering();
 
-	auto iter = MSM.find(modelName);
+	auto iter = models.find(modelName);
 
-	if (iter != MSM.end())
+	if (iter != models.end())
 	{
 		mainLGL->DeleteModel(modelName);
-		
-		for (auto currentSolidIter = iter->second.solids.begin(); 
-			 currentSolidIter != iter->second.solids.end(); 
-			 ++currentSolidIter
-		)
-		{
-			allNameTracker.erase(&currentSolidIter->first);
-		}
-
+		DeleteSolidsByModel(modelName);
+	
 		allNameTracker.erase(&iter->first);
-		MSM.erase(modelName);
+		models.erase(modelName);
 
 		res = true;
 	}
@@ -791,27 +795,27 @@ bool EverettEngine::DeleteSolid(const std::string& solidName)
 
 	mainLGL->PauseRendering();
 
-	for (auto& [modelName, modelInfo] : MSM)
+	auto iter = solids.find(solidName);
+
+	if (iter != solids.end())
 	{
-		auto iter = modelInfo.solids.find(solidName);
+		RemoveSolidPtrFromModel(iter->second.GetModelName(), &iter->second);
+		DeleteSolidImpl(iter);
 
-		if (iter != modelInfo.solids.end())
-		{
-			allNameTracker.erase(&iter->first);
-			modelInfo.solids.erase(solidName);
-			if (!modelInfo.solids.size())
-			{
-				modelInfo.model.first.lock()->render = false;
-			}
-
-			res = true;
-		}
+		res = true;
 	}
+
 	GenerateShader();
 
 	mainLGL->PauseRendering(false);
 
 	return res;
+}
+
+EverettEngine::SolidCollection::iterator EverettEngine::DeleteSolidImpl(SolidCollection::iterator solidIter)
+{
+	allNameTracker.erase(&solidIter->first);
+	return solids.erase(solidIter);
 }
 
 bool EverettEngine::DeleteLight(const std::string& lightName)
@@ -820,17 +824,14 @@ bool EverettEngine::DeleteLight(const std::string& lightName)
 
 	mainLGL->PauseRendering();
 
-	for (auto& [lightType, lightCollection] : lights)
+	auto iter = lights.find(lightName);
+
+	if (iter != lights.end())
 	{
-		auto iter = lightCollection.find(lightName);
+		allNameTracker.erase(&iter->first);
+		lights.erase(lightName);
 
-		if (iter != lightCollection.end())
-		{
-			allNameTracker.erase(&(*iter).first);
-			lightCollection.erase(lightName);
-
-			res = true;
-		}
+		res = true;
 	}
 
 	if (gizmoEnabled)
@@ -898,60 +899,34 @@ glm::vec3& EverettEngine::GetAmbientLightVectorAddr()
 	return LightSim::SGetAmbientLightColorVectorAddr();
 }
 
-size_t EverettEngine::GetCreatedSolidAmount()
+IObjectSim* EverettEngine::GetObjectInterface(ObjectTypes objectType, const std::string& objectName)
 {
-	size_t solidAmount = 0;
-
-	for (auto& model : MSM)
-	{
-		solidAmount += model.second.solids.size();
-	}
-
-	return solidAmount;
+	return dynamic_cast<IObjectSim*>(GetObjectFromMap(objectType, objectName));
 }
 
-IObjectSim* EverettEngine::GetObjectInterface(
-	ObjectTypes objectType,
-	const std::string& subtypeName,
-	const std::string& objectName
-)
+ISolidSim* EverettEngine::GetSolidInterface(const std::string& solidName)
 {
-	return dynamic_cast<IObjectSim*>(GetObjectFromMap(objectType, subtypeName, objectName));
+	return dynamic_cast<ISolidSim*>(GetObjectFromMap(ObjectTypes::Solid, solidName));
 }
 
-ISolidSim* EverettEngine::GetSolidInterface(
-	const std::string& modelName,
-	const std::string& solidName
-)
+ILightSim* EverettEngine::GetLightInterface(const std::string& lightName)
 {
-	return dynamic_cast<ISolidSim*>(GetObjectFromMap(ObjectTypes::Solid, modelName, solidName));
+	return dynamic_cast<ILightSim*>(GetObjectFromMap(ObjectTypes::Light, lightName));
 }
 
-ILightSim* EverettEngine::GetLightInterface(
-	const std::string& lightTypeName,
-	const std::string& lightName
-)
+ISoundSim* EverettEngine::GetSoundInterface(const std::string& soundName)
 {
-	return dynamic_cast<ILightSim*>(GetObjectFromMap(ObjectTypes::Light, lightTypeName, lightName));
-}
-
-ISoundSim* EverettEngine::GetSoundInterface(
-	const std::string& soundName
-)
-{
-	return dynamic_cast<ISoundSim*>(GetObjectFromMap(ObjectTypes::Sound, "", soundName));
+	return dynamic_cast<ISoundSim*>(GetObjectFromMap(ObjectTypes::Sound, soundName));
 }
 
 ICameraSim* EverettEngine::GetCameraInterface()
 {
-	return dynamic_cast<ICameraSim*>(GetObjectFromMap(ObjectTypes::Camera, "", ""));
+	return dynamic_cast<ICameraSim*>(GetObjectFromMap(ObjectTypes::Camera, ""));
 }
 
-IColliderSim* EverettEngine::GetColliderInterface(
-	const std::string& colliderName
-)
+IColliderSim* EverettEngine::GetColliderInterface(const std::string& colliderName)
 {
-	return dynamic_cast<IColliderSim*>(GetObjectFromMap(ObjectTypes::Collider, "", colliderName));
+	return dynamic_cast<IColliderSim*>(GetObjectFromMap(ObjectTypes::Collider, colliderName));
 }
 
 void EverettEngine::LightUpdater()
@@ -959,44 +934,58 @@ void EverettEngine::LightUpdater()
 	mainLGL->SetShaderUniformValue("proj", camera->GetProjectionMatrixAddr(), defaultShaderProgram);
 	mainLGL->SetShaderUniformValue("view", camera->GetViewMatrixAddr());
 
-	mainLGL->SetShaderUniformValue("dirLightAmount",   static_cast<int>(lights[LightTypes::Direction].size()));
-	mainLGL->SetShaderUniformValue("pointLightAmount", static_cast<int>(lights[LightTypes::Point].size()));
-	mainLGL->SetShaderUniformValue("spotLightAmount",  static_cast<int>(lights[LightTypes::Spot].size()));
+	mainLGL->SetShaderUniformValue(
+		"dirLightAmount", static_cast<int>(LightSim::GetAmountOfLightsByType(LightSim::LightTypes::Direction))
+	);
+	mainLGL->SetShaderUniformValue(
+		"pointLightAmount", static_cast<int>(LightSim::GetAmountOfLightsByType(LightSim::LightTypes::Point))
+	);
+	mainLGL->SetShaderUniformValue(
+		"spotLightAmount", static_cast<int>(LightSim::GetAmountOfLightsByType(LightSim::LightTypes::Spot))
+	);
 	mainLGL->SetShaderUniformValue("ambient", LightSim::SGetAmbientLightColorVectorAddr());
 	
-	int index = 0;
-	for (auto& [lightName, light] : lights[LightTypes::Point])
+	std::array<size_t, LightSim::LightTypes::_SIZE> lightCounter{0, 0, 0};
+
+	for (auto& [_, light] : lights)
 	{
+		LightSim::LightTypes lightType = light.GetLightType();
 		LightSim::Attenuation atten = light.GetAttenuation();
 
-		LGLUtils::SetShaderUniformArrayAt(
-			*mainLGL,
-			lightShaderValueNames[static_cast<int>(LightTypes::Point)].first,
-			index++,
-			lightShaderValueNames[static_cast<int>(LightTypes::Point)].second,
-			light.GetPositionVectorAddr(), light.GetColorVectorAddr(),
-			glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, atten.linear,
-			atten.quadratic
-		);
+		int lightIndex = static_cast<int>(lightType);
+
+		switch (lightType)
+		{
+		case ILightSim::Direction:
+			// Unimplemented
+			break;
+		case ILightSim::Point:
+			LGLUtils::SetShaderUniformArrayAt(
+				*mainLGL,
+				lightShaderValueNames[lightIndex].first,
+				lightCounter[lightIndex]++,
+				lightShaderValueNames[lightIndex].second,
+				light.GetPositionVectorAddr(), light.GetColorVectorAddr(),
+				glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, atten.linear,
+				atten.quadratic
+			);
+			break;
+		case ILightSim::Spot:
+			LGLUtils::SetShaderUniformArrayAt(
+				*mainLGL,
+				lightShaderValueNames[lightIndex].first,
+				lightCounter[lightIndex]++,
+				lightShaderValueNames[lightIndex].second,
+				light.GetPositionVectorAddr(), light.GetFrontVector(),
+				light.GetColorVectorAddr(), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
+				atten.linear, atten.quadratic, glm::cos(glm::radians(12.5f)),
+				glm::cos(glm::radians(17.5f))
+			);
+			break;
+		default:
+			break;
+		}
 	}
-
-	index = 0;
-	for (auto& [lightName, light] : lights[LightTypes::Spot])
-	{
-		LightSim::Attenuation atten = light.GetAttenuation();
-
-		LGLUtils::SetShaderUniformArrayAt(
-			*mainLGL,
-			lightShaderValueNames[static_cast<int>(LightTypes::Spot)].first,
-			index++,
-			lightShaderValueNames[static_cast<int>(LightTypes::Spot)].second,
-			light.GetPositionVectorAddr(), light.GetFrontVector(),
-			light.GetColorVectorAddr(), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
-			atten.linear, atten.quadratic, glm::cos(glm::radians(12.5f)),
-			glm::cos(glm::radians(17.5f))
-		);
-	}
-
 
 	mainLGL->SetShaderUniformValue("viewPos", camera->GetPositionVectorAddr());
 
@@ -1004,56 +993,28 @@ void EverettEngine::LightUpdater()
 	mainLGL->SetShaderUniformValue(lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[1], 1);
 }
 
-void EverettEngine::SetScriptToObject(
-	ObjectTypes objectType,
-	const std::string& subtypeName,
-	const std::string& objectName,
-	const std::string& dllPath,
-	const std::string& dllName
-)
+void EverettEngine::SetupScriptDLL(const std::string& dllPath)
 {
-	SetScriptToObjectImpl(
-		GetObjectFromMap(objectType, subtypeName, objectName), 
-		objectType == ObjectTypes::Camera ? "Camera" : objectName, 
-		dllPath, 
-		dllName
-	);
-}
+	if (fileLoader->dllLoader.IsDLLLoaded(dllPath)) return;
 
-void EverettEngine::SetScriptToObjectImpl(
-	ObjectSim* object,
-	const std::string& objectName,
-	const std::string& dllPath,
-	const std::string& dllName
-)
-{
-	bool reloadExecuted = false;
+	std::string dllName = FileLoader::GetFileFromPath(dllPath);
 
-	if (fileLoader && object)
+	auto simScriptFuncNameMultimap = fileLoader->dllLoader.GetSimScriptFuncNamesFromDll(dllPath);
+
+	for (auto& scriptFuncNameStruct : simScriptFuncNameMultimap)
 	{
-		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncWeakPtr;
-		std::string dllPathToUse = CheckIfRelativePathToUse(dllPath, "scripts");
+		auto& [rawFuncName, objectName, interfaceTypeName] = scriptFuncNameStruct.second;
 
-		fileLoader->dllLoader.GetScriptFuncFromDLL(
-			dllPathToUse,
-			objectName,
-			scriptFuncWeakPtr,
-			reloadExecuted
-		);
-
-		if (scriptFuncWeakPtr.lock())
-		{
-			object->AddScriptFunc(dllPathToUse, dllName, scriptFuncWeakPtr);
-		}
+		SetScriptToObject(GetObjectTypeToName(interfaceTypeName), objectName, rawFuncName, dllPath, dllName);
 	}
 
-	if (reloadExecuted)
+	auto keybindScriptFuncNameMap = fileLoader->dllLoader.GetKeybindScriptFuncNamesFromDll(dllPath);
+
+	for (auto& scriptFuncNameStruct : keybindScriptFuncNameMap)
 	{
-		ExecuteFuncForAllSimObjects(&ObjectSim::ExecuteScriptFunc, dllName);
-	}
-	else
-	{
-		object->ExecuteScriptFunc(dllName);
+		auto& [rawPressedFuncName, rawReleasedFuncName, holdable] = scriptFuncNameStruct.second;
+
+		SetScriptToKey(scriptFuncNameStruct.first, rawPressedFuncName, rawReleasedFuncName, holdable, dllPath, dllName);
 	}
 }
 
@@ -1069,7 +1030,7 @@ bool EverettEngine::IsDLLLoaded(const std::string& dllPath)
 
 void EverettEngine::UnsetScript(const std::string& dllPath)
 {
-	if(fileLoader)
+	if (fileLoader)
 	{ 
 		fileLoader->dllLoader.UnloadScriptDLL(dllPath);
 	}
@@ -1077,25 +1038,50 @@ void EverettEngine::UnsetScript(const std::string& dllPath)
 
 bool EverettEngine::IsObjectScriptSet(
 	ObjectTypes objectType,
-	const std::string& subtypeName,
 	const std::string& objectName,
 	const std::string& dllName
 )
 {
-	ObjectSim* object = GetObjectFromMap(objectType, subtypeName, objectName);
+	ObjectSim* object = GetObjectFromMap(objectType, objectName);
 	
 	return object && object->IsScriptFuncRunnable(dllName);
 }
 
+void EverettEngine::SetScriptToObject(
+	ObjectTypes objectType,
+	const std::string& objectName,
+	std::string_view rawFuncName,
+	const std::string& dllPath,
+	const std::string& dllName
+)
+{
+	ObjectSim* object = GetObjectFromMap(objectType, objectName);
+
+	if (object)
+	{
+		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncWeakPtr;
+
+		if (fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, rawFuncName.data(), scriptFuncWeakPtr))
+		{
+			if (!object->IsScriptFuncAdded(dllName))
+			{
+				object->AddScriptFunc(dllPath, dllName, scriptFuncWeakPtr);
+			}
+
+			object->ExecuteScriptFunc(dllName);
+		}
+	}
+}
+
 void EverettEngine::SetScriptToKey(
 	const std::string& keyName,
+	std::string_view pressedFuncName,
+	std::string_view releasedFuncName,
 	bool holdable,
 	const std::string& dllPath,
 	const std::string& dllName
 )
 {
-	bool reloadExecuted = false;
-
 	if (fileLoader && !keyName.empty())
 	{
 		bool isPressedExist = false;
@@ -1110,11 +1096,17 @@ void EverettEngine::SetScriptToKey(
 
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncPress;
 		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncRelease;
+		bool anyFuncAdded{};
 
-		// Using bitwise or to avoid short-circuiting second call
-		bool anyFuncAdded = 
-			fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Pressed", scriptFuncPress, reloadExecuted) |
-		fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, "Key" + keyName + "Released", scriptFuncRelease, reloadExecuted);
+		if (!pressedFuncName.empty())
+		{
+			anyFuncAdded |= fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, pressedFuncName.data(), scriptFuncPress);
+		}
+
+		if (!releasedFuncName.empty())
+		{
+			anyFuncAdded |= fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, releasedFuncName.data(), scriptFuncRelease);
+		}
 
 		if (anyFuncAdded)
 		{
@@ -1148,8 +1140,6 @@ void EverettEngine::SetScriptToKey(
 					scriptFuncReleaseWrapper = [this, keyName]() { keyScriptFuncMap[keyName].releasedFuncs.ExecuteAllScriptFuncs(nullptr); };
 				}
 
-				keyScriptFuncMap[keyName].holdable = holdable;
-
 				mainLGL->SetInteractable(
 					LGL::ConvertKeyTo(keyName),
 					holdable,
@@ -1159,26 +1149,6 @@ void EverettEngine::SetScriptToKey(
 			}
 		}
 	}
-
-	if (reloadExecuted)
-	{
-		ExecuteFuncForAllSimObjects(&ObjectSim::ExecuteScriptFunc, dllName);
-	}
-}
-
-bool EverettEngine::IsKeyScriptSet(
-	const std::string& keyName,
-	const std::string& dllName
-)
-{
-	if (keyScriptFuncMap.contains(keyName))
-	{
-		auto& [holdable, pressedFunc, releasedFunc] = keyScriptFuncMap[keyName];
-
-		return pressedFunc.IsScriptFuncRunnable(dllName) || releasedFunc.IsScriptFuncRunnable(dllName);
-	}
-
-	return false;
 }
 
 template<typename FunctionType, typename... Params>
@@ -1195,17 +1165,11 @@ void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... v
 	}
 	if constexpr (ConfirmMemberOf<SolidSim, FunctionType, Params...>)
 	{
-		for (auto& [_, currentMSM] : MSM)
-		{
-			ExecuteFuncForAllSimObjectsFor(currentMSM.solids, func, std::forward<Params>(values)...);
-		}
+		ExecuteFuncForAllSimObjectsFor(solids, func, std::forward<Params>(values)...);
 	}
 	if constexpr (ConfirmMemberOf<LightSim, FunctionType, Params...>)
 	{
-		for (auto& [_, lightsOfThisType] : lights)
-		{
-			ExecuteFuncForAllSimObjectsFor(lightsOfThisType, func, std::forward<Params>(values)...);
-		}
+		ExecuteFuncForAllSimObjectsFor(lights, func, std::forward<Params>(values)...);
 	}
 	if constexpr (ConfirmMemberOf<SoundSim, FunctionType, Params...>)
 	{
@@ -1219,7 +1183,7 @@ void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... v
 
 template<typename Sim, typename FunctionType, typename... Params>
 void EverettEngine::ExecuteFuncForAllSimObjectsFor(
-	std::map<std::string, Sim>& container, FunctionType func, Params&&... values
+	std::unordered_map<std::string, Sim>& container, FunctionType func, Params&&... values
 )
 {
 	for (auto& [_, sim] : container)
@@ -1285,8 +1249,7 @@ std::string EverettEngine::GetSaveFileType()
 }
 
 ObjectSim* EverettEngine::GetObjectFromMap(
-	EverettEngine::ObjectTypes objectType, 
-	const std::string& subtypeName, 
+	EverettEngine::ObjectTypes objectType,
 	const std::string& objectName
 )
 {
@@ -1298,24 +1261,37 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 		object = dynamic_cast<ObjectSim*>(camera.get());
 		break;
 	case EverettEngine::ObjectTypes::Solid:
-		object = dynamic_cast<ObjectSim*>(&MSM[subtypeName].solids[objectName]);
+		object = GetObjectFromTheMap(solids, objectName);
 		break;
 	case EverettEngine::ObjectTypes::Light:
-		object = dynamic_cast<ObjectSim*>(
-			&lights[static_cast<EverettEngine::LightTypes>(LightSim::GetTypeToName(subtypeName))][objectName]
-		);
+		object = GetObjectFromTheMap(lights, objectName);
 		break;
 	case EverettEngine::ObjectTypes::Sound:
-		object = dynamic_cast<ObjectSim*>(&sounds[objectName]);
+		object = GetObjectFromTheMap(sounds, objectName);
 		break;
 	case EverettEngine::ObjectTypes::Collider:
-		object = dynamic_cast<ObjectSim*>(&colliders[objectName]);
+		object = GetObjectFromTheMap(colliders, objectName);
 		break;
 	default:
-		break;
+		ThrowExceptionWMessage("Unreachable");
 	}
 
 	return object;
+}
+
+template<typename Sim>
+ObjectSim* EverettEngine::GetObjectFromTheMap(
+	std::unordered_map<std::string, Sim>& simMap, const std::string& objectName
+)
+{
+	auto iter = simMap.find(objectName);
+
+	if (iter != simMap.end())
+	{
+		return dynamic_cast<ObjectSim*>(&iter->second);
+	}
+
+	return nullptr;
 }
 
 template<typename Sim>
@@ -1330,22 +1306,21 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 	}
 	else if constexpr (std::is_same_v<Sim, SolidSim>)
 	{
-		for (auto& [modelName, model] : MSM | std::views::filter(IsGizmoModelInfo))
+		for (auto& [solidName, solid] : solids)
 		{
-			for (auto& [solidName, solid] : model.solids)
+			std::string modelName = solid.GetModelName();
+
+			if (modelName != gizmoModelName)
 			{
-				file << solid.GetSimInfoToSave(modelName + '*' + solidName + '*' + model.modelPath);
+				file << solid.GetSimInfoToSave(modelName + '*' + solidName + '*' + models[modelName].modelPath);
 			}
 		}
 	}
 	else if constexpr (std::is_same_v<Sim, LightSim>)
 	{
-		for (auto& [lightType, lightInfo] : lights)
+		for (auto& [lightName, light] : lights)
 		{
-			for (auto& [lightName, light] : lightInfo)
-			{
-				file << light.GetSimInfoToSave(light.GetCurrentLightType() + '*' + lightName);
-			}
+			file << light.GetSimInfoToSave(light.GetCurrentLightType() + '*' + lightName);
 		}
 	}
 	else if constexpr (std::is_same_v<Sim, SoundSim>)
@@ -1370,7 +1345,7 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 
 	if (assetPaths)
 	{
-		for (auto& [modelName, modelInfo] : MSM)
+		for (auto& [modelName, modelInfo] : models)
 		{
 			if (!assetPaths.value().modelPaths.contains(modelInfo.modelPath))
 			{
@@ -1387,7 +1362,8 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 	}
 
 	camera->ClearScriptFuncMap();
-	MSM.clear();
+	solids.clear();
+	models.clear();
 	lights.clear();
 	sounds.clear();
 	colliders.clear();
@@ -1429,21 +1405,11 @@ bool EverettEngine::SaveDataToFile(const std::string& filePath)
 	SaveObjectsToFile<SoundSim>(file);
 	SaveObjectsToFile<ColliderSim>(file);
 
-	for (auto& keybindPair : keyScriptFuncMap)
+	auto loadedScriptDlls = fileLoader->dllLoader.GetLoadedScriptDlls();
+
+	if (!loadedScriptDlls.empty())
 	{
-		std::string keybindBegin = "Keybind*" + keybindPair.first + '*' + std::to_string(keybindPair.second.holdable) + '*';
-
-		file <<
-			keybindBegin +
-			"Pressed*" +
-			SimSerializer::GetValueToSaveFrom(keybindPair.second.pressedFuncs.GetAddedScriptDLLs())
-			+ '\n';
-
-		file <<
-			keybindBegin +
-			"Released*" +
-			SimSerializer::GetValueToSaveFrom(keybindPair.second.releasedFuncs.GetAddedScriptDLLs())
-			+ '\n';
+		file << ("ScriptDLLs*" + SimSerializer::GetValueToSaveFrom(loadedScriptDlls) + '\n');
 	}
 
 	file.close();
@@ -1465,7 +1431,6 @@ void EverettEngine::ApplySimInfoFromLine(std::string_view& line, const std::arra
 {
 	Sim* createdObject = dynamic_cast<Sim*>(GetObjectFromMap(
 		GetObjectPureTypeToName(typeid(Sim)),
-		objectInfo[ObjectInfoNames::SubtypeName],
 		objectInfo[ObjectInfoNames::ObjectName])
 	);
 
@@ -1478,12 +1443,6 @@ void EverettEngine::ApplySimInfoFromLine(std::string_view& line, const std::arra
 		if constexpr (std::is_base_of_v<SolidSim, Sim>) 
 		{
 			createdObject->ForceModelUpdate();
-		}
-
-		std::vector<std::pair<std::string, std::string>> objectScriptDllInfo = createdObject->GetTempScriptDLLInfo();
-		for (auto& dllNamePair : objectScriptDllInfo)
-		{
-			SetScriptToObjectImpl(createdObject, objectInfo[ObjectInfoNames::ObjectName], dllNamePair.second, dllNamePair.first);
 		}
 	}
 }
@@ -1513,7 +1472,7 @@ void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<s
 		ApplySimInfoFromLine<LightSim>(line, objectInfo, res);
 		if (gizmoEnabled)
 		{
-			CreateGizmoSolid(lightName, lights[lightType][lightName], lightGizmoColor);
+			CreateGizmoSolid(lightName, lights[lightName], lightGizmoColor);
 		}
 	}
 
@@ -1551,31 +1510,28 @@ void EverettEngine::LoadColliderFromLine(std::string_view& line, const std::arra
 		}
 	}
 
-	CheckAndThrowExceptionWMessage(res, "Sound creation from file failed");
+	CheckAndThrowExceptionWMessage(res, "Collider creation from file failed");
 }
 
-void EverettEngine::LoadKeybindsFromLine(std::string_view& line)
+void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 {
 	size_t objectInfoAmount = std::count(line.begin(), line.end(), '*');
 	CheckAndThrowExceptionWMessage(
-		static_cast<bool>(objectInfoAmount == 4),
+		static_cast<bool>(objectInfoAmount == 1 || objectInfoAmount == 4),
 		"Invalid keybind info amount during world load"
 	);
 
-	line.remove_prefix(line.find('*') + 1);
-	std::string_view keyname = line.substr(0, line.find('*'));
-	line.remove_prefix(line.find('*') + 1);
-
-	bool holdable = std::stoi(std::string(line.substr(0, line.find('*'))));
-	line.remove_prefix(line.find('*') + 1);
-	line.remove_prefix(line.find('*') + 1);
+	for (size_t i = 0; i < objectInfoAmount; ++i)
+	{
+		line.remove_prefix(line.find('*') + 1);
+	}
 
 	std::vector<std::pair<std::string, std::string>> dllInfo;
 	SimSerializer::SetValueToLoadFrom(line, dllInfo, 2);
 
-	for (auto& dllPair : dllInfo)
+	for (auto& [dllName, dllPath] : dllInfo)
 	{
-		SetScriptToKey(std::string(keyname), holdable, dllPair.second, dllPair.first);
+		SetupScriptDLL(dllPath);
 	}
 }
 
@@ -1610,9 +1566,9 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 		{
 			SimSerializer::SetValueToLoadFrom(line, LightSim::SGetAmbientLightColorVectorAddr(), 4);
 		}
-		else if (lineTitle == "Keybind")
+		else if (lineTitle == "Keybind" || lineTitle == "ScriptDLLs") // Keybind kept for backwards comp.
 		{
-			LoadKeybindsFromLine(line);
+			LoadScriptDLLsFromLine(line);
 		}
 		else if (!line.empty())
 		{
@@ -1665,7 +1621,7 @@ AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 		line = lineLoader;
 		std::string_view lineTitle = line.substr(0, line.find('*'));
 
-		if (!(line.empty() || lineTitle == "AmbientLight" || lineTitle == "Keybind"))
+		if (!(line.empty() || lineTitle == "AmbientLight" || lineTitle == "ScriptDLLs" || lineTitle == "Keybind"))
 		{
 			SimSerializer::GetObjectInfo(line, objectInfo);
 
@@ -1729,7 +1685,7 @@ void EverettEngine::HidePathsInWorldFile(
 }
 
 template<typename Sim>
-std::vector<std::string> EverettEngine::GetNameList(const std::map<std::string, Sim>& sims)
+std::vector<std::string> EverettEngine::GetNameList(const std::unordered_map<std::string, Sim>& sims)
 {
 	std::vector<std::string> names;
 	names.reserve(sims.size());
@@ -1746,9 +1702,12 @@ std::vector<std::string> EverettEngine::GetCreatedModels(bool getFullPaths)
 {
 	std::vector<std::string> createdModels;
 
-	for (const auto& model : MSM | std::views::filter(IsGizmoModelInfo))
+	for (const auto& [modelName, model] : models)
 	{
-		createdModels.push_back(getFullPaths ? model.second.modelPath : model.first);
+		if (modelName != gizmoModelName)
+		{
+			createdModels.push_back(getFullPaths ? model.modelPath : modelName);
+		}
 	}
 
 	return createdModels;
@@ -1782,7 +1741,7 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectTypeToName(const std::string&
 {
 	for (auto& objectNamePair : objectTypes)
 	{
-		if (objectNamePair.nameStr == objectName)
+		if (objectNamePair.nameStr == objectName || objectNamePair.interfaceNameStr == objectName)
 		{
 			return objectNamePair.nameEnum;
 		}
@@ -1808,7 +1767,7 @@ std::type_index EverettEngine::GetObjectPureTypeToName(const std::string& object
 {
 	for (auto& objectNamePair : objectTypes)
 	{
-		if (objectNamePair.nameStr == objectName)
+		if (objectNamePair.nameStr == objectName || objectNamePair.interfaceNameStr == objectName)
 		{
 			return objectNamePair.pureType;
 		}
@@ -1830,14 +1789,14 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectPureTypeToName(std::type_inde
 	ThrowExceptionWMessage("Nonexistent type");
 }
 
-std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType)
+std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType, bool getAdditionalInfo)
 {
 	switch (objType)
 	{
 	case ObjectTypes::Solid:
-		return GetSolidList();
+		return GetSolidList(getAdditionalInfo);
 	case ObjectTypes::Light:
-		return GetLightList();
+		return GetLightList(getAdditionalInfo);
 	case ObjectTypes::Sound:
 		return GetSoundList();
 	case ObjectTypes::Collider:
@@ -1847,31 +1806,34 @@ std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType)
 	}
 }
 
-std::vector<std::string> EverettEngine::GetSolidList()
+std::vector<std::string> EverettEngine::GetSolidList(bool getModelNames)
 {
 	std::vector<std::string> solidNames;
 
-	for (const auto& model : MSM | std::views::filter(IsGizmoModelInfo))
+	for (auto& [solidName, solid] : solids)
 	{
-		solidNames.push_back('.' + model.first);
-		std::vector<std::string> modelSolidNames = GetNameList(model.second.solids);
-		solidNames.insert(solidNames.end(), modelSolidNames.begin(), modelSolidNames.end());
+		std::string modelName = solid.GetModelName();
+		if (modelName != gizmoModelName)
+		{
+			solidNames.push_back((getModelNames ? solid.GetModelName() + '.' : "") + solidName);
+		}
 	}
 
 	return solidNames;
 }
 
-std::vector<std::string> EverettEngine::GetLightList()
+std::vector<std::string> EverettEngine::GetLightList(bool getLightTypes)
 {
+	if (!getLightTypes)
+	{
+		return GetNameList(lights);
+	}
+
 	std::vector<std::string> lightNames;
 
-	std::vector<std::string> lightTypes = LightSim::GetLightTypeNames();
-
-	for (auto& light : lights)
+	for (auto& [lightName, light] : lights)
 	{
-		lightNames.push_back('.' + lightTypes[static_cast<int>(light.first)]);
-		std::vector<std::string> lightSolidNames = GetNameList(light.second);
-		lightNames.insert(lightNames.end(), lightSolidNames.begin(), lightSolidNames.end());
+		lightNames.push_back(light.GetCurrentLightType() + '.' + lightName);
 	}
 
 	return lightNames;
@@ -2031,11 +1993,6 @@ void EverettEngine::CreateLogReport()
 	file.close();
 }
 
-bool EverettEngine::IsGizmoModelInfo(const ModelSolidsMap::value_type& MSMelement)
-{
-	return MSMelement.first != gizmoModelName;
-}
-
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)
 {
 	if (allNameTracker.find(&name) != allNameTracker.end())
@@ -2044,41 +2001,4 @@ std::string EverettEngine::GetAvailableObjectName(const std::string& name)
 	}
 
 	return name;
-}
-
-EverettEngine::LastKeyPressPoll::LastKeyPressPoll()
-{
-	Reset();
-}
-
-void EverettEngine::LastKeyPressPoll::Reset()
-{
-	lastKeyPressedID = -1;
-	isValidKeyPress = false;
-}
-
-void EverettEngine::LastKeyPressPoll::KeyPressCallback(int key, int scancode, int action, int mods)
-{
-	if (action)
-	{
-		StopWaiting(key);
-	}
-}
-
-void EverettEngine::LastKeyPressPoll::StopWaiting(int keyID)
-{
-	lastKeyPressedID = keyID;
-	isValidKeyPress = true;
-	cv.notify_one();
-}
-
-void EverettEngine::LastKeyPressPoll::WaitForKeyPress()
-{
-	std::unique_lock<std::mutex> lk(mux);
-	cv.wait(lk, [this]() { return isValidKeyPress; });
-}
-
-int EverettEngine::LastKeyPressPoll::GetLastKeyPressedID()
-{
-	return lastKeyPressedID;
 }

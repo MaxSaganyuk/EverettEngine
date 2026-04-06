@@ -49,7 +49,7 @@ public:
 	
 	// Solid to model access section
 	// Mesh access; available through interface
-	void SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model);
+	void SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model, const std::string& modelName);
 	std::vector<std::string> GetModelMeshNames() override;
 	size_t GetMeshAmount() override;
 	void SetAllMeshVisibility(bool value) override;
@@ -66,6 +66,7 @@ public:
 	void InvokeAutoScale() override;
 
 	// Model access; engine only
+	std::string GetModelName();
 	glm::vec4 GetModelDefaultColor();
 	void SetModelDefaultColor(const glm::vec4& color);
 

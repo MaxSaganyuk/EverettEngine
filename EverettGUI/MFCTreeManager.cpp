@@ -13,19 +13,23 @@ MFCTreeManager::MFCTreeManagerNode::MFCTreeManagerNode(
 
 void MFCTreeManager::MFCTreeManagerNode::AddNode(const AdString& title, const AdString& data)
 {
-	HTREEITEM newNodeInfo = objectTree.InsertItem(title + L": " + data, nodeInfo);
-	nextNodes.emplace(
-		data,
-		std::make_unique<MFCTreeManagerNode>(
-			title,
-			data,
-			objectTree,
-			newNodeInfo,
-			this
-		)
-	);
+	if (!nextNodes.contains(title))
+	{
+		HTREEITEM newNodeInfo = objectTree.InsertItem(title + L": " + data, nodeInfo);
 
-	objectTree.RedrawWindow();
+		nextNodes.emplace(
+			data,
+			std::make_unique<MFCTreeManagerNode>(
+				title,
+				data,
+				objectTree,
+				newNodeInfo,
+				this
+			)
+		);
+
+		objectTree.RedrawWindow();
+	}
 }
 
 MFCTreeManager::MFCTreeManagerNode* MFCTreeManager::MFCTreeManagerNode::FindNodeBy(HTREEITEM item)
@@ -68,11 +72,14 @@ CTreeCtrl& MFCTreeManager::GetTreeCtrl()
 
 void MFCTreeManager::AddRootNode(const AdString& title, const AdString& data)
 {
-	HTREEITEM newNodeInfo = objectTree.InsertItem(title + L": " + data);
-	rootNodes.emplace(
-		data,
-		std::make_unique<MFCTreeManagerNode>(title, data, GetTreeCtrl(), newNodeInfo, nullptr)
-	);
+	if (!rootNodes.contains(title))
+	{
+		HTREEITEM newNodeInfo = objectTree.InsertItem(title + L": " + data);
+		rootNodes.emplace(
+			data,
+			std::make_unique<MFCTreeManagerNode>(title, data, GetTreeCtrl(), newNodeInfo, nullptr)
+		);
+	}
 }
 
 void MFCTreeManager::SetObjectTypes()

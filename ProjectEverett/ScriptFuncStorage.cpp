@@ -54,23 +54,3 @@ void ScriptFuncStorage::ClearScriptFuncMap()
 {
 	scriptFuncMap.clear();
 }
-
-std::vector<std::pair<std::string, std::string>> ScriptFuncStorage::GetAddedScriptDLLs() const
-{
-	std::vector<std::pair<std::string, std::string>> res;
-
-	for (auto& scriptFuncPair : scriptFuncMap)
-	{
-		res.push_back({ scriptFuncPair.first, scriptFuncPair.second.first });
-	}
-
-	return res;
-}
-
-std::vector<std::pair<std::string, std::string>> ScriptFuncStorage::GetTempScriptDllNameVect()
-{
-	std::vector<std::pair<std::string, std::string>> res = tempScriptDllNameVect;
-	tempScriptDllNameVect.clear();
-
-	return res;
-}

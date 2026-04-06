@@ -21,11 +21,15 @@ public:
 		const float speed = 1.0f,
 		const float range = 60.0f
 	);
+	~LightSim();
 
 	static std::string GetObjectTypeNameStr();
 
 	std::string GetSimInfoToSave(const std::string& lightName);
 	bool SetSimInfoToLoad(std::string_view& line);
+
+	LightTypes GetLightType();
+	static size_t GetAmountOfLightsByType(LightTypes lightType);
 
 	static std::vector<std::string> GetLightTypeNames();
 	std::string GetCurrentLightType() override;
@@ -46,6 +50,7 @@ private:
 	std::string GetSimInfoToSaveImpl();
 
 	static std::map<int, Attenuation> attenuationVals;
+	static inline std::array<size_t, ILightSim::LightTypes::_SIZE> amountOfLightsByType { 0, 0, 0 };
 
 	static inline std::vector<std::pair<LightTypes, std::string>> lightTypeToName
 	{

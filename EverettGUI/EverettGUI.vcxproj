@@ -213,7 +213,6 @@
     <ClInclude Include="CBrowseDialog.h" />
     <ClInclude Include="CGameProducerDlg.h" />
     <ClInclude Include="ChildView.h" />
-    <ClInclude Include="CKeybindOptionDlg.h" />
     <ClInclude Include="CLoadingDialog.h" />
     <ClInclude Include="CBrowseAndLoadDialog.h" />
     <ClInclude Include="CMainWindow.h" />
@@ -221,7 +220,7 @@
     <ClInclude Include="CObjectMoveDialog.h" />
     <ClInclude Include="CPlaceObjectDialog.h" />
     <ClInclude Include="CSaveLoadDlg.h" />
-    <ClInclude Include="DLLLoaderCommon.h" />
+    <ClInclude Include="CDLLLoaderDlg.h" />
     <ClInclude Include="EverettGUI.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MainFrm.h" />
@@ -237,7 +236,6 @@
     <ClCompile Include="CBrowseDialog.cpp" />
     <ClCompile Include="CGameProducerDlg.cpp" />
     <ClCompile Include="ChildView.cpp" />
-    <ClCompile Include="CKeybindOptionDlg.cpp" />
     <ClCompile Include="CLoadingDialog.cpp" />
     <ClCompile Include="CBrowseAndLoadDialog.cpp" />
     <ClCompile Include="CMainWindow.cpp" />
@@ -245,7 +243,7 @@
     <ClCompile Include="CObjectMoveDialog.cpp" />
     <ClCompile Include="CPlaceObjectDialog.cpp" />
     <ClCompile Include="CSaveLoadDlg.cpp" />
-    <ClCompile Include="DLLLoaderCommon.cpp" />
+    <ClCompile Include="CDLLLoaderDlg.cpp" />
     <ClCompile Include="EverettGUI.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="NameEditChecker.cpp" />
