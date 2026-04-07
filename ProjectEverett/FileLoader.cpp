@@ -720,12 +720,22 @@ bool FileLoader::DLLLoader::GetSeparatorPoints(
 {
 	size_t check = 0;
 
-	check &= separatorPoints[0] = rawName.find(SeparatorChar);
-	check &= separatorPoints[1] = rawName.find(SeparatorChar, separatorPoints[0] + 1);
-	check &= separatorPoints[3] = rawName.rfind(SeparatorChar);
-	check &= separatorPoints[2] = rawName.rfind(SeparatorChar, separatorPoints[3] - 1);
+	check |= separatorPoints[0] = rawName.find(SeparatorChar);
+	check |= separatorPoints[1] = rawName.find(SeparatorChar, separatorPoints[0] + 1);
+	check |= separatorPoints[3] = rawName.rfind(SeparatorChar);
+	check |= separatorPoints[2] = rawName.rfind(SeparatorChar, separatorPoints[3] - 1);
 
-	return check != std::string_view::npos;
+	if (check == std::string_view::npos) return false;
+
+	for (size_t i = 0; i < separatorPoints.size(); ++i)
+	{
+		for (size_t j = i + 1; j < separatorPoints.size(); ++j)
+		{
+			if (separatorPoints[i] == separatorPoints[j]) return false;
+		}
+	}
+
+	return true;
 }
 
 void FileLoader::DLLLoader::ParseRawNameFor(
