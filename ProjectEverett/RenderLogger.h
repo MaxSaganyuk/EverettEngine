@@ -43,5 +43,6 @@ private:
 	RenderTextDeleteFunc deleteFunc;
 
 	size_t counter;
+	bool isRenderEnabled;
 	stdEx::RingBuffer<std::pair<size_t, LGLStructs::TextInfo>, maxAmountOfMessages> renderMessageCollection;
 };

@@ -17,7 +17,8 @@ RenderLogger::RenderLogger(
 	shaderBehaviourError(shaderBehaviourError),
 	createFunc(createFunc), 
 	deleteFunc(deleteFunc),
-	counter(0)
+	counter(0),
+	isRenderEnabled(true)
 {
 	startTextPos = { 20.0f, windowHeight - 25.0f, 1.0f };
 }
@@ -41,7 +42,7 @@ void RenderLogger::CreateMessage(const std::string& str, const std::function<voi
 	}
 
 	renderMessageCollection.PushBack(
-		{ counter++, { str, GetCurrentTextPosition(), true, shader, glyphs, behaviourToUse} }
+		{ counter++, { str, GetCurrentTextPosition(), isRenderEnabled, shader, glyphs, behaviourToUse} }
 	);
 	createFunc(std::to_string(renderMessageCollection.GetBack().first), renderMessageCollection.GetBack().second);
 }
@@ -67,8 +68,10 @@ glm::vec3 RenderLogger::GetCurrentTextPosition()
 
 void RenderLogger::EnableRender(bool value)
 {
+	isRenderEnabled = value;
+
 	for (size_t i = 0; i < renderMessageCollection.GetCurrentSize(); ++i)
 	{
-		renderMessageCollection[i].second.render = value;
+		renderMessageCollection[i].second.render = isRenderEnabled;
 	}
 }
