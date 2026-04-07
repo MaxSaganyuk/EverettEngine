@@ -420,7 +420,12 @@ bool ObjectSim::IsScriptFuncRunnable(const std::string& dllName)
 
 void ObjectSim::LinkObject(IObjectSim& otherObject)
 {
-	objectGraph.AddElements(this, dynamic_cast<ObjectSim*>(&otherObject), stdEx::RelationType::LeftToRight);
+	objectGraph.SetupRelations(this, dynamic_cast<ObjectSim*>(&otherObject), stdEx::RelationType::LeftToRight);
+}
+
+void ObjectSim::UnlinkObject(IObjectSim& objectToUnlink)
+{
+	objectGraph.SetupRelations(this, dynamic_cast<ObjectSim*>(&objectToUnlink), stdEx::RelationType::NoRelation);
 }
 
 void ObjectSim::EnableObjectLinking(bool val)

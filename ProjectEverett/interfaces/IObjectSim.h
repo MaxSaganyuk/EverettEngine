@@ -91,5 +91,6 @@ public:
 	virtual void SetRotationChangeCallback(std::function<void()> callback) = 0;
 
 	virtual void LinkObject(IObjectSim& objectToLink) = 0;
+	virtual void UnlinkObject(IObjectSim& objectToUnlink) = 0;
 	virtual void EnableObjectLinking(bool val = true) = 0; // By default enabled.
 };

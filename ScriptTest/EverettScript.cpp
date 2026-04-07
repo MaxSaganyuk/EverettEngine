@@ -35,14 +35,11 @@ public:
 	void LinkCharToCamera(ICameraSim& camera)
 	{
 		std::cout << "Camera link to char";
-		if (!linkedToCamera)
-		{
-			testCharCollider->LinkObject(camera);
-		}
+
+		linkedToCamera ? testCharSolid->UnlinkObject(camera) : testCharSolid->LinkObject(camera);
 
 		linkedToCamera = !linkedToCamera;
 		std::cout << linkedToCamera ? " on\n" : " off\n";
-		testCharCollider->EnableObjectLinking(linkedToCamera);
 	}
 
 	void Go(float rotation)

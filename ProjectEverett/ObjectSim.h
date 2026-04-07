@@ -109,5 +109,6 @@ public:
 	bool IsScriptFuncRunnable(const std::string& dllName = "");
 
 	void LinkObject(IObjectSim& otherObject) override;
+	void UnlinkObject(IObjectSim& objectToUnlink) override;
 	void EnableObjectLinking(bool val = true) override;
 };
