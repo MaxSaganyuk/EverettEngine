@@ -220,7 +220,14 @@ void EverettEngine::CreateAndSetupMainWindow(
 	camera = std::make_shared<CameraSim>(windowWidth, windowHeight);
 	camera->SetMode(CameraSim::Mode::Fly);
 
-	mainLGL->SetFramebufferSizeCallback([this](int width, int height) { camera->SetAspect(width, height); });
+	mainLGL->SetFramebufferSizeCallback([this](int width, int height) { 
+		camera->SetAspect(width, height);
+
+		if (logger)
+		{
+			logger->UpdateTextPos(static_cast<float>(width), static_cast<float>(height));
+		}
+	});
 
 	SoundSim::SetCamera(camera);
 	camera->SetPositionChangeCallback(SoundSim::UpdateCameraPosition);

@@ -26,9 +26,11 @@ public:
 	void CreateErrorMessage(const std::string& str);
 
 	void EnableRender(bool value = true);
+	void UpdateTextPos(float windowWidth, float windowHeight);
 private:
 	void CreateMessage(const std::string& str, const std::function<void()>& behaviourToUse);
 
+	glm::vec3 CalcFirstTextPos(float windowWidth, float windowHeight);
 	glm::vec3 GetCurrentTextPosition();
 	void ScrollMessages();
 

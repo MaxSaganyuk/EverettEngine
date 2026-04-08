@@ -20,9 +20,13 @@ RenderLogger::RenderLogger(
 	counter(0),
 	isRenderEnabled(true)
 {
-	startTextPos = { 20.0f, windowHeight - 25.0f, 1.0f };
+	startTextPos = CalcFirstTextPos(windowWidth, windowHeight);
 }
 
+glm::vec3 RenderLogger::CalcFirstTextPos(float windowsWidth, float windowHeight)
+{
+	return { 20.0f, windowHeight - 25.0f, 1.0f };
+}
 
 void RenderLogger::CreateLogMessage(const std::string& str)
 {
@@ -73,5 +77,15 @@ void RenderLogger::EnableRender(bool value)
 	for (size_t i = 0; i < renderMessageCollection.GetCurrentSize(); ++i)
 	{
 		renderMessageCollection[i].second.render = isRenderEnabled;
+	}
+}
+
+void RenderLogger::UpdateTextPos(float windowWidth, float windowHeight)
+{
+	startTextPos = CalcFirstTextPos(windowWidth, windowHeight);
+
+	for (size_t i = 0; i < renderMessageCollection.GetCurrentSize(); ++i)
+	{
+		renderMessageCollection[i].second.position.y = startTextPos.y - i * 15.0f;
 	}
 }
