@@ -25,6 +25,8 @@ private:
 	static inline std::weak_ptr<CameraSim> camera;
 	static inline int soundsCurrentlyPlaying = 0;
 
+	constexpr static char TypeName[] = "Sound";
+
 	static bool CreateContext();
 
 	struct SoundInfo : WavData
@@ -52,6 +54,8 @@ private:
 	std::string GetSimInfoForSaveImpl();
 	void UpdateCurrentPlaybackTime();
 public:
+	std::string GetThisObjectTypeNameStr() override;
+
 	std::string GetSimInfoToSave(const std::string& soundName);
 	bool SetSimInfoToLoad(std::string_view& line);
 

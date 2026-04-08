@@ -39,9 +39,14 @@ SolidSim::SolidSim(
 	type = SolidType::Static;
 }
 
+std::string SolidSim::GetThisObjectTypeNameStr()
+{
+	return TypeName;
+}
+
 std::string SolidSim::GetObjectTypeNameStr()
 {
-	return "Solid";
+	return TypeName;
 }
 
 std::string SolidSim::CollectInfoToSaveFromSTMM()

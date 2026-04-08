@@ -1276,6 +1276,17 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 		ThrowExceptionWMessage("Unreachable");
 	}
 
+#ifdef _DEBUG
+	if (object)
+	{
+		std::cout << "Retrieved object " << objectName << " from " << object->GetThisObjectTypeNameStr() << " map\n";
+	}
+	else
+	{
+		std::cerr << "Failed to retrieve object " << objectName << " from maps\n";
+	}
+#endif
+
 	return object;
 }
 

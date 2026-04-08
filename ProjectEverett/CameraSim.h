@@ -6,6 +6,8 @@
 class CameraSim : public SolidSim, public ICameraSim
 {
 private:
+	constexpr static char TypeName[] = "Camera";
+
 	int windowHeight;
 	int windowWidth;
 	glm::mat4 view;
@@ -32,6 +34,7 @@ public:
 		const float speed = 1.0f
 	);
 
+	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
 	std::string GetSimInfoToSave(const std::string&);

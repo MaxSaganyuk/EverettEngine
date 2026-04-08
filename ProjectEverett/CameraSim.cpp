@@ -32,9 +32,14 @@ CameraSim::CameraSim(
 	SolidSim::SetType(SolidType::Dynamic);
 }
 
+std::string CameraSim::GetThisObjectTypeNameStr()
+{
+	return TypeName;
+}
+
 std::string CameraSim::GetObjectTypeNameStr()
 {
-	return "Camera";
+	return TypeName;
 }
 
 void CameraSim::SetAspect(const int windowWidth, const int windowHeight)

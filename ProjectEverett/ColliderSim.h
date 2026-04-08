@@ -18,6 +18,7 @@ public:
 	);
 	~ColliderSim();
 
+	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
 	static void ExecuteBroadCollisionCheck();
@@ -38,6 +39,8 @@ public:
 	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override {};
 	//
 private:
+	constexpr static char TypeName[] = "Collider";
+
 	enum Axis
 	{
 		X, Y, Z

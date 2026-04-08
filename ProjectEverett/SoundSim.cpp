@@ -12,6 +12,7 @@
 
 #include "EverettException.h"
 
+
 std::string SoundSim::GetSimInfoForSaveImpl()
 {
 	return ObjectSim::GetSimInfoToSaveImpl();
@@ -241,5 +242,10 @@ SoundSim::SoundSim(SoundSim&& otherSoundSim) noexcept
 
 std::string SoundSim::GetObjectTypeNameStr()
 {
-	return "Sound";
+	return TypeName;
+}
+
+std::string SoundSim::GetThisObjectTypeNameStr()
+{
+	return TypeName;
 }

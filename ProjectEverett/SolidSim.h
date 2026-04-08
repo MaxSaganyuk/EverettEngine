@@ -16,6 +16,8 @@
 class SolidSim : public ObjectSim, virtual public ISolidSim
 {
 private:
+	constexpr static char TypeName[] = "Solid";
+
 	glm::mat4 model;
 	SolidType type;
 	SolidToModelManager STMM;
@@ -32,6 +34,7 @@ public:
 		const float speed = 1.0f
 	);
 
+	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
 	void UpdatePosition() override;

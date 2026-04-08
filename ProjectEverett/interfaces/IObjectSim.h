@@ -50,6 +50,8 @@ public:
 	constexpr static inline const glm::vec3 worldUp   { 0, 1, 0 };
 	constexpr static inline const glm::vec3 worldFront{ 0, 0, 1 };
 
+	virtual std::string GetThisObjectTypeNameStr() = 0;
+
 	Linkable virtual void InvertMovement(bool value = true, bool executeLinkedObjects = true) = 0;
 	virtual bool IsMovementInverted() = 0;
 

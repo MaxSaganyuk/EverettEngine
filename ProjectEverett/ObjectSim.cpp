@@ -49,9 +49,9 @@ void ObjectSim::InitializeObjectGraph()
 	objectGraph.EnableBidirectionality(false);
 }
 
-std::string ObjectSim::GetObjectTypeNameStr()
+std::string ObjectSim::GetThisObjectTypeNameStr()
 {
-	return "Object";
+	ThrowExceptionWMessage("Impossible call, ObjectSim cannot be full type");
 }
 
 void ObjectSim::SetRenderDeltaTime(float deltaTime)

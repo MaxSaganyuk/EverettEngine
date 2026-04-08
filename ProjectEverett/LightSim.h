@@ -23,6 +23,7 @@ public:
 	);
 	~LightSim();
 
+	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
 	std::string GetSimInfoToSave(const std::string& lightName);
@@ -47,6 +48,8 @@ public:
 
 	glm::vec3& GetColorVectorAddr() override;
 private:
+	constexpr static char TypeName[] = "Light";
+
 	std::string GetSimInfoToSaveImpl();
 
 	static std::map<int, Attenuation> attenuationVals;

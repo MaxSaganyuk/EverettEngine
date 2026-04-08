@@ -56,8 +56,9 @@ public:
 	);
 	~ObjectSim();
 
+	std::string GetThisObjectTypeNameStr() override;
+
 	static void InitializeObjectGraph();
-	static std::string GetObjectTypeNameStr();
 	static void SetRenderDeltaTime(float deltaTime);
 
 	virtual void UpdatePosition();

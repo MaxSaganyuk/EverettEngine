@@ -37,9 +37,14 @@ LightSim::~LightSim()
 	--amountOfLightsByType[lightType];
 }
 
+std::string LightSim::GetThisObjectTypeNameStr()
+{
+	return TypeName;
+}
+
 std::string LightSim::GetObjectTypeNameStr()
 {
-	return "Light";
+	return TypeName;
 }
 
 std::string LightSim::GetSimInfoToSave(const std::string& lightName)

@@ -19,7 +19,12 @@ ColliderSim::~ColliderSim()
 
 std::string ColliderSim::GetObjectTypeNameStr()
 {
-	return "Collider";
+	return TypeName;
+}
+
+std::string ColliderSim::GetThisObjectTypeNameStr()
+{
+	return TypeName;
 }
 
 std::string ColliderSim::GetSimInfoToSaveImpl()
