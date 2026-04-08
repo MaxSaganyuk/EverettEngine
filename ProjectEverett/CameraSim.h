@@ -40,6 +40,7 @@ public:
 	std::string GetSimInfoToSave(const std::string&);
 	bool SetSimInfoToLoad(std::string_view& line);
 
+	void SetAspect();
 	void SetAspect(const int windowWidth, const int windowHeight);
 
 	glm::mat4& GetViewMatrixAddr();

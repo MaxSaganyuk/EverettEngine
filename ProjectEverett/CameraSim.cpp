@@ -42,11 +42,19 @@ std::string CameraSim::GetObjectTypeNameStr()
 	return TypeName;
 }
 
-void CameraSim::SetAspect(const int windowWidth, const int windowHeight)
+void CameraSim::SetAspect()
 {
 	float aspect = static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
 
 	projection = glm::perspective(glm::radians(fov), aspect, 0.1f, 100.f);
+}
+
+void CameraSim::SetAspect(const int windowWidth, const int windowHeight)
+{
+	this->windowWidth = windowWidth;
+	this->windowHeight = windowHeight;
+
+	SetAspect();
 }
 
 std::string CameraSim::GetSimInfoToSaveImpl()
@@ -154,6 +162,8 @@ void CameraSim::Zoom(float xpos, float ypos)
 	{
 		fov -= ypos;
 	}
+
+	SetAspect();
 }
 
 void CameraSim::SetMode(Mode mode)
