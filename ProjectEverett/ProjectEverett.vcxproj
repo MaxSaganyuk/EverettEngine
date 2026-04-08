@@ -198,7 +198,6 @@
     <ClInclude Include="SoundSim.h" />
     <ClInclude Include="LightSim.h" />
     <ClInclude Include="MaterialSim.h" />
-    <ClInclude Include="stb_image.h" />
     <ClInclude Include="StringCast.h" />
     <ClInclude Include="UnorderedPtrMap.h" />
     <ClInclude Include="WindowHandleHolder.h" />
@@ -220,7 +219,6 @@
     <ClCompile Include="SolidSim.cpp" />
     <ClCompile Include="SolidToModelManager.cpp" />
     <ClCompile Include="SoundSim.cpp" />
-    <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="WindowHandleHolder.cpp" />
   </ItemGroup>
   <ItemGroup>
