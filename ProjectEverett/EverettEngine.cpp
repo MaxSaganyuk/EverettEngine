@@ -133,8 +133,8 @@ std::vector<std::string> EverettEngine::lightTypes = LightSim::GetLightTypeNames
 
 struct EverettEngine::KeyScriptFuncInfo
 {
-	ScriptFuncStorage pressedFuncs;
-	ScriptFuncStorage releasedFuncs;
+	ScriptFuncStorage<void> pressedFuncs;
+	ScriptFuncStorage<void> releasedFuncs;
 };
 
 EverettEngine::EverettEngine()
@@ -154,6 +154,8 @@ EverettEngine::EverettEngine()
 	animSystem = std::make_unique<AnimSystem>();
 	cmdHandler = std::make_unique<CommandHandler>();
 	hwndHolder = std::make_unique<WindowHandleHolder>();
+
+	mouseScrollScriptFuncs = std::make_unique<ScriptFuncStorage<double>>();
 		
 	ObjectSim::InitializeObjectGraph();
 }
@@ -239,9 +241,7 @@ void EverettEngine::CreateAndSetupMainWindow(
 		[this](double xpos, double ypos) { camera->RotateByMousePos(static_cast<float>(xpos), static_cast<float>(ypos)); };
 	mainLGL->SetCursorPositionCallback(cursorCaptureCallback);
 
-	mainLGL->SetScrollCallback(
-		[this](double xpos, double ypos) { camera->Zoom(static_cast<float>(xpos), static_cast<float>(ypos)); }
-	);
+	mainLGL->SetScrollCallback([this](double xpos, double ypos) { mouseScrollScriptFuncs->ExecuteAllScriptFuncs(&ypos); });
 
 	mainLGL->SetRenderDeltaCallback(ObjectSim::SetRenderDeltaTime);
 
@@ -1021,7 +1021,14 @@ void EverettEngine::SetupScriptDLL(const std::string& dllPath)
 	{
 		auto& [rawPressedFuncName, rawReleasedFuncName, holdable] = scriptFuncNameStruct.second;
 
-		SetScriptToKey(scriptFuncNameStruct.first, rawPressedFuncName, rawReleasedFuncName, holdable, dllPath, dllName);
+		if (scriptFuncNameStruct.first == "MouseScroll")
+		{
+			SetScriptToMouseScroll(rawPressedFuncName, dllPath, dllName);
+		}
+		else
+		{
+			SetScriptToKey(scriptFuncNameStruct.first, rawPressedFuncName, rawReleasedFuncName, holdable, dllPath, dllName);
+		}
 	}
 }
 
@@ -1066,7 +1073,7 @@ void EverettEngine::SetScriptToObject(
 
 	if (object)
 	{
-		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncWeakPtr;
+		ScriptFuncWeakPtr scriptFuncWeakPtr;
 
 		if (fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, rawFuncName.data(), scriptFuncWeakPtr))
 		{
@@ -1101,8 +1108,8 @@ void EverettEngine::SetScriptToKey(
 			isReleasedExist = keyScriptFuncMap[keyName].releasedFuncs.IsScriptFuncAdded(dllName);
 		}
 
-		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncPress;
-		std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc> scriptFuncRelease;
+		ScriptFuncWeakPtr scriptFuncPress;
+		ScriptFuncWeakPtr scriptFuncRelease;
 		bool anyFuncAdded{};
 
 		if (!pressedFuncName.empty())
@@ -1139,12 +1146,12 @@ void EverettEngine::SetScriptToKey(
 
 				if (scriptFuncPress.lock())
 				{
-					scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].pressedFuncs.ExecuteAllScriptFuncs(nullptr); };
+					scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].pressedFuncs.ExecuteAllScriptFuncs(); };
 				}
 
 				if (scriptFuncRelease.lock())
 				{
-					scriptFuncReleaseWrapper = [this, keyName]() { keyScriptFuncMap[keyName].releasedFuncs.ExecuteAllScriptFuncs(nullptr); };
+					scriptFuncReleaseWrapper = [this, keyName]() { keyScriptFuncMap[keyName].releasedFuncs.ExecuteAllScriptFuncs(); };
 				}
 
 				mainLGL->SetInteractable(
@@ -1155,6 +1162,22 @@ void EverettEngine::SetScriptToKey(
 				);
 			}
 		}
+	}
+}
+
+void EverettEngine::SetScriptToMouseScroll(
+	std::string_view rawFuncName,
+	const std::string& dllPath,
+	const std::string& dllName
+)
+{
+	ScriptFuncWeakPtr scriptFuncWeakPtr;
+
+	fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, rawFuncName.data(), scriptFuncWeakPtr);
+
+	if (scriptFuncWeakPtr.lock())
+	{
+		mouseScrollScriptFuncs->AddScriptFunc(dllPath, dllName, scriptFuncWeakPtr);
 	}
 }
 

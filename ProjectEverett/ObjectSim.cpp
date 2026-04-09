@@ -377,7 +377,7 @@ void ObjectSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 void ObjectSim::AddScriptFunc(
 	const std::string& dllPath, 
 	const std::string& dllName, 
-	ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc
+	ScriptFuncWeakPtr& scriptFunc
 )
 {
 	scriptFuncStorage.AddScriptFunc(dllPath, dllName, scriptFunc);

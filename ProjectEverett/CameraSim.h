@@ -47,7 +47,6 @@ public:
 	glm::mat4& GetProjectionMatrixAddr();
 
 	void RotateByMousePos(float xpos, float ypos);
-	void Zoom(float xpos, float ypos);
 
 	void ForceModelUpdate() override;
 
@@ -58,4 +57,5 @@ public:
 		const glm::vec3& axis, const glm::vec3& axisToLimit = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) override;
 	void SetMode(Mode mode) override;
+	void Zoom(float valueDelta) override;
 };

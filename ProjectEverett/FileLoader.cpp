@@ -838,7 +838,7 @@ bool FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
 bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 	const std::string& dllPath,
 	const std::string& funcName,
-	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
+	ScriptFuncWeakPtr& scriptFuncWeakPtr
 )
 {
 	bool success = false;
@@ -859,7 +859,7 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
 	const std::string& funcName,
 	ScriptDLLInfo& dllInfo,
-	std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncWeakPtr
+	ScriptFuncWeakPtr& scriptFuncWeakPtr
 )
 {
 	using ScriptWrapperType = void(*)(void*);
@@ -869,20 +869,20 @@ bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
 
 	if (scriptWrapperFunc)
 	{
-		auto scriptFunc = [this, scriptWrapperFunc](IObjectSim* solid)
+		auto scriptFunc = [this, scriptWrapperFunc](void* data)
 		{
 			std::lock_guard<std::recursive_mutex> lock(scriptWrapperLock);
-			scriptWrapperFunc(reinterpret_cast<void*>(solid));
+			scriptWrapperFunc(data);
 		};
 
 		if (!dllInfo.scriptFuncMap.contains(funcName))
 		{
-			dllInfo.scriptFuncMap.emplace(funcName, std::make_shared<ScriptFuncStorage::InterfaceScriptFunc>(scriptFunc));
+			dllInfo.scriptFuncMap.emplace(funcName, std::make_shared<InterfaceScriptFunc>(scriptFunc));
 			scriptFuncWeakPtr = dllInfo.scriptFuncMap[funcName];
 		}
 		else
 		{
-			ScriptFuncStorage::InterfaceScriptFunc* currentScriptWrapperFunc = dllInfo.scriptFuncMap[funcName].get();
+			InterfaceScriptFunc* currentScriptWrapperFunc = dllInfo.scriptFuncMap[funcName].get();
 			*currentScriptWrapperFunc = scriptFunc;
 		}
 
@@ -903,7 +903,7 @@ void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
 	scriptWrapperLock.lock();
 	for (auto& [funcName, func] : dllInfo.scriptFuncMap)
 	{
-		ScriptFuncStorage::InterfaceScriptFunc* scriptFuncWrapper = func.get();
+		InterfaceScriptFunc* scriptFuncWrapper = func.get();
 		*scriptFuncWrapper = nullptr;
 	}
 	scriptWrapperLock.unlock();

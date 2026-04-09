@@ -12,4 +12,5 @@ public:
 	};
 
 	virtual void SetMode(Mode mode) = 0;
+	virtual void Zoom(float valueDelta) = 0;
 };

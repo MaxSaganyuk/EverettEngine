@@ -53,5 +53,15 @@ extern "C" __declspec(dllexport) void RESOLVE_AND_CONCAT(K, 0, keyname, 1)(void*
                                                                                                          \
 void ImplKey##keyname##Released()                                                                        \
 
+#define ScriptMouseScroll()                                                                              \
+void ImplScroll(double value);                                                                           \
+                                                                                                         \
+extern "C" __declspec(dllexport) void RESOLVE_AND_CONCAT(K, 0, MouseScroll, 0)(void* value)              \
+{                                                                                                        \
+    ImplScroll(*reinterpret_cast<double*>(value));                                                       \
+}                                                                                                        \
+                                                                                                         \
+void ImplScroll(double value)
+
 #define ScriptCleanUp()                                                                                  \
 extern "C" __declspec(dllexport) void CleanUp()                                                          

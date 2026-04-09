@@ -41,10 +41,12 @@ class ColliderSim;
 class CommandHandler;
 class LGL;
 class WindowHandleHolder;
-class ScriptFuncStorage;
 class AnimSystem;
 class RenderLogger;
 class CustomOutput;
+
+template<typename ParamType>
+class ScriptFuncStorage;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -269,6 +271,11 @@ private:
 		const std::string& dllPath,
 		const std::string& dllName
 	);
+	void SetScriptToMouseScroll(
+		std::string_view rawFuncName,
+		const std::string& dllPath,
+		const std::string& dllName
+	);
 
 	std::string CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder);
 
@@ -333,8 +340,10 @@ private:
 	static std::vector<std::string> lightTypes;
 
 	struct KeyScriptFuncInfo;
+	struct MouseScrollScriptFuncInfo;
 
 	std::map<std::string, KeyScriptFuncInfo> keyScriptFuncMap;
+	std::unique_ptr<ScriptFuncStorage<double>> mouseScrollScriptFuncs;
 
 	UnorderedPtrMap<const std::string*, int> allNameTracker;
 

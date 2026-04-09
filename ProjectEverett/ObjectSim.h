@@ -38,7 +38,7 @@ protected:
 	std::unordered_map<Direction, bool> disabledDirs;
 	std::pair<Rotation, Rotation> rotationLimits;
 
-	ScriptFuncStorage scriptFuncStorage;
+	ScriptFuncStorage<IObjectSim> scriptFuncStorage;
 
 	// Callbacks
 	std::function<void()> positionChangeCallback;
@@ -96,7 +96,7 @@ public:
 	void LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects = true) override;
 	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;
 
-	void AddScriptFunc(const std::string& dllPath, const std::string& dllName, ScriptFuncStorage::ScriptFuncWeakPtr& scriptFunc);
+	void AddScriptFunc(const std::string& dllPath, const std::string& dllName, ScriptFuncWeakPtr& scriptFunc);
 	void ClearScriptFuncMap();
 
 	// Callback setter

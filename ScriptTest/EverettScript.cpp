@@ -149,6 +149,11 @@ ScriptKeybindPressed(C, 0)
 	}
 }
 
+ScriptMouseScroll()
+{
+	cameraSim->Zoom(static_cast<float>(value));
+}
+
 ScriptCleanUp()
 {
 	cameraSim = nullptr;

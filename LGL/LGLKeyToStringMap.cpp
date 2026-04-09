@@ -75,5 +75,8 @@ NaiveBidirMap<int, std::string> LGLKeyToStringMap::keyToStringMap =
     { GLFW_KEY_RIGHT_CONTROL, "RightCtrl" },
     { GLFW_KEY_RIGHT_ALT, "RightAlt" },
     { GLFW_KEY_RIGHT_SUPER, "RightSuper" },
-    { GLFW_KEY_MENU, "Menu" }
+    { GLFW_KEY_MENU, "Menu" },
+    { GLFW_MOUSE_BUTTON_LEFT, "MouseLeft" },
+    { GLFW_MOUSE_BUTTON_RIGHT, "MouseRight" },
+    { GLFW_MOUSE_BUTTON_MIDDLE, "MouseMiddle"}
 };

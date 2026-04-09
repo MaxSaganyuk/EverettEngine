@@ -139,7 +139,7 @@ class FileLoader
 		struct ScriptDLLInfo
 		{
 			HMODULE dllHandle;
-			ScriptFuncStorage::ScriptFuncMainMap scriptFuncMap;
+			ScriptFuncMainMap scriptFuncMap;
 			std::vector<std::string_view> rawScriptFuncNames;
 			std::function<void()> mainFunc;
 			std::function<void()> cleanUpFunc;
@@ -168,7 +168,7 @@ class FileLoader
 		bool GetScriptFuncFromDLLImpl(
 			const std::string& funcName,
 			ScriptDLLInfo& dllInfo,
-			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
+			ScriptFuncWeakPtr& scriptFuncPtr
 		);
 		void SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo);
 		void UnloadScriptDLL(ScriptDLLInfo& dllInfo);
@@ -185,7 +185,7 @@ class FileLoader
 		bool GetScriptFuncFromDLL(
 			const std::string& dllPath,
 			const std::string& funcName,
-			std::weak_ptr<ScriptFuncStorage::InterfaceScriptFunc>& scriptFuncPtr
+			ScriptFuncWeakPtr& scriptFuncPtr
 		);
 		void UnloadScriptDLL(const std::string& dllPath);
 		std::vector<std::pair<std::string, std::string>> GetLoadedScriptDlls();

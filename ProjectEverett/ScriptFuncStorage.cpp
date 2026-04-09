@@ -1,21 +1,14 @@
 #include "ScriptFuncStorage.h"
 
-ScriptFuncStorage::ScriptFuncStorage()
-{
-	lastExecutedScriptDll = "";
-}
-
-void ScriptFuncStorage::AddScriptFunc(
-	const std::string& dllPath, 
-	const std::string& dllName, 
-	ScriptFuncWeakPtr scriptFunc
+void _ScriptFuncStorageImpl::AddScriptFunc(
+	const std::string& dllPath, const std::string& dllName, ScriptFuncWeakPtr scriptFunc
 )
 {
 	scriptFuncMap.try_emplace(dllName, dllPath, scriptFunc);
 	lastExecutedScriptDll = dllName;
 }
 
-void ScriptFuncStorage::ExecuteScriptFunc(IObjectSim* object, const std::string& dllName)
+void _ScriptFuncStorageImpl::ExecuteScriptFuncImpl(void* object, const std::string& dllName)
 {
 	if (!scriptFuncMap.empty())
 	{
@@ -29,7 +22,7 @@ void ScriptFuncStorage::ExecuteScriptFunc(IObjectSim* object, const std::string&
 	}
 }
 
-void ScriptFuncStorage::ExecuteAllScriptFuncs(IObjectSim* object)
+void _ScriptFuncStorageImpl::ExecuteAllScriptFuncsImpl(void* object)
 {
 	for (auto& scriptFuncPair : scriptFuncMap)
 	{
@@ -40,17 +33,17 @@ void ScriptFuncStorage::ExecuteAllScriptFuncs(IObjectSim* object)
 	}
 }
 
-bool ScriptFuncStorage::IsScriptFuncAdded(const std::string& dllName)
+bool _ScriptFuncStorageImpl::IsScriptFuncAdded(const std::string& dllName)
 {
 	return scriptFuncMap.find(dllName == "" ? lastExecutedScriptDll : dllName) != scriptFuncMap.end();
 }
 
-bool ScriptFuncStorage::IsScriptFuncRunnable(const std::string& dllName)
+bool _ScriptFuncStorageImpl::IsScriptFuncRunnable(const std::string& dllName)
 {
 	return IsScriptFuncAdded(dllName) && *scriptFuncMap[dllName].second.lock().get();
 }
 
-void ScriptFuncStorage::ClearScriptFuncMap()
+void _ScriptFuncStorageImpl::ClearScriptFuncMap()
 {
 	scriptFuncMap.clear();
 }
