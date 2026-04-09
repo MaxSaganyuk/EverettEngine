@@ -1318,13 +1318,32 @@ void LGL::SetInteractable(
 
 std::string LGL::ConvertKeyTo(int keyId)
 {
+	auto& keyToCharMap = LGLKeyToStringMap::keyToCharMap;
+
+	if (keyToCharMap.Exists(keyId))
+	{
+		return std::to_string(keyToCharMap[keyId]);
+	}
+
 	auto& keyToStringMap = LGLKeyToStringMap::keyToStringMap;
 
 	return keyToStringMap.Exists(keyId) ? keyToStringMap[keyId] : "InvalidKey";
 }
 
+int LGL::ConvertKeyTo(char c)
+{
+	auto& keyToCharMap = LGLKeyToStringMap::keyToCharMap;
+
+	return keyToCharMap.Exists(c) ? keyToCharMap[c] : -1;
+}
+
 int LGL::ConvertKeyTo(const std::string& keyName)
 {
+	if (keyName.size() == 1)
+	{
+		return ConvertKeyTo(keyName[0]);
+	}
+
 	auto& keyToStringMap = LGLKeyToStringMap::keyToStringMap;
 
 	return keyToStringMap.Exists(keyName) ? keyToStringMap[keyName] : -1;

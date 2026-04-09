@@ -52,5 +52,6 @@ private:
 class LGLKeyToStringMap
 {
 public:
+	static NaiveBidirMap<int, char> keyToCharMap;
 	static NaiveBidirMap<int, std::string> keyToStringMap;
 };

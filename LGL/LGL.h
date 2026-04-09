@@ -185,6 +185,7 @@ public:
 	);
 	
 	LGL_API static std::string ConvertKeyTo(int keyId);
+	LGL_API static int         ConvertKeyTo(char c);
 	LGL_API static int         ConvertKeyTo(const std::string& keyName);
 
 	LGL_API void SetAssetOnOpenGLFailure(bool value);
