@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <functional>
 #include <Windows.h>
@@ -25,6 +26,8 @@
 
 #define DR_WAV_IMPLEMENTATION
 #include <DrWav/dr_wav.h>
+
+#include "openssl/evp.h"
 
 #include "EverettStructs.h"
 #include "OutputUtils.h"
@@ -131,6 +134,41 @@ bool FileLoader::GetFilesInDir(std::vector<std::string>& files, const std::strin
 std::string FileLoader::GetFileFromPath(const std::string& dllPath)
 {
 	return dllPath.substr(dllPath.rfind('\\') + 1, std::string::npos);
+}
+
+std::string FileLoader::GetFileHash(const std::string& path)
+{
+	constexpr size_t BufferSize = 8192;
+
+	std::ifstream file(path, std::ios::binary);
+
+	if (!file)
+	{
+		std::cerr << "Cannot open " << path << '\n';
+		return "";
+	}
+
+	EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+	EVP_DigestInit(ctx, EVP_sha256());
+
+	std::vector<char> buffer(BufferSize);
+	while (file.read(buffer.data(), buffer.size()) || file.gcount())
+	{
+		EVP_DigestUpdate(ctx, buffer.data(), file.gcount());
+	}
+
+	BYTE hash[EVP_MAX_BLOCK_LENGTH];
+	EVP_DigestFinal(ctx, hash, nullptr);
+
+	std::ostringstream res;
+	for (BYTE c : hash)
+	{
+		res << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
+	}
+
+	EVP_MD_CTX_free(ctx);
+
+	return res.str();
 }
 
 void FileLoader::DeleteAllAbsentAssets(const EverettStructs::AssetPaths& assetPaths)
@@ -923,14 +961,14 @@ void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
 	}
 }
 
-std::vector<std::pair<std::string, std::string>> FileLoader::DLLLoader::GetLoadedScriptDlls()
+std::vector<EverettStructs::BasicFileInfo> FileLoader::DLLLoader::GetLoadedScriptDlls()
 {
-	std::vector<std::pair<std::string, std::string>> loadedDlls;
+	std::vector<EverettStructs::BasicFileInfo> loadedDlls;
 	loadedDlls.reserve(dllHandleMap.size());
 
-	for (auto& [dllPath, dllInfo] : dllHandleMap)
+	for (auto& [dllPath, _] : dllHandleMap)
 	{
-		loadedDlls.push_back({ dllPath, GetFileFromPath(dllPath) });
+		loadedDlls.push_back({ dllPath, GetFileFromPath(dllPath), GetFileHash(dllPath) });
 	}
 
 	return loadedDlls;

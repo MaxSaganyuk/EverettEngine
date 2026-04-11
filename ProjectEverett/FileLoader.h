@@ -188,7 +188,7 @@ class FileLoader
 			ScriptFuncWeakPtr& scriptFuncPtr
 		);
 		void UnloadScriptDLL(const std::string& dllPath);
-		std::vector<std::pair<std::string, std::string>> GetLoadedScriptDlls();
+		std::vector<EverettStructs::BasicFileInfo> GetLoadedScriptDlls();
 		void ExecuteAllMainScriptFuncs();
 	};
 
@@ -231,6 +231,7 @@ public:
 	static std::string GetCurrentDir();
 	static bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);
 	static std::string GetFileFromPath(const std::string& dllPath);
+	static std::string GetFileHash(const std::string& path);
 
 	void DeleteAllAbsentAssets(const EverettStructs::AssetPaths& assetPaths = {});
 

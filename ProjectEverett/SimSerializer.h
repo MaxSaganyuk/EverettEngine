@@ -14,6 +14,7 @@
 
 #include "interfaces/IObjectSim.h"
 #include "StringCast.h"
+#include "EverettStructs.h"
 
 class SimSerializer
 {
@@ -36,7 +37,7 @@ private:
 		UnsetCritical
 	};
 
-	constexpr static inline int latestSerializerVersion = 11;
+	constexpr static inline int latestSerializerVersion = 12;
 	static inline int usedVersion = -1;
 	static VersionValidationState ValidateVersion(int requiredVersion, int deprecatedAt);
 	static bool SetUsedVersion(int usedVersionToSet);
@@ -115,6 +116,7 @@ public:
 	static std::string GetValueToSaveFrom(const std::vector<std::string>& vectorStr);
 	static std::string GetValueToSaveFrom(const std::vector<std::pair<std::string, std::string>>& vectorPairStr);
 	static std::string GetValueToSaveFrom(const std::chrono::system_clock::time_point timePoint);
+	static std::string GetValueToSaveFrom(const std::vector<EverettStructs::BasicFileInfo>& vectOfFileInfo);
 	static bool SetValueToLoadFrom(
 		std::string_view& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs, 
 		int requiredVersion, int deprecatedAt = 0
@@ -132,6 +134,10 @@ public:
 	);
 	static bool SetValueToLoadFrom(
 		std::string_view& line, std::chrono::system_clock::time_point& timePoint, int requiredVersion, int deprecatedAt = 0
+	);
+	static bool SetValueToLoadFrom(
+		std::string_view& line, std::vector<EverettStructs::BasicFileInfo>& vectOfFileInfo, 
+		int requiredVersion, int deprecatedAt = 0
 	);
 };
 

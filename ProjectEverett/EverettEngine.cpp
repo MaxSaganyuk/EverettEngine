@@ -1227,7 +1227,7 @@ std::string EverettEngine::CheckIfRelativePathToUse(const std::string& path, con
 	return path.find(':') != std::string::npos ? path : expectedFolder + "//" + path;
 }
 
-std::vector<std::pair<std::string, std::string>> EverettEngine::GetLoadedScriptDLLs()
+std::vector<EverettStructs::BasicFileInfo> EverettEngine::GetLoadedScriptDLLs()
 {
 	return fileLoader->dllLoader.GetLoadedScriptDlls();
 }
@@ -1567,12 +1567,31 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 		line.remove_prefix(line.find('*') + 1);
 	}
 
-	std::vector<std::pair<std::string, std::string>> dllInfo;
-	SimSerializer::SetValueToLoadFrom(line, dllInfo, 2);
+	std::vector<std::pair<std::string, std::string>> legacyDllInfo;
+	std::vector<EverettStructs::BasicFileInfo> dllInfo;
 
-	for (auto& [dllName, dllPath] : dllInfo)
+	SimSerializer::SetValueToLoadFrom(line, legacyDllInfo, 2, 12);
+
+	if (legacyDllInfo.empty())
 	{
-		SetupScriptDLL(dllPath);
+		SimSerializer::SetValueToLoadFrom(line, dllInfo, 12);
+
+		for (auto& [dllPath, dllName, dllHash] : dllInfo)
+		{
+			if (dllHash != FileLoader::GetFileHash(dllPath))
+			{
+				std::cerr << dllName << " was changed, can't guarantee correct execution\n";
+			}
+
+			SetupScriptDLL(dllPath);
+		}
+	}
+	else
+	{
+		for (auto& [dllName, dllPath] : legacyDllInfo)
+		{
+			SetupScriptDLL(dllPath);
+		}
 	}
 }
 

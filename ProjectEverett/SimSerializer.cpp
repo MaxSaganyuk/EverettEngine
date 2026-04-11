@@ -363,3 +363,63 @@ bool SimSerializer::SetValueToLoadFrom(
 
 	return true;
 }
+
+std::string SimSerializer::GetValueToSaveFrom(const std::vector<EverettStructs::BasicFileInfo>& vectOfFileInfo)
+{
+	std::string res;
+
+	for (auto& fileInfo : vectOfFileInfo)
+	{
+		res += (fileInfo.path + ' ' + fileInfo.name + ' ' + fileInfo.hash + ' ');
+	}
+	if (res.size() > 1)
+	{
+		res.pop_back();
+	}
+
+	return PackValue(res);
+}
+
+bool SimSerializer::SetValueToLoadFrom(
+	std::string_view& line, std::vector<EverettStructs::BasicFileInfo>& vectOfFileInfo,
+	int requiredVersion, int deprecatedAt
+)
+{
+	ValidateVersionCheck(requiredVersion, deprecatedAt)
+
+	std::string values;
+
+	UnpackValue(line, values);
+
+	std::string value;
+	std::string firstValue;
+	std::string secondValue;
+	size_t i = 0;
+
+	for (auto c : values)
+	{
+		if (c == ' ')
+		{
+			if (i % 3 == 0)
+			{
+				firstValue = value;
+			}
+			else if (i % 3 == 1)
+			{
+				secondValue = value;
+			}
+			else
+			{
+				vectOfFileInfo.push_back({ firstValue, secondValue, value });
+			}
+
+			value.clear();
+			++i;
+			continue;
+		}
+
+		value += c;
+	}
+
+	return AssertAndReturn(!(i % 3));
+}

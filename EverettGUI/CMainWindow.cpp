@@ -221,11 +221,11 @@ std::vector<std::pair<AdString, AdString>>& CMainWindow::GetSelectedScriptDllInf
 	return selectedScriptDllInfo;
 }
 
-bool CMainWindow::SetSelectedScriptDLLInfo(const std::vector<std::pair<std::string, std::string>>& scriptDLLInfo)
+bool CMainWindow::SetSelectedScriptDLLInfo(const std::vector<EverettStructs::BasicFileInfo>& scriptDLLInfo)
 {
 	for (auto& scriptDLLPair : scriptDLLInfo)
 	{
-		selectedScriptDllInfo.push_back({ scriptDLLPair.first, scriptDLLPair.second });
+		selectedScriptDllInfo.push_back({ scriptDLLPair.name, scriptDLLPair.path });
 	}
 
 	return true;

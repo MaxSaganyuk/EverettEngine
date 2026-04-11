@@ -46,7 +46,7 @@ public:
 	void SetEverettEngineRef(EverettEngine& engineRef);
 	MFCTreeManager& GetObjectTree();
 	std::vector<std::pair<AdString, AdString>>& GetSelectedScriptDllInfo();
-	bool SetSelectedScriptDLLInfo(const std::vector<std::pair<std::string, std::string>>& scriptDLLInfo);
+	bool SetSelectedScriptDLLInfo(const std::vector<EverettStructs::BasicFileInfo>& scriptDLLInfo);
 private:
 
 	void OnInitialUpdate() override;

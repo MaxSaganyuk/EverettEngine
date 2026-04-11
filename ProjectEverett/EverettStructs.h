@@ -66,4 +66,11 @@ namespace EverettStructs
 			}
 		}
 	};
+
+	struct BasicFileInfo
+	{
+		std::string path;
+		std::string name;
+		std::string hash;
+	};
 }
