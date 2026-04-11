@@ -746,6 +746,19 @@ bool EverettEngine::CreateColliderImpl(const std::string& colliderName)
 	return false;
 }
 
+bool EverettEngine::CheckIfScriptsRunning()
+{
+	if (fileLoader->dllLoader.AnyDLLLoaded())
+	{
+		std::cerr << "Cannot delete whilst scripts are running\n";
+		std::cerr << "Unload dlls and try again\n";
+
+		return true;
+	}
+
+	return false;
+}
+
 void EverettEngine::DeleteSolidsByModel(const std::string& modelName)
 {
 	for (auto iter = solids.begin(); iter != solids.end();)
@@ -773,6 +786,11 @@ void EverettEngine::RemoveSolidPtrFromModel(const std::string& modelName, SolidS
 
 bool EverettEngine::DeleteModel(const std::string& modelName)
 {
+	if (CheckIfScriptsRunning())
+	{
+		return false;
+	}
+
 	bool res = false;
 
 	mainLGL->PauseRendering();
@@ -798,6 +816,11 @@ bool EverettEngine::DeleteModel(const std::string& modelName)
 
 bool EverettEngine::DeleteSolid(const std::string& solidName)
 {
+	if (CheckIfScriptsRunning())
+	{
+		return false;
+	}
+
 	bool res = false;
 
 	mainLGL->PauseRendering();
@@ -827,6 +850,11 @@ EverettEngine::SolidCollection::iterator EverettEngine::DeleteSolidImpl(SolidCol
 
 bool EverettEngine::DeleteLight(const std::string& lightName)
 {
+	if (CheckIfScriptsRunning())
+	{
+		return false;
+	}
+
 	bool res = false;
 
 	mainLGL->PauseRendering();
@@ -853,6 +881,11 @@ bool EverettEngine::DeleteLight(const std::string& lightName)
 
 bool EverettEngine::DeleteSound(const std::string& soundName)
 {
+	if (CheckIfScriptsRunning())
+	{
+		return false;
+	}
+
 	bool res = false;
 
 	mainLGL->PauseRendering();
@@ -879,6 +912,11 @@ bool EverettEngine::DeleteSound(const std::string& soundName)
 
 bool EverettEngine::DeleteCollider(const std::string& colliderName)
 {
+	if (CheckIfScriptsRunning())
+	{
+		return false;
+	}
+
 	bool res = false;
 
 	mainLGL->PauseRendering();

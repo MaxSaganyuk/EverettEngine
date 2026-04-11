@@ -873,6 +873,19 @@ bool FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
 	return false;
 }
 
+bool FileLoader::DLLLoader::AnyDLLLoaded()
+{
+	for (auto& [dllName, dllInfo] : dllHandleMap)
+	{
+		if (dllInfo.dllHandle)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
 	const std::string& dllPath,
 	const std::string& funcName,

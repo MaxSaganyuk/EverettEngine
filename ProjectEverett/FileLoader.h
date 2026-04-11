@@ -182,6 +182,7 @@ class FileLoader
 		KeybindScriptFuncNameMap GetKeybindScriptFuncNamesFromDll(const std::string& dllPath);
 		void FreeDllData();
 		bool IsDLLLoaded(const std::string& dllPath);
+		bool AnyDLLLoaded();
 		bool GetScriptFuncFromDLL(
 			const std::string& dllPath,
 			const std::string& funcName,

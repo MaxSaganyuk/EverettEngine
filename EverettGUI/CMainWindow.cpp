@@ -225,7 +225,7 @@ bool CMainWindow::SetSelectedScriptDLLInfo(const std::vector<EverettStructs::Bas
 {
 	for (auto& scriptDLLPair : scriptDLLInfo)
 	{
-		selectedScriptDllInfo.push_back({ scriptDLLPair.name, scriptDLLPair.path });
+		selectedScriptDllInfo.push_back({ scriptDLLPair.path, scriptDLLPair.name });
 	}
 
 	return true;

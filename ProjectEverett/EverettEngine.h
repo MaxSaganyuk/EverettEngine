@@ -234,6 +234,7 @@ private:
 		const glm::vec4& gizmoColor
 	);
 
+	bool CheckIfScriptsRunning();
 	void DeleteSolidsByModel(const std::string& modelName);
 	void RemoveSolidPtrFromModel(const std::string& modelName, SolidSim* solidPtr);
 
