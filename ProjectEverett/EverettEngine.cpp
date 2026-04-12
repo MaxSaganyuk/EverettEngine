@@ -37,6 +37,7 @@
 #include "EverettException.h"
 
 #include "SolidToModelManager.h"
+#include "ModelInfo.h"
 
 #include "ShaderGenerator.h"
 #include "ConceptUtils.h"
@@ -69,30 +70,6 @@ struct EverettEngine::ObjectTypeInfo
 	std::string nameStr;
 	std::string interfaceNameStr;
 	std::type_index pureType;
-};
-
-struct EverettEngine::ModelSolidInfo
-{
-	std::string modelPath;
-	SolidToModelManager::FullModelInfo model;
-	std::unordered_set<SolidSim*> relatedSolids;
-
-	~ModelSolidInfo()
-	{
-		auto modelPtr = model.first.lock();
-
-		if (modelPtr)
-		{
-			modelPtr->render = false;
-			modelPtr->modelBehaviour = nullptr;
-			modelPtr->generalMeshBehaviour = nullptr;
-
-			for (auto& mesh : modelPtr->meshes)
-			{
-				mesh.behaviour.ResetValue();
-			}
-		}
-	}
 };
 
 EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
@@ -310,15 +287,15 @@ void EverettEngine::SetGizmoVisible(bool value)
 {
 	gizmoVisible = value;
 
-	ModelSolidInfo& gizmoModel = models[gizmoModelName];
-	gizmoModel.model.first.lock()->render = gizmoModel.relatedSolids.size() && gizmoVisible;
+	ModelInfo& gizmoModel = models[gizmoModelName];
+	gizmoModel.GetFullModelInfo().first.lock()->render = gizmoModel.GetRelatedSolids().size() && gizmoVisible;
 }
 
 void EverettEngine::LoadGizmoModel()
 {
 	CreateModel(FileLoader::GetCurrentDir() + '\\' + modelPath + '\\' + gizmoModelFile, gizmoModelName);
 
-	models[gizmoModelName].model.first.lock()->lineMode = true;
+	models[gizmoModelName].GetFullModelInfo().first.lock()->lineMode = true;
 }
 
 bool EverettEngine::CreateGizmoSolid(
@@ -436,39 +413,31 @@ bool EverettEngine::CreateModel(const std::string& path, const std::string& name
 
 bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader)
 {
-	if (models.contains(name))
-	{
-		return true;
-	}
-
-	auto resPair = models.emplace(name, std::move(ModelSolidInfo{}));
+	if (models.contains(name)) return true;
 	
+	ModelInfo::FullModelInfo model;
 	std::string pathToUse = CheckIfRelativePathToUse(path, "models");
 
-	std::weak_ptr<LGLStructs::ModelInfo>& newModel = models[name].model.first;
-	std::weak_ptr<AnimSystem::ModelAnim>& newModelAnim = models[name].model.second;
-	models[name].modelPath = pathToUse;
+	if (!fileLoader->modelLoader.LoadModel(pathToUse, name, model.first, model.second)) return false;
 
-	if (!fileLoader->modelLoader.LoadModel(pathToUse, name, newModel, newModelAnim))
-	{
-		models.erase(name);
-		return false;
-	}
+	auto [iter, success] = models.try_emplace(name, name, pathToUse, std::move(model));
 
-	auto newModelPtr = newModel.lock();
+	CheckAndThrowExceptionWMessage(success, "Unexpected inability to add to model map");
 
-	CheckAndAddToNameTracker(resPair.first->first);
+	auto& [nameRef, modelSolidInfo] = *iter;
+	auto modelInfo = modelSolidInfo.GetFullModelInfo().first.lock();
 
-	newModelPtr->shaderProgram = defaultShaderProgram;
-	newModelPtr->render = false;
+	CheckAndAddToNameTracker(nameRef);
 
-	newModelPtr->modelBehaviour = [this, name]()
+	modelInfo->shaderProgram = defaultShaderProgram;
+	modelInfo->render = false;
+
+	modelInfo->modelBehaviour = [this, name]()
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = models[name];
-		auto& [modelPath, modelInfo, relatedSolids] = model;
-		auto modelPtr = model.model.first.lock();
-		auto modelAnimPtr = model.model.second.lock();
+		auto modelPtr = model.GetFullModelInfo().first.lock();
+		auto modelAnimPtr = model.GetFullModelInfo().second.lock();
 
 		bool animationless = modelAnimPtr->animInfoVect.empty();
 		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(modelPtr->isTextureless));
@@ -476,7 +445,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 		if (!animationless)
 		{
-			for (auto& solidPtr : relatedSolids)
+			for (auto& solidPtr : model.GetRelatedSolids())
 			{
 				SolidSim& solid = *solidPtr;
 
@@ -492,10 +461,10 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 			}
 		}
 
-		if (!model.relatedSolids.empty())
+		if (!model.GetRelatedSolids().empty())
 		{
 			size_t index = currentStartSolidIndex = nextStartSolidIndex;
-			for (auto& solidPtr : model.relatedSolids)
+			for (auto& solidPtr : model.GetRelatedSolids())
 			{
 				SolidSim& solid = *solidPtr;
 
@@ -521,13 +490,13 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		}
 	};
 
-	newModelPtr->generalMeshBehaviour = [this, name](int meshIndex)
+	modelInfo->generalMeshBehaviour = [this, name](int meshIndex)
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = models[name];
 
 		size_t index = currentStartSolidIndex;
-		for (auto& solidPtr : model.relatedSolids)
+		for (auto& solidPtr : model.GetRelatedSolids())
 		{
 			SolidSim& solid = *solidPtr;
 
@@ -547,7 +516,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		GenerateShader();
 	}
 
-	mainLGL->CreateModel(name, newModel);
+	mainLGL->CreateModel(name, modelInfo);
 
 	return true;
 }
@@ -566,8 +535,8 @@ bool EverettEngine::CreateSolidImpl(
 		return true;
 	}
 
-	auto modelPtr = models[modelName].model.first.lock();
-	auto modelAnimPtr = models[modelName].model.second.lock();
+	auto modelPtr = models[modelName].GetFullModelInfo().first.lock();
+	auto modelAnimPtr = models[modelName].GetFullModelInfo().second.lock();
 
 	auto [iter, success] = solids.try_emplace(
 		solidName, camera->GetPositionVectorAddr() + camera->GetFrontVector()
@@ -579,7 +548,7 @@ bool EverettEngine::CreateSolidImpl(
 		// which maps are storing, not simply the string
 		auto& [solidNameRef, newSolid] = *iter;
 
-		newSolid.SetBackwardsModelAccess(models[modelName].model, modelName);
+		models[modelName].InsertRelatedSolid(newSolid);
 
 		for (auto& animInfo : modelAnimPtr->animInfoVect)
 		{
@@ -598,8 +567,6 @@ bool EverettEngine::CreateSolidImpl(
 		{
 			GenerateShader();
 		}
-
-		models[modelName].relatedSolids.insert(&newSolid);
 
 		return true;
 	}
@@ -780,7 +747,7 @@ void EverettEngine::RemoveSolidPtrFromModel(const std::string& modelName, SolidS
 	
 	if (iter != models.end())
 	{
-		iter->second.relatedSolids.erase(solidPtr);
+		iter->second.EraseFromRelatedSolids(*solidPtr);
 	}
 }
 
@@ -1391,7 +1358,7 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 
 			if (modelName != gizmoModelName)
 			{
-				file << solid.GetSimInfoToSave(modelName + '*' + solidName + '*' + models[modelName].modelPath);
+				file << solid.GetSimInfoToSave(modelName + '*' + solidName + '*' + models[modelName].GetModelPath());
 			}
 		}
 	}
@@ -1426,7 +1393,7 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 	{
 		for (auto& [modelName, modelInfo] : models)
 		{
-			if (!assetPaths.value().modelPaths.contains(modelInfo.modelPath))
+			if (!assetPaths.value().modelPaths.contains(modelInfo.GetModelPath()))
 			{
 				mainLGL->DeleteModel(modelName);
 			}
@@ -1804,7 +1771,7 @@ std::vector<std::string> EverettEngine::GetCreatedModels(bool getFullPaths)
 	{
 		if (modelName != gizmoModelName)
 		{
-			createdModels.push_back(getFullPaths ? model.modelPath : modelName);
+			createdModels.push_back(getFullPaths ? model.GetModelPath() : modelName);
 		}
 	}
 

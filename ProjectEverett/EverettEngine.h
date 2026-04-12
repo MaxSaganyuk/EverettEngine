@@ -44,6 +44,7 @@ class WindowHandleHolder;
 class AnimSystem;
 class RenderLogger;
 class CustomOutput;
+class ModelInfo;
 
 template<typename ParamType>
 class ScriptFuncStorage;
@@ -208,11 +209,9 @@ private:
 
 	std::function<void(double, double)> cursorCaptureCallback;
 
-	struct ModelSolidInfo;
-
 	using LightShaderValueNames = std::vector<std::pair<std::string, std::vector<std::string>>>;
 
-	using ModelCollection    = std::unordered_map<std::string, ModelSolidInfo>; 
+	using ModelCollection    = std::unordered_map<std::string, ModelInfo>; 
 	using SolidCollection    = std::unordered_map<std::string, SolidSim>;
 	using LightCollection    = std::unordered_map<std::string, LightSim>;
 	using SoundCollection    = std::unordered_map<std::string, SoundSim>;
@@ -341,7 +340,6 @@ private:
 	static std::vector<std::string> lightTypes;
 
 	struct KeyScriptFuncInfo;
-	struct MouseScrollScriptFuncInfo;
 
 	std::map<std::string, KeyScriptFuncInfo> keyScriptFuncMap;
 	std::unique_ptr<ScriptFuncStorage<double>> mouseScrollScriptFuncs;

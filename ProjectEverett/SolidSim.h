@@ -16,6 +16,8 @@
 class SolidSim : public ObjectSim, virtual public ISolidSim
 {
 private:
+	friend class ModelInfo;
+
 	constexpr static char TypeName[] = "Solid";
 
 	glm::mat4 model;
@@ -52,7 +54,6 @@ public:
 	
 	// Solid to model access section
 	// Mesh access; available through interface
-	void SetBackwardsModelAccess(SolidToModelManager::FullModelInfo& model, const std::string& modelName);
 	std::vector<std::string> GetModelMeshNames() override;
 	size_t GetMeshAmount() override;
 	void SetAllMeshVisibility(bool value) override;

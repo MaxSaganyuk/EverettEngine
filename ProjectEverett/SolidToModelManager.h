@@ -4,21 +4,17 @@
 #include <string>
 #include <chrono>
 
-#include "LGLStructs.h"
-#include "AnimSystem.h"
-
+#include "ModelInfo.h"
 #include "PlaybackManager.h"
 
 class SolidToModelManager
 {
 public:
-	using FullModelInfo = std::pair<std::weak_ptr<LGLStructs::ModelInfo>, std::weak_ptr<AnimSystem::ModelAnim>>;
-
 	SolidToModelManager();
 
 	bool IsInitialized();
 
-	void InitializeSTMM(FullModelInfo& fullModelInfoRef, const std::string& modelName);
+	void InitializeSTMM(ModelInfo::FullModelInfo& fullModelInfoRef, const std::string& modelName);
 
 	std::string GetModelName();
 
@@ -78,5 +74,5 @@ private:
 	std::vector<bool> meshVisibility;
 	glm::vec4 modelDefaultColor;
 	
-	FullModelInfo* fullModelInfoP;
+	ModelInfo::FullModelInfo* fullModelInfoP;
 };

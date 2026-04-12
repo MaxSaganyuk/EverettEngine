@@ -4,7 +4,7 @@
 SolidToModelManager::SolidToModelManager() 
 	: initialized(false) {}
 
-void SolidToModelManager::InitializeSTMM(FullModelInfo& fullModelInfoRef, const std::string& modelName)
+void SolidToModelManager::InitializeSTMM(ModelInfo::FullModelInfo& fullModelInfoRef, const std::string& modelName)
 {
 	fullModelInfoP = &fullModelInfoRef;
 	this->modelName = modelName;

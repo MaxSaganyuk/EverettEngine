@@ -187,6 +187,7 @@
     <ClInclude Include="interfaces\IObjectSim.h" />
     <ClInclude Include="interfaces\ISolidSim.h" />
     <ClInclude Include="interfaces\ISoundSim.h" />
+    <ClInclude Include="ModelInfo.h" />
     <ClInclude Include="PlaybackManager.h" />
     <ClInclude Include="RenderLogger.h" />
     <ClInclude Include="ShaderGenerator.h" />
@@ -211,6 +212,7 @@
     <ClCompile Include="CameraSim.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
     <ClCompile Include="LightSim.cpp" />
+    <ClCompile Include="ModelInfo.cpp" />
     <ClCompile Include="ObjectSim.cpp" />
     <ClCompile Include="RenderLogger.cpp" />
     <ClCompile Include="ScriptFuncStorage.cpp" />
