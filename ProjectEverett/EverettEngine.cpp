@@ -320,7 +320,7 @@ bool EverettEngine::CreateGizmoSolid(
 
 		if (collider)
 		{
-			collider->AddCollisionCallback({
+			collider->AddPersistentCollisionCallback({
 				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColorCollided); },
 				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColor); }
 			});
@@ -1051,6 +1051,19 @@ void EverettEngine::UnsetScript(const std::string& dllPath)
 {
 	if (fileLoader)
 	{ 
+		// Since non persistent colliders can only be added via script funcs by user
+		// unloading presents a risk of forgetting the clean up, causing potential crash
+		// on attempt to call function ptr which is not accessible after unset
+		mainLGL->PauseRendering();
+		for (auto& [_, collider] : colliders)
+		{
+			if (collider.IsScriptFuncAdded(FileLoader::GetFileFromPath(dllPath)))
+			{
+				collider.ClearCollisionCallbacks();
+			}
+		}
+		mainLGL->PauseRendering(false);
+
 		fileLoader->dllLoader.UnloadScriptDLL(dllPath);
 	}
 }

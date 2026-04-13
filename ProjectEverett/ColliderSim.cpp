@@ -144,30 +144,51 @@ void ColliderSim::DeleteFromSortedVectorOfColliders()
 	lastGeneralCollisionState.resize(lastGeneralCollisionState.size() - 1);
 }
 
+void ColliderSim::AddPersistentCollisionCallback(const CollisionCallbackOptions& collisionOpts)
+{
+	AddCollisionCallbackImpl({ collisionOpts, false, true });
+}
+
 void ColliderSim::AddCollisionCallback(const CollisionCallbackOptions& collisionOpts)
 {
-	if (!collisionOpts.collisionStart && !collisionOpts.collisionStop) return;
-
-	if (!collisionOpts.colliderToBindTo)
-	{
-		anyCollisionCallbacks.push_back({ collisionOpts });
-	}
-	else
-	{
-		auto iter = bindedCollisionCallbacks.find(collisionOpts.colliderToBindTo);
-
-		if (iter == bindedCollisionCallbacks.end())
-		{
-			bindedCollisionCallbacks.emplace(collisionOpts.colliderToBindTo, std::vector<CollisionCallback>{});
-		}
-
-		bindedCollisionCallbacks[collisionOpts.colliderToBindTo].push_back({ collisionOpts });
-	}
+	AddCollisionCallbackImpl({ collisionOpts });
 }
 
 void ColliderSim::SetColliderActive(bool value)
 {
 	isActive = value;
+}
+
+void ColliderSim::ClearCollisionCallbacks()
+{
+	static auto persistanceCheck = [](CollisionCallback& colCallback) { return !colCallback.persistent; };
+
+	std::erase_if(anyCollisionCallbacks, persistanceCheck);
+	for (auto& [_, bindedCollisionCallbackVect] : bindedCollisionCallbacks)
+	{
+		std::erase_if(bindedCollisionCallbackVect, persistanceCheck);
+	}
+}
+
+void ColliderSim::AddCollisionCallbackImpl(const CollisionCallback& colCallback)
+{
+	if (!colCallback.collisionStart && !colCallback.collisionStop) return;
+
+	if (!colCallback.colliderToBindTo)
+	{
+		anyCollisionCallbacks.push_back(colCallback);
+	}
+	else
+	{
+		auto iter = bindedCollisionCallbacks.find(colCallback.colliderToBindTo);
+
+		if (iter == bindedCollisionCallbacks.end())
+		{
+			bindedCollisionCallbacks.emplace(colCallback.colliderToBindTo, std::vector<CollisionCallback>{});
+		}
+
+		bindedCollisionCallbacks[colCallback.colliderToBindTo].push_back(colCallback);
+	}
 }
 
 void ColliderSim::ResortCollidersByXPos()
