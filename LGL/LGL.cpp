@@ -126,14 +126,11 @@ void LGL::DeleteGLObjects()
 	internalModelMap.clear();
 	internalTextMap.clear();
 
-	for (auto& fontAndChars : collectionToCharTextures)
+	for (auto& [_, atlasInfo] : fontnameToAltasInfo)
 	{
-		for (auto& chars : fontAndChars.second)
-		{
-			GLSafeExecute(glDeleteTextures, 1, &chars.second);
-		}
+		GLSafeExecute(glDeleteTextures, 1, &atlasInfo.tex);
 	}
-	collectionToCharTextures.clear();
+	fontnameToAltasInfo.clear();
 
 	if (renderTextVOCreated)
 	{
@@ -391,6 +388,9 @@ void LGL::RenderText()
 {
 	ContextLock
 
+	std::vector<RenderCharVertex> currentRenderCharVertVec;
+	currentRenderCharVertVec.reserve(6 * RenderTextBufferSize);
+
 	for (auto& text : internalTextMap)
 	{
 		if (!text.second->render) continue;
@@ -405,43 +405,48 @@ void LGL::RenderText()
 			text.second->behaviour();
 		}
 
-		// Needs to be optimized to batch and draw string by string, likely
-		std::vector<RenderCharVertex> currentRenderCharVertVec;
-		currentRenderCharVertVec.reserve(6);
 		glm::vec3 pos = text.second->position;
+
+		const LGLStructs::GlyphInfo& currentGlyphInfo = *text.second->glyphInfo;
+		const AtlasInfo& currentAtlasInfo = fontnameToAltasInfo[currentGlyphInfo.fontName];
 
 		for (auto c : text.second->text)
 		{
-			const LGLStructs::GlyphTexture& glyph = text.second->glyphInfo->glyphs.at(c);
+			const LGLStructs::GlyphTexture& glyph = currentGlyphInfo.glyphs.at(c);
 
 			float xpos = pos.x + glyph.bitmap_left * pos.z;
 			float ypos = pos.y - (glyph.height - glyph.bitmap_top) * pos.z;
 			float wpos = glyph.width * pos.z;
 			float hpos = glyph.height * pos.z;
 
-			currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        }, { 0.0f, 0.0f }});
-			currentRenderCharVertVec.push_back({{ xpos, ypos               }, { 0.0f, 1.0f }});
-			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        }, { 1.0f, 1.0f }});
-			currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        }, { 0.0f, 0.0f }});
-			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        }, { 1.0f, 1.0f }});
-			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos + hpos }, { 1.0f, 0.0f }});           
+			float atlasXPos = currentAtlasInfo.charPos.at(c);
+			float atlasYPos = 0.0f;
+			float atlasWPos = static_cast<float>(glyph.width) / currentAtlasInfo.width;
+			float atlasHPos = static_cast<float>(glyph.height) / currentAtlasInfo.height;
 
-			GLSafeExecute(glBindTexture, GL_TEXTURE_2D, collectionToCharTextures[text.second->glyphInfo->fontName][c]);
-
-			GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, renderTextVBO);
-
-			GLSafeExecute(
-				glBufferData,
-				GL_ARRAY_BUFFER,
-				currentRenderCharVertVec.size() * sizeof(RenderCharVertex),
-				currentRenderCharVertVec.data(),
-				GL_DYNAMIC_DRAW
-			);
-			GLSafeExecute(glDrawArrays, GL_TRIANGLES, 0, currentRenderCharVertVec.size());
-			currentRenderCharVertVec.clear();
-
+			currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        },{ atlasXPos,  atlasYPos                        }});
+			currentRenderCharVertVec.push_back({{ xpos, ypos               },{ atlasXPos,  atlasYPos + atlasHPos            }});
+			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        },{ atlasXPos + atlasWPos, atlasYPos + atlasHPos }});
+			currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        },{ atlasXPos,  atlasYPos                        }});
+			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        },{ atlasXPos + atlasWPos, atlasYPos + atlasHPos }});
+			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos + hpos },{ atlasXPos + atlasWPos, atlasYPos             }});
+		
 			pos.x += (glyph.advanceX >> 6);
 		}
+
+		GLSafeExecute(glBindTexture, GL_TEXTURE_2D, currentAtlasInfo.tex);
+		GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, renderTextVBO);
+
+		GLSafeExecute(
+			glBufferData,
+			GL_ARRAY_BUFFER,
+			currentRenderCharVertVec.size() * sizeof(RenderCharVertex),
+			currentRenderCharVertVec.data(),
+			GL_DYNAMIC_DRAW
+		);
+
+		GLSafeExecute(glDrawArrays, GL_TRIANGLES, 0, currentRenderCharVertVec.size());
+		currentRenderCharVertVec.clear();
 	}
 
 	GLSafeExecute(glActiveTexture, GL_TEXTURE0);
@@ -623,9 +628,9 @@ void LGL::CreateRenderTextVO()
 	GLSafeExecute(glGenBuffers, 1, &renderTextVBO);
 	GLSafeExecute(glBindVertexArray, renderTextVAO);
 	GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, renderTextVBO);
-	GLSafeExecute(glBufferData, GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+	GLSafeExecute(glBufferData, GL_ARRAY_BUFFER, sizeof(float) * 6 * 4 * RenderTextBufferSize, nullptr, GL_DYNAMIC_DRAW);
 	GLSafeExecute(glEnableVertexAttribArray, 0);
-	GLSafeExecute(glVertexAttribPointer, 0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	GLSafeExecute(glVertexAttribPointer, 0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
 }
 
 void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
@@ -788,13 +793,11 @@ void LGL::CreateText(const std::string& textLabel, LGLStructs::TextInfo& text)
 		CreateRenderTextVO();
 		renderTextVOCreated = true;
 	}
+
 	LoadAndCompileShader(text.shaderProgram);
-	if (collectionToCharTextures.find(text.glyphInfo->fontName) == collectionToCharTextures.end())
+	if (!fontnameToAltasInfo.contains(text.glyphInfo->fontName) && text.glyphInfo)
 	{
-		for (auto& charTexture : text.glyphInfo->glyphs)
-		{
-			ConfigueGlyphTexture(text.glyphInfo->fontName, charTexture.second);
-		}
+		ProduceTextTexAtlas(*text.glyphInfo, fontnameToAltasInfo[text.glyphInfo->fontName]);
 	}
 
 	internalTextMap[textLabel] = &text;
@@ -1134,14 +1137,14 @@ bool LGL::ConfigureTextureImpl(TextureID& newTextureID, const Texture& texture)
 
 		GLSafeExecute(glGenerateMipmap, GL_TEXTURE_2D);
 	}
-	else 
+	else
 	{
 		int glParams[]{ GL_LINEAR, GL_NEAREST };
 
 		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glParams[texture.params.BFConfig.minFilter]);
 		GLSafeExecute(glTexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glParams[texture.params.BFConfig.maxFilter]);
 	}
-	
+
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1168,16 +1171,8 @@ bool LGL::ConfigureTextureImpl(TextureID& newTextureID, const Texture& texture)
 	GLSafeExecute(glPixelStorei, GL_UNPACK_ALIGNMENT, textureFormat != GL_RGBA ? 1 : 4);
 
 	GLSafeExecute(
-		glTexImage2D,
-		GL_TEXTURE_2D, 
-		0, 
-		textureFormat,
-		texture.width, 
-		texture.height, 
-		0, 
-		textureFormat,
-		GL_UNSIGNED_BYTE, 
-		texture.data
+		glTexImage2D, GL_TEXTURE_2D, 0, textureFormat, texture.width, texture.height, 0, textureFormat, 
+		GL_UNSIGNED_BYTE, texture.data
 	);
 
 	std::cout << "Texture " << texture.name << " configured\n";
@@ -1199,16 +1194,38 @@ bool LGL::ConfigureTexture(const std::string& modelName, const LGLStructs::Textu
 	return ConfigureTextureImpl(newTextureID, texture);
 }
 
-bool LGL::ConfigueGlyphTexture(const std::string& collectionName, const LGLStructs::GlyphTexture& glyphTexture)
+void LGL::ProduceTextTexAtlas(const LGLStructs::GlyphInfo& glyphInfo, AtlasInfo& atlasInfo)
 {
-	if (collectionToCharTextures.find(collectionName) == collectionToCharTextures.end())
+	HandshakeContextLock
+
+	CalcAtlasDimensions(glyphInfo, atlasInfo);
+
+	if (ConfigureTextureImpl(
+		atlasInfo.tex, Texture("", {}, nullptr, {}, static_cast<int>(atlasInfo.width), static_cast<int>(atlasInfo.height), 1)
+	))
 	{
-		collectionToCharTextures[collectionName] = {};
+		int atlasXPos{};
+
+		for (auto& [c, glyphTexture] : glyphInfo.glyphs)
+		{
+			GLSafeExecute(
+				glTexSubImage2D, GL_TEXTURE_2D, 0, atlasXPos, 0, glyphTexture.width, glyphTexture.height, GL_RED,
+				GL_UNSIGNED_BYTE, glyphTexture.data
+			);
+
+			atlasInfo.charPos[c] = static_cast<float>(atlasXPos) / atlasInfo.width;
+			atlasXPos += glyphTexture.width;
+		}
 	}
+}
 
-	TextureID& currentRenderCharTexture = collectionToCharTextures[collectionName][glyphTexture.c];
-
-	return ConfigureTextureImpl(currentRenderCharTexture, glyphTexture);
+void LGL::CalcAtlasDimensions(const LGLStructs::GlyphInfo& glyphInfo, AtlasInfo& atlasInfo)
+{
+	for (auto& [_, glyphTex] : glyphInfo.glyphs)
+	{
+		atlasInfo.width += glyphTex.width;
+		atlasInfo.height = glm::max(atlasInfo.height, static_cast<float>(glyphTex.height));
+	}
 }
 
 bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderNames)

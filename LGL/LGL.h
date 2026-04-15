@@ -88,6 +88,14 @@ private:
 		glm::vec2 uv;
 	};
 
+	struct AtlasInfo
+	{
+		TextureID tex{};
+		float width{};
+		float height{};
+		std::map<char, float> charPos;
+	};
+
 	class InternalModelInfo
 	{
 		LGLStructs::ModelInfo* modelRawPtr = nullptr;
@@ -165,7 +173,6 @@ public:
 	LGL_API void DeleteText(const std::string& textLabel);
 #endif
 	LGL_API bool ConfigureTexture(const std::string& modelName, const LGLStructs::Texture& texture);
-	LGL_API bool ConfigueGlyphTexture(const std::string& collectionName, const LGLStructs::GlyphTexture& glyphText);
 
 	LGL_API static void InitOpenGL(int major, int minor);
 
@@ -236,6 +243,8 @@ private:
 	bool CreateShaderProgram(const std::string& name, const std::vector<std::string>& shaderVector = {});
 	ShaderProgramID SetCurrentShaderProg(const std::string& shaderProg);
 
+	void ProduceTextTexAtlas(const LGLStructs::GlyphInfo& glyphText, AtlasInfo& atlasInfo);
+	void CalcAtlasDimensions(const LGLStructs::GlyphInfo& glyphInfo, AtlasInfo& atlasInfo);
 	bool ConfigureTextureImpl(TextureID& newTextureID, const LGLStructs::Texture& texture);
 
 	// If shader file names can be identical to shader program name, general load and compile can be used
@@ -288,11 +297,12 @@ private:
 	InternalModelMap internalModelMap;
 	std::vector<EBO> EBOCollection;
 
+	constexpr static size_t RenderTextBufferSize = 256;
 	VAO renderTextVAO;
 	VBO renderTextVBO;
 	bool renderTextVOCreated;
 	std::map<std::string, LGLStructs::TextInfo*> internalTextMap;
-	std::map<std::string, std::map<char, TextureID>> collectionToCharTextures;
+	std::map<std::string, AtlasInfo> fontnameToAltasInfo;
 
 	// Shader
 	static std::map<std::string, ShaderType> shaderTypeChoice;
