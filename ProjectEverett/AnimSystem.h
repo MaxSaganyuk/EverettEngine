@@ -11,6 +11,8 @@
 
 #include "TreeManager.h"
 
+class SolidSim;
+
 class AnimSystem
 {
 public:
@@ -63,7 +65,7 @@ public:
 		glm::mat4 globalInverseTransform = glm::mat4(1.0f);
 	};
 
-	void ProcessAnimations(ModelAnim& modelAnim, double currentTime, size_t animIndex, size_t startingBoneIndex);
+	void ProcessAnimations(ModelAnim& modelAnim, SolidSim& solid);
 	std::vector<glm::mat4>& GetFinalTransforms();
 	void ResetFinalTransforms();
 	void IncrementTotalBoneAmount(ModelAnim& modelAnim);

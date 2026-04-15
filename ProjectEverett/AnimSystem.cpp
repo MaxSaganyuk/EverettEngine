@@ -1,5 +1,6 @@
 #include "AnimSystem.h"
 #include "LGL.h"
+#include "SolidSim.h"
 
 void AnimSystem::InterpolateImpl(const glm::vec3& vec1, const glm::vec3& vec2, glm::vec3& resVec, float factor)
 {
@@ -101,18 +102,24 @@ void AnimSystem::CollectAllFinalTransforms(
 	}
 }
 
-void AnimSystem::ProcessAnimations(ModelAnim& modelAnim, double animationTimeTicks, size_t animIndex, size_t startingBoneIndex)
+void AnimSystem::ProcessAnimations(ModelAnim& modelAnim, SolidSim& solid)
 {
 	if (!modelAnim.animInfoVect.empty())
 	{
-		for (auto& [childNodeName, childNode] : modelAnim.boneTree.GetChildNodes())
+		if (!solid.IsModelAnimationPaused())
 		{
-			ParseBoneTree(childNode, animationTimeTicks, animIndex, modelAnim.globalInverseTransform, modelAnim.animKeyMap);
+			for (auto& [childNodeName, childNode] : modelAnim.boneTree.GetChildNodes())
+			{
+				ParseBoneTree(
+					childNode, solid.GetModelCurrentAnimationTime(), solid.GetModelAnimation(),
+					modelAnim.globalInverseTransform, modelAnim.animKeyMap
+				);
+			}
 		}
 
 		for (auto& [childNodeName, childNode] : modelAnim.boneTree.GetChildNodes())
 		{
-			CollectAllFinalTransforms(childNode, startingBoneIndex, finalTransforms);
+			CollectAllFinalTransforms(childNode, solid.GetModelCurrentStartingBoneIndex(), finalTransforms);
 		}
 	}
 }

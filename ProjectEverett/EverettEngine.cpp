@@ -451,12 +451,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 				if (solid.IsModelAnimationPlaying())
 				{
-					animSystem->ProcessAnimations(
-						*modelAnimPtr,
-						solid.GetModelCurrentAnimationTime(),
-						solid.GetModelAnimation(),
-						solid.GetModelCurrentStartingBoneIndex()
-					);
+					animSystem->ProcessAnimations(*modelAnimPtr, solid);
 				}
 			}
 		}
