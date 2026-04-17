@@ -19,7 +19,7 @@
 #include "MainFrm.h"
 #include "AdString.h"
 
-#include "EverettException.h"
+#include "external/EverettException.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -63,6 +63,9 @@ CMainFrame::CMainFrame() noexcept
 		engine.SetFontPath("..\\ProjectEverett\\fonts");
 		engine.SetModelPath("..\\ProjectEverett\\models");
 #endif
+		engine.AddWorldLoadCallback([this]() {
+			ClearTree() && LoadObjectNamesToTree() && mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
+		});
 		engine.CreateAndSetupMainWindow(800, 600, "Everett");
 		// Allowing custom icons for games will probably have this removed
 		GetActiveWindow()->SetIcon(AfxGetApp()->LoadIconW(IDR_MAINFRAME), false);
@@ -75,8 +78,15 @@ CMainFrame::CMainFrame() noexcept
 		std::terminate();
 	}
 	engineRenderThread = std::thread([this] () { 
-		engine.RunRenderWindow(); 
-		engine.CloseWindow("EverettGUI");
+		try
+		{
+			engine.RunRenderWindow();
+			engine.CloseWindow("EverettGUI");
+		}
+		catch (const EverettException&)
+		{
+			std::terminate();
+		}
 	});
 	nameCheckFunc = [this](const std::string& name) { return engine.GetAvailableObjectName(name); };
 	NameEditChecker::SetNameCheckFunc(nameCheckFunc);
@@ -260,11 +270,7 @@ void CMainFrame::OnLoad()
 	OnLoadSave(true, [this](const std::string& path){
 		try
 		{
-			return
-				ClearTree() &&
-				engine.LoadDataFromFile(path) &&
-				LoadObjectNamesToTree() &&
-				mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
+			return engine.LoadWorldFromFile(path);
 		}
 		catch (const EverettException&)
 		{
@@ -280,7 +286,7 @@ void CMainFrame::OnSave()
 	OnLoadSave(false, [this](const std::string& path) {
 		try
 		{
-			return engine.SaveDataToFile(path);
+			return engine.SaveWorldToFile(path);
 		}
 		catch (const EverettException&)
 		{

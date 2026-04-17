@@ -1,7 +1,7 @@
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
 #include <EverettEngine.h>
-#include <EverettException.h>
+#include <external/EverettException.h>
 
 #include <fstream>
 
@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
 				engine.SetDefaultWASDControls();
 			}
 
-			engine.LoadDataFromFile(config.startSave);
+			engine.LoadWorldFromFile(config.startSave);
 			engine.RunRenderWindow();
 		}
 		catch (const EverettException&)

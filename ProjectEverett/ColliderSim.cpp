@@ -115,7 +115,7 @@ void ColliderSim::ExecuteBroadCollisionCheck()
 		}
 	}
 
-	if (lastCollisionState.size() > currentCollisionState.size())
+	if (collidersByAxis.size() && lastCollisionState.size() > currentCollisionState.size())
 	{
 		CollisionSet collidersToCallEndCallbacksSet = SetDifference(lastCollisionState, currentCollisionState);
 

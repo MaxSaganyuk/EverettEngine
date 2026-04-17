@@ -1,5 +1,6 @@
 #include <string>
 
+#include "IEverettEngine.h"
 #include "IObjectSim.h"
 #include "ISolidSim.h"
 #include "ICameraSim.h"
@@ -7,11 +8,22 @@
 #include "ISoundSim.h"
 #include "IColliderSim.h"
 
+// This macro system can be simplified since we are getting engine interface now.
 #define CONCAT(a, b, c, d) a##_##b##_##c##_##d##_
 #define RESOLVE_AND_CONCAT(a, b, c, d) CONCAT(a, b, c, d)
 
 #define MainScriptLoop()                                                                                 \
 extern "C" __declspec(dllexport) void Main()                                                             \
+
+#define EngineInterfaceInit()                                                                            \
+void ImplEngineInterInit(IEverettEngine& engine);                                                        \
+                                                                                                         \
+extern "C" __declspec(dllexport) void RESOLVE_AND_CONCAT(S, __LINE__, EngineInter, 0)(void* object)      \
+{                                                                                                        \
+    ImplEngineInterInit(*reinterpret_cast<IEverettEngine*>(object));                                     \
+}                                                                                                        \
+                                                                                                         \
+void ImplEngineInterInit(IEverettEngine& engine)
 
 #define CameraObjectInit()                                                                               \
 void ImplCamera(ICameraSim& objectCamera);                                                               \

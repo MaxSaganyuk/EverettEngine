@@ -7,7 +7,7 @@
 #include "CBrowseDialog.h"
 #include "CObjectEditDialog.h"
 
-#include "EverettException.h"
+#include "external\EverettException.h"
 
 using ObjectTypes = EverettEngine::ObjectTypes;
 

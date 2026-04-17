@@ -6,7 +6,7 @@
 #include <functional>
 
 #include "ObjectSim.h"
-#include "interfaces/IColliderSim.h"
+#include "external/IColliderSim.h"
 
 class ColliderSim : public ObjectSim, public IColliderSim
 {

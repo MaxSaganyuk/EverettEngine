@@ -8,7 +8,7 @@
 
 #include <string>
 
-#include "interfaces/ISoundSim.h"
+#include "external/ISoundSim.h"
 #include "CameraSim.h"
 
 #include "CommonStructs.h"

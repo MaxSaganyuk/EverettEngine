@@ -12,7 +12,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "interfaces/IObjectSim.h"
+#include "external/IObjectSim.h"
 #include "StringCast.h"
 #include "EverettStructs.h"
 

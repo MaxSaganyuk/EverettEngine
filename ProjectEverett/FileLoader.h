@@ -11,7 +11,6 @@
 #include <mutex>
 #include <typeindex>
 
-#include "interfaces/ISolidSim.h"
 #include "ScriptFuncStorage.h"
 #include "AnimSystem.h"
 

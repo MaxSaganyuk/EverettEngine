@@ -11,7 +11,7 @@
 
 #include "SolidToModelManager.h"
 
-#include "interfaces/ISolidSim.h"
+#include "external/ISolidSim.h"
 
 class SolidSim : public ObjectSim, virtual public ISolidSim
 {

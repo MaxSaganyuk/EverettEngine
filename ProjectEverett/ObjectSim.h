@@ -1,6 +1,6 @@
 #pragma once
 
-#include "interfaces/IObjectSim.h"
+#include "external/IObjectSim.h"
 
 #include "stdEx/utilityEx.h"
 

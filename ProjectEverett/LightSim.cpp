@@ -1,5 +1,5 @@
 #include "LightSim.h"
-#include "EverettException.h"
+#include "EverettExceptionInternal.h"
 
 std::map<int, LightSim::Attenuation> LightSim::attenuationVals
 {

@@ -2,8 +2,10 @@
 
 #include <iostream>
 
+IEverettEngine* engineInter = nullptr;
 ICameraSim* cameraSim = nullptr;
 IColliderSim* blockCollider = nullptr;
+IColliderSim* worldSwitchCollider = nullptr;
 
 class TestCharHolder
 {
@@ -29,6 +31,13 @@ public:
 	{
 		testCharCollider->AddCollisionCallback(
 			{ [this]() { testCharSolid->SetLastPosition(); }, nullptr, &blockCollider, true }
+		);
+	}
+
+	void SetupWorldSwitchCollision(IColliderSim& worldSwitchCollider)
+	{
+		testCharCollider->AddCollisionCallback(
+			{ []() { engineInter->RequestWorldLoad("E:\\WorldSwitchTest.esav"); }, nullptr, &worldSwitchCollider, false }
 		);
 	}
 
@@ -79,6 +88,11 @@ public:
 
 TestCharHolder testChar;
 
+EngineInterfaceInit()
+{
+	engineInter = &engine;
+}
+
 CameraObjectInit()
 {
 	cameraSim = &objectCamera;
@@ -99,6 +113,12 @@ ScriptObjectInit(BlockBox, IColliderSim)
 {
 	blockCollider = &objectBlockBox;
 	testChar.SetupBlockCollision(objectBlockBox);
+}
+
+ScriptObjectInit(WorldSwitchBox, IColliderSim)
+{
+	worldSwitchCollider = &objectWorldSwitchBox;
+	testChar.SetupWorldSwitchCollision(objectWorldSwitchBox);
 }
 
 ScriptKeybindPressed(I, 1)
@@ -156,6 +176,7 @@ ScriptMouseScroll()
 
 ScriptCleanUp()
 {
+	engineInter = nullptr;
 	cameraSim = nullptr;
 	blockCollider = nullptr;
 	testChar.Reset();

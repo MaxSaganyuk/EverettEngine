@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SolidSim.h"
-#include "interfaces/ICameraSim.h"
+#include "external/ICameraSim.h"
 
 class CameraSim : public SolidSim, public ICameraSim
 {

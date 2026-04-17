@@ -1,5 +1,5 @@
 #include "ObjectSim.h"
-#include "EverettException.h"
+#include "EverettExceptionInternal.h"
 
 template<typename MemberFuncType, typename... ParamTypes>
 void ObjectSim::ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... values)

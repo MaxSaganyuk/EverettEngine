@@ -1,5 +1,5 @@
 #include "SolidToModelManager.h"
-#include "EverettException.h"
+#include "EverettExceptionInternal.h"
 
 SolidToModelManager::SolidToModelManager() 
 	: initialized(false) {}

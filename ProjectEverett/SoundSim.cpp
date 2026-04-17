@@ -10,7 +10,7 @@
 #include "ContextManager.h"
 #define ContextLock ContextManager<ALCcontext> mux(context);
 
-#include "EverettException.h"
+#include "EverettExceptionInternal.h"
 
 
 std::string SoundSim::GetSimInfoForSaveImpl()

@@ -34,7 +34,7 @@
 
 #define EVERETT_EXPORT
 #include "EverettEngine.h"
-#include "EverettException.h"
+#include "EverettExceptionInternal.h"
 
 #include "SolidToModelManager.h"
 #include "ModelInfo.h"
@@ -132,6 +132,7 @@ EverettEngine::EverettEngine()
 	cmdHandler = std::make_unique<CommandHandler>();
 	hwndHolder = std::make_unique<WindowHandleHolder>();
 
+	engineInterfaceScriptFunc = std::make_unique<ScriptFuncStorage<IEverettEngine>>();
 	mouseScrollScriptFuncs = std::make_unique<ScriptFuncStorage<double>>();
 		
 	ObjectSim::InitializeObjectGraph();
@@ -349,6 +350,8 @@ void EverettEngine::RunRenderWindow()
 	auto additionalFuncs = [this]() {
 		currentStartSolidIndex = 0;
 		nextStartSolidIndex = 0;
+
+		CheckAndLoadRequestedWorld();
 
 		ColliderSim::ExecuteBroadCollisionCheck();
 
@@ -1012,7 +1015,14 @@ void EverettEngine::SetupScriptDLL(const std::string& dllPath)
 	{
 		auto& [rawFuncName, objectName, interfaceTypeName] = scriptFuncNameStruct.second;
 
-		SetScriptToObject(GetObjectTypeToName(interfaceTypeName), objectName, rawFuncName, dllPath, dllName);
+		if (objectName == "EngineInter")
+		{
+			PassEngineInterfaceToScriptDLL(rawFuncName, dllPath, dllName);
+		}
+		else
+		{
+			SetScriptToObject(GetObjectTypeToName(interfaceTypeName), objectName, rawFuncName, dllPath, dllName);
+		}
 	}
 
 	auto keybindScriptFuncNameMap = fileLoader->dllLoader.GetKeybindScriptFuncNamesFromDll(dllPath);
@@ -1097,6 +1107,23 @@ void EverettEngine::SetScriptToObject(
 
 			object->ExecuteScriptFunc(dllName);
 		}
+	}
+}
+
+void EverettEngine::PassEngineInterfaceToScriptDLL(
+	std::string_view rawFuncName, const std::string& dllPath, const std::string& dllName
+)
+{
+	ScriptFuncWeakPtr scriptFuncWeakPtr;
+
+	if (fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, rawFuncName.data(), scriptFuncWeakPtr))
+	{
+		if (!engineInterfaceScriptFunc->IsScriptFuncAdded(dllName))
+		{
+			engineInterfaceScriptFunc->AddScriptFunc(dllPath, dllName, scriptFuncWeakPtr);
+		}
+
+		engineInterfaceScriptFunc->ExecuteScriptFunc(dynamic_cast<IEverettEngine*>(this), dllName);
 	}
 }
 
@@ -1197,7 +1224,8 @@ void EverettEngine::SetScriptToMouseScroll(
 template<typename FunctionType, typename... Params>
 void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values)
 {
-	static_assert(ConfirmMemberOf<ObjectSim, FunctionType, Params...>, "Must accept ObjectSim or derived member func");
+	// TODO: Fix to check for class type only
+	//static_assert(ConfirmMemberOf<ObjectSim, FunctionType, Params...>, "Must accept ObjectSim or derived member func");
 
 	if constexpr (ConfirmMemberOf<CameraSim, FunctionType, Params...>)
 	{
@@ -1445,7 +1473,26 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 	mainLGL->PauseRendering(false);
 }
 
-bool EverettEngine::SaveDataToFile(const std::string& filePath)
+void EverettEngine::AddWorldLoadCallback(std::function<void()> callback)
+{
+	worldLoadCallback = callback;
+}
+
+void EverettEngine::RequestWorldLoad(const char* filePath)
+{
+	worldToLoad = filePath;
+}
+
+void EverettEngine::CheckAndLoadRequestedWorld()
+{
+	if (!worldToLoad.empty())
+	{
+		LoadWorldFromFile(worldToLoad);
+		worldToLoad.clear();
+	}
+}
+
+bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 {
 	std::string realFilePath = filePath + saveFileType;
 	std::fstream file(realFilePath, std::ios::out);
@@ -1608,7 +1655,7 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 	}
 }
 
-bool EverettEngine::LoadDataFromFile(const std::string& filePath)
+bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 {
 	std::string pathToUse = CheckIfRelativePathToUse(filePath, "worlds");
 
@@ -1670,6 +1717,11 @@ bool EverettEngine::LoadDataFromFile(const std::string& filePath)
 		}
 	}
 	GenerateShader();
+
+	if (worldLoadCallback)
+	{
+		worldLoadCallback();
+	}
 	mainLGL->PauseRendering(false);
 
 	return true;

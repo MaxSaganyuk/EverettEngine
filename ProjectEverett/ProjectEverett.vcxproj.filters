@@ -48,20 +48,8 @@
     <ClInclude Include="EverettEngine.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="interfaces\ISolidSim.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="SolidToModelManager.h">
       <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="interfaces\ICameraSim.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="interfaces\ILightSim.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="interfaces\ISoundSim.h">
-      <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="WindowHandleHolder.h">
       <Filter>Файлы заголовков</Filter>
@@ -74,9 +62,6 @@
     </ClInclude>
     <ClInclude Include="AnimSystem.h">
       <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="interfaces\IObjectSim.h">
-      <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="ObjectSim.h">
       <Filter>Файлы заголовков</Filter>
@@ -91,9 +76,6 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="RenderLogger.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="EverettException.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="CustomOutput.h">
@@ -111,14 +93,38 @@
     <ClInclude Include="ColliderSim.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="interfaces\IColliderSim.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="StringCast.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="ModelInfo.h">
       <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="EverettExceptionInternal.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="scriptUtils\EverettException.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="external\ICameraSim.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="external\IColliderSim.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="external\IEverettEngine.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="external\ILightSim.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="external\IObjectSim.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="external\ISolidSim.h">
+      <Filter>Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="external\ISoundSim.h">
+      <Filter>Interfaces</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -22,12 +22,14 @@
 
 #include "UnorderedPtrMap.h"
 
-#include "interfaces/IObjectSim.h"
-#include "interfaces/ISolidSim.h"
-#include "interfaces/ILightSim.h"
-#include "interfaces/ISoundSim.h"
-#include "interfaces/ICameraSim.h"
-#include "interfaces/IColliderSim.h"
+#include "external/IEverettEngine.h"
+
+#include "external/IObjectSim.h"
+#include "external/ISolidSim.h"
+#include "external/ILightSim.h"
+#include "external/ISoundSim.h"
+#include "external/ICameraSim.h"
+#include "external/IColliderSim.h"
 
 #include "EverettStructs.h"
 
@@ -59,7 +61,8 @@ namespace LGLStructs
 
 enum class LightTypes;
 
-class EverettEngine
+// Concrete engine class is for internal use.
+class EverettEngine : public IEverettEngine
 {
 public:
 	enum class LightTypes
@@ -177,8 +180,10 @@ public:
 
 	EVERETT_API std::string GetSaveFileType();
 
-	EVERETT_API bool SaveDataToFile(const std::string& filePath);
-	EVERETT_API bool LoadDataFromFile(const std::string& filePath);
+	EVERETT_API void AddWorldLoadCallback(std::function<void()> callback);
+	EVERETT_API bool SaveWorldToFile(const std::string& filePath);
+	EVERETT_API bool LoadWorldFromFile(const std::string& path);
+	EVERETT_API void RequestWorldLoad(const char* filePath) override;
 	EVERETT_API EverettStructs::AssetPaths GetPathsFromWorldFile(const std::string& filePath);
 	EVERETT_API void HidePathsInWorldFile(
 		const std::string& originalFilePath, 
@@ -263,6 +268,9 @@ private:
 		const std::string& dllPath,
 		const std::string& dllName
 	);
+	void PassEngineInterfaceToScriptDLL(
+		std::string_view rawFuncName, const std::string& dllPath, const std::string& dllName
+	);
 	void SetScriptToKey(
 		const std::string& keyName,
 		std::string_view pressedFuncName,
@@ -303,6 +311,7 @@ private:
 	template<typename Sim>
 	void ApplySimInfoFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo, bool& res);
 
+	void CheckAndLoadRequestedWorld();
 	void LoadCameraFromLine(std::string_view& line);
 	void LoadSolidFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
@@ -342,6 +351,7 @@ private:
 	struct KeyScriptFuncInfo;
 
 	std::map<std::string, KeyScriptFuncInfo> keyScriptFuncMap;
+	std::unique_ptr<ScriptFuncStorage<IEverettEngine>> engineInterfaceScriptFunc;
 	std::unique_ptr<ScriptFuncStorage<double>> mouseScrollScriptFuncs;
 
 	UnorderedPtrMap<const std::string*, int> allNameTracker;
@@ -352,4 +362,7 @@ private:
 	std::unique_ptr<CustomOutput> logOutput;
 	std::unique_ptr<CustomOutput> errorOutput;
 	std::list<std::string> logStrings;
+
+	std::function<void()> worldLoadCallback;
+	std::string worldToLoad;
 };

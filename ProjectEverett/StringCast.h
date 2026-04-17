@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "EverettException.h"
+#include "EverettExceptionInternal.h"
 #include "ConceptUtils.h"
 
 class StringCast
