@@ -20,7 +20,6 @@
 #include "CommandHandler.h"
 
 #include "WindowHandleHolder.h"
-#include "ScriptFuncStorage.h"
 
 #include "CommonStrEdits.h"
 
@@ -110,8 +109,8 @@ std::vector<std::string> EverettEngine::lightTypes = LightSim::GetLightTypeNames
 
 struct EverettEngine::KeyScriptFuncInfo
 {
-	ScriptFuncStorage<void> pressedFuncs;
-	ScriptFuncStorage<void> releasedFuncs;
+	std::vector<std::function<void()>> pressedFuncs;
+	std::vector<std::function<void()>> releasedFuncs;
 };
 
 EverettEngine::EverettEngine()
@@ -131,9 +130,6 @@ EverettEngine::EverettEngine()
 	animSystem = std::make_unique<AnimSystem>();
 	cmdHandler = std::make_unique<CommandHandler>();
 	hwndHolder = std::make_unique<WindowHandleHolder>();
-
-	engineInterfaceScriptFunc = std::make_unique<ScriptFuncStorage<IEverettEngine>>();
-	mouseScrollScriptFuncs = std::make_unique<ScriptFuncStorage<double>>();
 		
 	ObjectSim::InitializeObjectGraph();
 }
@@ -219,7 +215,7 @@ void EverettEngine::CreateAndSetupMainWindow(
 		[this](double xpos, double ypos) { camera->RotateByMousePos(static_cast<float>(xpos), static_cast<float>(ypos)); };
 	mainLGL->SetCursorPositionCallback(cursorCaptureCallback);
 
-	mainLGL->SetScrollCallback([this](double xpos, double ypos) { mouseScrollScriptFuncs->ExecuteAllScriptFuncs(&ypos); });
+	mainLGL->SetScrollCallback([this](double xpos, double ypos) { ExecuteVectorOfFuncs(mouseScrollScriptFuncs, ypos); });
 
 	mainLGL->SetRenderDeltaCallback(ObjectSim::SetRenderDeltaTime);
 
@@ -335,14 +331,54 @@ bool EverettEngine::CreateGizmoSolid(
 	return false;
 }
 
-void EverettEngine::SetInteractable(
-	char key,
+void EverettEngine::AddInteractable(
+	int key,
 	bool holdable,
 	std::function<void()> pressFunc,
 	std::function<void()> releaseFunc
 )
 {
-	mainLGL->SetInteractable(LGL::ConvertKeyTo(std::string{ key }), holdable, pressFunc, releaseFunc);
+	bool addNew = false;
+
+	if (!keyScriptFuncMap.contains(key))
+	{
+		keyScriptFuncMap.try_emplace(key, KeyScriptFuncInfo{});
+		addNew = true;
+	}
+
+	if (pressFunc)
+	{
+		keyScriptFuncMap[key].pressedFuncs.push_back(pressFunc);
+	}
+
+	if (releaseFunc)
+	{
+		keyScriptFuncMap[key].releasedFuncs.push_back(releaseFunc);
+	}
+
+	if (addNew)
+	{
+		mainLGL->SetInteractable(
+			key, holdable, 
+			[this, key]() { ExecuteVectorOfFuncs(keyScriptFuncMap[key].pressedFuncs);  },
+			[this, key]() { ExecuteVectorOfFuncs(keyScriptFuncMap[key].releasedFuncs); }
+		);
+	}
+}
+
+void EverettEngine::AddMouseScrollCallback(std::function<void(double)> callback)
+{
+	mouseScrollScriptFuncs.push_back(callback);
+}
+
+// Since some containers are controlled externally (via script funcs by user)
+// unloading presents a risk of forgetting the clean up, causing potential crash
+// on attempt to call function ptr which is not accessible after unset
+void EverettEngine::ClearExternallyControlledContainers()
+{
+	ExecuteFuncForAllSimObjects(&ColliderSim::ClearCollisionCallbacks);
+	keyScriptFuncMap.clear();
+	mouseScrollScriptFuncs.clear();
 }
 
 void EverettEngine::RunRenderWindow()
@@ -404,7 +440,12 @@ std::string EverettEngine::ConvertKeyTo(int keyId)
 	return LGL::ConvertKeyTo(keyId);
 }
 
-int EverettEngine::ConvertKeyTo(const std::string& keyName)
+int EverettEngine::ConvertKeyTo(char c)
+{
+	return LGL::ConvertKeyTo(c);
+}
+
+int EverettEngine::ConvertKeyTo(const char* keyName)
 {
 	return LGL::ConvertKeyTo(keyName);
 }
@@ -909,34 +950,34 @@ glm::vec3& EverettEngine::GetAmbientLightVectorAddr()
 	return LightSim::SGetAmbientLightColorVectorAddr();
 }
 
-IObjectSim* EverettEngine::GetObjectInterface(ObjectTypes objectType, const std::string& objectName)
+IObjectSim* EverettEngine::GetObjectInterface(ObjectTypes objectType, const char* objectName)
 {
 	return dynamic_cast<IObjectSim*>(GetObjectFromMap(objectType, objectName));
 }
 
-ISolidSim* EverettEngine::GetSolidInterface(const std::string& solidName)
+ISolidSim* EverettEngine::GetSolidInterface(const char* solidName)
 {
 	return dynamic_cast<ISolidSim*>(GetObjectFromMap(ObjectTypes::Solid, solidName));
 }
 
-ILightSim* EverettEngine::GetLightInterface(const std::string& lightName)
+ILightSim* EverettEngine::GetLightInterface(const char* lightName)
 {
 	return dynamic_cast<ILightSim*>(GetObjectFromMap(ObjectTypes::Light, lightName));
 }
 
-ISoundSim* EverettEngine::GetSoundInterface(const std::string& soundName)
+ISoundSim* EverettEngine::GetSoundInterface(const char* soundName)
 {
 	return dynamic_cast<ISoundSim*>(GetObjectFromMap(ObjectTypes::Sound, soundName));
+}
+
+IColliderSim* EverettEngine::GetColliderInterface(const char* colliderName)
+{
+	return dynamic_cast<IColliderSim*>(GetObjectFromMap(ObjectTypes::Collider, colliderName));
 }
 
 ICameraSim* EverettEngine::GetCameraInterface()
 {
 	return dynamic_cast<ICameraSim*>(GetObjectFromMap(ObjectTypes::Camera, ""));
-}
-
-IColliderSim* EverettEngine::GetColliderInterface(const std::string& colliderName)
-{
-	return dynamic_cast<IColliderSim*>(GetObjectFromMap(ObjectTypes::Collider, colliderName));
 }
 
 void EverettEngine::LightUpdater()
@@ -1007,38 +1048,9 @@ void EverettEngine::SetupScriptDLL(const std::string& dllPath)
 {
 	if (fileLoader->dllLoader.IsDLLLoaded(dllPath)) return;
 
-	std::string dllName = FileLoader::GetFileFromPath(dllPath);
-
-	auto simScriptFuncNameMultimap = fileLoader->dllLoader.GetSimScriptFuncNamesFromDll(dllPath);
-
-	for (auto& scriptFuncNameStruct : simScriptFuncNameMultimap)
+	if (fileLoader->dllLoader.LoadDLL(dllPath))
 	{
-		auto& [rawFuncName, objectName, interfaceTypeName] = scriptFuncNameStruct.second;
-
-		if (objectName == "EngineInter")
-		{
-			PassEngineInterfaceToScriptDLL(rawFuncName, dllPath, dllName);
-		}
-		else
-		{
-			SetScriptToObject(GetObjectTypeToName(interfaceTypeName), objectName, rawFuncName, dllPath, dllName);
-		}
-	}
-
-	auto keybindScriptFuncNameMap = fileLoader->dllLoader.GetKeybindScriptFuncNamesFromDll(dllPath);
-
-	for (auto& scriptFuncNameStruct : keybindScriptFuncNameMap)
-	{
-		auto& [rawPressedFuncName, rawReleasedFuncName, holdable] = scriptFuncNameStruct.second;
-
-		if (scriptFuncNameStruct.first == "MouseScroll")
-		{
-			SetScriptToMouseScroll(rawPressedFuncName, dllPath, dllName);
-		}
-		else
-		{
-			SetScriptToKey(scriptFuncNameStruct.first, rawPressedFuncName, rawReleasedFuncName, holdable, dllPath, dllName);
-		}
+		fileLoader->dllLoader.ExecuteScriptInitFor(dllPath, dynamic_cast<IEverettEngine&>(*this));
 	}
 }
 
@@ -1056,168 +1068,28 @@ void EverettEngine::UnsetScript(const std::string& dllPath)
 {
 	if (fileLoader)
 	{ 
-		// Since non persistent colliders can only be added via script funcs by user
-		// unloading presents a risk of forgetting the clean up, causing potential crash
-		// on attempt to call function ptr which is not accessible after unset
 		mainLGL->PauseRendering();
-		for (auto& [_, collider] : colliders)
-		{
-			if (collider.IsScriptFuncAdded(FileLoader::GetFileFromPath(dllPath)))
-			{
-				collider.ClearCollisionCallbacks();
-			}
-		}
+		ClearExternallyControlledContainers();
 		mainLGL->PauseRendering(false);
 
 		fileLoader->dllLoader.UnloadScriptDLL(dllPath);
 	}
 }
 
-bool EverettEngine::IsObjectScriptSet(
-	ObjectTypes objectType,
-	const std::string& objectName,
-	const std::string& dllName
-)
+template<typename Type>
+void EverettEngine::ExecuteVectorOfFuncs(const std::vector<std::function<void(Type)>>& vectOfFuncs, const Type& value)
 {
-	ObjectSim* object = GetObjectFromMap(objectType, objectName);
-	
-	return object && object->IsScriptFuncRunnable(dllName);
-}
-
-void EverettEngine::SetScriptToObject(
-	ObjectTypes objectType,
-	const std::string& objectName,
-	std::string_view rawFuncName,
-	const std::string& dllPath,
-	const std::string& dllName
-)
-{
-	ObjectSim* object = GetObjectFromMap(objectType, objectName);
-
-	if (object)
+	for (auto& func : vectOfFuncs)
 	{
-		ScriptFuncWeakPtr scriptFuncWeakPtr;
-
-		if (fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, rawFuncName.data(), scriptFuncWeakPtr))
-		{
-			if (!object->IsScriptFuncAdded(dllName))
-			{
-				object->AddScriptFunc(dllPath, dllName, scriptFuncWeakPtr);
-			}
-
-			object->ExecuteScriptFunc(dllName);
-		}
+		func(value);
 	}
 }
 
-void EverettEngine::PassEngineInterfaceToScriptDLL(
-	std::string_view rawFuncName, const std::string& dllPath, const std::string& dllName
-)
+void EverettEngine::ExecuteVectorOfFuncs(const std::vector<std::function<void()>>& vectOfFuncs)
 {
-	ScriptFuncWeakPtr scriptFuncWeakPtr;
-
-	if (fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, rawFuncName.data(), scriptFuncWeakPtr))
+	for (auto& func : vectOfFuncs)
 	{
-		if (!engineInterfaceScriptFunc->IsScriptFuncAdded(dllName))
-		{
-			engineInterfaceScriptFunc->AddScriptFunc(dllPath, dllName, scriptFuncWeakPtr);
-		}
-
-		engineInterfaceScriptFunc->ExecuteScriptFunc(dynamic_cast<IEverettEngine*>(this), dllName);
-	}
-}
-
-void EverettEngine::SetScriptToKey(
-	const std::string& keyName,
-	std::string_view pressedFuncName,
-	std::string_view releasedFuncName,
-	bool holdable,
-	const std::string& dllPath,
-	const std::string& dllName
-)
-{
-	if (fileLoader && !keyName.empty())
-	{
-		bool isPressedExist = false;
-		bool isReleasedExist = false;
-		bool addNewKey = keyScriptFuncMap.find(keyName) == keyScriptFuncMap.end();
-
-		if (!addNewKey)
-		{
-			isPressedExist = keyScriptFuncMap[keyName].pressedFuncs.IsScriptFuncAdded(dllName);
-			isReleasedExist = keyScriptFuncMap[keyName].releasedFuncs.IsScriptFuncAdded(dllName);
-		}
-
-		ScriptFuncWeakPtr scriptFuncPress;
-		ScriptFuncWeakPtr scriptFuncRelease;
-		bool anyFuncAdded{};
-
-		if (!pressedFuncName.empty())
-		{
-			anyFuncAdded |= fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, pressedFuncName.data(), scriptFuncPress);
-		}
-
-		if (!releasedFuncName.empty())
-		{
-			anyFuncAdded |= fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, releasedFuncName.data(), scriptFuncRelease);
-		}
-
-		if (anyFuncAdded)
-		{
-			if (addNewKey)
-			{
-				keyScriptFuncMap.emplace(keyName, KeyScriptFuncInfo{});
-			}
-
-			if (scriptFuncPress.lock() && !isPressedExist)
-			{
-				keyScriptFuncMap[keyName].pressedFuncs.AddScriptFunc(dllPath, dllName, scriptFuncPress);
-			}
-
-			if (scriptFuncRelease.lock() && !isReleasedExist)
-			{
-				keyScriptFuncMap[keyName].releasedFuncs.AddScriptFunc(dllPath, dllName, scriptFuncRelease);
-			}
-
-			if (addNewKey)
-			{
-				std::function<void()> scriptFuncPressWrapper = nullptr;
-				std::function<void()> scriptFuncReleaseWrapper = nullptr;
-
-				if (scriptFuncPress.lock())
-				{
-					scriptFuncPressWrapper = [this, keyName]() { keyScriptFuncMap[keyName].pressedFuncs.ExecuteAllScriptFuncs(); };
-				}
-
-				if (scriptFuncRelease.lock())
-				{
-					scriptFuncReleaseWrapper = [this, keyName]() { keyScriptFuncMap[keyName].releasedFuncs.ExecuteAllScriptFuncs(); };
-				}
-
-				mainLGL->SetInteractable(
-					LGL::ConvertKeyTo(keyName),
-					holdable,
-					scriptFuncPressWrapper,
-					scriptFuncReleaseWrapper
-				);
-			}
-		}
-	}
-}
-
-void EverettEngine::SetScriptToMouseScroll(
-	std::string_view rawFuncName,
-	const std::string& dllPath,
-	const std::string& dllName
-)
-{
-	ScriptFuncWeakPtr scriptFuncWeakPtr;
-
-	fileLoader->dllLoader.GetScriptFuncFromDLL(dllPath, rawFuncName.data(), scriptFuncWeakPtr);
-
-	if (scriptFuncWeakPtr.lock())
-	{
-		mouseScrollScriptFuncs->AddScriptFunc(dllPath, dllName, scriptFuncWeakPtr);
+		func();
 	}
 }
 
@@ -1443,14 +1315,14 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 		SetRenderLoggerCallbacks();
 	}
 
-	camera->ClearScriptFuncMap();
 	solids.clear();
 	models.clear();
 	lights.clear();
 	sounds.clear();
 	colliders.clear();
 
-	keyScriptFuncMap.clear();
+	ClearExternallyControlledContainers();
+
 	allNameTracker.clear();
 
 	if (fileLoader)

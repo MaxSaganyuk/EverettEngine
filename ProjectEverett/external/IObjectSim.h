@@ -87,11 +87,6 @@ public:
 	) = 0;
 	Linkable virtual void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) = 0;
 
-	virtual bool IsScriptFuncAdded(const std::string& dllName = "") = 0;
-
-	virtual void SetPositionChangeCallback(std::function<void()> callback) = 0;
-	virtual void SetRotationChangeCallback(std::function<void()> callback) = 0;
-
 	virtual void LinkObject(IObjectSim& objectToLink) = 0;
 	virtual void UnlinkObject(IObjectSim& objectToUnlink) = 0;
 	virtual void EnableObjectLinking(bool val = true) = 0; // By default enabled.

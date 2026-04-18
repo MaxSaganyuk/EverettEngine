@@ -74,6 +74,7 @@ public:
 	AdString& operator+=(const CString& str);
 
 	// Should be used to copy the string from AdString
+	operator const char*() const;
 	operator std::string() const;
 	operator CString() const;
 	operator LPCTSTR() const;

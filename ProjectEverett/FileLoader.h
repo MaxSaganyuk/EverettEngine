@@ -2,6 +2,7 @@
 
 #include "LGLStructs.h"
 #include "EverettStructs.h"
+#include "external/IEverettEngine.h"
 #include "CommonStructs.h"
 
 #include <map>
@@ -11,7 +12,6 @@
 #include <mutex>
 #include <typeindex>
 
-#include "ScriptFuncStorage.h"
 #include "AnimSystem.h"
 
 // Assimp forward declarations
@@ -112,34 +112,13 @@ class FileLoader
 		);
 	};
 
-
 	class DLLLoader
 	{
-	public:
-		struct SimFuncNameInfo
-		{
-			std::string_view rawFuncName;
-			std::string objectName;
-			std::string interfaceTypeName;
-		};
-
-		struct KeybindFuncNameInfo
-		{
-			std::string_view rawPressedFuncName;
-			std::string_view rawReleasedFuncName;
-			bool holdable{};
-		};
-
-		using SimScriptFuncNameMultimap = std::multimap<size_t, SimFuncNameInfo>;
-		using KeybindScriptFuncNameMap = std::unordered_map<std::string, KeybindFuncNameInfo>;
 	private:
-		std::recursive_mutex scriptWrapperLock;
-
 		struct ScriptDLLInfo
 		{
 			HMODULE dllHandle;
-			ScriptFuncMainMap scriptFuncMap;
-			std::vector<std::string_view> rawScriptFuncNames;
+			std::function<void(void*)> scriptInitFunc;
 			std::function<void()> mainFunc;
 			std::function<void()> cleanUpFunc;
 		};
@@ -147,46 +126,20 @@ class FileLoader
 		using ScriptDLLPath = std::string;
 		using ScriptMap = std::map<ScriptDLLPath, ScriptDLLInfo>;
 
-		bool LoadDLL(const std::string& dllPath);
-
-		std::vector<std::string_view> GetRawScriptFuncNamesFromHandle(HMODULE handle);
-
-		template<typename MultimapType>
-		MultimapType GetScriptFuncNamesFromDLL(const std::string& dllPath, char indicatorChar);
-		
-		constexpr static char SimIndicator = 'S';
-		constexpr static char KeybindIndicator = 'K';
-		constexpr static char SeparatorChar = '_';
-		constexpr static short SeparatorAmountInScriptFuncs = 4;
-		using SeparatorArray = std::array<size_t, SeparatorAmountInScriptFuncs>;
-
-		bool GetSeparatorPoints(std::string_view rawName, SeparatorArray& separatorPoints);
-		void ParseRawNameFor(std::string_view rawName, SimScriptFuncNameMultimap& scriptFuncNameMap);
-		void ParseRawNameFor(std::string_view rawName, KeybindScriptFuncNameMap& scriptFuncNameMap);
-
-		bool GetScriptFuncFromDLLImpl(
-			const std::string& funcName,
-			ScriptDLLInfo& dllInfo,
-			ScriptFuncWeakPtr& scriptFuncPtr
-		);
 		void SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo);
 		void UnloadScriptDLL(ScriptDLLInfo& dllInfo);
 
+		constexpr static char scriptInitFuncName[] = "ScriptInitFunc";
 		constexpr static char mainScriptFuncName[] = "Main";
 		constexpr static char cleanUpFuncName[] = "CleanUp";
 
 		ScriptMap dllHandleMap;
 	public:
-		SimScriptFuncNameMultimap GetSimScriptFuncNamesFromDll(const std::string& dllPath);
-		KeybindScriptFuncNameMap GetKeybindScriptFuncNamesFromDll(const std::string& dllPath);
 		void FreeDllData();
 		bool IsDLLLoaded(const std::string& dllPath);
 		bool AnyDLLLoaded();
-		bool GetScriptFuncFromDLL(
-			const std::string& dllPath,
-			const std::string& funcName,
-			ScriptFuncWeakPtr& scriptFuncPtr
-		);
+		bool LoadDLL(const std::string& dllPath);
+		void ExecuteScriptInitFor(const std::string& dllPath, IEverettEngine& engine);
 		void UnloadScriptDLL(const std::string& dllPath);
 		std::vector<EverettStructs::BasicFileInfo> GetLoadedScriptDlls();
 		void ExecuteAllMainScriptFuncs();

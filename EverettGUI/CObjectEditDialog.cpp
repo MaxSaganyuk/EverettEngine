@@ -23,8 +23,7 @@ CObjectEditDialog::CObjectEditDialog(
 	CDialogEx(IDD_DIALOG4, pParent),
 	engineRef(engine), 
 	objectType(objectTypeP),
-	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : ""),
-	selectedScriptDllInfo(selectedScriptDllInfo),
+	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : AdString{}),
 	currentObjectInterface(*engineRef.GetObjectInterface(objectType, objectName)),
 	castedCameraInterface(nullptr),
 	castedSolidInterface(nullptr),
@@ -66,8 +65,6 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON12, colorEditButton);
 	DDX_Control(pDX, IDC_BUTTON13, autoScaleButton);
 	DDX_Control(pDX, IDC_BUTTON10, rotationEditButton);
-	DDX_Control(pDX, IDC_COMBO1, dllCombobox);
-	DDX_Control(pDX, IDC_CHECK2, scriptRunCheck);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -105,11 +102,6 @@ void CObjectEditDialog::SetupObjectParams()
 	}
 
 	autoScaleButton.ShowWindow(isSolid);
-
-	for (auto& [dllPath, dllName] : selectedScriptDllInfo)
-	{
-		dllCombobox.AddString(dllName);
-	}
 
 	meshComboBox.ShowWindow (isSolid);
 	meshVisCheck.ShowWindow (isSolid);
@@ -234,7 +226,6 @@ BEGIN_MESSAGE_MAP(CObjectEditDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON10, &CObjectEditDialog::OnRotEditButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON12, &CObjectEditDialog::OnColorEditButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON13, &CObjectEditDialog::OnAutoScaleButtonClicked)
-	ON_CBN_SELCHANGE(IDC_COMBO1, &CObjectEditDialog::OnDllComboBoxCheck)
 END_MESSAGE_MAP()
 
 
@@ -389,17 +380,5 @@ void CObjectEditDialog::OnAutoScaleButtonClicked()
 		castedSolidInterface->InvokeAutoScale();
 		castedSolidInterface->ForceModelUpdate();
 		UpdateParams();
-	}
-}
-
-void CObjectEditDialog::OnDllComboBoxCheck()
-{
-	AdString dllName;
-	bool curSelExists = dllCombobox.GetCurSel() != -1;
-	
-	if (curSelExists)
-	{
-		dllCombobox.GetLBText(dllCombobox.GetCurSel(), dllName);
-		scriptRunCheck.SetCheck(engineRef.IsObjectScriptSet(objectType, objectName, dllName));
 	}
 }

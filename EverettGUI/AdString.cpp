@@ -212,6 +212,13 @@ AdString& AdString::operator+=(const CString& str)
 	return *this;
 }
 
+AdString::operator const char*() const
+{
+	CheckAndReadapt(StrType::Regular);
+
+	return strPair.first.c_str();
+}
+
 AdString::operator std::string() const
 {
 	CheckAndReadapt(StrType::Regular);

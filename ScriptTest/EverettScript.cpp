@@ -4,8 +4,6 @@
 
 IEverettEngine* engineInter = nullptr;
 ICameraSim* cameraSim = nullptr;
-IColliderSim* blockCollider = nullptr;
-IColliderSim* worldSwitchCollider = nullptr;
 
 class TestCharHolder
 {
@@ -14,30 +12,47 @@ class TestCharHolder
 	bool moving{};
 	bool linkedToCamera{};
 
-public:
-	void SetSolidSim(ISolidSim& testCharSolid)
+	void CheckIfPtrValid(IObjectSim* ptr)
 	{
-		this->testCharSolid = &testCharSolid;
+		if (!ptr)
+		{
+			std::cerr << "Invalid ptr. Cannot continue\n";
+			std::terminate();
+		}
+	}
+
+public:
+	void SetSolidSim(ISolidSim* testCharSolid)
+	{
+		CheckIfPtrValid(testCharSolid);
+
+		this->testCharSolid = testCharSolid;
 		this->testCharSolid->EnableAutoModelUpdates();
 	}
 
-	void SetColliderSim(IColliderSim& testCharCollider)
+	void SetColliderSim(IColliderSim* testCharCollider)
 	{
-		this->testCharCollider = &testCharCollider;
-		testCharSolid->LinkObject(testCharCollider);
+		CheckIfPtrValid(testCharCollider);
+
+		this->testCharCollider = testCharCollider;
+		testCharSolid->LinkObject(*testCharCollider);
 	}
 
-	void SetupBlockCollision(IColliderSim& blockCollider)
+	void SetupBlockCollision(IColliderSim* blockCollider)
 	{
+		CheckIfPtrValid(blockCollider);
+
 		testCharCollider->AddCollisionCallback(
-			{ [this]() { testCharSolid->SetLastPosition(); }, nullptr, &blockCollider, true }
+			{ [this]() { testCharSolid->SetLastPosition(); }, nullptr, blockCollider, true }
 		);
 	}
 
-	void SetupWorldSwitchCollision(IColliderSim& worldSwitchCollider)
+	void SetupWorldSwitchCollision(IColliderSim* worldSwitchCollider)
 	{
+		CheckIfPtrValid(worldSwitchCollider);
+
 		testCharCollider->AddCollisionCallback(
-			{ []() { engineInter->RequestWorldLoad("E:\\WorldSwitchTest.esav"); }, nullptr, &worldSwitchCollider, false }
+			{ []() { engineInter->RequestWorldLoad("E:\\WorldSwitchTest.esav"); }, nullptr, worldSwitchCollider, false }
 		);
 	}
 
@@ -88,96 +103,47 @@ public:
 
 TestCharHolder testChar;
 
-EngineInterfaceInit()
+ScriptInit()
 {
-	engineInter = &engine;
-}
-
-CameraObjectInit()
-{
-	cameraSim = &objectCamera;
+	cameraSim = engine.GetCameraInterface();
 	cameraSim->EnableAutoModelUpdates();
-}
 
-ScriptObjectInit(TestChar, ISolidSim)
-{
-	testChar.SetSolidSim(objectTestChar);
-}
+	testChar.SetSolidSim(engine.GetSolidInterface("TestChar"));
+	testChar.SetColliderSim(engine.GetColliderInterface("TestCharBox"));
+	testChar.SetupBlockCollision(engine.GetColliderInterface("BlockBox"));
+	testChar.SetupWorldSwitchCollision(engine.GetColliderInterface("WorldSwitchBox"));
 
-ScriptObjectInit(TestCharBox, IColliderSim)
-{
-	testChar.SetColliderSim(objectTestCharBox);
-}
+	auto testCharStopFunc = []() { testChar.Stop(); };
 
-ScriptObjectInit(BlockBox, IColliderSim)
-{
-	blockCollider = &objectBlockBox;
-	testChar.SetupBlockCollision(objectBlockBox);
-}
+	engine.AddInteractable(
+		engine.ConvertKeyTo('I'), true, 
+		[]() { testChar.Go(0.0f); }, testCharStopFunc
+	);
+	engine.AddInteractable(
+		engine.ConvertKeyTo('J'), true,
+		[]() { testChar.Go(glm::pi<float>() / 2.0f); }, testCharStopFunc
+	);
+	engine.AddInteractable(
+		engine.ConvertKeyTo('K'), true,
+		[]() { testChar.Go(glm::pi<float>()); }, testCharStopFunc
+	);
+	engine.AddInteractable(
+		engine.ConvertKeyTo('L'), true,
+		[]() { testChar.Go(-glm::pi<float>() / 2.0f); }, testCharStopFunc
+	);
+	engine.AddInteractable(
+		engine.ConvertKeyTo('C'), false,
+		[]() { testChar.LinkCharToCamera(*cameraSim); }, nullptr
+	);
 
-ScriptObjectInit(WorldSwitchBox, IColliderSim)
-{
-	worldSwitchCollider = &objectWorldSwitchBox;
-	testChar.SetupWorldSwitchCollision(objectWorldSwitchBox);
-}
+	engine.AddMouseScrollCallback([](double value) { cameraSim->Zoom(static_cast<float>(value)); });
 
-ScriptKeybindPressed(I, 1)
-{
-	testChar.Go(0.0f);
-}
-
-ScriptKeybindPressed(J, 1)
-{
-	testChar.Go(glm::pi<float>() / 2.0f);
-}
-
-ScriptKeybindPressed(K, 1)
-{
-	testChar.Go(glm::pi<float>());
-}
-
-ScriptKeybindPressed(L, 1)
-{
-	testChar.Go(-glm::pi<float>() / 2.0f);
-}
-
-ScriptKeybindReleased(I)
-{
-	testChar.Stop();
-}
-
-ScriptKeybindReleased(J)
-{
-	testChar.Stop();
-}
-
-ScriptKeybindReleased(K)
-{
-	testChar.Stop();
-}
-
-ScriptKeybindReleased(L)
-{
-	testChar.Stop();
-}
-
-ScriptKeybindPressed(C, 0)
-{
-	if (cameraSim)
-	{
-		testChar.LinkCharToCamera(*cameraSim);
-	}
-}
-
-ScriptMouseScroll()
-{
-	cameraSim->Zoom(static_cast<float>(value));
+	engineInter = &engine;
 }
 
 ScriptCleanUp()
 {
 	engineInter = nullptr;
 	cameraSim = nullptr;
-	blockCollider = nullptr;
 	testChar.Reset();
 }

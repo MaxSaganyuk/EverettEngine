@@ -374,20 +374,6 @@ void ObjectSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 	}
 }
 
-void ObjectSim::AddScriptFunc(
-	const std::string& dllPath, 
-	const std::string& dllName, 
-	ScriptFuncWeakPtr& scriptFunc
-)
-{
-	scriptFuncStorage.AddScriptFunc(dllPath, dllName, scriptFunc);
-}
-
-void ObjectSim::ClearScriptFuncMap()
-{
-	scriptFuncStorage.ClearScriptFuncMap();
-}
-
 void ObjectSim::SetPositionChangeCallback(std::function<void()> callback)
 {
 	positionChangeCallback = callback;
@@ -396,26 +382,6 @@ void ObjectSim::SetPositionChangeCallback(std::function<void()> callback)
 void ObjectSim::SetRotationChangeCallback(std::function<void()> callback)
 {
 	rotationChangeCallback = callback;
-}
-
-void ObjectSim::ExecuteScriptFunc(const std::string& dllName)
-{
-	scriptFuncStorage.ExecuteScriptFunc(this, dllName);
-}
-
-void ObjectSim::ExecuteAllScriptFuncs()
-{
-	scriptFuncStorage.ExecuteAllScriptFuncs(this);
-}
-
-bool ObjectSim::IsScriptFuncAdded(const std::string& dllName)
-{
-	return scriptFuncStorage.IsScriptFuncAdded(dllName);
-}
-
-bool ObjectSim::IsScriptFuncRunnable(const std::string& dllName)
-{
-	return scriptFuncStorage.IsScriptFuncRunnable(dllName);
 }
 
 void ObjectSim::LinkObject(IObjectSim& otherObject)

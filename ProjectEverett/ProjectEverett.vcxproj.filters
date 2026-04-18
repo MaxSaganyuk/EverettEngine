@@ -54,9 +54,6 @@
     <ClInclude Include="WindowHandleHolder.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="ScriptFuncStorage.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="UnorderedPtrMap.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
@@ -150,9 +147,6 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="WindowHandleHolder.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="ScriptFuncStorage.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="AnimSystem.cpp">

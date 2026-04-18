@@ -26,7 +26,6 @@ CObjectMoveDialog::CObjectMoveDialog(
 	object(object),
 	isSolid(isSolid),
 	transType(transType),
-	WASDBasedTransOn(false),
 	CDialogEx(IDD_DIALOG8, pParent)
 {
 
@@ -37,11 +36,6 @@ CObjectMoveDialog::~CObjectMoveDialog()
 	if (coordBitmap)
 	{
 		delete coordBitmap;
-	}
-
-	if (WASDBasedTransOn)
-	{
-		ToggleWASDBasedControls();
 	}
 }
 
@@ -93,7 +87,6 @@ ON_BN_CLICKED(IDC_BUTTON4, &CObjectMoveDialog::OnYPlusButtonClick)
 ON_BN_CLICKED(IDC_BUTTON11, &CObjectMoveDialog::OnYMinusButtonClick)
 ON_BN_CLICKED(IDC_BUTTON12, &CObjectMoveDialog::OnZPlusButtonClick)
 ON_BN_CLICKED(IDC_BUTTON13, &CObjectMoveDialog::OnZMinusButtonClick)
-ON_BN_CLICKED(IDC_BUTTON1, &CObjectMoveDialog::OnWASDBasedButtonClick)
 END_MESSAGE_MAP()
 
 
@@ -199,38 +192,4 @@ void CObjectMoveDialog::OnZPlusButtonClick()
 void CObjectMoveDialog::OnZMinusButtonClick()
 {
 	TransformObject(directions[ZMinus]);
-}
-
-void CObjectMoveDialog::ToggleWASDBasedControls()
-{
-	std::string keys = "ADWSRF";
-
-	WASDBasedTransOn = !WASDBasedTransOn;
-
-	if (WASDBasedTransOn)
-	{
-		engineRef.SetDefaultWASDControls(!WASDBasedTransOn);
-	}
-
-	for (int i = 0; i < keys.size(); ++i)
-	{
-		engineRef.SetInteractable(
-			keys[i],
-			false,
-			WASDBasedTransOn ?
-			[this, i]() { TransformObject(directions[static_cast<DirectionXYZ>(i)]); } : std::function<void()>(nullptr)
-		);
-	}
-
-	if (!WASDBasedTransOn)
-	{
-		engineRef.SetDefaultWASDControls(!WASDBasedTransOn);
-	}
-
-	std::cout << "Turned " << (WASDBasedTransOn ? "On" : "Off") << " WASD based transformations\n";
-}
-
-void CObjectMoveDialog::OnWASDBasedButtonClick()
-{
-	ToggleWASDBasedControls();
 }

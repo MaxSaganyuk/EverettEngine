@@ -63,8 +63,6 @@ private:
 	bool isSolid;
 	ObjectTransformType transType;
 
-	bool WASDBasedTransOn;
-
 	enum DirectionXYZ
 	{
 		XPlus,
@@ -87,14 +85,10 @@ private:
 	
 	Gdiplus::Bitmap* coordBitmap;
 
-	void ToggleWASDBasedControls();
-
 	afx_msg void OnXPlusButtonClick();
 	afx_msg void OnXMinusButtonClick();
 	afx_msg void OnYPlusButtonClick();
 	afx_msg void OnYMinusButtonClick();
 	afx_msg void OnZPlusButtonClick();
 	afx_msg void OnZMinusButtonClick();
-
-	afx_msg void OnWASDBasedButtonClick();
 };

@@ -24,13 +24,6 @@
 
 #include "external/IEverettEngine.h"
 
-#include "external/IObjectSim.h"
-#include "external/ISolidSim.h"
-#include "external/ILightSim.h"
-#include "external/ISoundSim.h"
-#include "external/ICameraSim.h"
-#include "external/IColliderSim.h"
-
 #include "EverettStructs.h"
 
 class FileLoader;
@@ -47,9 +40,6 @@ class AnimSystem;
 class RenderLogger;
 class CustomOutput;
 class ModelInfo;
-
-template<typename ParamType>
-class ScriptFuncStorage;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -72,16 +62,6 @@ public:
 		Spot
 	};
 
-	enum class ObjectTypes
-	{
-		Camera,
-		Solid,
-		Light,
-		Sound,
-		Collider,
-		_SIZE
-	};
-
 	EVERETT_API EverettEngine();
 	EVERETT_API ~EverettEngine();
 	EVERETT_API void CreateAndSetupMainWindow(
@@ -92,7 +72,7 @@ public:
 		bool enableLogger = true
 	);
 
-	EVERETT_API void SetDebugLogVisible(bool value = true);
+	EVERETT_API void SetDebugLogVisible(bool value = true) override;
 
 	EVERETT_API void SetShaderPath(const std::string& shaderPath);
 	EVERETT_API void SetFontPath(const std::string& fontPath);
@@ -102,13 +82,6 @@ public:
 	
 	EVERETT_API void EnableGizmoCreation();
 	EVERETT_API void SetGizmoVisible(bool value = true);
-
-	EVERETT_API void SetInteractable(
-		char key, 
-		bool holdable,
-		std::function<void()> pressFunc, 
-		std::function<void()> releaseFunc = nullptr
-	);
 
 	EVERETT_API void RunRenderWindow();
 	EVERETT_API void StopRenderWindow();
@@ -127,30 +100,14 @@ public:
 
 	EVERETT_API glm::vec3& GetAmbientLightVectorAddr(); 
 
-	EVERETT_API IObjectSim* GetObjectInterface(
-		ObjectTypes objectType,
-		const std::string& objectName
-	);
-	EVERETT_API ISolidSim* GetSolidInterface(
-		const std::string& solidName
-	);
-	EVERETT_API ILightSim* GetLightInterface(
-		const std::string& lightName
-	);
-	EVERETT_API ISoundSim* GetSoundInterface(
-		const std::string& soundName
-	);
-	EVERETT_API IColliderSim* GetColliderInterface(
-		const std::string& colliderName
-	);
-	EVERETT_API ICameraSim* GetCameraInterface();
+	EVERETT_API IObjectSim* GetObjectInterface(ObjectTypes objectType, const char* objectName) override;
+	EVERETT_API ISolidSim* GetSolidInterface(const char* solidName) override;
+	EVERETT_API ILightSim* GetLightInterface(const char* lightName) override;
+	EVERETT_API ISoundSim* GetSoundInterface(const char* soundName) override;
+	EVERETT_API IColliderSim* GetColliderInterface(const char* colliderName) override;
+	EVERETT_API ICameraSim* GetCameraInterface() override;
 
 	EVERETT_API void SetupScriptDLL(const std::string& dllPath);
-	EVERETT_API bool IsObjectScriptSet(
-		ObjectTypes objectType,
-		const std::string& objectName,
-		const std::string& dllName
-	);
 	EVERETT_API bool IsDLLLoaded(const std::string& dllPath);
 	EVERETT_API void UnsetScript(const std::string& dllPath);
 	EVERETT_API std::vector<EverettStructs::BasicFileInfo> GetLoadedScriptDLLs();
@@ -167,8 +124,10 @@ public:
 	EVERETT_API static std::string GetObjectTypeToName(ObjectTypes objectType);
 	EVERETT_API static ObjectTypes GetObjectTypeToName(const std::string& objectName);
 
-	EVERETT_API static std::string ConvertKeyTo(int keyId);
-	EVERETT_API static int         ConvertKeyTo(const std::string& keyName);
+	EVERETT_API std::string ConvertKeyTo(int keyId);
+
+	EVERETT_API int ConvertKeyTo(char c) override;
+	EVERETT_API int ConvertKeyTo(const char* keyName) override;
 
 	EVERETT_API void ForceFocusOnWindow(const std::string& name);
 	EVERETT_API void AddWindowHandler(HWND windowHandler, const std::string& name);
@@ -192,7 +151,7 @@ public:
 
 	EVERETT_API void ResetEngine(const std::optional<EverettStructs::AssetPaths>& assetPaths = std::nullopt);
 
-	EVERETT_API void CreateLogReport();
+	EVERETT_API void CreateLogReport() override;
 private:
 	std::string shaderPath = "shaders";
 	std::string modelPath = "models";
@@ -238,6 +197,16 @@ private:
 		const glm::vec4& gizmoColor
 	);
 
+	void AddInteractable(
+		int key,
+		bool holdable,
+		std::function<void()> pressFunc,
+		std::function<void()> releaseFunc = nullptr
+	) override;
+	void AddMouseScrollCallback(std::function<void(double)> callback) override;
+
+	void ClearExternallyControlledContainers();
+
 	bool CheckIfScriptsRunning();
 	void DeleteSolidsByModel(const std::string& modelName);
 	void RemoveSolidPtrFromModel(const std::string& modelName, SolidSim* solidPtr);
@@ -260,30 +229,6 @@ private:
 
 	template<typename Sim>
 	ObjectSim* GetObjectFromTheMap(std::unordered_map<std::string, Sim>& simMap, const std::string& objectName);
-
-	void SetScriptToObject(
-		ObjectTypes objectType,
-		const std::string& objectName,
-		std::string_view rawFuncName,
-		const std::string& dllPath,
-		const std::string& dllName
-	);
-	void PassEngineInterfaceToScriptDLL(
-		std::string_view rawFuncName, const std::string& dllPath, const std::string& dllName
-	);
-	void SetScriptToKey(
-		const std::string& keyName,
-		std::string_view pressedFuncName,
-		std::string_view releasedFuncName,
-		bool holdable,
-		const std::string& dllPath,
-		const std::string& dllName
-	);
-	void SetScriptToMouseScroll(
-		std::string_view rawFuncName,
-		const std::string& dllPath,
-		const std::string& dllName
-	);
 
 	std::string CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder);
 
@@ -323,6 +268,10 @@ private:
 	void SetRenderLoggerCallbacks(bool value = true);
 	std::string GetDateTimeStr();
 
+	template<typename Type>
+	void ExecuteVectorOfFuncs(const std::vector<std::function<void(Type)>>& vectOfFuncs, const Type& value);
+	void ExecuteVectorOfFuncs(const std::vector<std::function<void()>>& vectOfFuncs);
+
 	template<typename FunctionType, typename... Params>
 	void ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values);
 	template<typename Sim, typename FunctionType, typename... Params>
@@ -350,9 +299,8 @@ private:
 
 	struct KeyScriptFuncInfo;
 
-	std::map<std::string, KeyScriptFuncInfo> keyScriptFuncMap;
-	std::unique_ptr<ScriptFuncStorage<IEverettEngine>> engineInterfaceScriptFunc;
-	std::unique_ptr<ScriptFuncStorage<double>> mouseScrollScriptFuncs;
+	std::map<int, KeyScriptFuncInfo> keyScriptFuncMap;
+	std::vector<std::function<void(double)>> mouseScrollScriptFuncs;
 
 	UnorderedPtrMap<const std::string*, int> allNameTracker;
 

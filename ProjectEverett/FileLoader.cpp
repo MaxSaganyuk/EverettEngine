@@ -665,7 +665,6 @@ bool FileLoader::DLLLoader::LoadDLL(const std::string& dllPath)
 	if (!dllHandle)
 	{
 		dllHandle = LoadLibraryA(dllPath.c_str());
-		dllHandleMap[dllPath].rawScriptFuncNames = GetRawScriptFuncNamesFromHandle(dllHandle);
 	}
 
 	if (dllHandle)
@@ -691,144 +690,9 @@ bool FileLoader::DLLLoader::LoadDLL(const std::string& dllPath)
 	return dllHandle;
 }
 
-std::vector<std::string_view> FileLoader::DLLLoader::GetRawScriptFuncNamesFromHandle(HMODULE dllHandle)
+void FileLoader::DLLLoader::ExecuteScriptInitFor(const std::string& dllPath, IEverettEngine& engine)
 {
-	BYTE* baseByte = reinterpret_cast<BYTE*>(dllHandle);
-
-	IMAGE_DOS_HEADER* DOS = reinterpret_cast<IMAGE_DOS_HEADER*>(baseByte);
-	IMAGE_NT_HEADERS* NT = reinterpret_cast<IMAGE_NT_HEADERS*>(baseByte + DOS->e_lfanew);
-
-	DWORD exportDirRVA = NT->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-
-	IMAGE_EXPORT_DIRECTORY* exportDir = reinterpret_cast<IMAGE_EXPORT_DIRECTORY*>(baseByte + exportDirRVA);
-
-	DWORD* names = reinterpret_cast<DWORD*>(baseByte + exportDir->AddressOfNames);
-
-	std::vector<std::string_view> rawNames;
-	rawNames.reserve(exportDir->NumberOfNames);
-
-	for (DWORD i = 0; i < exportDir->NumberOfNames; i++)
-	{
-		std::string_view rawName = reinterpret_cast<char*>(baseByte + names[i]);
-
-		if (rawName[0] == SimIndicator || rawName[0] == KeybindIndicator)
-		{
-			rawNames.push_back(rawName);
-		}
-	}
-
-	return rawNames;
-}
-
-template<typename MultimapType>
-MultimapType FileLoader::DLLLoader::GetScriptFuncNamesFromDLL(const std::string& dllPath, char indicatorChar)
-{
-	MultimapType scriptFuncNameMap;
-
-	if (LoadDLL(dllPath))
-	{
-		for (auto& rawName : dllHandleMap[dllPath].rawScriptFuncNames)
-		{
-			if (rawName[0] == indicatorChar)
-			{
-				ParseRawNameFor(rawName, scriptFuncNameMap);
-			}
-		}
-	}
-
-	return scriptFuncNameMap;
-}
-
-FileLoader::DLLLoader::SimScriptFuncNameMultimap FileLoader::DLLLoader::GetSimScriptFuncNamesFromDll(
-	const std::string& dllPath
-)
-{
-	return GetScriptFuncNamesFromDLL<SimScriptFuncNameMultimap>(dllPath, SimIndicator);
-}
-
-FileLoader::DLLLoader::KeybindScriptFuncNameMap FileLoader::DLLLoader::GetKeybindScriptFuncNamesFromDll(
-	const std::string& dllPath
-)
-{
-	return GetScriptFuncNamesFromDLL<KeybindScriptFuncNameMap>(dllPath, KeybindIndicator);
-}
-
-bool FileLoader::DLLLoader::GetSeparatorPoints(
-	std::string_view rawName, SeparatorArray& separatorPoints
-)
-{
-	size_t check = 0;
-
-	check |= separatorPoints[0] = rawName.find(SeparatorChar);
-	check |= separatorPoints[1] = rawName.find(SeparatorChar, separatorPoints[0] + 1);
-	check |= separatorPoints[3] = rawName.rfind(SeparatorChar);
-	check |= separatorPoints[2] = rawName.rfind(SeparatorChar, separatorPoints[3] - 1);
-
-	if (check == std::string_view::npos) return false;
-
-	for (size_t i = 0; i < separatorPoints.size(); ++i)
-	{
-		for (size_t j = i + 1; j < separatorPoints.size(); ++j)
-		{
-			if (separatorPoints[i] == separatorPoints[j]) return false;
-		}
-	}
-
-	return true;
-}
-
-void FileLoader::DLLLoader::ParseRawNameFor(
-	std::string_view rawName, SimScriptFuncNameMultimap& scriptFuncNameMap
-)
-{
-	if (rawName.find('@') == std::string_view::npos)
-	{
-		SeparatorArray sepArray{};
-
-		if (GetSeparatorPoints(rawName, sepArray))
-		{
-			size_t lineNumber = StringCast::FromString<size_t>(rawName.substr(sepArray[0] + 1, sepArray[1]));
-			std::string objectName = std::string(rawName.substr(sepArray[1] + 1, sepArray[2] - sepArray[1] - 1));
-			std::string interfaceName = std::string(rawName.substr(sepArray[2] + 1, sepArray[3] - sepArray[2] - 1));
-
-			if (!objectName.empty() && !interfaceName.empty())
-			{
-				scriptFuncNameMap.emplace(lineNumber, SimFuncNameInfo{ rawName, objectName, interfaceName });
-			}
-		}
-	}
-}
-
-void FileLoader::DLLLoader::ParseRawNameFor(
-	std::string_view rawName, KeybindScriptFuncNameMap& scriptFuncNameMap
-)
-{
-	if (rawName.find('@') == std::string_view::npos)
-	{
-		SeparatorArray sepArray{};
-
-		if (GetSeparatorPoints(rawName, sepArray))
-		{
-			bool holdable = StringCast::FromString<bool>(rawName.substr(sepArray[0] + 1, sepArray[1]));
-			std::string key = std::string(rawName.substr(sepArray[1] + 1, sepArray[2] - sepArray[1] - 1));
-			bool bindType = StringCast::FromString<bool>(rawName.substr(sepArray[2] + 1, sepArray[3] - sepArray[2] - 1));
-
-			if (!scriptFuncNameMap.contains(key))
-			{
-				scriptFuncNameMap.emplace(key, KeybindFuncNameInfo{});
-			}
-
-			if (!bindType)
-			{
-				scriptFuncNameMap[key].holdable = holdable;
-				scriptFuncNameMap[key].rawPressedFuncName = rawName;
-			}
-			else
-			{
-				scriptFuncNameMap[key].rawReleasedFuncName = rawName;
-			}
-		}
-	}
+	dllHandleMap[dllPath].scriptInitFunc(&engine);
 }
 
 void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo)
@@ -861,6 +725,22 @@ void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE 
 	{
 		std::cerr << "Cleanup script does not exist\n";
 	}
+
+	using ParamfulFuncType = void(*)(void*);
+
+	ParamfulFuncType scriptFuncInitFunc = reinterpret_cast<ParamfulFuncType>(
+		GetProcAddress(dllInfo.dllHandle, scriptInitFuncName)
+	);
+
+	if (scriptFuncInitFunc)
+	{
+		std::cout << "Loaded script init func\n";
+		dllInfo.scriptInitFunc = scriptFuncInitFunc;
+	}
+	else
+	{
+		std::cerr << "Script init does not exist\n";
+	}
 }
 
 bool FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
@@ -886,63 +766,6 @@ bool FileLoader::DLLLoader::AnyDLLLoaded()
 	return false;
 }
 
-bool FileLoader::DLLLoader::GetScriptFuncFromDLL(
-	const std::string& dllPath,
-	const std::string& funcName,
-	ScriptFuncWeakPtr& scriptFuncWeakPtr
-)
-{
-	bool success = false;
-
-	if (LoadDLL(dllPath))
-	{
-		success = GetScriptFuncFromDLLImpl(funcName, dllHandleMap[dllPath], scriptFuncWeakPtr);
-	}
-	else
-	{
-		std::cerr << "Failed to load " << GetFileFromPath(dllPath) << '\n';
-	}
-
-	return success;
-
-}
-
-bool FileLoader::DLLLoader::GetScriptFuncFromDLLImpl(
-	const std::string& funcName,
-	ScriptDLLInfo& dllInfo,
-	ScriptFuncWeakPtr& scriptFuncWeakPtr
-)
-{
-	using ScriptWrapperType = void(*)(void*);
-	ScriptWrapperType scriptWrapperFunc = reinterpret_cast<ScriptWrapperType>(
-		GetProcAddress(dllInfo.dllHandle, funcName.c_str())
-	);
-
-	if (scriptWrapperFunc)
-	{
-		auto scriptFunc = [this, scriptWrapperFunc](void* data)
-		{
-			std::lock_guard<std::recursive_mutex> lock(scriptWrapperLock);
-			scriptWrapperFunc(data);
-		};
-
-		if (!dllInfo.scriptFuncMap.contains(funcName))
-		{
-			dllInfo.scriptFuncMap.emplace(funcName, std::make_shared<InterfaceScriptFunc>(scriptFunc));
-			scriptFuncWeakPtr = dllInfo.scriptFuncMap[funcName];
-		}
-		else
-		{
-			InterfaceScriptFunc* currentScriptWrapperFunc = dllInfo.scriptFuncMap[funcName].get();
-			*currentScriptWrapperFunc = scriptFunc;
-		}
-
-		return true;
-	}
-
-	return false;
-}
-
 void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
 {
 	UnloadScriptDLL(dllHandleMap.at(dllPath));
@@ -951,14 +774,6 @@ void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
 
 void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
 {
-	scriptWrapperLock.lock();
-	for (auto& [funcName, func] : dllInfo.scriptFuncMap)
-	{
-		InterfaceScriptFunc* scriptFuncWrapper = func.get();
-		*scriptFuncWrapper = nullptr;
-	}
-	scriptWrapperLock.unlock();
-
 	if (dllInfo.dllHandle)
 	{
 		if (dllInfo.cleanUpFunc)
@@ -967,7 +782,6 @@ void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
 		}
 
 		FreeLibrary(dllInfo.dllHandle);
-		dllInfo.rawScriptFuncNames.clear();
 		dllInfo.dllHandle = nullptr;
 		dllInfo.mainFunc = nullptr;
 		dllInfo.cleanUpFunc = nullptr;

@@ -196,7 +196,6 @@
     <ClInclude Include="SimSerializer.h" />
     <ClInclude Include="SolidToModelManager.h" />
     <ClInclude Include="ObjectSim.h" />
-    <ClInclude Include="ScriptFuncStorage.h" />
     <ClInclude Include="SolidSim.h" />
     <ClInclude Include="SoundSim.h" />
     <ClInclude Include="LightSim.h" />
@@ -217,7 +216,6 @@
     <ClCompile Include="ModelInfo.cpp" />
     <ClCompile Include="ObjectSim.cpp" />
     <ClCompile Include="RenderLogger.cpp" />
-    <ClCompile Include="ScriptFuncStorage.cpp" />
     <ClCompile Include="ShaderGenerator.cpp" />
     <ClCompile Include="SimSerializer.cpp" />
     <ClCompile Include="SolidSim.cpp" />

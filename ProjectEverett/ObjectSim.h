@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <type_traits>
 
-#include "ScriptFuncStorage.h"
 #include "SimSerializer.h"
 #include "ValueObserver.h"
 
@@ -37,8 +36,6 @@ protected:
 
 	std::unordered_map<Direction, bool> disabledDirs;
 	std::pair<Rotation, Rotation> rotationLimits;
-
-	ScriptFuncStorage<IObjectSim> scriptFuncStorage;
 
 	// Callbacks
 	std::function<void()> positionChangeCallback;
@@ -96,18 +93,9 @@ public:
 	void LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects = true) override;
 	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;
 
-	void AddScriptFunc(const std::string& dllPath, const std::string& dllName, ScriptFuncWeakPtr& scriptFunc);
-	void ClearScriptFuncMap();
-
 	// Callback setter
-	void SetPositionChangeCallback(std::function<void()> callback) override;
-	void SetRotationChangeCallback(std::function<void()> callback) override;
-
-	bool IsScriptFuncAdded(const std::string& dllName = "") override;
-
-	void ExecuteScriptFunc(const std::string& dllName = "");
-	void ExecuteAllScriptFuncs();
-	bool IsScriptFuncRunnable(const std::string& dllName = "");
+	void SetPositionChangeCallback(std::function<void()> callback);
+	void SetRotationChangeCallback(std::function<void()> callback);
 
 	void LinkObject(IObjectSim& otherObject) override;
 	void UnlinkObject(IObjectSim& objectToUnlink) override;
