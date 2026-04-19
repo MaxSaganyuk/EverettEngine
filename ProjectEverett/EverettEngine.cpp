@@ -25,6 +25,7 @@
 
 #include "stdEx/mapEx.h"
 #include "stdEx/rangesEx.h"
+#include "stdEx/type_traitsEx.h"
 
 #include "AnimSystem.h"
 
@@ -1096,8 +1097,10 @@ void EverettEngine::ExecuteVectorOfFuncs(const std::vector<std::function<void()>
 template<typename FunctionType, typename... Params>
 void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values)
 {
-	// TODO: Fix to check for class type only
-	//static_assert(ConfirmMemberOf<ObjectSim, FunctionType, Params...>, "Must accept ObjectSim or derived member func");
+	static_assert(
+		std::is_base_of_v<ObjectSim, typename stdEx::MemberFuncInfo<FunctionType>::ClassType>, 
+		"Must accept ObjectSim or derived member func"
+	);
 
 	if constexpr (ConfirmMemberOf<CameraSim, FunctionType, Params...>)
 	{
