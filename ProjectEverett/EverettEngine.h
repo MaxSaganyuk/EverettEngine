@@ -40,6 +40,7 @@ class AnimSystem;
 class RenderLogger;
 class CustomOutput;
 class ModelInfo;
+class KeyScriptFuncInfo;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -296,8 +297,6 @@ private:
 	static LightShaderValueNames lightShaderValueNames;
 	static std::vector<ObjectTypeInfo> objectTypes;
 	static std::vector<std::string> lightTypes;
-
-	struct KeyScriptFuncInfo;
 
 	std::map<int, KeyScriptFuncInfo> keyScriptFuncMap;
 	std::vector<std::function<void(double)>> mouseScrollScriptFuncs;

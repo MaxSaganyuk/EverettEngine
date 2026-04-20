@@ -38,6 +38,7 @@
 
 #include "SolidToModelManager.h"
 #include "ModelInfo.h"
+#include "KeyScriptFuncInfo.h"
 
 #include "ShaderGenerator.h"
 #include "ConceptUtils.h"
@@ -107,12 +108,6 @@ std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 #undef ToStr
 
 std::vector<std::string> EverettEngine::lightTypes = LightSim::GetLightTypeNames();
-
-struct EverettEngine::KeyScriptFuncInfo
-{
-	std::vector<std::function<void()>> pressedFuncs;
-	std::vector<std::function<void()>> releasedFuncs;
-};
 
 EverettEngine::EverettEngine()
 {
@@ -349,20 +344,20 @@ void EverettEngine::AddInteractable(
 
 	if (pressFunc)
 	{
-		keyScriptFuncMap[key].pressedFuncs.push_back(pressFunc);
+		keyScriptFuncMap[key].AddPressedFunc(pressFunc, holdable);
 	}
 
 	if (releaseFunc)
 	{
-		keyScriptFuncMap[key].releasedFuncs.push_back(releaseFunc);
+		keyScriptFuncMap[key].AddReleasedFunc(releaseFunc);
 	}
 
 	if (addNew)
 	{
 		mainLGL->SetInteractable(
-			key, holdable, 
-			[this, key]() { ExecuteVectorOfFuncs(keyScriptFuncMap[key].pressedFuncs);  },
-			[this, key]() { ExecuteVectorOfFuncs(keyScriptFuncMap[key].releasedFuncs); }
+			key, true, 
+			[this, key]() { keyScriptFuncMap[key].ButtonPressed();  },
+			[this, key]() { keyScriptFuncMap[key].ButtonReleased(); }
 		);
 	}
 }

@@ -188,6 +188,7 @@
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="CameraSim.h" />
     <ClInclude Include="CommandHandler.h" />
+    <ClInclude Include="KeyScriptFuncInfo.h" />
     <ClInclude Include="ModelInfo.h" />
     <ClInclude Include="PlaybackManager.h" />
     <ClInclude Include="RenderLogger.h" />
