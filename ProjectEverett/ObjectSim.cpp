@@ -115,6 +115,21 @@ void ObjectSim::CheckRotationLimits()
 	// TODO: rotation recalculation 
 }
 
+const glm::vec3& ObjectSim::GetWorldAxisVector(int axis)
+{
+	switch (axis)
+	{
+	case 0:
+		return worldRight;
+	case 1:
+		return worldUp;
+	case 2:
+		return worldFront;
+	default:
+		ThrowExceptionWMessage("Axis can only be 0, 1 or 2");
+	}
+}
+
 void ObjectSim::SetMovementSpeed(float speed, bool executeLinkedObjects)
 {
 	this->speed = speed;

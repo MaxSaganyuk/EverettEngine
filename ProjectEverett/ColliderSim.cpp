@@ -1,13 +1,14 @@
 #include "ColliderSim.h"
 
 #include <algorithm>
+#include <numbers>
 
 ColliderSim::ColliderSim(
 	const glm::vec3& pos,
 	const glm::vec3& scale,
 	float speed
 )
-	: ObjectSim(pos, scale, speed), isCollided(false), isActive(true) 
+	: ObjectSim(pos, scale, speed), isCollided(false), isActive(true)
 {
 	AppendToSortedVectorOfColliders();
 }
@@ -54,13 +55,6 @@ bool ColliderSim::SetSimInfoToLoad(std::string_view& line)
 	return res;
 }
 
-glm::quat& ColliderSim::GetOrientationAddr()
-{
-	static glm::quat placeholderOrient{};
-
-	return placeholderOrient;
-}
-
 ColliderSim::CollisionSet ColliderSim::SetDifference(
 	const CollisionSet& firstSet, const CollisionSet& secondSet
 )
@@ -76,6 +70,9 @@ ColliderSim::CollisionSet ColliderSim::SetDifference(
 
 void ColliderSim::ExecuteBroadCollisionCheck()
 {
+	// For a rotated box, max possible maxMin is full diagonal length (45 degree rotation)
+	constexpr float maxPossibleMaxMin = 0.5f * std::numbers::sqrt2_v<float>;
+
 	size_t amountOfColliders = collidersByAxis.size();
 
 	std::vector<bool> currentGeneralCollisonState(amountOfColliders, false);
@@ -85,8 +82,9 @@ void ColliderSim::ExecuteBroadCollisionCheck()
 	{
 		for (size_t j = i + 1; j < amountOfColliders; ++j)
 		{
-			bool doPruneCheck = !(collidersByAxis[j]->pos[axisToSortBy] - (collidersByAxis[j]->scale[axisToSortBy] / 2) >
-				                  collidersByAxis[i]->pos[axisToSortBy] + (collidersByAxis[i]->scale[axisToSortBy] / 2));
+			bool doPruneCheck = 
+				!(collidersByAxis[j]->pos[axisToSortBy] - (collidersByAxis[j]->scale[axisToSortBy] * maxPossibleMaxMin) >
+				  collidersByAxis[i]->pos[axisToSortBy] + (collidersByAxis[i]->scale[axisToSortBy] * maxPossibleMaxMin));
 
 			if (doPruneCheck)
 			{
@@ -102,10 +100,7 @@ void ColliderSim::ExecuteBroadCollisionCheck()
 					currentCollisionState.insert({ i, j });
 				}
 			}
-			else
-			{
-				break;
-			}
+			else break;
 		}
 
 		collidersByAxis[i]->isCollided = false;
@@ -134,7 +129,7 @@ void ColliderSim::AppendToSortedVectorOfColliders()
 {
 	collidersByAxis.emplace_back(this);
 	lastGeneralCollisionState.emplace_back(false);
-	ResortCollidersByXPos();
+	ResortCollidersByPos();
 }
 
 void ColliderSim::DeleteFromSortedVectorOfColliders()
@@ -191,7 +186,7 @@ void ColliderSim::AddCollisionCallbackImpl(const CollisionCallback& colCallback)
 	}
 }
 
-void ColliderSim::ResortCollidersByXPos()
+void ColliderSim::ResortCollidersByPos()
 {
 	std::sort(collidersByAxis.begin(), collidersByAxis.end(), ByPosSorter);
 }
@@ -202,19 +197,89 @@ bool ColliderSim::ByPosSorter(ColliderSim* firstCollider, ColliderSim* secondCol
 		secondCollider->pos[axisToSortBy] - (secondCollider->scale[axisToSortBy] / 2);
 }
 
-bool ColliderSim::ExecuteNarrowCollisionCheck(ColliderSim& firstCollider, ColliderSim& secondCollider)
+float ColliderSim::CalcProjectionRadius(ColliderSim& collider, const glm::vec3& axis)
+{
+	float projRad{};
+
+	for (int i = 0; i <3; ++i)
+	{
+		projRad += 
+			((collider.scale[i] / 2.0f) * glm::abs(glm::dot(axis, collider.orient.GetValue() * GetWorldAxisVector(i))));
+	}
+
+	return projRad;
+}
+
+glm::vec3 ColliderSim::GetCurrentAxis(ColliderSim& firstCollider, ColliderSim& secondCollider, int index)
+{
+	// 0-2 - a, 3-5 - b, 6-... - cross prod. each 0,1,2 - x y z
+	const glm::vec3& currentWorldAxisVect = GetWorldAxisVector(index % 3);
+	int setOfCalcs = index / 3;
+
+	if (setOfCalcs == 0)
+	{
+		return firstCollider.orient.GetValue() * currentWorldAxisVect;
+	}
+
+	glm::vec3 secondVect = secondCollider.orient.GetValue() * currentWorldAxisVect;
+
+	if (setOfCalcs == 1)
+	{
+		return secondVect;
+	}
+	else
+	{
+		return glm::cross(firstCollider.orient.GetValue() * GetWorldAxisVector(setOfCalcs - 2), secondVect);
+	}
+}
+
+bool ColliderSim::ExecuteAABBCheck(ColliderSim& firstCollider, ColliderSim& secondCollider)
 {
 	bool res = true;
 
 	for (int i = 0; i <3; ++i)
 	{
-		res = ((firstCollider.pos[i] + firstCollider.scale[i] / 2) - 
+		res = ((firstCollider.pos[i] + firstCollider.scale[i] / 2) -
 			   (secondCollider.pos[i] - secondCollider.scale[i] / 2)) > 0.0f &&
-			  ((firstCollider.pos[i] - firstCollider.scale[i] / 2) - 
+			  ((firstCollider.pos[i] - firstCollider.scale[i] / 2) -
 			   (secondCollider.pos[i] + secondCollider.scale[i] / 2)) < 0.0f;
 
 		if (!res) break;
 	}
+
+	return res;
+}
+
+bool ColliderSim::ExecuteOBBCheck(ColliderSim& firstCollider, ColliderSim& secondCollider)
+{
+	constexpr int FaceAmount = 3 * 2;
+	constexpr int CrossAmount = 3 * 3;
+	constexpr int OBBCalcAmount = FaceAmount + CrossAmount;
+	constexpr float error = 1e-5f;
+
+	for (int i = 0; i < OBBCalcAmount; ++i)
+	{
+		glm::vec3 currentAxis = glm::normalize(GetCurrentAxis(firstCollider, secondCollider, i));
+
+		float rA = CalcProjectionRadius(firstCollider, currentAxis);
+		float rB = CalcProjectionRadius(secondCollider, currentAxis);
+
+		float distance = glm::abs(glm::dot(secondCollider.pos.GetValue() - firstCollider.pos.GetValue(), currentAxis));
+
+		if (distance > rA + rB + error) return false;
+	}
+
+	return true;
+}
+
+bool ColliderSim::ExecuteNarrowCollisionCheck(ColliderSim& firstCollider, ColliderSim& secondCollider)
+{
+	constexpr glm::quat identityQuat = glm::identity<glm::quat>();
+
+	// Use simpler AABB check for unrotated colliders, otherwise go with OBB
+	// It's expected to execute OBB for any collider that was rotated at all, even if re-rotated back to default orientation
+	bool res = firstCollider.orient.GetValue() == identityQuat && secondCollider.orient.GetValue() == identityQuat ?
+		ExecuteAABBCheck(firstCollider, secondCollider) : ExecuteOBBCheck(firstCollider, secondCollider);
 
 	if (res)
 	{

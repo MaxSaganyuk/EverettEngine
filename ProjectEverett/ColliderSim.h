@@ -35,13 +35,6 @@ public:
 
 	std::string GetSimInfoToSave(const std::string& colliderName);
 	bool SetSimInfoToLoad(std::string_view& line);
-
-	// TODO: Implement math for narrow collision check for rotated colliders, for now
-	// rotations for colliders are not allowed
-	glm::quat& GetOrientationAddr() override;
-	void SetOrientation(const glm::quat& quat, bool executeLinkedObjects = true) override {};
-	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override {};
-	//
 private:
 	constexpr static char TypeName[] = "Collider";
 
@@ -60,10 +53,16 @@ private:
 
 	void AddCollisionCallbackImpl(const CollisionCallback& colCallback);
 
-	static void ResortCollidersByXPos();
+	static void ResortCollidersByPos();
 	static bool ByPosSorter(ColliderSim* firstCollider, ColliderSim* secondCollider);
 
+	static float CalcProjectionRadius(ColliderSim& collider, const glm::vec3& axis);
+	static glm::vec3 GetCurrentAxis(ColliderSim& firstCollider, ColliderSim& secondCollider, int index);
+
+	static bool ExecuteAABBCheck(ColliderSim& firstCollider, ColliderSim& secondCollider);
+	static bool ExecuteOBBCheck(ColliderSim& firstCollider, ColliderSim& secondCollider);
 	static bool ExecuteNarrowCollisionCheck(ColliderSim& firstCollider, ColliderSim& secondCollider);
+
 	static void ExecuteStartCallbacksFor(ColliderSim& colliderToExe, ColliderSim& bindedCollider);
 	static void ExecuteEndBindedCallbacksFor(ColliderSim& firstCollider, ColliderSim& secondCollider);
 	static void ExecuteEndAnyCallbacksFor(ColliderSim& colliderToExe);

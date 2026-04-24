@@ -23,6 +23,8 @@ protected:
 	std::string GetSimInfoToSaveImpl();
 	bool SetSimInfoToLoad(std::string_view& line);
 	void CheckRotationLimits();
+
+	static const glm::vec3& GetWorldAxisVector(int axis); // 0, 1 or 2
 	
 	constexpr static size_t realDirectionAmount = 6;
 

@@ -86,14 +86,6 @@ void CObjectEditDialog::SetupObjectParams()
 	bool isSound    = objectType == EverettEngine::ObjectTypes::Sound;
 	bool isCollider = objectType == EverettEngine::ObjectTypes::Collider;
 
-	// TODO: Remove after implementing rotated collider checks correctly
-	rotationEditButton.EnableWindow(!isCollider);
-	for (int i = 0; i <3; ++i)
-	{
-		objectInfoEdits[2][i].EnableWindow(!isCollider);
-	}
-	//
-
 	propText.ShowWindow(isSolid || isLight);
 	if (isSolid || isLight)
 	{
