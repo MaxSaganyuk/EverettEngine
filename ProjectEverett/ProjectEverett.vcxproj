@@ -176,6 +176,7 @@
     <ClInclude Include="ConceptUtils.h" />
     <ClInclude Include="CustomOutput.h" />
     <ClInclude Include="EverettEngine.h" />
+    <ClInclude Include="EverettException.h" />
     <ClInclude Include="EverettExceptionInternal.h" />
     <ClInclude Include="EverettStructs.h" />
     <ClInclude Include="external\ICameraSim.h" />
@@ -192,7 +193,6 @@
     <ClInclude Include="ModelInfo.h" />
     <ClInclude Include="PlaybackManager.h" />
     <ClInclude Include="RenderLogger.h" />
-    <ClInclude Include="scriptUtils\EverettException.h" />
     <ClInclude Include="ShaderGenerator.h" />
     <ClInclude Include="SimSerializer.h" />
     <ClInclude Include="SolidToModelManager.h" />

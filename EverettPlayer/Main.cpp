@@ -1,7 +1,7 @@
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
 #include <EverettEngine.h>
-#include <external/EverettException.h>
+#include <EverettException.h>
 
 #include <fstream>
 

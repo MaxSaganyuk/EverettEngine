@@ -19,7 +19,7 @@
 #include "MainFrm.h"
 #include "AdString.h"
 
-#include "external/EverettException.h"
+#include "EverettException.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

@@ -1,4 +1,4 @@
-#include "external/EverettException.h"
+#include "EverettException.h"
 
 #include <iostream>
 #include <cassert>

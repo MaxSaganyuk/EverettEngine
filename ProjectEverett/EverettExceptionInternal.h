@@ -1,6 +1,6 @@
 #pragma once
 
-#include "external/EverettException.h"
+#include "EverettException.h"
 
 #define ThrowException                                     throw EverettException(std::source_location::current())
 #define ThrowExceptionWMessage(message)                    throw EverettException(std::source_location::current(), message)

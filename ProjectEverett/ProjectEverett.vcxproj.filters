@@ -99,9 +99,6 @@
     <ClInclude Include="EverettExceptionInternal.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="scriptUtils\EverettException.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="external\ICameraSim.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
@@ -124,6 +121,9 @@
       <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="KeyScriptFuncInfo.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="EverettException.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
