@@ -38,11 +38,6 @@ public:
 private:
 	constexpr static char TypeName[] = "Collider";
 
-	enum Axis
-	{
-		X, Y, Z
-	};
-
 	struct CollisionCallback : public CollisionCallbackOptions
 	{
 		bool started{};
@@ -84,6 +79,6 @@ private:
 	static inline std::vector<bool> lastGeneralCollisionState;
 	static inline CollisionSet lastCollisionState;
 
-	constexpr static Axis axisToSortBy = Axis::X;
+	constexpr static size_t axisToSortBy = static_cast<size_t>(Axis::X);
 	static inline std::vector<ColliderSim*> collidersByAxis;
 };

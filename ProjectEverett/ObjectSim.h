@@ -23,8 +23,6 @@ protected:
 	std::string GetSimInfoToSaveImpl();
 	bool SetSimInfoToLoad(std::string_view& line);
 	void CheckRotationLimits();
-
-	static const glm::vec3& GetWorldAxisVector(int axis); // 0, 1 or 2
 	
 	constexpr static size_t realDirectionAmount = 6;
 
@@ -59,6 +57,7 @@ public:
 
 	static void InitializeObjectGraph();
 	static void SetRenderDeltaTime(float deltaTime);
+	static const glm::vec3& GetWorldAxisVector(Axis axis);
 
 	virtual void UpdatePosition();
 
@@ -90,6 +89,9 @@ public:
 	) override;
 	void MoveByAxis(
 		const glm::vec3& axis, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
+	) override;
+	void MoveByAxis(
+		Axis axis, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) override;
 
 	void LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects = true) override;

@@ -115,18 +115,18 @@ void ObjectSim::CheckRotationLimits()
 	// TODO: rotation recalculation 
 }
 
-const glm::vec3& ObjectSim::GetWorldAxisVector(int axis)
+const glm::vec3& ObjectSim::GetWorldAxisVector(Axis axis)
 {
 	switch (axis)
 	{
-	case 0:
+	case Axis::X:
 		return worldRight;
-	case 1:
+	case Axis::Y:
 		return worldUp;
-	case 2:
+	case Axis::Z:
 		return worldFront;
 	default:
-		ThrowExceptionWMessage("Axis can only be 0, 1 or 2");
+		ThrowExceptionWMessage("Unreachable");
 	}
 }
 
@@ -347,8 +347,16 @@ void ObjectSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& limitAxis, bo
 
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
-		ExecuteLinkedObjects(&ObjectSim::MoveByAxis, axis, limitAxis, executeLinkedObjects);
+		ExecuteLinkedObjects(
+			static_cast<void(ObjectSim::*)(const glm::vec3&, const glm::vec3&, bool)>(&ObjectSim::MoveByAxis),
+			axis, limitAxis, executeLinkedObjects
+		);
 	}
+}
+
+void ObjectSim::MoveByAxis(Axis axis, const glm::vec3& limitAxis, bool executeLinkedObjects)
+{
+	MoveByAxis(GetWorldAxisVector(axis), limitAxis, executeLinkedObjects);
 }
 
 void ObjectSim::LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects)

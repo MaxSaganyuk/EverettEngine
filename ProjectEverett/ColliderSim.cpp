@@ -204,7 +204,8 @@ float ColliderSim::CalcProjectionRadius(ColliderSim& collider, const glm::vec3& 
 	for (int i = 0; i <3; ++i)
 	{
 		projRad += 
-			((collider.scale[i] / 2.0f) * glm::abs(glm::dot(axis, collider.orient.GetValue() * GetWorldAxisVector(i))));
+			((collider.scale[i] / 2.0f) * 
+			glm::abs(glm::dot(axis, collider.orient.GetValue() * GetWorldAxisVector(static_cast<Axis>(i)))));
 	}
 
 	return projRad;
@@ -213,7 +214,7 @@ float ColliderSim::CalcProjectionRadius(ColliderSim& collider, const glm::vec3& 
 glm::vec3 ColliderSim::GetCurrentAxis(ColliderSim& firstCollider, ColliderSim& secondCollider, int index)
 {
 	// 0-2 - a, 3-5 - b, 6-... - cross prod. each 0,1,2 - x y z
-	const glm::vec3& currentWorldAxisVect = GetWorldAxisVector(index % 3);
+	const glm::vec3& currentWorldAxisVect = GetWorldAxisVector(static_cast<Axis>(index % 3));
 	int setOfCalcs = index / 3;
 
 	if (setOfCalcs == 0)
@@ -229,7 +230,9 @@ glm::vec3 ColliderSim::GetCurrentAxis(ColliderSim& firstCollider, ColliderSim& s
 	}
 	else
 	{
-		return glm::cross(firstCollider.orient.GetValue() * GetWorldAxisVector(setOfCalcs - 2), secondVect);
+		return glm::cross(
+			firstCollider.orient.GetValue() * GetWorldAxisVector(static_cast<Axis>(setOfCalcs - 2)), secondVect
+		);
 	}
 }
 
