@@ -1513,14 +1513,14 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 				std::cerr << dllName << " was changed, can't guarantee correct execution\n";
 			}
 
-			SetupScriptDLL(dllPath);
+			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"));
 		}
 	}
 	else
 	{
 		for (auto& [dllName, dllPath] : legacyDllInfo)
 		{
-			SetupScriptDLL(dllPath);
+			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"));
 		}
 	}
 }

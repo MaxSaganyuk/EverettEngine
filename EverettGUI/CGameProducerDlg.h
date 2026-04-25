@@ -47,22 +47,18 @@ private:
 
 	static inline std::vector<AdString> foldersToCopy
 	{
-		"fonts",
-		"shaders"
+		"fonts", "shaders"
 	};
 
 	static inline std::vector<AdString> filesToCopy
 	{
-		"EverettPlayer.exe",
-		"LGL.dll",
-		"EverettCore.dll",
+		"EverettPlayer.exe", "LGL.dll", "EverettCore.dll", "freetype.dll", "OpenAL32.dll", "libcrypto-3-x64.dll",
+		"libssl-3-x64.dll",
 #ifdef _DEBUG
 		"assimp-vc143-mtd.dll",
 #else
 		"assimp-vc143-mt.dll",
 #endif
-		"freetype.dll",
-		"OpenAL32.dll"
 	};
 
 	constexpr static const char configFileName[] = "config.ini";
