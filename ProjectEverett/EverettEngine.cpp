@@ -395,7 +395,6 @@ void EverettEngine::RunRenderWindow()
 		{
 			mainLGL->SetShaderUniformValue("Bones", finalTransforms, defaultShaderProgram);
 		}
-		animSystem->ResetFinalTransforms();
 
 		if (models.size())
 		{
@@ -487,12 +486,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		{
 			for (auto& solidPtr : model.GetRelatedSolids())
 			{
-				SolidSim& solid = *solidPtr;
-
-				if (solid.IsModelAnimationPlaying())
-				{
-					animSystem->ProcessAnimations(*modelAnimPtr, solid);
-				}
+				animSystem->ProcessAnimations(*modelAnimPtr, *solidPtr);
 			}
 		}
 

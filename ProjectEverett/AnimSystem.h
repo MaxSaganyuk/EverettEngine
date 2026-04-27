@@ -67,7 +67,6 @@ public:
 
 	void ProcessAnimations(ModelAnim& modelAnim, SolidSim& solid);
 	std::vector<glm::mat4>& GetFinalTransforms();
-	void ResetFinalTransforms();
 	void IncrementTotalBoneAmount(ModelAnim& modelAnim);
 	size_t GetTotalBoneAmount();
 private:
@@ -82,13 +81,20 @@ private:
 		glm::mat4& globalInverseTransform,
 		AnimKeyMap& animKeyMap
 	);
-	void CollectAllFinalTransforms(
-		BoneTree::TreeManagerNode* boneTreeNode,
-		size_t startingBoneIndex,
-		std::vector<glm::mat4>& finalTransforms
+
+	using FinalTransformAssigner = void(AnimSystem::*)(BoneTree::TreeManagerNode*, size_t, int);
+
+	void FinalTransformAssignIdentity(BoneTree::TreeManagerNode* boneTreeNode, size_t startBoneIndex, int currentID);
+	void FinalTransformAssignData(BoneTree::TreeManagerNode* boneTreeNode, size_t startBoneIndex, int currentID);
+
+	void ExecuteAssignFinalTransforms(BoneTree& boneTree, size_t startingBoneIndex, FinalTransformAssigner assigner);
+	void AssignFinalTransforms(
+		BoneTree::TreeManagerNode* boneTreeNode, size_t startingBoneIndex, FinalTransformAssigner assigner
 	);
+	void ResetFinalTransforms();
 
 	std::vector<glm::mat4> finalTransforms;
+	std::unordered_map<size_t, bool> resetTracker;
 
 	size_t totalBoneAmount = 0;
 };

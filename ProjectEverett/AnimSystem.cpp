@@ -83,22 +83,32 @@ void AnimSystem::ParseBoneTree(
 	}
 }
 
-void AnimSystem::CollectAllFinalTransforms(
-	BoneTree::TreeManagerNode* boneTreeNode,
-	size_t startingBoneIndex,
-	std::vector<glm::mat4>& finalTransforms
+void AnimSystem::FinalTransformAssignIdentity(
+	BoneTree::TreeManagerNode* boneTreeNode, size_t startBoneIndex, int currentID
+)
+{
+	finalTransforms[startBoneIndex + currentID] = glm::mat4(1.0f);
+}
+
+void AnimSystem::FinalTransformAssignData(BoneTree::TreeManagerNode* boneTreeNode, size_t startBoneIndex, int currentID)
+{
+	finalTransforms[startBoneIndex + currentID] = boneTreeNode->GetValue().finalTransform;
+}
+
+void AnimSystem::AssignFinalTransforms(
+	BoneTree::TreeManagerNode* boneTreeNode, size_t startingBoneIndex, FinalTransformAssigner assigner
 )
 {
 	int currentID = boneTreeNode->GetValue().id;
 
 	if (currentID != -1)
 	{
-		finalTransforms[startingBoneIndex + currentID] = boneTreeNode->GetValue().finalTransform;
+		(this->*assigner)(boneTreeNode, startingBoneIndex, currentID);
 	}
 
 	for (auto& [childNodeName, childNode] : boneTreeNode->GetChildNodes())
 	{
-		CollectAllFinalTransforms(childNode, startingBoneIndex, finalTransforms);
+		AssignFinalTransforms(childNode, startingBoneIndex, assigner);
 	}
 }
 
@@ -106,21 +116,45 @@ void AnimSystem::ProcessAnimations(ModelAnim& modelAnim, SolidSim& solid)
 {
 	if (!modelAnim.animInfoVect.empty())
 	{
-		if (!solid.IsModelAnimationPaused())
-		{
-			for (auto& [childNodeName, childNode] : modelAnim.boneTree.GetChildNodes())
-			{
-				ParseBoneTree(
-					childNode, solid.GetModelCurrentAnimationTime(), solid.GetModelAnimation(),
-					modelAnim.globalInverseTransform, modelAnim.animKeyMap
-				);
-			}
-		}
+		// On Play - parse and assign data, on pause - ignore all, on stop - assign identity mats only once (singular reset)
+		size_t currentStartBoneIndex = solid.GetModelCurrentStartingBoneIndex();
+		bool toReset = resetTracker[currentStartBoneIndex];
+		bool isPlaying = solid.IsModelAnimationPlaying();
+		bool isPaused = solid.IsModelAnimationPaused();
 
-		for (auto& [childNodeName, childNode] : modelAnim.boneTree.GetChildNodes())
+		if (!isPaused || (!isPlaying && toReset))
 		{
-			CollectAllFinalTransforms(childNode, solid.GetModelCurrentStartingBoneIndex(), finalTransforms);
+			if (!isPaused)
+			{
+				for (auto& [childNodeName, childNode] : modelAnim.boneTree.GetChildNodes())
+				{
+					ParseBoneTree(
+						childNode, solid.GetModelCurrentAnimationTime(), solid.GetModelAnimation(),
+						modelAnim.globalInverseTransform, modelAnim.animKeyMap
+					);
+				}
+			}
+
+			// This avoids rechecking for required form of assignment (either 1.0f or real data) on every call
+			// (No "reset ? glm::mat4(1.0f) : boneTreeNode->GetValue().finalTransform;")
+			// And avoids creating a duplicate funcs for recursive logic
+			ExecuteAssignFinalTransforms(
+				modelAnim.boneTree, currentStartBoneIndex, 
+				isPlaying ? &AnimSystem::FinalTransformAssignData : &AnimSystem::FinalTransformAssignIdentity
+			);
+
+			resetTracker[currentStartBoneIndex] = isPlaying;
 		}
+	}
+}
+
+void AnimSystem::ExecuteAssignFinalTransforms(
+	BoneTree& boneTree, size_t startingBoneIndex, FinalTransformAssigner assigner
+)
+{
+	for (auto& [childNodeName, childNode] : boneTree.GetChildNodes())
+	{
+		AssignFinalTransforms(childNode, startingBoneIndex, assigner);
 	}
 }
 
@@ -137,6 +171,9 @@ void AnimSystem::ResetFinalTransforms()
 void AnimSystem::IncrementTotalBoneAmount(ModelAnim& modelAnim)
 {
 	totalBoneAmount += modelAnim.boneAmount;
+	resetTracker.emplace(modelAnim.boneAmount, false);
+
+	ResetFinalTransforms();
 }
 
 size_t AnimSystem::GetTotalBoneAmount()
