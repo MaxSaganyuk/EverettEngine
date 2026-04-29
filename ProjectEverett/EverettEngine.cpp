@@ -471,7 +471,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 	modelInfo->shaderProgram = defaultShaderProgram;
 	modelInfo->render = false;
 
-	modelInfo->modelBehaviour = [this, name]()
+	modelSolidInfo.SetModelBehaviour([this, name]()
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = models[name];
@@ -517,9 +517,9 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 			}
 			nextStartSolidIndex = index;
 		}
-	};
+	});
 
-	modelInfo->generalMeshBehaviour = [this, name](int meshIndex)
+	modelSolidInfo.SetGeneralMeshBehaviour([this, name](int meshIndex)
 	{
 		// Existence of the lambda implies existence of the model
 		auto& model = models[name];
@@ -538,7 +538,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 			++index;
 		}
-	};
+	});
 
 	if (regenerateShader)
 	{

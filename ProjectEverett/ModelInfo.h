@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_set>
+#include <functional>
 
 #include "LGLStructs.h"
 #include "AnimSystem.h"
@@ -23,9 +24,14 @@ public:
 	const FullModelInfo& GetFullModelInfo() const;
 	void InsertRelatedSolid(SolidSim& solid);
 	void EraseFromRelatedSolids(SolidSim& solid);
+	void SetModelBehaviour(std::function<void()> func);
+	void SetGeneralMeshBehaviour(std::function<void(int)> func);
 	const std::unordered_set<SolidSim*>& GetRelatedSolids() const;
 private:
-	void ResetModelPtr();
+	void SetupModelInfo(bool set);
+
+	std::function<void()> modelBehaviour;
+	std::function<void(int)> generalMeshBehaviour;
 
 	std::string modelName;
 	std::string modelPath;

@@ -6,7 +6,7 @@ ModelInfo::ModelInfo(const std::string& modelName, const std::string& modelPath,
 
 ModelInfo::~ModelInfo()
 {
-	ResetModelPtr();
+	SetupModelInfo(false);
 }
 
 const std::string& ModelInfo::GetModelName() const
@@ -26,6 +26,11 @@ const ModelInfo::FullModelInfo& ModelInfo::GetFullModelInfo() const
 
 void ModelInfo::InsertRelatedSolid(SolidSim& solid)
 {
+	if (relatedSolids.empty())
+	{
+		SetupModelInfo(true);
+	}
+
 	solid.STMM.InitializeSTMM(model, modelName);
 	relatedSolids.insert(&solid);
 }
@@ -36,7 +41,7 @@ void ModelInfo::EraseFromRelatedSolids(SolidSim& solid)
 
 	if (relatedSolids.empty())
 	{
-		ResetModelPtr();
+		SetupModelInfo(false);
 	}
 }
 
@@ -45,19 +50,32 @@ const std::unordered_set<SolidSim*>& ModelInfo::GetRelatedSolids() const
 	return relatedSolids;
 }
 
-void ModelInfo::ResetModelPtr()
+void ModelInfo::SetModelBehaviour(std::function<void()> func)
+{
+	modelBehaviour = std::move(func);
+}
+
+void ModelInfo::SetGeneralMeshBehaviour(std::function<void(int)> func)
+{
+	generalMeshBehaviour = std::move(func);
+}
+
+void ModelInfo::SetupModelInfo(bool set)
 {
 	auto modelPtr = model.first.lock();
 
 	if (modelPtr)
 	{
-		modelPtr->render = false;
-		modelPtr->modelBehaviour = nullptr;
-		modelPtr->generalMeshBehaviour = nullptr;
+		modelPtr->render = set;
+		modelPtr->modelBehaviour = set ? modelBehaviour : nullptr;
+		modelPtr->generalMeshBehaviour = set ? generalMeshBehaviour : nullptr;
 
-		for (auto& mesh : modelPtr->meshes)
+		if (!set)
 		{
-			mesh.behaviour.ResetValue();
+			for (auto& mesh : modelPtr->meshes)
+			{
+				mesh.behaviour.ResetValue();
+			}
 		}
 	}
 }
