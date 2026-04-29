@@ -226,6 +226,7 @@ void SolidToModelManager::StopAnimation()
 {
 	CheckIfInitialized();
 
+	resetAnim = true;
 	animStates.Stop();
 	ResetAnimationTime();
 }
@@ -267,8 +268,8 @@ double SolidToModelManager::GetAnimationTimeTicks(double currentTime)
 
 	if (!animStates.IsLooped() && animationTime < lastAnimationTime)
 	{
-		timeInTicks = lastAnimationTime = 0.0;
-		animStates.Stop();
+		StopAnimation();
+		animationTime = lastAnimationTime;
 	}
 
 	lastAnimationTime = animationTime;
@@ -283,18 +284,38 @@ double SolidToModelManager::GetCurrentAnimationTime()
 	return GetAnimationTimeTicks(animStates.GetCurrentTime());
 }
 
-void SolidToModelManager::AppendStartingBoneIndex(size_t staringBoneIndex)
+void SolidToModelManager::SetStartBoneIndexRef(const size_t& startingBoneIndex)
 {
 	CheckIfInitialized();
 
-	startingBoneIndexes.push_back(staringBoneIndex);
+	startBoneIndexPtr = &startingBoneIndex;
 }
 
 size_t SolidToModelManager::GetCurrentStartingBoneIndex()
 {
 	CheckIfInitialized();
 
-	return startingBoneIndexes[currentAnimationIndex];
+	return *startBoneIndexPtr;
+}
+
+size_t SolidToModelManager::GetModelBoneAmount()
+{
+	CheckIfInitialized();
+
+	return fullModelInfoP->second.lock()->boneAmount;
+}
+
+bool SolidToModelManager::IsAnimationResetRequired()
+{
+	CheckIfInitialized();
+
+	if (resetAnim)
+	{
+		resetAnim = false;
+		return true;
+	}
+
+	return false;
 }
 
 void SolidToModelManager::CheckIfInitialized()

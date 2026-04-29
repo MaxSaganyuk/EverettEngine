@@ -68,7 +68,9 @@ public:
 	void ProcessAnimations(ModelAnim& modelAnim, SolidSim& solid);
 	std::vector<glm::mat4>& GetFinalTransforms();
 	void IncrementTotalBoneAmount(ModelAnim& modelAnim);
+	void DecrementTotalBoneAmount(SolidSim& solid);
 	size_t GetTotalBoneAmount();
+	const size_t& GetLastStartBoneIndexRef();
 private:
 	template<typename GLMType>
 	void InterpolateKey(std::vector<std::pair<double, GLMType>>& keys, GLMType& res, double animTime);
@@ -91,10 +93,10 @@ private:
 	void AssignFinalTransforms(
 		BoneTree::TreeManagerNode* boneTreeNode, size_t startingBoneIndex, FinalTransformAssigner assigner
 	);
-	void ResetFinalTransforms();
+	void AppendToFinalTransforms(size_t amount);
+	void CutAndGlueFinalTransforms(size_t startPoint, size_t amount);
+	void CutAndRecalcStartBoneIndexes(size_t startBoneIndex, size_t boneAmount);
 
 	std::vector<glm::mat4> finalTransforms;
-	std::unordered_map<size_t, bool> resetTracker;
-
-	size_t totalBoneAmount = 0;
+	std::list<size_t> startBoneIndexes;
 };

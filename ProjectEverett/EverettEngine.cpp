@@ -579,11 +579,10 @@ bool EverettEngine::CreateSolidImpl(
 
 		models[modelName].InsertRelatedSolid(newSolid);
 
-		for (auto& animInfo : modelAnimPtr->animInfoVect)
-		{
-			newSolid.AppendModelStartingBoneIndex(animSystem->GetTotalBoneAmount());
-			animSystem->IncrementTotalBoneAmount(*modelAnimPtr);
-		}
+		animSystem->IncrementTotalBoneAmount(*modelAnimPtr);
+		// We pass start bone index reference for automated reassignment of start bone index in all created
+		// solids without looping through the map on deletion of one specific solid removing entire O(n) walkthrough
+		newSolid.SetModelStartBoneIndexRef(animSystem->GetLastStartBoneIndexRef());
 
 		if (forceVisible)
 		{
@@ -841,6 +840,7 @@ bool EverettEngine::DeleteSolid(const std::string& solidName)
 EverettEngine::SolidCollection::iterator EverettEngine::DeleteSolidImpl(SolidCollection::iterator solidIter)
 {
 	allNameTracker.erase(&solidIter->first);
+	animSystem->DecrementTotalBoneAmount(solidIter->second);
 	return solids.erase(solidIter);
 }
 

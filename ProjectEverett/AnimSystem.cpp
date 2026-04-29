@@ -1,5 +1,4 @@
 #include "AnimSystem.h"
-#include "LGL.h"
 #include "SolidSim.h"
 
 void AnimSystem::InterpolateImpl(const glm::vec3& vec1, const glm::vec3& vec2, glm::vec3& resVec, float factor)
@@ -117,12 +116,10 @@ void AnimSystem::ProcessAnimations(ModelAnim& modelAnim, SolidSim& solid)
 	if (!modelAnim.animInfoVect.empty())
 	{
 		// On Play - parse and assign data, on pause - ignore all, on stop - assign identity mats only once (singular reset)
-		size_t currentStartBoneIndex = solid.GetModelCurrentStartingBoneIndex();
-		bool toReset = resetTracker[currentStartBoneIndex];
 		bool isPlaying = solid.IsModelAnimationPlaying();
 		bool isPaused = solid.IsModelAnimationPaused();
 
-		if (!isPaused || (!isPlaying && toReset))
+		if (!isPaused || (!isPlaying && solid.IsModelAnimationResetRequired()))
 		{
 			if (!isPaused)
 			{
@@ -139,11 +136,9 @@ void AnimSystem::ProcessAnimations(ModelAnim& modelAnim, SolidSim& solid)
 			// (No "reset ? glm::mat4(1.0f) : boneTreeNode->GetValue().finalTransform;")
 			// And avoids creating a duplicate funcs for recursive logic
 			ExecuteAssignFinalTransforms(
-				modelAnim.boneTree, currentStartBoneIndex, 
+				modelAnim.boneTree, solid.GetModelCurrentStartingBoneIndex(),
 				isPlaying ? &AnimSystem::FinalTransformAssignData : &AnimSystem::FinalTransformAssignIdentity
 			);
-
-			resetTracker[currentStartBoneIndex] = isPlaying;
 		}
 	}
 }
@@ -163,20 +158,70 @@ std::vector<glm::mat4>& AnimSystem::GetFinalTransforms()
 	return finalTransforms;
 }
 
-void AnimSystem::ResetFinalTransforms()
+void AnimSystem::AppendToFinalTransforms(size_t amount)
 {
-	finalTransforms = std::vector<glm::mat4>(GetTotalBoneAmount(), glm::mat4(1.0f));
+	finalTransforms.insert(finalTransforms.end(), amount, glm::mat4(1.0f));
+}
+
+void AnimSystem::CutAndGlueFinalTransforms(size_t startPoint, size_t amount)
+{
+	std::vector<glm::mat4> finalTransformSubstitute;
+
+	finalTransformSubstitute.insert(
+		finalTransformSubstitute.end(), finalTransforms.begin(), finalTransforms.begin() + startPoint
+	);
+	finalTransformSubstitute.insert(
+		finalTransformSubstitute.end(), finalTransforms.begin() + startPoint + amount, finalTransforms.end()
+	);
+
+	finalTransforms = std::move(finalTransformSubstitute);
+}
+
+void AnimSystem::CutAndRecalcStartBoneIndexes(size_t startBoneIndex, size_t boneAmount)
+{
+	bool indexFound = false;
+
+	for (auto iter = startBoneIndexes.begin(); iter != startBoneIndexes.end();)
+	{
+		if (indexFound)
+		{
+			(*iter) -= boneAmount;
+		}
+
+		if (!indexFound && *iter == startBoneIndex)
+		{
+			iter = startBoneIndexes.erase(iter);
+			indexFound = true;
+		}
+		else
+		{
+			++iter;
+		}
+	}
 }
 
 void AnimSystem::IncrementTotalBoneAmount(ModelAnim& modelAnim)
 {
-	totalBoneAmount += modelAnim.boneAmount;
-	resetTracker.emplace(modelAnim.boneAmount, false);
+	startBoneIndexes.push_back(finalTransforms.size());
 
-	ResetFinalTransforms();
+	AppendToFinalTransforms(modelAnim.boneAmount);
+}
+
+void AnimSystem::DecrementTotalBoneAmount(SolidSim& solid)
+{
+	size_t currentSolidStartBoneIndex = solid.GetModelCurrentStartingBoneIndex();
+	size_t modelBoneAmount = solid.GetModelBoneAmount();
+
+	CutAndGlueFinalTransforms(currentSolidStartBoneIndex, modelBoneAmount);
+	CutAndRecalcStartBoneIndexes(currentSolidStartBoneIndex, modelBoneAmount);
 }
 
 size_t AnimSystem::GetTotalBoneAmount()
 {
-	return totalBoneAmount;
+	return finalTransforms.size();
+}
+
+const size_t& AnimSystem::GetLastStartBoneIndexRef()
+{
+	return startBoneIndexes.back();
 }

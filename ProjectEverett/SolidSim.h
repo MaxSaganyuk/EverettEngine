@@ -92,6 +92,8 @@ public:
 
 	// Animation access; engine only
 	double GetModelCurrentAnimationTime();
-	void AppendModelStartingBoneIndex(size_t startingBoneIndex);
+	void SetModelStartBoneIndexRef(const size_t& startingBoneIndexRef);
 	size_t GetModelCurrentStartingBoneIndex();
+	size_t GetModelBoneAmount();
+	bool IsModelAnimationResetRequired();
 };

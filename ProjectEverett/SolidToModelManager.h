@@ -49,8 +49,10 @@ public:
 	void SetAnimationPlaybackCallback(std::function<void(bool, bool, bool)> callback);
 
 	double GetCurrentAnimationTime();
-	void AppendStartingBoneIndex(size_t startingBoneIndex);
+	void SetStartBoneIndexRef(const size_t& startingBoneIndex);
 	size_t GetCurrentStartingBoneIndex();
+	size_t GetModelBoneAmount();
+	bool IsAnimationResetRequired();
 private:
 	friend class SolidSim;
 
@@ -64,15 +66,17 @@ private:
 
 	bool initialized;
 
+	bool resetAnim{};
 	std::string modelName;
 	double animationSpeed;
 	double lastAnimationTime;
 	size_t currentAnimationIndex;
-	std::vector<size_t> startingBoneIndexes;
 	PlaybackManager animStates;
 
 	std::vector<bool> meshVisibility;
 	glm::vec4 modelDefaultColor;
+
+	const size_t* startBoneIndexPtr;
 	
 	ModelInfo::FullModelInfo* fullModelInfoP;
 };
