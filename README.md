@@ -1,5 +1,5 @@
 <p align="center">
-<img width="500" height="250" alt="title" src="docs/title.png" />
+<img width="500" height="250" alt="title" src="https://github.com/MaxSaganyuk/EverettEngine/blob/main/Docs/title.png" />
 </p>
 
 # ProjectEverett
@@ -16,7 +16,7 @@ Third party includes: Assimp for model loading with animation info, OpenAL for s
 
 Main windows looks like so. Window on the left is a render window, on the right - interactable GUI:
 
-![image](docs/pic1.png)
+![image](https://github.com/MaxSaganyuk/EverettEngine/blob/main/Docs/pic1.png)
 
 Features include:
 
@@ -40,11 +40,11 @@ Placing light and sound objects work the same way. All objects exist in space. S
 
 Light, sound and collider objects are represented in space via transparent colored gizmos. Yellow for light, blue for sound
 
-![image](docs/pic2.png)
+![image](https://github.com/MaxSaganyuk/EverettEngine/blob/main/Docs/pic2.png)
 
 For colliders there are two colors - green for non colliding and red for colliding (all gifs below have lower FPS than the engine is capable of)
 
-![image](docs/mov1.gif)
+![image](https://github.com/MaxSaganyuk/EverettEngine/blob/main/Docs/mov1.gif)
 
 ### Scripting
 
@@ -88,11 +88,11 @@ Object linking is a feature that allows to link calls to objects, this removes n
 
 Box and its collider without object linking:
 
-![image](docs/mov3.gif)
+![image](https://github.com/MaxSaganyuk/EverettEngine/blob/main/Docs/mov3.gif)
 
 Box and its collider with object linking:
 
-![image](docs/mov4.gif)
+![image](https://github.com/MaxSaganyuk/EverettEngine/blob/main/Docs/mov4.gif)
 
 #### Binding (key binds and collision binds)
 
@@ -110,7 +110,7 @@ Demonstration of linking and binding (perspective causes illusion of an error):
 
 In this script pressing I and P keys moves the collider, pressing R key rotates the box, which rotates box collider due to linking, and if box collider and (specifically) "free" collider hit - spot light in the scene changes color to blue. When collision stops - back to yellow. 
 
-![image](docs/mov6.gif)
+![image](https://github.com/MaxSaganyuk/EverettEngine/blob/main/Docs/mov6.gif)
 
 Code that executes this behaviour:
 
@@ -167,7 +167,7 @@ ScriptCleanUp()
 
 Animations can be playbacked through the engine or from scripting. 
 
-![image](docs/mov2.gif)
+![image](https://github.com/MaxSaganyuk/EverettEngine/blob/main/Docs/mov2.gif)
 
 Engine supports unlimited amount of animations to be playbacked at different times for different solids as well. (The internally used shader will be recompiled dynamically see ShaderGenerator)
 
@@ -179,7 +179,7 @@ You can save and load your work from Save/Load. Custom esav file will be created
 
 It's possible to produce a runnable game via EverettPlayer.exe. 
 
-![image](docs/pic3.png)
+![image](https://github.com/MaxSaganyuk/EverettEngine/blob/main/Docs/pic3.png)
 
 After confirming folder and starting world save - required exe, dlls and assets will automatically be copied to chosen folder.
 
