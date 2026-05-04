@@ -13,7 +13,7 @@ MFCTreeManager::MFCTreeManagerNode::MFCTreeManagerNode(
 
 void MFCTreeManager::MFCTreeManagerNode::AddNode(const AdString& title, const AdString& data)
 {
-	if (!nextNodes.contains(title))
+	if (!nextNodes.contains(data))
 	{
 		HTREEITEM newNodeInfo = objectTree.InsertItem(title + L": " + data, nodeInfo);
 
@@ -72,7 +72,7 @@ CTreeCtrl& MFCTreeManager::GetTreeCtrl()
 
 void MFCTreeManager::AddRootNode(const AdString& title, const AdString& data)
 {
-	if (!rootNodes.contains(title))
+	if (!rootNodes.contains(data))
 	{
 		HTREEITEM newNodeInfo = objectTree.InsertItem(title + L": " + data);
 		rootNodes.emplace(
