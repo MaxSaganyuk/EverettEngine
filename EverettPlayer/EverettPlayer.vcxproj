@@ -138,6 +138,8 @@
       <Command>xcopy $(TargetDir)..\..\ProjectEverett\fonts $(TargetDir)\fonts /i
 xcopy $(TargetDir)..\..\ProjectEverett\shaders $(TargetDir)\shaders /i
 xcopy $(TargetDir)..\..\ProjectEverett\models $(TargetDir)\models /i
+xcopy $(TargetDir)..\..\ProjectEverett\external $(TargetDir)\external /i
+xcopy $(TargetDir)..\..\ThirdParty\includes\glm $(TargetDir)\external\glm /e /i /k /y
 copy $(TargetDir)..\..\ThirdParty\dlls\Release\*.dll $(TargetDir)
 mkdir $(TargetDir)shaders
 del /q "$(TargetDir)*.exp"

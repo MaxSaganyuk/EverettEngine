@@ -137,10 +137,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="EverettScript.h" />
+    <ClCompile Include="EverettScript.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EverettScript.cpp" />
+    <ClInclude Include="..\ProjectEverett\external\EverettScript.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
