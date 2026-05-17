@@ -1,9 +1,5 @@
 name: MSBuild
 
-on:
-  push:
-    branches: [ "main" ]
-
 env:
   SOLUTION_FILE_PATH: .
   BUILD_CONFIGURATION: Release
@@ -13,7 +9,7 @@ permissions:
   
 jobs:
   build:
-    runs-on: windows-2025-vs2026
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v4
