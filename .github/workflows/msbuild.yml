@@ -19,19 +19,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-        
-    - name: Install MFC
-      shell: powershell
-      run: |
-         $installer = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe"
 
-         & $installer modify `
-         --installPath "C:\Program Files\Microsoft Visual Studio\2026\Enterprise" `
-         --add Microsoft.VisualStudio.Component.VC.ATLMFC `
-         --passive `
-         --norestart `
-         --wait
-      
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1.3
 
