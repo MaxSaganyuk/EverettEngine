@@ -126,7 +126,7 @@ const glm::vec3& ObjectSim::GetWorldAxisVector(Axis axis)
 	case Axis::Z:
 		return worldFront;
 	default:
-		ThrowExceptionWMessage("Unreachable");
+		std::unreachable();
 	}
 }
 

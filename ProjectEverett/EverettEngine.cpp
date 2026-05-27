@@ -1195,7 +1195,7 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 		object = GetObjectFromTheMap(colliders, objectName);
 		break;
 	default:
-		ThrowExceptionWMessage("Unreachable");
+		std::unreachable();
 	}
 
 #ifdef _DEBUG
@@ -1561,7 +1561,7 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 				LoadColliderFromLine(line, objectInfo);
 				break;
 			default:
-				ThrowExceptionWMessage("Unreachable");
+				std::unreachable();
 			}
 		}
 	}
@@ -1612,7 +1612,7 @@ AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 				assetPaths.soundPaths.insert(objectInfo[ObjectInfoNames::Path]);
 				break;
 			default:
-				ThrowExceptionWMessage("Unreachable");
+				std::unreachable();
 			}
 		}
 
@@ -1764,7 +1764,7 @@ std::generator<std::string_view> EverettEngine::GetNamesByObject(ObjectTypes obj
 	case ObjectTypes::Collider:
 		return GetColliderList();
 	default:
-		ThrowExceptionWMessage("Unreachable");
+		std::unreachable();
 	}
 }
 

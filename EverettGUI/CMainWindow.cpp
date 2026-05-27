@@ -194,7 +194,7 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 			deleterFunc = [this](const std::string& colliderName) { return engineP->DeleteCollider(colliderName); };
 			break;
 		default:
-			assert(false && "unreachable");
+			std::unreachable();
 		}
 	}
 	else if (currentType == ObjectTypes::Solid && selectedNodes.size() == validSubnodeAmount[currentType] - 1)

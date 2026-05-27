@@ -134,7 +134,7 @@ void CObjectEditDialog::SetupObjectParams()
 		castedColliderInterface = dynamic_cast<IColliderSim*>(&currentObjectInterface);
 		break;
 	default:
-		throw std::runtime_error("Unreachable");
+		std::unreachable();
 	}
 
 	if (isSolid || isSound)
