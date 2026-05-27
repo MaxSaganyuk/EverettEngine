@@ -12,6 +12,7 @@
 #include <mutex>
 #include <typeindex>
 #include <generator>
+#include <span>
 
 #include "AnimSystem.h"
 
@@ -100,8 +101,7 @@ class FileLoader
 		bool LoadTexture(
 			const std::string& file,
 			LGLStructs::Texture& texture,
-			unsigned char* data = nullptr,
-			size_t dataSize = 0
+			std::span<unsigned char> data
 		);
 	public:
 		bool LoadModel(

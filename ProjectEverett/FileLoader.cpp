@@ -148,15 +148,15 @@ void FileLoader::DeleteAllAbsentAssets(const EverettStructs::AssetPaths& assetPa
 bool FileLoader::ModelLoader::LoadTexture(
 	const std::string& file, 
 	LGLStructs::Texture& texture, 
-	unsigned char* data, 
-	size_t dataSize
+	std::span<unsigned char> data
 )
 {
-	stbi_set_flip_vertically_on_load(data == nullptr);
+	stbi_set_flip_vertically_on_load(data.empty());
 
-	texture.data = data ? 
-		stbi_load_from_memory(data, static_cast<int>(dataSize), &texture.width, &texture.height, &texture.channelAmount, 0) :
-		stbi_load(file.c_str(), &texture.width, &texture.height, &texture.channelAmount, 0);
+	texture.data = !data.empty() ?
+		stbi_load_from_memory(
+			data.data(), static_cast<int>(data.size()), &texture.width, &texture.height, &texture.channelAmount, 0
+		) : stbi_load(file.c_str(), &texture.width, &texture.height, &texture.channelAmount, 0);
 
 	if (texture.data)
 	{
@@ -386,8 +386,9 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 					LoadTexture(
 						fileProcessed,
 						newTexture,
-						embeddedTexture ? reinterpret_cast<unsigned char*>(embeddedTexture->pcData) : nullptr,
-						embeddedTexture ? embeddedTexture->mWidth : -1
+						embeddedTexture ? 
+						std::span{ reinterpret_cast<unsigned char*>(embeddedTexture->pcData), embeddedTexture->mWidth } : 
+						std::span<unsigned char>{}
 					);
 					tempTexMap.emplace(newTexture.name, newTexture);
 				}
