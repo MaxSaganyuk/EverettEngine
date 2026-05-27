@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <ranges>
+#include <generator>
 
 #include "external/ILightSim.h"
 #include "ObjectSim.h"
@@ -32,7 +33,7 @@ public:
 	LightTypes GetLightType();
 	static size_t GetAmountOfLightsByType(LightTypes lightType);
 
-	static std::vector<std::string> GetLightTypeNames();
+	static std::generator<std::string_view> GetLightTypeNames();
 	std::string GetCurrentLightType() override;
 
 	static LightTypes GetTypeToName(const std::string& name);

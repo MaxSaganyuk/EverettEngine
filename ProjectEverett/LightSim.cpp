@@ -104,16 +104,12 @@ LightSim::Attenuation LightSim::GetAttenuation()
 	return GetAttenuation(lightRange);
 }
 
-std::vector<std::string> LightSim::GetLightTypeNames()
+std::generator<std::string_view> LightSim::GetLightTypeNames()
 {
-	std::vector<std::string> lightTypeNamesVect;
-	
-	for(auto& lightType : lightTypeToName)
+	for (auto& [_, lightTypeName] : lightTypeToName)
 	{
-		lightTypeNamesVect.push_back(lightType.second);
+		co_yield lightTypeName;
 	}
-	
-	return lightTypeNamesVect;
 }
 
 LightSim::LightTypes LightSim::GetTypeToName(const std::string& name)

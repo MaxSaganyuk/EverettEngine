@@ -107,8 +107,6 @@ std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 
 #undef ToStr
 
-std::vector<std::string> EverettEngine::lightTypes = LightSim::GetLightTypeNames();
-
 EverettEngine::EverettEngine()
 {
 	logOutput = std::make_unique<CustomOutput>();
@@ -1132,50 +1130,39 @@ std::string EverettEngine::CheckIfRelativePathToUse(const std::string& path, con
 	return path.find(':') != std::string::npos ? path : expectedFolder + "//" + path;
 }
 
-std::vector<EverettStructs::BasicFileInfo> EverettEngine::GetLoadedScriptDLLs()
+std::generator<EverettStructs::BasicFileInfo> EverettEngine::GetLoadedScriptDLLs()
 {
 	return fileLoader->dllLoader.GetLoadedScriptDlls();
 }
 
-std::vector<std::string> EverettEngine::GetObjectsInDirList(
+std::generator<std::string> EverettEngine::GetObjectsInDirList(
 	const std::string& path, 
 	const std::vector<std::string>& fileTypes
 )
 {
-	auto FilterNonModelFiles = [&fileTypes](std::vector<std::string>& files)
+	for (auto&& file : fileLoader->GetFilesInDir(path))
 	{
-		std::vector<std::string> modelFiles;
-
-		for (auto& file : files)
+		for (auto& fileType : fileTypes)
 		{
-			for (auto& fileType : fileTypes)
+			if (file.find(fileType) != file.npos)
 			{
-				if (file.find(fileType) != file.npos)
-				{
-					modelFiles.push_back(file);
-					break;
-				}
+				co_yield file;
+				break;
 			}
 		}
-
-		return modelFiles;
-	};
-
-	std::vector<std::string> files;
-
-	fileLoader->GetFilesInDir(files, path);
-
-	return FilterNonModelFiles(files);
+	}
 }
 
-std::vector<std::string> EverettEngine::GetModelInDirList(const std::string& path)
+std::generator<std::string> EverettEngine::GetModelInDirList(std::string& path)
 {
-	return GetObjectsInDirList(path, { ".glb", ".dae", ".fbx", ".obj" });
+	static std::vector<std::string> fileTypes{ ".glb", ".dae", ".fbx", ".obj" };
+	return GetObjectsInDirList(path, fileTypes);
 }
 
-std::vector<std::string> EverettEngine::GetSoundInDirList(const std::string& path)
+std::generator<std::string> EverettEngine::GetSoundInDirList(std::string& path)
 {
-	return GetObjectsInDirList(path, {".wav"});
+	static std::vector<std::string> fileTypes{ ".wav" };
+	return GetObjectsInDirList(path, fileTypes);
 }
 
 std::string EverettEngine::GetSaveFileType()
@@ -1370,11 +1357,9 @@ bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 	SaveObjectsToFile<SoundSim>(file);
 	SaveObjectsToFile<ColliderSim>(file);
 
-	auto loadedScriptDlls = fileLoader->dllLoader.GetLoadedScriptDlls();
-
-	if (!loadedScriptDlls.empty())
+	if (fileLoader->dllLoader.AnyDLLLoaded())
 	{
-		file << ("ScriptDLLs*" + SimSerializer::GetValueToSaveFrom(loadedScriptDlls) + '\n');
+		file << ("ScriptDLLs*" + SimSerializer::GetValueToSaveFrom(fileLoader->dllLoader.GetLoadedScriptDlls()) + '\n');
 	}
 
 	file.close();
@@ -1674,45 +1659,33 @@ void EverettEngine::HidePathsInWorldFile(
 }
 
 template<typename Sim>
-std::vector<std::string> EverettEngine::GetNameList(const std::unordered_map<std::string, Sim>& sims)
+std::generator<std::string_view> EverettEngine::GetNameList(const std::unordered_map<std::string, Sim>& sims)
 {
-	std::vector<std::string> names;
-	names.reserve(sims.size());
-
-	for (auto& sim : sims)
+	for (auto& [name, _] : sims)
 	{
-		names.push_back(sim.first);
+		co_yield name;
 	}
-
-	return names;
 }
 
-std::vector<std::string> EverettEngine::GetCreatedModels(bool getFullPaths)
+std::generator<std::string_view> EverettEngine::GetCreatedModels(bool getFullPaths)
 {
-	std::vector<std::string> createdModels;
-
 	for (const auto& [modelName, model] : models)
 	{
 		if (modelName != gizmoModelName)
 		{
-			createdModels.push_back(getFullPaths ? model.GetModelPath() : modelName);
+			co_yield (getFullPaths ? model.GetModelPath() : modelName);
 		}
 	}
-
-	return createdModels;
 }
 
-std::vector<std::string> EverettEngine::GetAllObjectTypeNames()
+std::generator<std::string_view> EverettEngine::GetAllObjectTypeNames()
 {
-	std::vector<std::string> objectNames;
-
 	for (auto& objectNamePair : objectTypes)
 	{
-		objectNames.push_back(objectNamePair.nameStr);
+		co_yield objectNamePair.nameStr;
 	}
-
-	return objectNames;
 }
+
 std::string EverettEngine::GetObjectTypeToName(ObjectTypes objectType)
 {
 	for (auto& objectNamePair : objectTypes)
@@ -1778,7 +1751,7 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectPureTypeToName(std::type_inde
 	ThrowExceptionWMessage("Nonexistent type");
 }
 
-std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType, bool getAdditionalInfo)
+std::generator<std::string_view> EverettEngine::GetNamesByObject(ObjectTypes objType, bool getAdditionalInfo)
 {
 	switch (objType)
 	{
@@ -1795,50 +1768,43 @@ std::vector<std::string> EverettEngine::GetNamesByObject(ObjectTypes objType, bo
 	}
 }
 
-std::vector<std::string> EverettEngine::GetSolidList(bool getModelNames)
+std::generator<std::string_view> EverettEngine::GetSolidList(bool getModelNames)
 {
-	std::vector<std::string> solidNames;
-
 	for (auto& [solidName, solid] : solids)
 	{
 		std::string modelName = solid.GetModelName();
+
 		if (modelName != gizmoModelName)
 		{
-			solidNames.push_back((getModelNames ? solid.GetModelName() + '.' : "") + solidName);
+			co_yield ((getModelNames ? modelName + '.' : "") + solidName);
 		}
 	}
-
-	return solidNames;
 }
 
-std::vector<std::string> EverettEngine::GetLightList(bool getLightTypes)
+std::generator<std::string_view> EverettEngine::GetLightList(bool getLightTypes)
 {
-	if (!getLightTypes)
+	auto GetLightsWType = [this]() -> std::generator<std::string_view>
 	{
-		return GetNameList(lights);
-	}
+		for (auto& [lightName, light] : lights)
+		{
+			co_yield (light.GetCurrentLightType() + '.' + lightName);
+		}
+	};
 
-	std::vector<std::string> lightNames;
-
-	for (auto& [lightName, light] : lights)
-	{
-		lightNames.push_back(light.GetCurrentLightType() + '.' + lightName);
-	}
-
-	return lightNames;
+	 return getLightTypes ? GetLightsWType() : GetNameList(lights);
 }
 
-std::vector<std::string> EverettEngine::GetSoundList()
+std::generator<std::string_view> EverettEngine::GetSoundList()
 {
 	return GetNameList(sounds);
 }
 
-std::vector<std::string> EverettEngine::GetColliderList()
+std::generator<std::string_view> EverettEngine::GetColliderList()
 {
 	return GetNameList(colliders);
 }
 
-std::vector<std::string> EverettEngine::GetLightTypeList()
+std::generator<std::string_view> EverettEngine::GetLightTypeList()
 {
 	return LightSim::GetLightTypeNames();
 }

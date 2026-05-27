@@ -79,19 +79,15 @@ void ShaderGenerator::InitializeLineMap()
 	}
 }
 
-std::vector<std::string> ShaderGenerator::GetValuesToDefine()
+std::generator<std::string_view> ShaderGenerator::GetValuesToDefine()
 {
-	std::vector<std::string> res;
-
 	for (auto& firstMap : lineToSubstMap)
 	{
 		for (auto& secondMap : firstMap)
 		{
-			res.push_back(secondMap.second.valueName);
+			co_yield secondMap.second.valueName;
 		}
 	}
-
-	return res;
 }
 
 void ShaderGenerator::GenerateShaderFiles(const std::string& path)

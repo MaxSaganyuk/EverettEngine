@@ -4,6 +4,8 @@
 #include <string>
 #include <array>
 #include <map>
+#include <generator>
+
 #include "EverettEngine.h"
 #include "MFCTreeManager.h"
 #include "AdString.h"
@@ -46,7 +48,7 @@ public:
 	void SetEverettEngineRef(EverettEngine& engineRef);
 	MFCTreeManager& GetObjectTree();
 	std::vector<std::pair<AdString, AdString>>& GetSelectedScriptDllInfo();
-	bool SetSelectedScriptDLLInfo(const std::vector<EverettStructs::BasicFileInfo>& scriptDLLInfo);
+	bool SetSelectedScriptDLLInfo(std::generator<EverettStructs::BasicFileInfo>&& scriptDLLInfo);
 private:
 
 	void OnInitialUpdate() override;

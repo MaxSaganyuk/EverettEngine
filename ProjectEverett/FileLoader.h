@@ -11,6 +11,7 @@
 #include <functional>
 #include <mutex>
 #include <typeindex>
+#include <generator>
 
 #include "AnimSystem.h"
 
@@ -63,7 +64,6 @@ class FileLoader
 	class ModelLoader : public AssetManager<ModelOwner>
 	{
 		const aiScene* modelHandle;
-		std::vector<std::string> extraTextureName;
 		std::string fileProcessed;
 		std::string nameToSet;
 
@@ -95,7 +95,7 @@ class FileLoader
 		template<typename AssimpType, typename GLMCont>
 		void ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmCont);
 
-		bool GetTextureFilenames(const std::string& path);
+		std::generator<std::string> GetTextureFilenames(const std::string& path);
 		LGLStructs::Mesh ProcessMesh(const aiMesh* meshHandle, BoneMap& boneMap, TempTexMap& tempTexMap);
 		bool LoadTexture(
 			const std::string& file,
@@ -141,7 +141,7 @@ class FileLoader
 		bool LoadDLL(const std::string& dllPath);
 		void ExecuteScriptInitFor(const std::string& dllPath, IEverettEngine& engine);
 		void UnloadScriptDLL(const std::string& dllPath);
-		std::vector<EverettStructs::BasicFileInfo> GetLoadedScriptDlls();
+		std::generator<EverettStructs::BasicFileInfo> GetLoadedScriptDlls();
 		void ExecuteAllMainScriptFuncs();
 	};
 
@@ -182,7 +182,7 @@ public:
 	~FileLoader();
 
 	static std::string GetCurrentDir();
-	static bool GetFilesInDir(std::vector<std::string>& files, const std::string& dir);
+	static std::generator<std::string> GetFilesInDir(const std::string& dir);
 	static std::string GetFileFromPath(const std::string& dllPath);
 	static std::string GetFileHash(const std::string& path);
 

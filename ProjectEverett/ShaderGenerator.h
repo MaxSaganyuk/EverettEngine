@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <fstream>
+#include <generator>
 
 class ShaderGenerator
 {
@@ -12,7 +13,7 @@ public:
 	~ShaderGenerator();
 
 	void LoadPreSources(const std::string& path);
-	std::vector<std::string> GetValuesToDefine();
+	std::generator<std::string_view> GetValuesToDefine();
 
 	template<typename Type>
 	void SetValueToDefine(const std::string& valueName, Type&& value);

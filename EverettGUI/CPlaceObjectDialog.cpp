@@ -17,7 +17,7 @@ CPlaceObjectDialog::CPlaceObjectDialog(
 	const AdString& objectTypeName, 
 	const AdString& sourceObjectTypeName,
 	NameCheckFunc nameCheckFunc,
-	const std::vector<std::string>& objectNameList, 
+	std::generator<std::string_view>&& objectNameList, 
 	CWnd* pParent
 )
 	: 
@@ -25,7 +25,7 @@ CPlaceObjectDialog::CPlaceObjectDialog(
 	objectTypeName(objectTypeName), 
 	sourceObjectTypeName(sourceObjectTypeName), 
 	nameCheckFunc(nameCheckFunc),
-	objectNameList(objectNameList),
+	objectNameList(std::move(objectNameList)),
 	chosenIndex(-1)
 {
 }
@@ -42,9 +42,9 @@ BOOL CPlaceObjectDialog::OnInitDialog()
 	choiceLabel.SetWindowTextW(L"Choose " + sourceObjectTypeName + L':');
 	nameLabel.SetWindowTextW(objectTypeName + L" name:");
 
-	for (auto& object : objectNameList)
+	for (auto object : objectNameList)
 	{
-		objectChoice.AddString(AdString(object));
+		objectChoice.AddString(AdString(object.data()));
 	}
 
 	placeObjectButton.EnableWindow(false);

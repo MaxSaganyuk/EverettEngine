@@ -7,6 +7,7 @@
 #include <array>
 #include <chrono>
 #include <concepts>
+#include <generator>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -116,7 +117,7 @@ public:
 	static std::string GetValueToSaveFrom(const std::vector<std::string>& vectorStr);
 	static std::string GetValueToSaveFrom(const std::vector<std::pair<std::string, std::string>>& vectorPairStr);
 	static std::string GetValueToSaveFrom(const std::chrono::system_clock::time_point timePoint);
-	static std::string GetValueToSaveFrom(const std::vector<EverettStructs::BasicFileInfo>& vectOfFileInfo);
+	static std::string GetValueToSaveFrom(std::generator<EverettStructs::BasicFileInfo>&& vectOfFileInfo);
 	static bool SetValueToLoadFrom(
 		std::string_view& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs, 
 		int requiredVersion, int deprecatedAt = 0

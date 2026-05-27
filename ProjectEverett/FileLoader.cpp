@@ -87,48 +87,15 @@ std::string FileLoader::GetCurrentDir()
 #endif
 }
 
-bool FileLoader::GetFilesInDir(std::vector<std::string>& files, const std::string& dir)
+std::generator<std::string> FileLoader::GetFilesInDir(const std::string& dir)
 {
-#ifdef _HAS_CXX17
 	for (auto& entry : std::filesystem::directory_iterator(dir))
 	{
 		if (entry.is_regular_file())
 		{
-			files.push_back(entry.path().filename().string());
+			co_yield entry.path().filename().string();
 		}
 	}
-#else
-	HANDLE dirHandle;
-	WIN32_FIND_DATAA fileData;
-
-	std::string pathToCheck = dir + "\\*";
-
-	if (dir.find(':') == dir.npos)
-	{
-		pathToCheck = GetCurrentDir() + '\\' + pathToCheck;
-	}
-
-	if ((dirHandle = FindFirstFileA(pathToCheck.c_str(), &fileData)) == INVALID_HANDLE_VALUE)
-	{
-		return false;
-	}
-
-	do
-	{
-		const std::string fileName = fileData.cFileName;
-		const bool isDir = fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-
-		if (fileName[0] == '.') continue;
-		if (isDir) continue;
-
-		files.push_back(fileName);
-
-	} while (FindNextFileA(dirHandle, &fileData));
-
-	FindClose(dirHandle);
-#endif
-
-	return true;
 }
 
 std::string FileLoader::GetFileFromPath(const std::string& dllPath)
@@ -234,14 +201,14 @@ FileLoader::ModelOwner::~ModelOwner()
 	}
 }
 
-bool FileLoader::ModelLoader::GetTextureFilenames(const std::string& path)
+std::generator<std::string> FileLoader::ModelLoader::GetTextureFilenames(const std::string& path)
 {
 	auto GetTexturePath = [](const std::string& path)
 	{
 		return path.substr(0, path.rfind('\\') + 1) + "textures";
 	};
 
-	return GetFilesInDir(extraTextureName, GetTexturePath(path));
+	return GetFilesInDir(GetTexturePath(path));
 }
 
 LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
@@ -788,17 +755,12 @@ void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
 	}
 }
 
-std::vector<EverettStructs::BasicFileInfo> FileLoader::DLLLoader::GetLoadedScriptDlls()
+std::generator<EverettStructs::BasicFileInfo> FileLoader::DLLLoader::GetLoadedScriptDlls()
 {
-	std::vector<EverettStructs::BasicFileInfo> loadedDlls;
-	loadedDlls.reserve(dllHandleMap.size());
-
 	for (auto& [dllPath, _] : dllHandleMap)
 	{
-		loadedDlls.push_back({ dllPath, GetFileFromPath(dllPath), GetFileHash(dllPath) });
+		co_yield { dllPath, GetFileFromPath(dllPath), GetFileHash(dllPath) };
 	}
-
-	return loadedDlls;
 }
 
 void FileLoader::DLLLoader::FreeDllData()

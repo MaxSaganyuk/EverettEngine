@@ -1,8 +1,12 @@
 #pragma once
+
 #include "afxdialogex.h"
+
 #include <functional>
 #include <string>
 #include <vector>
+#include <generator>
+
 #include "AdString.h"
 
 // CLoadModelDialog dialog
@@ -10,7 +14,7 @@
 class CBrowseAndLoadDialog : public CDialogEx
 {
 	DECLARE_DYNAMIC(CBrowseAndLoadDialog)
-	using LoaderFunc = std::function<std::vector<std::string>(const std::string&)>;
+	using LoaderFunc = std::move_only_function<std::generator<std::string>(std::string&)>;
 	using NameCheckFunc = std::function<std::string(const std::string&)>;
 
 public:

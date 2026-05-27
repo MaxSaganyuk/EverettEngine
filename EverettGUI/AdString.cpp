@@ -34,6 +34,12 @@ AdString::AdString(const char* cPtr)
 	strPair.first = cPtr;
 }
 
+AdString::AdString(std::string_view str)
+{
+	currentType = StrType::Regular;
+	strPair.first = str;
+}
+
 AdString::AdString(const std::string& str)
 {
 	currentType = StrType::Regular;

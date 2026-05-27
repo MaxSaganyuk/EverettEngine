@@ -86,17 +86,17 @@ void MFCTreeManager::SetObjectTypes()
 {
 	this->objectTypes = objectTypes;
 
-	for (auto& type : EverettEngine::GetAllObjectTypeNames())
+	for (auto type : EverettEngine::GetAllObjectTypeNames())
 	{
 		if (type != "Camera")
 		{
-			AddRootNode("Object", type);
+			AddRootNode("Object", type.data());
 		}
 	}
 
-	for (auto& lightType : EverettEngine::GetLightTypeList())
+	for (auto lightType : EverettEngine::GetLightTypeList())
 	{
-		rootNodes["Light"]->AddNode("LightType", lightType);
+		rootNodes["Light"]->AddNode("LightType", lightType.data());
 	}
 }
 

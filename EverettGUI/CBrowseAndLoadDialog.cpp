@@ -25,7 +25,7 @@ CBrowseAndLoadDialog::CBrowseAndLoadDialog(
 	: 
 	CDialogEx(IDD_DIALOG1, pParent), 
 	objectName(objectName),
-	modelLoader(modelLoader), 
+	modelLoader(std::move(modelLoader)),
 	nameCheckFunc(nameCheckFunc),
 	path(""), 
 	name("")
@@ -94,12 +94,11 @@ void CBrowseAndLoadDialog::UpdateObjectChoice(const AdString& filePath)
 {
 	modelFolderEdit.SetWindowTextW(filePath);
 
-	std::vector<std::string> files = modelLoader(filePath);
-
 	modelChoice.Clear();
-	for (auto& file : files)
+	AdString str = filePath;
+	for (auto file : modelLoader(str))
 	{
-		modelChoice.AddString(AdString(file));
+		modelChoice.AddString(AdString(file.data()));
 	}
 }
 

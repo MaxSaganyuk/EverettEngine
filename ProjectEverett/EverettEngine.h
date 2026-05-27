@@ -19,6 +19,7 @@
 #include <chrono>
 #include <typeindex>
 #include <optional>
+#include <generator>
 
 #include "UnorderedPtrMap.h"
 
@@ -111,17 +112,21 @@ public:
 	EVERETT_API void SetupScriptDLL(const std::string& dllPath);
 	EVERETT_API bool IsDLLLoaded(const std::string& dllPath);
 	EVERETT_API void UnsetScript(const std::string& dllPath);
-	EVERETT_API std::vector<EverettStructs::BasicFileInfo> GetLoadedScriptDLLs();
+	EVERETT_API std::generator<EverettStructs::BasicFileInfo> GetLoadedScriptDLLs();
 
-	EVERETT_API std::vector<std::string> GetModelInDirList(const std::string& path);
-	EVERETT_API std::vector<std::string> GetSoundInDirList(const std::string& path);
+	// Requesting for l-value ref prevents creating copy on call and prevents calling co-routine with "in place" temporary
+	// ensuring correct execution despite the fact that "path" value will not be modified
+	EVERETT_API std::generator<std::string> GetModelInDirList(std::string& path);
+	EVERETT_API std::generator<std::string> GetSoundInDirList(std::string& path);
 
-	EVERETT_API std::vector<std::string> GetCreatedModels(bool getFullPaths = false);
+	EVERETT_API std::generator<std::string_view> GetCreatedModels(bool getFullPaths = false);
 	// If getAdditionalInfo is set to true - list of solids will include model names, lights will include light type
-	EVERETT_API std::vector<std::string> GetNamesByObject(ObjectTypes objType, bool getAdditionalInfo = false);
-	EVERETT_API static std::vector<std::string> GetLightTypeList();
+	// Also if getAdditionalInfo is true, result is created on each iteration, so result must be copied if will be used post iteration.
+	// This is because the result is a temporary, and resuing it post iteration is UB. Dangerous, but efficient and copyless.
+	EVERETT_API std::generator<std::string_view> GetNamesByObject(ObjectTypes objType, bool getAdditionalInfo = false);
+	EVERETT_API static std::generator<std::string_view> GetLightTypeList();
 
-	EVERETT_API static std::vector<std::string> GetAllObjectTypeNames();
+	EVERETT_API static std::generator<std::string_view> GetAllObjectTypeNames();
 	EVERETT_API static std::string GetObjectTypeToName(ObjectTypes objectType);
 	EVERETT_API static ObjectTypes GetObjectTypeToName(const std::string& objectName);
 
@@ -234,9 +239,9 @@ private:
 	std::string CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder);
 
 	template<typename Sim>
-	std::vector<std::string> GetNameList(const std::unordered_map<std::string, Sim>& sims);
+	std::generator<std::string_view> GetNameList(const std::unordered_map<std::string, Sim>& sims);
 
-	std::vector<std::string> GetObjectsInDirList(const std::string& path, const std::vector<std::string>& fileTypes);
+	std::generator<std::string> GetObjectsInDirList(const std::string& path, const std::vector<std::string>& fileTypes);
 
 	struct ObjectTypeInfo;
 
@@ -246,10 +251,10 @@ private:
 	static std::type_index GetObjectPureTypeToName(const std::string& objectName);
 	static ObjectTypes GetObjectPureTypeToName(std::type_index objectType);
 
-	std::vector<std::string> GetSolidList(bool getModelNames);
-	std::vector<std::string> GetLightList(bool getLightTypes);
-	std::vector<std::string> GetSoundList();
-	std::vector<std::string> GetColliderList();
+	std::generator<std::string_view> GetSolidList(bool getModelNames);
+	std::generator<std::string_view> GetLightList(bool getLightTypes);
+	std::generator<std::string_view> GetSoundList();
+	std::generator<std::string_view> GetColliderList();
 
 	template<typename Sim>
 	void SaveObjectsToFile(std::fstream& file);
@@ -296,7 +301,6 @@ private:
 
 	static LightShaderValueNames lightShaderValueNames;
 	static std::vector<ObjectTypeInfo> objectTypes;
-	static std::vector<std::string> lightTypes;
 
 	std::map<int, KeyScriptFuncInfo> keyScriptFuncMap;
 	std::vector<std::function<void(double)>> mouseScrollScriptFuncs;

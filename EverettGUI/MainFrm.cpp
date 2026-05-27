@@ -212,10 +212,9 @@ bool CMainFrame::LoadObjectNamesToTree()
 	for (size_t i = static_cast<size_t>(ObjectTypes::Solid); i < static_cast<size_t>(ObjectTypes::_SIZE); ++i)
 	{
 		ObjectTypes currentObjectType = static_cast<ObjectTypes>(i);
-		objectNames = engine.GetNamesByObject(currentObjectType, true);
 
-		AdString subTypeName = "";
-		for (auto objectName : objectNames)
+		std::string_view subTypeName;
+		for (auto objectName : engine.GetNamesByObject(currentObjectType, true))
 		{
 			if (objectName.find('.') != std::string::npos)
 			{
@@ -300,7 +299,7 @@ void CMainFrame::OnLoadModel()
 {
 	CBrowseAndLoadDialog loadModelDlg(
 		"Model",
-		[this](const std::string& path) { return engine.GetModelInDirList(path); },
+		[this](std::string& path) { return engine.GetModelInDirList(path); },
 		nameCheckFunc
 	);
 
@@ -370,7 +369,7 @@ void CMainFrame::OnPlaceSound()
 {
 	CBrowseAndLoadDialog placeSoundDlg(
 		L"Sound", 
-		[this](const std::string& path) { return engine.GetSoundInDirList(path); }, 
+		[this](std::string& path) { return engine.GetSoundInDirList(path); }, 
 		nameCheckFunc
 	);
 
@@ -387,7 +386,7 @@ void CMainFrame::OnPlaceCollider()
 		L"Collider",
 		L"Collider type",
 		nameCheckFunc,
-		{ "Box" }
+		[]() -> std::generator<std::string_view> { co_yield { "Box" }; }()
 	);
 
 	if (placeColliderDlg.DoModal() == IDOK)

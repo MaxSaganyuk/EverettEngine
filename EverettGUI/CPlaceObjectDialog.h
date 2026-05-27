@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <generator>
 
 #include "AdString.h"
 
@@ -19,7 +20,7 @@ public:
 		const AdString& objectTypeName, 
 		const AdString& sourceObjectTypeName,
 		NameCheckFunc nameCheckFunc,
-		const std::vector<std::string>& objectNameList = {},
+		std::generator<std::string_view>&& objectNameList,
 		CWnd* pParent = nullptr
 	);   // standard constructor
 	virtual ~CPlaceObjectDialog();
@@ -35,7 +36,7 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 private:
-	std::vector<std::string> objectNameList;
+	std::generator<std::string_view> objectNameList;
 	AdString objectTypeName;
 	AdString sourceObjectTypeName;
 	size_t chosenIndex;

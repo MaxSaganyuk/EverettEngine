@@ -364,11 +364,11 @@ bool SimSerializer::SetValueToLoadFrom(
 	return true;
 }
 
-std::string SimSerializer::GetValueToSaveFrom(const std::vector<EverettStructs::BasicFileInfo>& vectOfFileInfo)
+std::string SimSerializer::GetValueToSaveFrom(std::generator<EverettStructs::BasicFileInfo>&& vectOfFileInfo)
 {
 	std::string res;
 
-	for (auto& fileInfo : vectOfFileInfo)
+	for (auto&& fileInfo : vectOfFileInfo)
 	{
 		res += (fileInfo.path + ' ' + fileInfo.name + ' ' + fileInfo.hash + ' ');
 	}

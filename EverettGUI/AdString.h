@@ -30,6 +30,7 @@ class AdString
 public:
 	AdString();
 	AdString(const char* cPtr);
+	AdString(std::string_view str);
 	AdString(const std::string& str);
 	AdString(const CString& str);
 	AdString(LPCTSTR str);
