@@ -8,8 +8,6 @@
 
 #include <gdiplus.h>
 
-#include <iostream>
-
 // CObjectMoveDialog dialog
 
 IMPLEMENT_DYNAMIC(CObjectMoveDialog, CDialogEx)

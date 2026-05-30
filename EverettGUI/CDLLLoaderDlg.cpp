@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "EverettGUI.h"
+#include "resource.h"
 
 #include "CDLLLoaderDlg.h"
 #include "CBrowseDialog.h"

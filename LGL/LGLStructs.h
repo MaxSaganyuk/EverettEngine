@@ -12,7 +12,6 @@
 #include <string>
 #include <array>
 #include <map>
-#include <unordered_map>
 
 namespace LGLStructs
 {

@@ -1,4 +1,3 @@
-#include "afxdialogex.h"
 #include <vector>
 #include <array>
 

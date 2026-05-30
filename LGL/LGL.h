@@ -15,9 +15,7 @@
 #include <map>
 #include <unordered_map>
 #include <functional>
-#include <thread>
 #include <mutex>
-#include <typeindex>
 #include <unordered_set>
 
 #include "LGLStructs.h"

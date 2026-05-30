@@ -1,9 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <unordered_set>
 #include <unordered_map>
-#include <functional>
 
 #include "ObjectSim.h"
 #include "external/IColliderSim.h"

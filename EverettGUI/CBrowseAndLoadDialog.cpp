@@ -2,12 +2,11 @@
 //
 
 #include "pch.h"
-#include "EverettGUI.h"
+#include "resource.h"
 #include "afxdialogex.h"
 #include "CBrowseAndLoadDialog.h"
 #include "CBrowseDialog.h"
 
-#include "CommonStrEdits.h"
 #include "NameEditChecker.h"
 
 #include <fstream>

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cmath>
-#include <cstdlib>
 #include <algorithm>
 #include <format>
 #include <ranges>
@@ -23,8 +22,6 @@
 
 #include "CommonStrEdits.h"
 
-#include "stdEx/mapEx.h"
-#include "stdEx/rangesEx.h"
 #include "stdEx/type_traitsEx.h"
 
 #include "AnimSystem.h"
@@ -36,7 +33,6 @@
 #include "EverettEngine.h"
 #include "EverettExceptionInternal.h"
 
-#include "SolidToModelManager.h"
 #include "ModelInfo.h"
 #include "KeyScriptFuncInfo.h"
 

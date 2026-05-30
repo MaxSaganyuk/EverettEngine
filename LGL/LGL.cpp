@@ -2,7 +2,6 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-#include <cctype>
 #include <array>
 #include <chrono>
 
@@ -10,7 +9,6 @@
 
 #define LGL_EXPORT
 #include "LGL.h"
-#include "stdEx/mapEx.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

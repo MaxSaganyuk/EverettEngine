@@ -2,10 +2,9 @@
 //
 
 #include "pch.h"
-#include "EverettGUI.h"
+#include "resource.h"
 #include "afxdialogex.h"
 #include "CObjectEditDialog.h"
-#include "CBrowseDialog.h"
 
 
 // CObjectEditDialog dialog

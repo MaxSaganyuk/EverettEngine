@@ -4,7 +4,6 @@
 
 #include <functional>
 #include <string>
-#include <vector>
 #include <generator>
 
 #include "AdString.h"

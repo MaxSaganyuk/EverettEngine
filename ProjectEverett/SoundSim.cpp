@@ -5,7 +5,6 @@
 #include <OpenAL\alext.h>
 
 #include <iostream>
-#include <cassert>
 
 #include "ContextManager.h"
 #define ContextLock ContextManager<ALCcontext> mux(context);

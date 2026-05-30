@@ -4,8 +4,6 @@
 
 #include "pch.h"
 #include "framework.h"
-#include "afxwinappex.h"
-#include "afxdialogex.h"
 #include "EverettGUI.h"
 #include "MainFrm.h"
 #include <gdiplus.h>

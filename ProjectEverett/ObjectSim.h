@@ -5,7 +5,6 @@
 #include "stdEx/utilityEx.h"
 
 #include <unordered_map>
-#include <type_traits>
 
 #include "SimSerializer.h"
 #include "ValueObserver.h"

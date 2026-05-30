@@ -9,6 +9,8 @@
 #include "EverettEngine.h"
 #include "NameEditChecker.h"
 
+#include <thread>
+
 class CMainFrame : public CFrameWnd
 {
 	

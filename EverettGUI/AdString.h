@@ -1,6 +1,5 @@
 #pragma once
 
-#include "afxdialogex.h"
 #include <string>
 
 // Ad(aptive)String

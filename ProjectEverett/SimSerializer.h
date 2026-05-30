@@ -1,16 +1,12 @@
 #pragma once
 
-#include <type_traits>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <array>
 #include <chrono>
-#include <concepts>
 #include <generator>
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
 #include "external/IObjectSim.h"

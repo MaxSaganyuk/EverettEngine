@@ -19,7 +19,6 @@
 #include "stb_image.h"
 
 #include "SolidSim.h"
-#include "SoundSim.h"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H  
@@ -30,7 +29,6 @@
 #include "openssl/evp.h"
 
 #include "EverettStructs.h"
-#include "OutputUtils.h"
 #include "StringCast.h"
 
 void ConvertFromAssimpToGLM(const aiMatrix4x4& assimpMatrix, glm::mat4& glmMatrix)

@@ -1,8 +1,6 @@
 #pragma once
 
-#include "afxdialogex.h"
 #include <vector>
-#include <string>
 
 #include "AdString.h"
 

@@ -2,7 +2,6 @@
 #include "afxdialogex.h"
 #include <functional>
 #include <vector>
-#include <string>
 
 // CLoadingDialog dialog
 

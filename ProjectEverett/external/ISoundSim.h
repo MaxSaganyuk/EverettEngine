@@ -2,6 +2,8 @@
 
 #include "IObjectSim.h"
 
+#include <functional>
+
 class ISoundSim : virtual public IObjectSim
 {
 public:

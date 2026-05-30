@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include <vector>
+#include "CommonStrEdits.h"
 
 #include "NameEditChecker.h"
 #include "AdString.h"

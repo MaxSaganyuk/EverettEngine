@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "EverettGUI.h"
 #include "CMainWindow.h"
-#include "CBrowseDialog.h"
 #include "CObjectEditDialog.h"
 
 #include "EverettException.h"

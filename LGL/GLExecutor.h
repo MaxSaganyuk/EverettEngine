@@ -8,8 +8,6 @@
 
 #include <iostream>
 #include <string>
-#include <functional>
-#include <cassert>
 #include <unordered_map>
 
 #define GLSafeExecute(glFunc, ...) GLExecutor::SafeExecute(#glFunc, glFunc, __VA_ARGS__)

@@ -6,7 +6,6 @@
 #include "afxdialogex.h"
 #include "CPlaceObjectDialog.h"
 
-#include "CommonStrEdits.h"
 #include "NameEditChecker.h"
 
 // CPlaceObjectDialog dialog

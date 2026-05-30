@@ -5,7 +5,6 @@
 #include "EverettEngine.h"
 
 #include <vector>
-#include <string>
 
 #include "AdString.h"
 

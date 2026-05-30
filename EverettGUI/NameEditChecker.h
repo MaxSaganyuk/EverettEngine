@@ -1,11 +1,6 @@
 #pragma once
 
-#include "afxdialogex.h"
-
-#include "CommonStrEdits.h"
-
 #include <functional>
-#include <mutex>
 #include <string>
 
 class AdString;

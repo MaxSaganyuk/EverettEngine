@@ -2,10 +2,6 @@
 
 #include "ObjectSim.h"
 
-#include <cassert>
-#include <unordered_map>
-#include <map>
-#include <memory>
 #include <string>
 #include <functional>
 

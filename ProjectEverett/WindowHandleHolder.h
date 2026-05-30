@@ -1,8 +1,6 @@
 #pragma once
 
-#include <map>
 #include <string>
-#include <vector>
 #include <stdEx/mapEx.h>
 
 struct HWND__;

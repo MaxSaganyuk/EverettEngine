@@ -9,7 +9,7 @@
 #include "CBrowseDialog.h"
 
 #include <fstream>
-
+#include <filesystem>
 
 // CGameProducerDlg dialog
 
