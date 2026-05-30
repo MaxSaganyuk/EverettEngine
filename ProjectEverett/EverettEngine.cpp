@@ -205,10 +205,12 @@ void EverettEngine::CreateAndSetupMainWindow(
 
 	mainLGL->SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
-	cursorCaptureCallback =
-		[this](double xpos, double ypos) { camera->RotateByMousePos(static_cast<float>(xpos), static_cast<float>(ypos)); };
-	mainLGL->SetCursorPositionCallback(cursorCaptureCallback);
-
+	mainLGL->SetCursorPositionCallback(
+		[this](double xpos, double ypos) {
+			camera->RotateByMousePos(static_cast<float>(xpos), static_cast<float>(ypos));
+			ExecuteVectorOfFuncs(mouseMoveScriptFuncs, xpos, ypos); 
+		}
+	);
 	mainLGL->SetScrollCallback([this](double xpos, double ypos) { ExecuteVectorOfFuncs(mouseScrollScriptFuncs, ypos); });
 
 	mainLGL->SetRenderDeltaCallback(ObjectSim::SetRenderDeltaTime);
@@ -365,6 +367,11 @@ void EverettEngine::AddMouseScrollCallback(std::function<void(double)> callback)
 	mouseScrollScriptFuncs.push_back(callback);
 }
 
+void EverettEngine::AddMouseMoveCallback(std::function<void(double, double)> callback)
+{
+	mouseMoveScriptFuncs.push_back(callback);
+}
+
 // Since some containers are controlled externally (via script funcs by user)
 // unloading presents a risk of forgetting the clean up, causing potential crash
 // on attempt to call function ptr which is not accessible after unset
@@ -373,6 +380,7 @@ void EverettEngine::ClearExternallyControlledContainers()
 	ExecuteFuncForAllSimObjects(&ColliderSim::ClearCollisionCallbacks);
 	keyScriptFuncMap.clear();
 	mouseScrollScriptFuncs.clear();
+	mouseMoveScriptFuncs.clear();
 }
 
 void EverettEngine::RunRenderWindow()
@@ -1064,20 +1072,12 @@ void EverettEngine::UnsetScript(const std::string& dllPath)
 	}
 }
 
-template<typename Type>
-void EverettEngine::ExecuteVectorOfFuncs(const std::vector<std::function<void(Type)>>& vectOfFuncs, const Type& value)
+template<typename... Type>
+void EverettEngine::ExecuteVectorOfFuncs(const std::vector<std::function<void(Type...)>>& vectOfFuncs, Type... value)
 {
 	for (auto& func : vectOfFuncs)
 	{
-		func(value);
-	}
-}
-
-void EverettEngine::ExecuteVectorOfFuncs(const std::vector<std::function<void()>>& vectOfFuncs)
-{
-	for (auto& func : vectOfFuncs)
-	{
-		func();
+		func(std::forward<Type>(value)...);
 	}
 }
 

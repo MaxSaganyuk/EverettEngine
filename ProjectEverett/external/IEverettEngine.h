@@ -25,6 +25,7 @@ public:
 		std::function<void()> releaseFunc = nullptr
 	) = 0;
 	virtual void AddMouseScrollCallback(std::function<void(double)> callback) = 0;
+	virtual void AddMouseMoveCallback(std::function<void(double, double)> callback) = 0;
 
 	virtual IObjectSim* GetObjectInterface(ObjectTypes objectType, const char* objectName) = 0;
 	virtual ISolidSim* GetSolidInterface(const char* solidName) = 0;

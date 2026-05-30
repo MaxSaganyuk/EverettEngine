@@ -177,8 +177,6 @@ private:
 	size_t currentStartSolidIndex;
 	size_t nextStartSolidIndex;
 
-	std::function<void(double, double)> cursorCaptureCallback;
-
 	using LightShaderValueNames = std::vector<std::pair<std::string, std::vector<std::string>>>;
 
 	using ModelCollection    = std::unordered_map<std::string, ModelInfo>; 
@@ -210,6 +208,7 @@ private:
 		std::function<void()> releaseFunc = nullptr
 	) override;
 	void AddMouseScrollCallback(std::function<void(double)> callback) override;
+	void AddMouseMoveCallback(std::function<void(double, double)> callback) override;
 
 	void ClearExternallyControlledContainers();
 
@@ -274,9 +273,8 @@ private:
 	void SetRenderLoggerCallbacks(bool value = true);
 	std::string GetDateTimeStr();
 
-	template<typename Type>
-	void ExecuteVectorOfFuncs(const std::vector<std::function<void(Type)>>& vectOfFuncs, const Type& value);
-	void ExecuteVectorOfFuncs(const std::vector<std::function<void()>>& vectOfFuncs);
+	template<typename... Type>
+	void ExecuteVectorOfFuncs(const std::vector<std::function<void(Type...)>>& vectOfFuncs, Type... value);
 
 	template<typename FunctionType, typename... Params>
 	void ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values);
@@ -304,6 +302,7 @@ private:
 
 	std::map<int, KeyScriptFuncInfo> keyScriptFuncMap;
 	std::vector<std::function<void(double)>> mouseScrollScriptFuncs;
+	std::vector<std::function<void(double, double)>> mouseMoveScriptFuncs;
 
 	UnorderedPtrMap<const std::string*, int> allNameTracker;
 
