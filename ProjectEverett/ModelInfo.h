@@ -15,10 +15,11 @@ public:
 	using FullModelInfo = std::pair<std::weak_ptr<LGLStructs::ModelInfo>, std::weak_ptr<AnimSystem::ModelAnim>>;
 
 	ModelInfo() = default;
-	ModelInfo(const std::string& modelName, const std::string& modelPath, FullModelInfo&& model);
+	ModelInfo(const std::string& modelPath, FullModelInfo&& model);
 
 	~ModelInfo();
 
+	void SetModelNamePtr(const std::string& modelAddr);
 	const std::string& GetModelName() const;
 	const std::string& GetModelPath() const;
 	const FullModelInfo& GetFullModelInfo() const;
@@ -28,12 +29,13 @@ public:
 	void SetGeneralMeshBehaviour(std::function<void(int)> func);
 	const std::unordered_set<SolidSim*>& GetRelatedSolids() const;
 private:
+	void CheckModelNamePtrSet() const;
 	void SetupModelInfo(bool set);
 
 	std::function<void()> modelBehaviour;
 	std::function<void(int)> generalMeshBehaviour;
 
-	std::string modelName;
+	const std::string* modelNamePtr{};
 	std::string modelPath;
 	FullModelInfo model;
 	std::unordered_set<SolidSim*> relatedSolids;

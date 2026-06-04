@@ -6,8 +6,6 @@
 #include "afxdialogex.h"
 #include "CPlaceObjectDialog.h"
 
-#include "NameEditChecker.h"
-
 // CPlaceObjectDialog dialog
 
 IMPLEMENT_DYNAMIC(CPlaceObjectDialog, CDialogEx)
@@ -15,7 +13,7 @@ IMPLEMENT_DYNAMIC(CPlaceObjectDialog, CDialogEx)
 CPlaceObjectDialog::CPlaceObjectDialog(
 	const AdString& objectTypeName, 
 	const AdString& sourceObjectTypeName,
-	NameCheckFunc nameCheckFunc,
+	NameEditChecker::NameCheckFunc nameCheckFunc,
 	std::generator<std::string_view>&& objectNameList, 
 	CWnd* pParent
 )

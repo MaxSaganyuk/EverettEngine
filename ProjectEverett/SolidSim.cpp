@@ -216,7 +216,7 @@ std::vector<std::string> SolidSim::GetModelAnimationNames()
 	return STMM.GetAnimationNames();
 }
 
-std::string SolidSim::GetModelName()
+const std::string& SolidSim::GetModelName()
 {
 	return STMM.GetModelName();
 }

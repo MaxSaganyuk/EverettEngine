@@ -138,7 +138,24 @@ MFCTreeManager::MFCTreeManagerNode* MFCTreeManager::FindNodeByItem(HTREEITEM ite
 	return nullptr;
 }
 
-void MFCTreeManager::DeleteNodeByItem(HTREEITEM item, bool includeItself)
+bool MFCTreeManager::RenameNodeByItem(HTREEITEM item, const AdString& newName)
+{
+	MFCTreeManagerNode* node = FindNodeByItem(item);
+
+	if (node)
+	{
+		auto mapNode = node->previousNode->nextNodes.extract(node->data);
+		auto& key = mapNode.key();
+		key = node->data = newName;
+		node->previousNode->nextNodes.insert(std::move(mapNode));
+
+		return objectTree.SetItemText(item, node->title + L": " + node->data);
+	}
+
+	return false;
+}
+
+bool MFCTreeManager::DeleteNodeByItem(HTREEITEM item, bool includeItself)
 {
 	MFCTreeManagerNode* node = FindNodeByItem(item);
 
@@ -150,7 +167,11 @@ void MFCTreeManager::DeleteNodeByItem(HTREEITEM item, bool includeItself)
 		{
 			node->previousNode->nextNodes.erase(node->data);
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 std::vector<std::pair<AdString, AdString>> MFCTreeManager::GetAllOfRootsSelectedNode()

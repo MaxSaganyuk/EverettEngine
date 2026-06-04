@@ -1,17 +1,24 @@
 #include "SolidSim.h"
 #include "ModelInfo.h"
 
-ModelInfo::ModelInfo(const std::string& modelName, const std::string& modelPath, FullModelInfo&& model)
-	: modelName(modelName), modelPath(modelPath), model(std::move(model)) {}
+ModelInfo::ModelInfo(const std::string& modelPath, FullModelInfo&& model)
+	: modelPath(modelPath), model(std::move(model)) {}
 
 ModelInfo::~ModelInfo()
 {
 	SetupModelInfo(false);
 }
 
+void ModelInfo::SetModelNamePtr(const std::string& modelAddr)
+{
+	modelNamePtr = &modelAddr;
+}
+
 const std::string& ModelInfo::GetModelName() const
 {
-	return modelName;
+	CheckModelNamePtrSet();
+
+	return *modelNamePtr;
 }
 
 const std::string& ModelInfo::GetModelPath() const
@@ -26,12 +33,14 @@ const ModelInfo::FullModelInfo& ModelInfo::GetFullModelInfo() const
 
 void ModelInfo::InsertRelatedSolid(SolidSim& solid)
 {
+	CheckModelNamePtrSet();
+
 	if (relatedSolids.empty())
 	{
 		SetupModelInfo(true);
 	}
 
-	solid.STMM.InitializeSTMM(model, modelName);
+	solid.STMM.InitializeSTMM(model, modelNamePtr);
 	relatedSolids.insert(&solid);
 }
 
@@ -58,6 +67,11 @@ void ModelInfo::SetModelBehaviour(std::function<void()> func)
 void ModelInfo::SetGeneralMeshBehaviour(std::function<void(int)> func)
 {
 	generalMeshBehaviour = std::move(func);
+}
+
+void ModelInfo::CheckModelNamePtrSet() const
+{
+	CheckAndThrowExceptionWMessage(modelNamePtr, "ModelNamePtr is unset");
 }
 
 void ModelInfo::SetupModelInfo(bool set)

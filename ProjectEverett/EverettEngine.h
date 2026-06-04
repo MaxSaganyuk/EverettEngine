@@ -15,6 +15,7 @@
 #include <typeindex>
 #include <optional>
 #include <generator>
+#include <expected>
 
 #include "UnorderedPtrMap.h"
 
@@ -89,6 +90,10 @@ public:
 	EVERETT_API bool CreateSound(const std::string& path, const std::string& soundName);
 	EVERETT_API bool CreateCollider(const std::string& colliderName);
 
+	EVERETT_API std::expected<void, std::string> RenameObject(
+		const std::string& oldName, const std::string& newName, std::optional<ObjectTypes> hintType = std::nullopt
+	);
+
 	EVERETT_API bool DeleteModel(const std::string& modelName);
 	EVERETT_API bool DeleteSolid(const std::string& solidName);
 	EVERETT_API bool DeleteLight(const std::string& lightName);
@@ -104,6 +109,7 @@ public:
 	EVERETT_API IColliderSim* GetColliderInterface(const char* colliderName) override;
 	EVERETT_API ICameraSim* GetCameraInterface() override;
 
+	EVERETT_API bool CheckIfScriptsRunning(bool displayErrorIfYes = true);
 	EVERETT_API void SetupScriptDLL(const std::string& dllPath);
 	EVERETT_API bool IsDLLLoaded(const std::string& dllPath);
 	EVERETT_API void UnsetScript(const std::string& dllPath);
@@ -123,7 +129,7 @@ public:
 
 	EVERETT_API static std::generator<std::string_view> GetAllObjectTypeNames();
 	EVERETT_API static std::string GetObjectTypeToName(ObjectTypes objectType);
-	EVERETT_API static ObjectTypes GetObjectTypeToName(const std::string& objectName);
+	EVERETT_API static std::optional<ObjectTypes> GetObjectTypeToName(const std::string& objectName);
 
 	EVERETT_API std::string ConvertKeyTo(int keyId);
 
@@ -167,6 +173,7 @@ private:
 	std::string defaultShaderProgram;
 	std::string defaultRenderTextShaderProgram;
 	constexpr static inline char loggerFont[] = "consolab.ttf";
+	constexpr static inline char deleteObjErrorMes[] = "Cannot delete whilst scripts are running\n";
 	std::function<void(glm::vec4&&)> generalRenderTextBehaviour;
 
 	size_t currentStartSolidIndex;
@@ -207,7 +214,6 @@ private:
 
 	void ClearExternallyControlledContainers();
 
-	bool CheckIfScriptsRunning();
 	void DeleteSolidsByModel(const std::string& modelName);
 	void RemoveSolidPtrFromModel(const std::string& modelName, SolidSim* solidPtr);
 

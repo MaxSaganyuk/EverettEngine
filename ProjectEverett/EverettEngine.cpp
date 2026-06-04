@@ -461,11 +461,12 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 	if (!fileLoader->modelLoader.LoadModel(pathToUse, name, model.first, model.second)) return false;
 
-	auto [iter, success] = models.try_emplace(name, name, pathToUse, std::move(model));
+	auto [iter, success] = models.try_emplace(name, pathToUse, std::move(model));
 
 	CheckAndThrowExceptionWMessage(success, "Unexpected inability to add to model map");
 
 	auto& [nameRef, modelSolidInfo] = *iter;
+	modelSolidInfo.SetModelNamePtr(nameRef);
 	auto modelInfo = modelSolidInfo.GetFullModelInfo().first.lock();
 
 	CheckAndAddToNameTracker(nameRef);
@@ -473,10 +474,10 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 	modelInfo->shaderProgram = defaultShaderProgram;
 	modelInfo->render = false;
 
-	modelSolidInfo.SetModelBehaviour([this, name]()
+	modelSolidInfo.SetModelBehaviour([this, &nameRef]()
 	{
 		// Existence of the lambda implies existence of the model
-		auto& model = models[name];
+		auto& model = models[nameRef];
 		auto modelPtr = model.GetFullModelInfo().first.lock();
 		auto modelAnimPtr = model.GetFullModelInfo().second.lock();
 
@@ -521,10 +522,10 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		}
 	});
 
-	modelSolidInfo.SetGeneralMeshBehaviour([this, name](int meshIndex)
+	modelSolidInfo.SetGeneralMeshBehaviour([this, &nameRef](int meshIndex)
 	{
 		// Existence of the lambda implies existence of the model
-		auto& model = models[name];
+		auto& model = models[nameRef];
 
 		size_t index = currentStartSolidIndex;
 		for (auto& solidPtr : model.GetRelatedSolids())
@@ -743,12 +744,68 @@ bool EverettEngine::CreateColliderImpl(const std::string& colliderName)
 	return false;
 }
 
-bool EverettEngine::CheckIfScriptsRunning()
+std::expected<void, std::string> EverettEngine::RenameObject(
+	const std::string& oldName, const std::string& newName, std::optional<ObjectTypes> hintType
+)
+{
+	enum RenameState : bool
+	{
+		FoundCorrectOne, CheckNextOne
+	};
+
+	if (CheckIfScriptsRunning())
+		return std::unexpected("Cannot rename whilst scripts are running\n");
+	if (oldName == "Camera" || (hintType.has_value() && hintType == ObjectTypes::Camera))
+		return std::unexpected("Cannot rename camera object");
+	if (allNameTracker.contains(&newName))
+		return std::unexpected("New name already exists");
+
+	auto TryRenameKey = [&]<typename Type>(
+		std::unordered_map<std::string, Type>& cont, std::optional<ObjectTypes> objectType = std::nullopt
+	){ 
+		bool check = true;
+
+		if (hintType.has_value() && objectType.has_value())
+		{
+			check = hintType == objectType;
+		}
+
+		if (check && cont.contains(oldName))
+		{
+			auto node = cont.extract(oldName);
+			auto& key = node.key();
+			allNameTracker.erase(&key);
+
+			key = newName;
+			cont.insert(std::move(node));
+
+			CheckAndAddToNameTracker(key);
+
+			return FoundCorrectOne;
+		}
+
+		return CheckNextOne;
+	};
+
+	// Monadic-like check
+	auto result = TryRenameKey(models) && TryRenameKey(solids, ObjectTypes::Solid) && 
+		TryRenameKey(lights, ObjectTypes::Light) && TryRenameKey(sounds, ObjectTypes::Sound) && 
+		TryRenameKey(colliders, ObjectTypes::Collider);
+
+	if (result != FoundCorrectOne) return std::unexpected("Old name does not exist");
+
+	return {};
+}
+
+bool EverettEngine::CheckIfScriptsRunning(bool displayErrorIfYes)
 {
 	if (fileLoader->dllLoader.AnyDLLLoaded())
 	{
-		std::cerr << "Cannot delete whilst scripts are running\n";
-		std::cerr << "Unload dlls and try again\n";
+		if (displayErrorIfYes)
+		{
+			std::cerr << "Cannot do this action whilst scripts are running\n";
+			std::cerr << "Unload dlls and try again\n";
+		}
 
 		return true;
 	}
@@ -1539,7 +1596,7 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 		{
 			SimSerializer::GetObjectInfo(line, objectInfo);
 
-			switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]))
+			switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]).value_or(ObjectTypes::_SIZE))
 			{
 			case EverettEngine::ObjectTypes::Camera:
 				LoadCameraFromLine(line);
@@ -1557,7 +1614,7 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 				LoadColliderFromLine(line, objectInfo);
 				break;
 			default:
-				std::unreachable();
+				ThrowExceptionWMessage("Unexpected object type name in file");
 			}
 		}
 	}
@@ -1595,7 +1652,7 @@ AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 		{
 			SimSerializer::GetObjectInfo(line, objectInfo);
 
-			switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]))
+			switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]).value_or(ObjectTypes::_SIZE))
 			{
 			case EverettEngine::ObjectTypes::Camera:
 			case EverettEngine::ObjectTypes::Light:
@@ -1608,7 +1665,7 @@ AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 				assetPaths.soundPaths.insert(objectInfo[ObjectInfoNames::Path]);
 				break;
 			default:
-				std::unreachable();
+				ThrowExceptionWMessage("Unexpected object type name in file");
 			}
 		}
 
@@ -1695,7 +1752,7 @@ std::string EverettEngine::GetObjectTypeToName(ObjectTypes objectType)
 	ThrowExceptionWMessage("Nonexistent type");
 }
 
-EverettEngine::ObjectTypes EverettEngine::GetObjectTypeToName(const std::string& objectName)
+std::optional<EverettEngine::ObjectTypes> EverettEngine::GetObjectTypeToName(const std::string& objectName)
 {
 	for (auto& objectNamePair : objectTypes)
 	{
@@ -1705,7 +1762,7 @@ EverettEngine::ObjectTypes EverettEngine::GetObjectTypeToName(const std::string&
 		}
 	}
 
-	ThrowExceptionWMessage("Nonexistent type");
+	return {};
 }
 
 std::type_index EverettEngine::GetObjectPureTypeToName(ObjectTypes objectType)

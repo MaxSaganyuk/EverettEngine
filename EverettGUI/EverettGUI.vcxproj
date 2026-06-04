@@ -219,6 +219,7 @@
     <ClInclude Include="CObjectEditDialog.h" />
     <ClInclude Include="CObjectMoveDialog.h" />
     <ClInclude Include="CPlaceObjectDialog.h" />
+    <ClInclude Include="CRenameObjDlg.h" />
     <ClInclude Include="CSaveLoadDlg.h" />
     <ClInclude Include="CDLLLoaderDlg.h" />
     <ClInclude Include="EverettGUI.h" />
@@ -242,6 +243,7 @@
     <ClCompile Include="CObjectEditDialog.cpp" />
     <ClCompile Include="CObjectMoveDialog.cpp" />
     <ClCompile Include="CPlaceObjectDialog.cpp" />
+    <ClCompile Include="CRenameObjDlg.cpp" />
     <ClCompile Include="CSaveLoadDlg.cpp" />
     <ClCompile Include="CDLLLoaderDlg.cpp" />
     <ClCompile Include="EverettGUI.cpp" />

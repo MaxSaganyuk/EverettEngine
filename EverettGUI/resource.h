@@ -15,6 +15,7 @@
 #define IDD_DIALOG7                     327
 #define IDD_DIALOG8                     329
 #define IDB_PNG1                        331
+#define IDD_DIALOG9                     332
 #define IDC_BUTTON1                     1001
 #define IDC_BUTTON8                     1002
 #define IDC_BUTTON9                     1003
@@ -59,7 +60,7 @@
 #define IDC_EDIT11                      1036
 #define IDC_SPEED_TEXT                  1037
 #define IDC_SL_FILENAME_TEXT            1038
-#define IDC_COMBO4                      1041
+#define IDC_RENAME_WARNING              1044
 #define ID_BUTTON32771                  32771
 #define ID_BUTTON32772                  32772
 #define ID_BUTTON32773                  32773
@@ -74,9 +75,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        332
+#define _APS_NEXT_RESOURCE_VALUE        334
 #define _APS_NEXT_COMMAND_VALUE         32780
-#define _APS_NEXT_CONTROL_VALUE         1044
+#define _APS_NEXT_CONTROL_VALUE         1045
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

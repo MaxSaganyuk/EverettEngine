@@ -4,7 +4,7 @@
 SolidToModelManager::SolidToModelManager() 
 	: initialized(false) {}
 
-void SolidToModelManager::InitializeSTMM(ModelInfo::FullModelInfo& fullModelInfoRef, const std::string& modelName)
+void SolidToModelManager::InitializeSTMM(ModelInfo::FullModelInfo& fullModelInfoRef, const std::string* modelName)
 {
 	fullModelInfoP = &fullModelInfoRef;
 	this->modelName = modelName;
@@ -22,9 +22,9 @@ void SolidToModelManager::InitializeSTMM(ModelInfo::FullModelInfo& fullModelInfo
 	}
 }
 
-std::string SolidToModelManager::GetModelName()
+const std::string& SolidToModelManager::GetModelName()
 {
-	return modelName;
+	return *modelName;
 }
 
 void SolidToModelManager::ResetAnimationTime()

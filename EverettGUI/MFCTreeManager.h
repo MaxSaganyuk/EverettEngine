@@ -57,7 +57,8 @@ public:
 
 	void ClearNonRootNodes();
 
-	void DeleteNodeByItem(HTREEITEM item, bool includeItself = false);
+	bool RenameNodeByItem(HTREEITEM item, const AdString& newName);
+	bool DeleteNodeByItem(HTREEITEM item, bool includeItself = false);
 
 private:
 

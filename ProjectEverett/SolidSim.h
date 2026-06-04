@@ -66,7 +66,7 @@ public:
 	void InvokeAutoScale() override;
 
 	// Model access; engine only
-	std::string GetModelName();
+	const std::string& GetModelName();
 	glm::vec4 GetModelDefaultColor();
 	void SetModelDefaultColor(const glm::vec4& color);
 

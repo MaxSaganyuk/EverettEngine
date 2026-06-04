@@ -51,10 +51,26 @@ private:
 
 	void OnInitialUpdate() override;
 	HTREEITEM ForceNodeSelection();
+	void Panic(const char* errorMessage);
 
 	EverettEngine* engineP;
 	MFCTreeManager objectTree;
 
+	struct NodeInfo
+	{
+		HTREEITEM rawNode;
+		std::optional<EverettEngine::ObjectTypes> selectedType;
+		std::vector<std::pair<AdString, AdString>> selectedSubnodes;
+
+		void Clean()
+		{
+			rawNode = nullptr;
+			selectedType.reset();
+			selectedSubnodes.clear();
+		}
+	};
+
+	NodeInfo currentNodeInfo;
 	std::vector<std::pair<AdString, AdString>> selectedScriptDllInfo;
 
 	static inline std::map<EverettEngine::ObjectTypes, int> validSubnodeAmount
@@ -67,10 +83,15 @@ private:
 
 	CButton showGizmoCheck;
 	CButton showDebugTextCheck;
+
+	constexpr static int RenameNode = WM_USER + 4;
+	constexpr static int DeleteNode = WM_USER + 5;
 public:
 	afx_msg void OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnRenameNode();
+	afx_msg void OnDeleteNode();
 	afx_msg void OnEditAmbientLightButton();
 	afx_msg void OnShowGizmoCheckClick();
 	afx_msg void OnShowDebugTextCheckClick();

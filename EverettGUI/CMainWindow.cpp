@@ -5,8 +5,11 @@
 #include "EverettGUI.h"
 #include "CMainWindow.h"
 #include "CObjectEditDialog.h"
+#include "CRenameObjDlg.h"
 
 #include "EverettException.h"
+
+#include <iostream>
 
 using ObjectTypes = EverettEngine::ObjectTypes;
 
@@ -63,6 +66,8 @@ void CMainWindow::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
+	ON_COMMAND(RenameNode, &CMainWindow::OnRenameNode)
+	ON_COMMAND(DeleteNode, &CMainWindow::OnDeleteNode)
 	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE1, &CMainWindow::OnTreeSelectionChanged)
 	ON_NOTIFY(NM_DBLCLK, IDC_TREE1, &CMainWindow::OnNodeDoubleClick)
 	ON_NOTIFY(NM_RCLICK, IDC_TREE1, &CMainWindow::OnNodeRightClick)
@@ -105,7 +110,7 @@ HTREEITEM CMainWindow::ForceNodeSelection()
 	CTreeCtrl& treeCtrl = objectTree.GetTreeCtrl();
 	treeCtrl.ScreenToClient(&point);
 
-	unsigned int flags;
+	unsigned int flags{};
 	HTREEITEM hItem = nullptr;
 	hItem = treeCtrl.HitTest(point, &flags);
 
@@ -117,30 +122,33 @@ HTREEITEM CMainWindow::ForceNodeSelection()
 	return hItem;
 }
 
+// C string is used instead of std::string to reduce amount of issues possible on panic state
+void CMainWindow::Panic(const char* errorMessage)
+{
+	engineP->CreateLogReport();
+	std::cerr << errorMessage << '\n';
+	throw std::runtime_error{ errorMessage };
+}
+
 void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
 
 	if (!selectedNodes.empty())
 	{
-		ObjectTypes currentType;
+		std::optional<ObjectTypes> currentType;
 
-		try
-		{
-			currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
-		}
-		catch (const EverettException&)
-		{
-			// Invalid value here is unexpected, but not fatal - log, ignore and do not crash
-			return;
-		}
+		currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
+
+		if (!currentType.has_value()) return;
+
 		selectedNodes.pop_back();
 
-		if (selectedNodes.size() == validSubnodeAmount[currentType])
+		if (selectedNodes.size() == validSubnodeAmount[currentType.value()])
 		{
 			CObjectEditDialog objEditDlg(
 				*engineP,
-				currentType,
+				currentType.value(),
 				selectedScriptDllInfo,
 				selectedNodes
 			);
@@ -153,32 +161,79 @@ void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 { 
-	HTREEITEM selectedNodeRaw = ForceNodeSelection();
-	if (!selectedNodeRaw)
+	if (engineP->CheckIfScriptsRunning()) return;
+
+	currentNodeInfo.rawNode = ForceNodeSelection();
+	
+	if (!currentNodeInfo.rawNode)
 	{
+		currentNodeInfo.Clean();
 		return;
 	}
 
-	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
+	currentNodeInfo.selectedSubnodes = objectTree.GetAllOfRootsSelectedNode();
 
-	ObjectTypes currentType;
+	AdString& objectType = currentNodeInfo.selectedSubnodes.front().first;
 
-	try
+	if (objectType != "Model")
 	{
-		currentType = EverettEngine::GetObjectTypeToName(selectedNodes.back().second);
-	}
-	catch (const EverettException&)
-	{
-		// Invalid value here is unexpected, but not fatal - log, ignore and do not crash
-		return;
-	}
-	selectedNodes.pop_back();
+		currentNodeInfo.selectedType = EverettEngine::GetObjectTypeToName(objectType);
 
+		if (!currentNodeInfo.selectedType.has_value())
+		{
+			currentNodeInfo.Clean();
+			return;
+		}
+
+	}
+	currentNodeInfo.selectedSubnodes.pop_back();
+
+	CMenu menu;
+	CPoint point;
+
+	if (GetCursorPos(&point))
+	{
+		menu.CreatePopupMenu();
+
+		menu.AppendMenuW(MF_STRING, RenameNode, _T("Rename object"));
+		menu.AppendMenuW(MF_STRING, DeleteNode, _T("Delete object"));
+
+		menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+	}
+}
+
+void CMainWindow::OnRenameNode()
+{
+	AdString& oldName = currentNodeInfo.selectedSubnodes.front().second;
+
+	CRenameObjDlg renameObjDlg(oldName);
+
+	if (renameObjDlg.DoModal() == IDOK)
+	{
+		AdString newName = renameObjDlg.GetNewName();
+
+		if (!(engineP->RenameObject(oldName, newName, currentNodeInfo.selectedType) &&
+			  objectTree.RenameNodeByItem(currentNodeInfo.rawNode, newName))
+		)
+		{
+			Panic("[CRITICAL ERROR] Rename step failed. Terminating\n");
+		}
+	}
+
+	currentNodeInfo.Clean();
+}
+
+void CMainWindow::OnDeleteNode()
+{
 	std::function<bool(const std::string&)> deleterFunc = nullptr;
 
-	if (selectedNodes.size() == validSubnodeAmount[currentType])
+	if (!currentNodeInfo.selectedType.has_value())
 	{
-		switch (currentType)
+		deleterFunc = [this](const std::string& modelName) { return engineP->DeleteModel(modelName); };
+	}
+	else 
+	{
+		switch (currentNodeInfo.selectedType.value())
 		{
 		case ObjectTypes::Solid:
 			deleterFunc = [this](const std::string& solidName) { return engineP->DeleteSolid(solidName); };
@@ -196,23 +251,26 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 			std::unreachable();
 		}
 	}
-	else if (currentType == ObjectTypes::Solid && selectedNodes.size() == validSubnodeAmount[currentType] - 1)
-	{
-		deleterFunc = [this](const std::string& modelName) { return engineP->DeleteModel(modelName); };
-	}
-	
+
 	if (deleterFunc)
 	{
+		auto& [typeName, objectName] = currentNodeInfo.selectedSubnodes.front();
+
 		int res = AfxMessageBox(
-			L"Are you sure you want to delete " + selectedNodes.front().first + L" : " + selectedNodes.front().second + L'?',
+			L"Are you sure you want to delete " + typeName + L" : " + objectName + L'?',
 			MB_YESNO | MB_ICONQUESTION
 		);
 
-		if (res == IDYES && deleterFunc(selectedNodes.front().second))
+		if (res == IDYES)
 		{
-			objectTree.DeleteNodeByItem(selectedNodeRaw, true);
+			if (!(deleterFunc(objectName) && objectTree.DeleteNodeByItem(currentNodeInfo.rawNode, true)))
+			{
+				Panic("[CRITICAL ERROR] Delete step failed. Terminating\n");
+			}
 		}
 	}
+
+	currentNodeInfo.Clean();
 }
 
 std::vector<std::pair<AdString, AdString>>& CMainWindow::GetSelectedScriptDllInfo()

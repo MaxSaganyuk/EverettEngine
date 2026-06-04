@@ -6,19 +6,19 @@
 #include <generator>
 
 #include "AdString.h"
+#include "NameEditChecker.h"
 
 // CPlaceObjectDialog dialog
 
 class CPlaceObjectDialog : public CDialogEx
 {
 	DECLARE_DYNAMIC(CPlaceObjectDialog)
-	using NameCheckFunc = std::function<std::string(const std::string&)>;
 
 public:
 	CPlaceObjectDialog(
 		const AdString& objectTypeName, 
 		const AdString& sourceObjectTypeName,
-		NameCheckFunc nameCheckFunc,
+		NameEditChecker::NameCheckFunc nameCheckFunc,
 		std::generator<std::string_view>&& objectNameList,
 		CWnd* pParent = nullptr
 	);   // standard constructor
@@ -42,7 +42,7 @@ private:
 	AdString chosenObject;
 	AdString newName;
 
-	NameCheckFunc nameCheckFunc;
+	NameEditChecker::NameCheckFunc nameCheckFunc;
 
 	CComboBox objectChoice;
 	CStatic choiceLabel;
