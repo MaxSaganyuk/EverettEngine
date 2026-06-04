@@ -59,14 +59,14 @@ const std::unordered_set<SolidSim*>& ModelInfo::GetRelatedSolids() const
 	return relatedSolids;
 }
 
-void ModelInfo::SetModelBehaviour(std::function<void()> func)
+void ModelInfo::SetModelBehaviour(std::function<void(const ModelInfo&)> func)
 {
-	modelBehaviour = std::move(func);
+	modelBehaviour = [this, func = std::move(func)]() { func(*this); };
 }
 
-void ModelInfo::SetGeneralMeshBehaviour(std::function<void(int)> func)
+void ModelInfo::SetGeneralMeshBehaviour(std::function<void(const ModelInfo&, int)> func)
 {
-	generalMeshBehaviour = std::move(func);
+	generalMeshBehaviour = [this, func = std::move(func)](int meshIndex) { func(*this, meshIndex); };
 }
 
 void ModelInfo::CheckModelNamePtrSet() const

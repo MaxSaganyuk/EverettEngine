@@ -474,10 +474,9 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 	modelInfo->shaderProgram = defaultShaderProgram;
 	modelInfo->render = false;
 
-	modelSolidInfo.SetModelBehaviour([this, &nameRef]()
+	modelSolidInfo.SetModelBehaviour([this](const ModelInfo& model)
 	{
 		// Existence of the lambda implies existence of the model
-		auto& model = models[nameRef];
 		auto modelPtr = model.GetFullModelInfo().first.lock();
 		auto modelAnimPtr = model.GetFullModelInfo().second.lock();
 
@@ -522,11 +521,9 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		}
 	});
 
-	modelSolidInfo.SetGeneralMeshBehaviour([this, &nameRef](int meshIndex)
+	modelSolidInfo.SetGeneralMeshBehaviour([this](const ModelInfo& model, int meshIndex)
 	{
 		// Existence of the lambda implies existence of the model
-		auto& model = models[nameRef];
-
 		size_t index = currentStartSolidIndex;
 		for (auto& solidPtr : model.GetRelatedSolids())
 		{

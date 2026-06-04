@@ -25,8 +25,8 @@ public:
 	const FullModelInfo& GetFullModelInfo() const;
 	void InsertRelatedSolid(SolidSim& solid);
 	void EraseFromRelatedSolids(SolidSim& solid);
-	void SetModelBehaviour(std::function<void()> func);
-	void SetGeneralMeshBehaviour(std::function<void(int)> func);
+	void SetModelBehaviour(std::function<void(const ModelInfo&)> func);
+	void SetGeneralMeshBehaviour(std::function<void(const ModelInfo&, int)> func);
 	const std::unordered_set<SolidSim*>& GetRelatedSolids() const;
 private:
 	void CheckModelNamePtrSet() const;
