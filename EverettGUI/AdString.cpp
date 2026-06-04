@@ -12,14 +12,14 @@ void AdString::CheckAndReadapt(StrType typeToBeUsed) const
 void AdString::ToRegular() const
 {
 	strPair.first = CT2A(strPair.second);
-	strPair.second = _T("");
+	strPair.second.Empty();
 	currentType = StrType::Regular;
 }
 
 void AdString::ToWide() const
 {
 	strPair.second = CA2T(strPair.first.c_str());
-	strPair.first = "";
+	strPair.first.clear();
 	currentType = StrType::Wide;
 }
 
