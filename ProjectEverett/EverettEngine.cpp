@@ -61,12 +61,30 @@ using namespace EverettStructs;
 
 using ObjectInfoNames = SimSerializer::ObjectInfoNames;
 
+template<typename Type>
+constexpr static std::optional<EverettEngine::ObjectTypes> GetTypeEnumByType()
+{
+	return {};
+}
+
+#define DefineTypeEnumByType(Type)                                                        \
+template<>                                                                                \
+constexpr static std::optional<EverettEngine::ObjectTypes> GetTypeEnumByType<Type##Sim>() \
+{                                                                                         \
+	return EverettEngine::ObjectTypes::Type;                                              \
+}
+
+DefineTypeEnumByType(Camera)
+DefineTypeEnumByType(Solid)
+DefineTypeEnumByType(Light)
+DefineTypeEnumByType(Sound)
+DefineTypeEnumByType(Collider)
+
 struct EverettEngine::ObjectTypeInfo
 {
 	ObjectTypes nameEnum;
 	std::string nameStr;
 	std::string interfaceNameStr;
-	std::type_index pureType;
 };
 
 EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
@@ -94,11 +112,11 @@ EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
 
 std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
 {
-	{EverettEngine::ObjectTypes::Camera,   CameraSim::GetObjectTypeNameStr(), ToStr(ICameraSim), typeid(CameraSim)},
-	{EverettEngine::ObjectTypes::Solid,    SolidSim::GetObjectTypeNameStr(), ToStr(ISolidSim), typeid(SolidSim)},
-	{EverettEngine::ObjectTypes::Light,    LightSim::GetObjectTypeNameStr(), ToStr(ILightSim), typeid(LightSim)},
-	{EverettEngine::ObjectTypes::Sound,    SoundSim::GetObjectTypeNameStr(), ToStr(ISolidSim), typeid(SoundSim)},
-	{EverettEngine::ObjectTypes::Collider, ColliderSim::GetObjectTypeNameStr(), ToStr(IColliderSim), typeid(ColliderSim)}
+	{EverettEngine::ObjectTypes::Camera,   CameraSim::GetObjectTypeNameStr(), ToStr(ICameraSim)},
+	{EverettEngine::ObjectTypes::Solid,    SolidSim::GetObjectTypeNameStr(), ToStr(ISolidSim)},
+	{EverettEngine::ObjectTypes::Light,    LightSim::GetObjectTypeNameStr(), ToStr(ILightSim)},
+	{EverettEngine::ObjectTypes::Sound,    SoundSim::GetObjectTypeNameStr(), ToStr(ISolidSim)},
+	{EverettEngine::ObjectTypes::Collider, ColliderSim::GetObjectTypeNameStr(), ToStr(IColliderSim)}
 };
 
 #undef ToStr
@@ -753,8 +771,10 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 		return std::unexpected("New name already exists");
 
 	auto TryRenameKey = [&]<typename Type>(
-		std::unordered_map<std::string, Type>& cont, std::optional<ObjectTypes> objectType = std::nullopt
+		std::unordered_map<std::string, Type>& cont
 	){ 
+		constexpr std::optional<ObjectTypes> objectType = GetTypeEnumByType<Type>();
+
 		if (CheckHintAndType(hintType, objectType) && cont.contains(oldName))
 		{
 			auto node = cont.extract(oldName);
@@ -775,9 +795,8 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 	mainLGL->PauseRendering();
 
 	// Monadic-like check
-	auto result = TryRenameKey(models) && TryRenameKey(solids, ObjectTypes::Solid) && 
-		TryRenameKey(lights, ObjectTypes::Light) && TryRenameKey(sounds, ObjectTypes::Sound) && 
-		TryRenameKey(colliders, ObjectTypes::Collider);
+	auto result = TryRenameKey(models) && TryRenameKey(solids) && TryRenameKey(lights) && TryRenameKey(sounds) && 
+		TryRenameKey(colliders);
 
 	mainLGL->PauseRendering(false);
 
@@ -1443,10 +1462,9 @@ void EverettEngine::LoadCameraFromLine(std::string_view& line)
 template<typename Sim>
 void EverettEngine::ApplySimInfoFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo, bool& res)
 {
-	Sim* createdObject = dynamic_cast<Sim*>(GetObjectFromMap(
-		GetObjectPureTypeToName(typeid(Sim)),
-		objectInfo[ObjectInfoNames::ObjectName])
-	);
+	constexpr ObjectTypes objectType = GetTypeEnumByType<Sim>().value();
+
+	Sim* createdObject = dynamic_cast<Sim*>(GetObjectFromMap(objectType, objectInfo[ObjectInfoNames::ObjectName]));
 
 	if (createdObject)
 	{
@@ -1774,45 +1792,6 @@ std::optional<EverettEngine::ObjectTypes> EverettEngine::GetObjectTypeToName(con
 	}
 
 	return {};
-}
-
-std::type_index EverettEngine::GetObjectPureTypeToName(ObjectTypes objectType)
-{
-	for (auto& objectNamePair : objectTypes)
-	{
-		if (objectNamePair.nameEnum == objectType)
-		{
-			return objectNamePair.pureType;
-		}
-	}
-
-	ThrowExceptionWMessage("Nonexistent type");
-}
-
-std::type_index EverettEngine::GetObjectPureTypeToName(const std::string& objectName)
-{
-	for (auto& objectNamePair : objectTypes)
-	{
-		if (objectNamePair.nameStr == objectName || objectNamePair.interfaceNameStr == objectName)
-		{
-			return objectNamePair.pureType;
-		}
-	}
-
-	ThrowExceptionWMessage("Nonexistent type");
-}
-
-EverettEngine::ObjectTypes EverettEngine::GetObjectPureTypeToName(std::type_index pureType)
-{
-	for (auto& objectNamePair : objectTypes)
-	{
-		if (objectNamePair.pureType == pureType)
-		{
-			return objectNamePair.nameEnum;
-		}
-	}
-
-	ThrowExceptionWMessage("Nonexistent type");
 }
 
 std::generator<std::string_view> EverettEngine::GetNamesByObject(ObjectTypes objType, bool getAdditionalInfo)

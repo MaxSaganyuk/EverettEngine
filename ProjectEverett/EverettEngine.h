@@ -129,7 +129,7 @@ public:
 	EVERETT_API static std::generator<std::string_view> GetAllObjectTypeNames();
 	EVERETT_API static std::string GetObjectTypeToName(ObjectTypes objectType);
 	EVERETT_API static std::optional<ObjectTypes> GetObjectTypeToName(const std::string& objectName);
-
+	
 	EVERETT_API std::string ConvertKeyTo(int keyId);
 
 	EVERETT_API int ConvertKeyTo(char c) override;
@@ -261,10 +261,6 @@ private:
 	struct ObjectTypeInfo;
 
 	void CheckAndAddToNameTracker(const std::string& name);
-
-	static std::type_index GetObjectPureTypeToName(ObjectTypes objectType);
-	static std::type_index GetObjectPureTypeToName(const std::string& objectName);
-	static ObjectTypes GetObjectPureTypeToName(std::type_index objectType);
 
 	std::generator<std::string_view> GetSolidList(bool getModelNames);
 	std::generator<std::string_view> GetLightList(bool getLightTypes);
