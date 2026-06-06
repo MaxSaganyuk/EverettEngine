@@ -755,14 +755,7 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 	auto TryRenameKey = [&]<typename Type>(
 		std::unordered_map<std::string, Type>& cont, std::optional<ObjectTypes> objectType = std::nullopt
 	){ 
-		bool check = true;
-
-		if (hintType && objectType)
-		{
-			check = hintType == objectType;
-		}
-
-		if (check && cont.contains(oldName))
+		if (CheckHintAndType(hintType, objectType) && cont.contains(oldName))
 		{
 			auto node = cont.extract(oldName);
 			auto& key = node.key();
@@ -806,14 +799,7 @@ std::expected<void, std::string> EverettEngine::DeleteObject(
 		ObjectModificationState(EverettEngine::*deleter)(const std::string&), const std::string& name,
 		std::optional<ObjectTypes> objectType = std::nullopt)
 	{
-		bool check = true;
-
-		if (hintType && objectType)
-		{
-			check = hintType == objectType;
-		}
-
-		if (check)
+		if (CheckHintAndType(hintType, objectType))
 		{
 			return (this->*deleter)(name);
 		}
@@ -914,6 +900,22 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteSolid(const std::str
 	}
 
 	return CheckNextOne;
+}
+
+bool EverettEngine::CheckHintAndType(
+	const std::optional<ObjectTypes>& hintType, const std::optional<ObjectTypes>& objectType
+)
+{
+	// If hint provided, but container does not have sim object type - ignore, because it is definitly invalid.
+	bool check = !(hintType && !objectType);
+
+	// If both hint and sim type provided - check only if equivalent.
+	if (check && hintType && objectType)
+	{
+		check = hintType == objectType;
+	}
+
+	return check;
 }
 
 EverettEngine::SolidCollection::iterator EverettEngine::DeleteSolidImpl(SolidCollection::iterator solidIter)

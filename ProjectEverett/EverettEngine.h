@@ -198,6 +198,10 @@ private:
 	constexpr static glm::vec4 colliderGizmoColor         = { 0.0f, 1.0f, 0.0f, 1.0f };
 	constexpr static glm::vec4 colliderGizmoColorCollided = { 1.0f, 0.0f, 0.0f, 1.0f };
 
+	static bool CheckHintAndType(
+		const std::optional<ObjectTypes>& hintType, const std::optional<ObjectTypes>& objectType
+	);
+
 	SolidCollection::iterator DeleteSolidImpl(SolidCollection::iterator solidIter);
 
 	ObjectModificationState DeleteModel(const std::string& modelName);
