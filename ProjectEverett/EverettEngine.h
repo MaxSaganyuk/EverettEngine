@@ -93,16 +93,15 @@ public:
 	EVERETT_API std::expected<void, std::string> RenameObject(
 		const std::string& oldName, const std::string& newName, std::optional<ObjectTypes> hintType = std::nullopt
 	);
-
-	EVERETT_API bool DeleteModel(const std::string& modelName);
-	EVERETT_API bool DeleteSolid(const std::string& solidName);
-	EVERETT_API bool DeleteLight(const std::string& lightName);
-	EVERETT_API bool DeleteSound(const std::string& soundName);
-	EVERETT_API bool DeleteCollider(const std::string& colliderName);
+	EVERETT_API std::expected<void, std::string> DeleteObject(
+		const std::string& name, std::optional<ObjectTypes> hintType = std::nullopt
+	);
 
 	EVERETT_API glm::vec3& GetAmbientLightVectorAddr(); 
 
-	EVERETT_API IObjectSim* GetObjectInterface(ObjectTypes objectType, const char* objectName) override;
+	EVERETT_API IObjectSim* GetObjectInterface(
+		const char* objectName, std::optional<ObjectTypes> hintType = std::nullopt
+	) override;
 	EVERETT_API ISolidSim* GetSolidInterface(const char* solidName) override;
 	EVERETT_API ILightSim* GetLightInterface(const char* lightName) override;
 	EVERETT_API ISoundSim* GetSoundInterface(const char* soundName) override;
@@ -160,6 +159,11 @@ public:
 
 	EVERETT_API void CreateLogReport() override;
 private:
+	enum ObjectModificationState : bool
+	{
+		FoundCorrectOne, CheckNextOne
+	};
+
 	std::string shaderPath = "shaders";
 	std::string modelPath = "models";
 	std::string fontPath = "fonts";
@@ -196,6 +200,12 @@ private:
 
 	SolidCollection::iterator DeleteSolidImpl(SolidCollection::iterator solidIter);
 
+	ObjectModificationState DeleteModel(const std::string& modelName);
+	ObjectModificationState DeleteSolid(const std::string& solidName);
+	ObjectModificationState DeleteLight(const std::string& lightName);
+	ObjectModificationState DeleteSound(const std::string& soundName);
+	ObjectModificationState DeleteCollider(const std::string& colliderName);
+
 	void LoadGizmoModel();
 	bool CreateGizmoSolid(
 		const std::string& relatedObjModelName, 
@@ -230,7 +240,8 @@ private:
 
 	ObjectSim* GetObjectFromMap(
 		ObjectTypes objectType,
-		const std::string& objectName
+		const std::string& objectName,
+		bool logFail = true
 	);
 
 	template<typename Sim>

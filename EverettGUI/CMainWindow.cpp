@@ -225,48 +225,20 @@ void CMainWindow::OnRenameNode()
 
 void CMainWindow::OnDeleteNode()
 {
-	std::function<bool(const std::string&)> deleterFunc = nullptr;
+	auto& [typeName, objectName] = currentNodeInfo.selectedSubnodes.front();
 
-	if (!currentNodeInfo.selectedType.has_value())
+	int res = AfxMessageBox(
+		L"Are you sure you want to delete " + typeName + L" : " + objectName + L'?',
+		MB_YESNO | MB_ICONQUESTION
+	);
+
+	if (res == IDYES)
 	{
-		deleterFunc = [this](const std::string& modelName) { return engineP->DeleteModel(modelName); };
-	}
-	else 
-	{
-		switch (currentNodeInfo.selectedType.value())
+		if (!(engineP->DeleteObject(objectName, currentNodeInfo.selectedType) && 
+			objectTree.DeleteNodeByItem(currentNodeInfo.rawNode, true))
+		)
 		{
-		case ObjectTypes::Solid:
-			deleterFunc = [this](const std::string& solidName) { return engineP->DeleteSolid(solidName); };
-			break;
-		case ObjectTypes::Light:
-			deleterFunc = [this](const std::string& lightName) { return engineP->DeleteLight(lightName); };
-			break;
-		case ObjectTypes::Sound:
-			deleterFunc = [this](const std::string& soundName) { return engineP->DeleteSound(soundName); };
-			break;
-		case ObjectTypes::Collider:
-			deleterFunc = [this](const std::string& colliderName) { return engineP->DeleteCollider(colliderName); };
-			break;
-		default:
-			std::unreachable();
-		}
-	}
-
-	if (deleterFunc)
-	{
-		auto& [typeName, objectName] = currentNodeInfo.selectedSubnodes.front();
-
-		int res = AfxMessageBox(
-			L"Are you sure you want to delete " + typeName + L" : " + objectName + L'?',
-			MB_YESNO | MB_ICONQUESTION
-		);
-
-		if (res == IDYES)
-		{
-			if (!(deleterFunc(objectName) && objectTree.DeleteNodeByItem(currentNodeInfo.rawNode, true)))
-			{
-				Panic("[CRITICAL ERROR] Delete step failed. Terminating\n");
-			}
+			Panic("[CRITICAL ERROR] Delete step failed. Terminating\n");
 		}
 	}
 

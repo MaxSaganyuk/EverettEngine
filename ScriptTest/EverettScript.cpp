@@ -111,7 +111,9 @@ ScriptInit()
 	testChar.SetSolidSim(engine.GetSolidInterface("TestChar"));
 	testChar.SetColliderSim(engine.GetColliderInterface("TestCharBox"));
 	testChar.SetupBlockCollision(engine.GetColliderInterface("BlockBox"));
-	testChar.SetupWorldSwitchCollision(engine.GetColliderInterface("WorldSwitchBox"));
+
+	// Delibirate hintless interface get test
+	testChar.SetupWorldSwitchCollision(dynamic_cast<IColliderSim*>(engine.GetObjectInterface("WorldSwitchBox")));
 
 	auto testCharStopFunc = []() { testChar.Stop(); };
 

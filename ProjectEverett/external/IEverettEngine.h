@@ -7,6 +7,8 @@
 #include "ICameraSim.h"
 #include "IColliderSim.h"
 
+#include <optional>
+
 // Engine interface is for external use, will only expose necessary calls to the engine from scripting
 class IEverettEngine
 {
@@ -27,7 +29,9 @@ public:
 	virtual void AddMouseScrollCallback(std::function<void(double)> callback) = 0;
 	virtual void AddMouseMoveCallback(std::function<void(double, double)> callback) = 0;
 
-	virtual IObjectSim* GetObjectInterface(ObjectTypes objectType, const char* objectName) = 0;
+	virtual IObjectSim* GetObjectInterface(
+		const char* objectName, std::optional<ObjectTypes> hintType = std::nullopt
+	) = 0;
 	virtual ISolidSim* GetSolidInterface(const char* solidName) = 0;
 	virtual ILightSim* GetLightInterface(const char* lightName) = 0;
 	virtual ISoundSim* GetSoundInterface(const char* soundName) = 0;

@@ -23,7 +23,7 @@ CObjectEditDialog::CObjectEditDialog(
 	engineRef(engine), 
 	objectType(objectTypeP),
 	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : AdString{}),
-	currentObjectInterface(*engineRef.GetObjectInterface(objectType, objectName)),
+	currentObjectInterface(*engineRef.GetObjectInterface(objectName, objectType)),
 	castedCameraInterface(nullptr),
 	castedSolidInterface(nullptr),
 	castedLightInterface(nullptr),

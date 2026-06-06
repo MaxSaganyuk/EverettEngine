@@ -745,11 +745,6 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 	const std::string& oldName, const std::string& newName, std::optional<ObjectTypes> hintType
 )
 {
-	enum RenameState : bool
-	{
-		FoundCorrectOne, CheckNextOne
-	};
-
 	if (CheckIfScriptsRunning())
 		return std::unexpected("Cannot rename whilst scripts are running\n");
 	if (oldName == "Camera" || (hintType.has_value() && hintType == ObjectTypes::Camera))
@@ -762,7 +757,7 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 	){ 
 		bool check = true;
 
-		if (hintType.has_value() && objectType.has_value())
+		if (hintType && objectType)
 		{
 			check = hintType == objectType;
 		}
@@ -784,10 +779,59 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 		return CheckNextOne;
 	};
 
+	mainLGL->PauseRendering();
+
 	// Monadic-like check
 	auto result = TryRenameKey(models) && TryRenameKey(solids, ObjectTypes::Solid) && 
 		TryRenameKey(lights, ObjectTypes::Light) && TryRenameKey(sounds, ObjectTypes::Sound) && 
 		TryRenameKey(colliders, ObjectTypes::Collider);
+
+	mainLGL->PauseRendering(false);
+
+	if (result != FoundCorrectOne) return std::unexpected("Old name does not exist");
+
+	return {};
+}
+
+std::expected<void, std::string> EverettEngine::DeleteObject(
+	const std::string& name, std::optional<ObjectTypes> hintType
+)
+{
+	if (CheckIfScriptsRunning())
+		return std::unexpected("Cannot rename whilst scripts are running\n");
+	if (name == "Camera" || (hintType.has_value() && hintType == ObjectTypes::Camera))
+		return std::unexpected("Cannot rename camera object");
+
+	auto DeleteWrapperFunc = [&](
+		ObjectModificationState(EverettEngine::*deleter)(const std::string&), const std::string& name,
+		std::optional<ObjectTypes> objectType = std::nullopt)
+	{
+		bool check = true;
+
+		if (hintType && objectType)
+		{
+			check = hintType == objectType;
+		}
+
+		if (check)
+		{
+			return (this->*deleter)(name);
+		}
+
+		return CheckNextOne;
+	};
+
+	mainLGL->PauseRendering();
+
+	// Monadic-like check
+	auto result = 
+		DeleteWrapperFunc(&EverettEngine::DeleteModel, name) &&
+		DeleteWrapperFunc(&EverettEngine::DeleteSolid, name, ObjectTypes::Solid) &&
+		DeleteWrapperFunc(&EverettEngine::DeleteLight, name, ObjectTypes::Light) &&
+		DeleteWrapperFunc(&EverettEngine::DeleteSound, name, ObjectTypes::Sound) &&
+		DeleteWrapperFunc(&EverettEngine::DeleteCollider, name, ObjectTypes::Collider);
+
+	mainLGL->PauseRendering(false);
 
 	if (result != FoundCorrectOne) return std::unexpected("Old name does not exist");
 
@@ -835,17 +879,8 @@ void EverettEngine::RemoveSolidPtrFromModel(const std::string& modelName, SolidS
 	}
 }
 
-bool EverettEngine::DeleteModel(const std::string& modelName)
+EverettEngine::ObjectModificationState EverettEngine::DeleteModel(const std::string& modelName)
 {
-	if (CheckIfScriptsRunning())
-	{
-		return false;
-	}
-
-	bool res = false;
-
-	mainLGL->PauseRendering();
-
 	auto iter = models.find(modelName);
 
 	if (iter != models.end())
@@ -856,26 +891,16 @@ bool EverettEngine::DeleteModel(const std::string& modelName)
 		allNameTracker.erase(&iter->first);
 		models.erase(modelName);
 
-		res = true;
+		GenerateShader();
+		
+		return FoundCorrectOne;
 	}
-	GenerateShader();
-	
-	mainLGL->PauseRendering(false);
 
-	return res;
+	return CheckNextOne;
 }
 
-bool EverettEngine::DeleteSolid(const std::string& solidName)
+EverettEngine::ObjectModificationState EverettEngine::DeleteSolid(const std::string& solidName)
 {
-	if (CheckIfScriptsRunning())
-	{
-		return false;
-	}
-
-	bool res = false;
-
-	mainLGL->PauseRendering();
-
 	auto iter = solids.find(solidName);
 
 	if (iter != solids.end())
@@ -883,14 +908,12 @@ bool EverettEngine::DeleteSolid(const std::string& solidName)
 		RemoveSolidPtrFromModel(iter->second.GetModelName(), &iter->second);
 		DeleteSolidImpl(iter);
 
-		res = true;
+		GenerateShader();
+
+		return FoundCorrectOne;
 	}
 
-	GenerateShader();
-
-	mainLGL->PauseRendering(false);
-
-	return res;
+	return CheckNextOne;
 }
 
 EverettEngine::SolidCollection::iterator EverettEngine::DeleteSolidImpl(SolidCollection::iterator solidIter)
@@ -900,17 +923,8 @@ EverettEngine::SolidCollection::iterator EverettEngine::DeleteSolidImpl(SolidCol
 	return solids.erase(solidIter);
 }
 
-bool EverettEngine::DeleteLight(const std::string& lightName)
+EverettEngine::ObjectModificationState EverettEngine::DeleteLight(const std::string& lightName)
 {
-	if (CheckIfScriptsRunning())
-	{
-		return false;
-	}
-
-	bool res = false;
-
-	mainLGL->PauseRendering();
-
 	auto iter = lights.find(lightName);
 
 	if (iter != lights.end())
@@ -918,30 +932,19 @@ bool EverettEngine::DeleteLight(const std::string& lightName)
 		allNameTracker.erase(&iter->first);
 		lights.erase(lightName);
 
-		res = true;
+		if (gizmoEnabled)
+		{
+			DeleteSolid(lightName + gizmoModelName);
+		}
+
+		return FoundCorrectOne;
 	}
-
-	if (gizmoEnabled)
-	{
-		DeleteSolid(lightName + gizmoModelName);
-	}
-
-	mainLGL->PauseRendering(false);
-
-	return res;
+	
+	return CheckNextOne;
 }
 
-bool EverettEngine::DeleteSound(const std::string& soundName)
+EverettEngine::ObjectModificationState EverettEngine::DeleteSound(const std::string& soundName)
 {
-	if (CheckIfScriptsRunning())
-	{
-		return false;
-	}
-
-	bool res = false;
-
-	mainLGL->PauseRendering();
-
 	auto iter = sounds.find(soundName);
 
 	if (iter != sounds.end())
@@ -949,30 +952,19 @@ bool EverettEngine::DeleteSound(const std::string& soundName)
 		allNameTracker.erase(&(*iter).first);
 		sounds.erase(soundName);
 
-		res = true;
+		if (gizmoEnabled)
+		{
+			DeleteSolid(soundName + gizmoModelName);
+		}
+
+		return FoundCorrectOne;
 	}
 
-	if (gizmoEnabled)
-	{
-		DeleteSolid(soundName + gizmoModelName);
-	}
-
-	mainLGL->PauseRendering(false);
-
-	return res;
+	return CheckNextOne;
 }
 
-bool EverettEngine::DeleteCollider(const std::string& colliderName)
+EverettEngine::ObjectModificationState EverettEngine::DeleteCollider(const std::string& colliderName)
 {
-	if (CheckIfScriptsRunning())
-	{
-		return false;
-	}
-
-	bool res = false;
-
-	mainLGL->PauseRendering();
-
 	auto iter = colliders.find(colliderName);
 
 	if (iter != colliders.end())
@@ -980,15 +972,15 @@ bool EverettEngine::DeleteCollider(const std::string& colliderName)
 		allNameTracker.erase(&iter->first);
 		colliders.erase(colliderName);
 
-		res = true;
+		if (gizmoEnabled)
+		{
+			DeleteSolid(colliderName + gizmoModelName);
+		}
+
+		return FoundCorrectOne;
 	}
 
-	if (gizmoEnabled)
-	{
-		DeleteSolid(colliderName + gizmoModelName);
-	}
-
-	return res;
+	return CheckNextOne;
 }
 
 glm::vec3& EverettEngine::GetAmbientLightVectorAddr()
@@ -996,9 +988,28 @@ glm::vec3& EverettEngine::GetAmbientLightVectorAddr()
 	return LightSim::SGetAmbientLightColorVectorAddr();
 }
 
-IObjectSim* EverettEngine::GetObjectInterface(ObjectTypes objectType, const char* objectName)
+IObjectSim* EverettEngine::GetObjectInterface(const char* objectName, std::optional<ObjectTypes> hintType)
 {
-	return dynamic_cast<IObjectSim*>(GetObjectFromMap(objectType, objectName));
+	IObjectSim* objectPtr = nullptr;
+
+	if (!hintType)
+	{
+		for (size_t objectType = 0; objectType < std::to_underlying(ObjectTypes::_SIZE); ++objectType)
+		{
+			if ((objectType == 0) == (std::string_view(objectName) == "Camera"))
+			{
+				objectPtr = GetObjectFromMap(static_cast<ObjectTypes>(objectType), objectName, false);
+			}
+
+			if (objectPtr) break;
+		}
+	}
+	else
+	{
+		objectPtr = GetObjectFromMap(hintType.value(), objectName);
+	}
+
+	return objectPtr;
 }
 
 ISolidSim* EverettEngine::GetSolidInterface(const char* solidName)
@@ -1222,7 +1233,8 @@ std::string EverettEngine::GetSaveFileType()
 
 ObjectSim* EverettEngine::GetObjectFromMap(
 	EverettEngine::ObjectTypes objectType,
-	const std::string& objectName
+	const std::string& objectName,
+	bool logFail
 )
 {
 	ObjectSim* object = nullptr;
@@ -1253,7 +1265,7 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 	{
 		std::cout << "Retrieved object " << objectName << " from " << object->GetThisObjectTypeNameStr() << " map\n";
 	}
-	else
+	else if (logFail)
 	{
 		std::cerr << "Failed to retrieve object " << objectName << " from maps\n";
 	}

@@ -315,7 +315,7 @@ void CMainFrame::OnLoadModel()
 					}
 					catch (const EverettException&)
 					{
-						engine.DeleteModel(loadModelDlg.GetChosenName());
+						engine.DeleteObject(loadModelDlg.GetChosenName());
 						return false;
 					}
 				}
