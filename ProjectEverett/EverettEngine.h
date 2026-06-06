@@ -12,12 +12,9 @@
 #include <vector>
 #include <memory>
 #include <functional>
-#include <typeindex>
 #include <optional>
 #include <generator>
 #include <expected>
-
-#include "UnorderedPtrMap.h"
 
 #include "external/IEverettEngine.h"
 
@@ -38,6 +35,7 @@ class RenderLogger;
 class CustomOutput;
 class ModelInfo;
 class KeyScriptFuncInfo;
+class NameTracker;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -260,8 +258,6 @@ private:
 
 	struct ObjectTypeInfo;
 
-	void CheckAndAddToNameTracker(const std::string& name);
-
 	std::generator<std::string_view> GetSolidList(bool getModelNames);
 	std::generator<std::string_view> GetLightList(bool getLightTypes);
 	std::generator<std::string_view> GetSoundList();
@@ -316,7 +312,7 @@ private:
 	std::vector<std::function<void(double)>> mouseScrollScriptFuncs;
 	std::vector<std::function<void(double, double)>> mouseMoveScriptFuncs;
 
-	UnorderedPtrMap<const std::string*, int> allNameTracker;
+	std::unique_ptr<NameTracker> allNameTracker;
 
 	std::streambuf* stdOutStreamBuffer;
 	std::streambuf* stdErrStreamBuffer;

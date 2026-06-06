@@ -20,8 +20,6 @@
 
 #include "WindowHandleHolder.h"
 
-#include "CommonStrEdits.h"
-
 #include "stdEx/type_traitsEx.h"
 
 #include "AnimSystem.h"
@@ -38,6 +36,8 @@
 
 #include "ShaderGenerator.h"
 #include "ConceptUtils.h"
+
+#include "NameTracker.h"
 
 using namespace EverettStructs;
 
@@ -138,6 +138,8 @@ EverettEngine::EverettEngine()
 	animSystem = std::make_unique<AnimSystem>();
 	cmdHandler = std::make_unique<CommandHandler>();
 	hwndHolder = std::make_unique<WindowHandleHolder>();
+
+	allNameTracker = std::make_unique<NameTracker>();
 		
 	ObjectSim::InitializeObjectGraph();
 }
@@ -487,7 +489,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 	modelSolidInfo.SetModelNamePtr(nameRef);
 	auto modelInfo = modelSolidInfo.GetFullModelInfo().first.lock();
 
-	CheckAndAddToNameTracker(nameRef);
+	allNameTracker->Add(name);
 
 	modelInfo->shaderProgram = defaultShaderProgram;
 	modelInfo->render = false;
@@ -591,8 +593,6 @@ bool EverettEngine::CreateSolidImpl(
 
 	if (success)
 	{ 
-		// We use solidNameRef to add to tracker exactly because we need reference to a string
-		// which maps are storing, not simply the string
 		auto& [solidNameRef, newSolid] = *iter;
 
 		models[modelName].InsertRelatedSolid(newSolid);
@@ -607,7 +607,7 @@ bool EverettEngine::CreateSolidImpl(
 			modelPtr->render = true;
 		}
 
-		CheckAndAddToNameTracker(solidNameRef);
+		allNameTracker->Add(solidNameRef);
 
 		if (regenerateShader)
 		{
@@ -674,7 +674,7 @@ bool EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lig
 
 		newLight.SetScaleVector(glm::vec3{ 0.25 });
 		newLight.SetOrientation(camera->GetOrientationAddr());
-		CheckAndAddToNameTracker(lightNameRef);
+		allNameTracker->Add(lightNameRef);
 
 		return true;
 	}
@@ -717,7 +717,7 @@ bool EverettEngine::CreateSoundImpl(const std::string& path, const std::string& 
 
 			newSound.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVector());
 			newSound.SetScaleVector(glm::vec3{ 0.25 });
-			CheckAndAddToNameTracker(soundNameRef);
+			allNameTracker->Add(soundNameRef);
 
 			return true;
 		}
@@ -751,7 +751,7 @@ bool EverettEngine::CreateColliderImpl(const std::string& colliderName)
 	{
 		auto& [colliderNameRef, _] = *iter;
 
-		CheckAndAddToNameTracker(colliderNameRef);
+		allNameTracker->Add(colliderNameRef);
 
 		return true;
 	}
@@ -767,7 +767,7 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 		return std::unexpected("Cannot rename whilst scripts are running\n");
 	if (oldName == "Camera" || (hintType.has_value() && hintType == ObjectTypes::Camera))
 		return std::unexpected("Cannot rename camera object");
-	if (allNameTracker.contains(&newName))
+	if (allNameTracker->Contains(newName))
 		return std::unexpected("New name already exists");
 
 	auto TryRenameKey = [&]<typename Type>(
@@ -779,12 +779,13 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 		{
 			auto node = cont.extract(oldName);
 			auto& key = node.key();
-			allNameTracker.erase(&key);
+			
+			allNameTracker->TryRemove(oldName);
 
 			key = newName;
 			cont.insert(std::move(node));
 
-			CheckAndAddToNameTracker(key);
+			allNameTracker->Add(newName);
 
 			return FoundCorrectOne;
 		}
@@ -893,7 +894,7 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteModel(const std::str
 		mainLGL->DeleteModel(modelName);
 		DeleteSolidsByModel(modelName);
 	
-		allNameTracker.erase(&iter->first);
+		allNameTracker->TryRemove(modelName);
 		models.erase(modelName);
 
 		GenerateShader();
@@ -939,7 +940,7 @@ bool EverettEngine::CheckHintAndType(
 
 EverettEngine::SolidCollection::iterator EverettEngine::DeleteSolidImpl(SolidCollection::iterator solidIter)
 {
-	allNameTracker.erase(&solidIter->first);
+	allNameTracker->TryRemove(solidIter->first);
 	animSystem->DecrementTotalBoneAmount(solidIter->second);
 	return solids.erase(solidIter);
 }
@@ -950,7 +951,7 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteLight(const std::str
 
 	if (iter != lights.end())
 	{
-		allNameTracker.erase(&iter->first);
+		allNameTracker->TryRemove(lightName);
 		lights.erase(lightName);
 
 		if (gizmoEnabled)
@@ -970,7 +971,7 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteSound(const std::str
 
 	if (iter != sounds.end())
 	{
-		allNameTracker.erase(&(*iter).first);
+		allNameTracker->TryRemove(soundName);
 		sounds.erase(soundName);
 
 		if (gizmoEnabled)
@@ -990,7 +991,7 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteCollider(const std::
 
 	if (iter != colliders.end())
 	{
-		allNameTracker.erase(&iter->first);
+		allNameTracker->TryRemove(colliderName);
 		colliders.erase(colliderName);
 
 		if (gizmoEnabled)
@@ -1385,7 +1386,7 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 
 	ClearExternallyControlledContainers();
 
-	allNameTracker.clear();
+	allNameTracker->Clean();
 
 	if (fileLoader)
 	{
@@ -1893,28 +1894,6 @@ void EverettEngine::CloseWindow(const std::string& name)
 	}
 }
 
-void EverettEngine::CheckAndAddToNameTracker(const std::string& name)
-{
-	int number;
-	std::string namePure = CommonStrEdits::RemoveDigitsFromStringEnd(name, number);
-
-	if (allNameTracker.find(&namePure) != allNameTracker.end())
-	{
-		int& currentNumber = allNameTracker[&namePure];
-
-		if (number > currentNumber)
-		{
-			currentNumber = number;
-		}
-
-		++currentNumber;
-	}
-	else
-	{
-		allNameTracker.emplace(&name, 1);
-	}
-}
-
 std::string EverettEngine::GetDateTimeStr()
 {
 	auto now = std::chrono::zoned_time{
@@ -1993,10 +1972,5 @@ void EverettEngine::CreateLogReport()
 
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)
 {
-	if (allNameTracker.find(&name) != allNameTracker.end())
-	{
-		return (name + std::to_string(allNameTracker[&name]));
-	}
-
-	return name;
+	return allNameTracker->GetAvailibleName(name);
 }
