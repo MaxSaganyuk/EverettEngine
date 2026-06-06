@@ -88,8 +88,8 @@ CMainFrame::CMainFrame() noexcept
 			std::terminate();
 		}
 	});
-	nameCheckFunc = [this](const std::string& name) { return engine.GetAvailableObjectName(name); };
-	NameEditChecker::SetNameCheckFunc(nameCheckFunc);
+
+	NameEditChecker::SetNameCheckFunc([this](const std::string& name) { return engine.GetAvailableObjectName(name); });
 }
 
 CMainFrame::~CMainFrame()
@@ -299,8 +299,7 @@ void CMainFrame::OnLoadModel()
 {
 	CBrowseAndLoadDialog loadModelDlg(
 		"Model",
-		[this](std::string& path) { return engine.GetModelInDirList(path); },
-		nameCheckFunc
+		[this](std::string& path) { return engine.GetModelInDirList(path); }
 	);
 
 	if (loadModelDlg.DoModal() == IDOK)
@@ -335,7 +334,6 @@ void CMainFrame::OnPlaceSolid()
 	CPlaceObjectDialog placeSolidDlg(
 		L"Solid", 
 		L"Model", 
-		nameCheckFunc,
 		engine.GetCreatedModels()
 	);
 
@@ -351,7 +349,6 @@ void CMainFrame::OnPlaceLight()
 	CPlaceObjectDialog placeLightDlg(
 		L"Light", 
 		L"Light type",
-		nameCheckFunc,
 		engine.GetLightTypeList()
 	);
 
@@ -369,8 +366,7 @@ void CMainFrame::OnPlaceSound()
 {
 	CBrowseAndLoadDialog placeSoundDlg(
 		L"Sound", 
-		[this](std::string& path) { return engine.GetSoundInDirList(path); }, 
-		nameCheckFunc
+		[this](std::string& path) { return engine.GetSoundInDirList(path); }
 	);
 
 	if (placeSoundDlg.DoModal() == IDOK)
@@ -385,7 +381,6 @@ void CMainFrame::OnPlaceCollider()
 	CPlaceObjectDialog placeColliderDlg(
 		L"Collider",
 		L"Collider type",
-		nameCheckFunc,
 		[]() -> std::generator<std::string_view> { co_yield { "Box" }; }()
 	);
 

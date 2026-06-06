@@ -14,13 +14,11 @@ class CBrowseAndLoadDialog : public CDialogEx
 {
 	DECLARE_DYNAMIC(CBrowseAndLoadDialog)
 	using LoaderFunc = std::move_only_function<std::generator<std::string>(std::string&)>;
-	using NameCheckFunc = std::function<std::string(const std::string&)>;
 
 public:
 	CBrowseAndLoadDialog(
 		const AdString& objectName,
 		LoaderFunc loader,
-		NameCheckFunc nameCheckFunc,
 		CWnd* pParent = nullptr
 	);   // standard constructor
 	virtual ~CBrowseAndLoadDialog();
@@ -59,7 +57,6 @@ private:
 	AdString name;
 
 	LoaderFunc modelLoader;
-	NameCheckFunc nameCheckFunc;
 		
 	constexpr static const char cacheFileName[] = "loadCache";
 public:

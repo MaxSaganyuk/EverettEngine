@@ -49,6 +49,7 @@ BOOL CRenameObjDlg::OnInitDialog()
 
 BEGIN_MESSAGE_MAP(CRenameObjDlg, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT2, &CRenameObjDlg::OnNewNameBoxChange)
+	ON_BN_CLICKED(IDOK, &CRenameObjDlg::OnBnClickedOk)
 END_MESSAGE_MAP()
 
 
@@ -61,4 +62,11 @@ void CRenameObjDlg::OnNewNameBoxChange()
 	newNameBox.GetWindowTextW(newName);
 
 	okButton.EnableWindow(!newName.empty());
+}
+
+void CRenameObjDlg::OnBnClickedOk()
+{
+	newName = NameEditChecker::GetNameCheckedString(newName);
+
+	CDialogEx::OnOK();
 }

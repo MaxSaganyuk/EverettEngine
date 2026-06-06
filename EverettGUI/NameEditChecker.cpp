@@ -31,6 +31,11 @@ void NameEditChecker::SetNameCheckFunc(NameCheckFunc nameCheckFuncInp)
 	nameCheckFunc = nameCheckFuncInp;
 }
 
+AdString NameEditChecker::GetNameCheckedString(const AdString& str)
+{
+	return nameCheckFunc(str);
+}
+
 void NameEditChecker::RemoveRestrictedSymbs(AdString& str)
 {
 	std::string& stdStr = str;

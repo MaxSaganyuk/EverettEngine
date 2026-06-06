@@ -18,14 +18,12 @@ IMPLEMENT_DYNAMIC(CBrowseAndLoadDialog, CDialogEx)
 CBrowseAndLoadDialog::CBrowseAndLoadDialog(
 	const AdString& objectName,
 	LoaderFunc modelLoader, 
-	NameCheckFunc nameCheckFunc,
 	CWnd* pParent
 )
 	: 
 	CDialogEx(IDD_DIALOG1, pParent), 
 	objectName(objectName),
 	modelLoader(std::move(modelLoader)),
-	nameCheckFunc(nameCheckFunc),
 	path(""), 
 	name("")
 {
@@ -120,12 +118,7 @@ void CBrowseAndLoadDialog::OnBnClickedOk()
 	if (nameWarning.IsWindowVisible())
 	{
 		nameEdit.GetWindowTextW(name);
-		std::string pathStdStrNameChecked = nameCheckFunc(name);
-
-		if (pathStdStrNameChecked != name)
-		{
-			name = pathStdStrNameChecked;
-		}
+		name = NameEditChecker::GetNameCheckedString(name);
 	}
 
 	std::fstream file(cacheFileName + objectName, std::ios::out, std::ios::trunc);

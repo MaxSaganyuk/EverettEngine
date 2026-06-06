@@ -71,8 +71,6 @@ private:
 	EverettEngine engine;
 	CMainWindow* mainWindow; // not owner
 	std::thread engineRenderThread;
-
-	NameEditChecker::NameCheckFunc nameCheckFunc;
 };
 
 

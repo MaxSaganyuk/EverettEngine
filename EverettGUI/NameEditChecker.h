@@ -3,7 +3,7 @@
 #include <functional>
 #include <string>
 
-class AdString;
+#include "AdString.h"
 
 class NameEditChecker
 {
@@ -12,6 +12,7 @@ public:
 
 	static void CheckAndEditName(CEdit& nameEdit, CStatic& nameWarning);
 	static void SetNameCheckFunc(NameCheckFunc nameCheckFuncInp);
+	static AdString GetNameCheckedString(const AdString& str);
 private:
 	static void RemoveRestrictedSymbs(AdString& str);
 

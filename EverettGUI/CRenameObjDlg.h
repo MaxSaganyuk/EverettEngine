@@ -35,4 +35,5 @@ private:
 	CButton okButton;
 public:
 	afx_msg void OnNewNameBoxChange();
+	afx_msg void OnBnClickedOk();
 };

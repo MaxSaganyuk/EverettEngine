@@ -18,7 +18,6 @@ public:
 	CPlaceObjectDialog(
 		const AdString& objectTypeName, 
 		const AdString& sourceObjectTypeName,
-		NameEditChecker::NameCheckFunc nameCheckFunc,
 		std::generator<std::string_view>&& objectNameList,
 		CWnd* pParent = nullptr
 	);   // standard constructor
@@ -41,8 +40,6 @@ private:
 	size_t chosenIndex;
 	AdString chosenObject;
 	AdString newName;
-
-	NameEditChecker::NameCheckFunc nameCheckFunc;
 
 	CComboBox objectChoice;
 	CStatic choiceLabel;
