@@ -239,7 +239,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 			tempVector = meshHandle->mBitangents;
 			break;
 		default:
-			ThrowExceptionWMessage("Vertex param does not exist");
+			std::unreachable();
 		}
 
 		return tempVector;
@@ -247,23 +247,20 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 
 	auto ProcessVerteces = [&meshHandle, &GetVertexParam](LGLStructs::Mesh& mesh)
 	{
-		for (size_t i = 0; i < meshHandle->mNumVertices; ++i)
-		{
-			LGLStructs::Vertex vert;
-			for (size_t vertData = 0; vertData < 5; ++vertData)
-			{
-				glm::vec3 glmVect{ 0.0f, 0.0f, 0.0f };
-				aiVector3D* assimpVect = GetVertexParam(static_cast<LGLStructs::Vertex::BasicVertexData>(vertData));
-	
-				if (assimpVect)
-				{
-					ConvertFromAssimpToGLM(*(assimpVect + i), glmVect);
-				}
-				
-				vert[vertData] = glmVect;
-			}
+		mesh.vert.resize(meshHandle->mNumVertices);
+		LGLStructs::Vertex* internalVertArray = mesh.vert.data();
 
-			mesh.vert.push_back(vert);
+		for (size_t vertData = 0; vertData < LGLStructs::BasicVertex::GetLocalMemberAmount(); ++vertData)
+		{
+			aiVector3D* assimpVect = GetVertexParam(static_cast<LGLStructs::Vertex::BasicVertexData>(vertData));
+
+			if (assimpVect)
+			{
+				for (size_t i = 0; i < meshHandle->mNumVertices; ++i)
+				{
+					ConvertFromAssimpToGLM(assimpVect[i], internalVertArray[i][vertData]);
+				}
+			}
 		}
 	};
 
@@ -300,6 +297,8 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 
 	auto ProcessFaces = [&meshHandle](LGLStructs::Mesh& mesh)
 	{
+		mesh.indices.reserve(meshHandle->mNumFaces);
+
 		for (size_t i = 0; i < meshHandle->mNumFaces; ++i)
 		{
 			aiFace face = meshHandle->mFaces[i];
@@ -370,14 +369,14 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 			{
 				aiString str;
 				material->GetTexture(convertedType, static_cast<unsigned int>(i), &str);
-				std::string strWithoutPrefix = str.C_Str();
+				std::string_view strWithoutPrefix = str.C_Str();
 
 				LGLStructs::Texture newTexture;
 
-				newTexture.name = nameToSet + '_' + strWithoutPrefix;
+				newTexture.name = nameToSet + '_' + strWithoutPrefix.data();
 				newTexture.type = textureTypeInfo[texTypeIndex].lglTexType;
 
-				const aiTexture* embeddedTexture = modelHandle->GetEmbeddedTexture(strWithoutPrefix.c_str());
+				const aiTexture* embeddedTexture = modelHandle->GetEmbeddedTexture(strWithoutPrefix.data());
 
 				if (!ownerContainer[fileProcessed].textureMap.contains(newTexture.name))
 				{
@@ -397,7 +396,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 
 				if (newTexture.data)
 				{
-					mesh.textures.push_back(newTexture);
+					mesh.textures.push_back(std::move(newTexture));
 				}
 			}
 		};
