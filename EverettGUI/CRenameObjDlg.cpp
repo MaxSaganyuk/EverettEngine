@@ -42,6 +42,7 @@ BOOL CRenameObjDlg::OnInitDialog()
 
 	oldNameBox.SetWindowTextW(oldName);
 	renameWarning.ShowWindow(false);
+	okButton.EnableWindow(false);
 
 	return 0;
 }
@@ -61,7 +62,17 @@ void CRenameObjDlg::OnNewNameBoxChange()
 
 	newNameBox.GetWindowTextW(newName);
 
-	okButton.EnableWindow(!newName.empty());
+	bool newNameEmpty = newName.empty();
+	bool namesSame = oldName == newName;
+	
+	bool showError = newNameEmpty || namesSame;
+
+	if (showError)
+	{
+		renameWarning.SetWindowTextW(namesSame ? sameNameError : nameExistsError);
+	}
+
+	okButton.EnableWindow(!showError);
 }
 
 void CRenameObjDlg::OnBnClickedOk()

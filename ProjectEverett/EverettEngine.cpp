@@ -765,6 +765,8 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 {
 	if (CheckIfScriptsRunning())
 		return std::unexpected("Cannot rename whilst scripts are running\n");
+	if (oldName == newName)
+		return std::unexpected("Old and new names can't be the same");
 	if (oldName == "Camera" || (hintType.has_value() && hintType == ObjectTypes::Camera))
 		return std::unexpected("Cannot rename camera object");
 	if (allNameTracker->Contains(newName))

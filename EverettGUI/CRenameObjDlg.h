@@ -33,6 +33,9 @@ private:
 	CEdit newNameBox;
 	CStatic renameWarning;
 	CButton okButton;
+
+	static inline const AdString nameExistsError = L"Name exists, will add a number to the back";
+	static inline const AdString sameNameError = L"Old and new name cannot be the same";
 public:
 	afx_msg void OnNewNameBoxChange();
 	afx_msg void OnBnClickedOk();
