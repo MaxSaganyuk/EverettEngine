@@ -55,6 +55,7 @@ public:
 	std::string GetThisObjectTypeNameStr() override;
 
 	static void InitializeObjectGraph();
+	static void ResetObjectLinking();
 	static void SetRenderDeltaTime(float deltaTime);
 	static const glm::vec3& GetWorldAxisVector(Axis axis);
 

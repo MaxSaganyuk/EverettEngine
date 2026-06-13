@@ -394,6 +394,7 @@ void EverettEngine::AddMouseMoveCallback(std::function<void(double, double)> cal
 void EverettEngine::ClearExternallyControlledContainers()
 {
 	ExecuteFuncForAllSimObjects(&ColliderSim::ClearCollisionCallbacks);
+	ObjectSim::ResetObjectLinking();
 	keyScriptFuncMap.clear();
 	mouseScrollScriptFuncs.clear();
 	mouseMoveScriptFuncs.clear();

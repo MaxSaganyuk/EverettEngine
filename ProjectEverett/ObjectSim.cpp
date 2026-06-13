@@ -10,7 +10,12 @@ void ObjectSim::ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... 
 	}
 	visited = true;
 
-	for (ObjectSim* linkedObject : objectGraph.GetValuesRelatedTo(this))
+	// Caused by necessity of ViewValuesRelatedTo to accept l-value to guarantee that passed
+	// value will outlive the call for the co routine and "this" is a pr-value
+	// There must be another way of doing this
+	ObjectSim* thisPtr = this;
+
+	for (ObjectSim* linkedObject : objectGraph.ViewValuesRelatedTo(thisPtr))
 	{
 		(linkedObject->*memberFunc)(std::forward<ParamTypes>(values)...);
 	}
@@ -47,6 +52,11 @@ ObjectSim::~ObjectSim()
 void ObjectSim::InitializeObjectGraph()
 {
 	objectGraph.EnableBidirectionality(false);
+}
+
+void ObjectSim::ResetObjectLinking()
+{
+	objectGraph.EraseAllRelations();
 }
 
 std::string ObjectSim::GetThisObjectTypeNameStr()
