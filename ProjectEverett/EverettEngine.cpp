@@ -622,21 +622,25 @@ bool EverettEngine::CreateSolidImpl(
 
 void EverettEngine::GenerateShader()
 {
-	ShaderGenerator shaderGen;
+	constexpr char genDefineError[] = "Shader generation failed, no genDefine";
+
 	size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
 	size_t totalSolidAmount = solids.size();
 
 	std::string filePath = FileLoader::GetCurrentDir() + '\\' + shaderPath + '\\' + defaultShaderProgram;
 
-	shaderGen.LoadPreSources(filePath);
+	ShaderGenerator shaderGen{ filePath };
+
+	// In the future, genDefine section might have various types, so generalization here is excessive
 	if (totalBoneAmount > 1)
 	{
-		shaderGen.SetValueToDefine("BONE_AMOUNT", totalBoneAmount);
+		CheckAndThrowExceptionWMessage(shaderGen.SetValueToDefine("BONE_AMOUNT", totalBoneAmount), genDefineError);
 	}
 	if (totalSolidAmount > 1)
 	{
-		shaderGen.SetValueToDefine("SOLID_AMOUNT", totalSolidAmount);
+		CheckAndThrowExceptionWMessage(shaderGen.SetValueToDefine("SOLID_AMOUNT", totalSolidAmount), genDefineError);
 	}
+
 	shaderGen.GenerateShaderFiles(filePath);
 
 	mainLGL->RecompileShader(defaultShaderProgram);

@@ -5,6 +5,11 @@
 std::vector<std::string> ShaderGenerator::fileTypes { "evert", "efrag" };
 std::vector<std::pair<std::string, std::string>> ShaderGenerator::customKeywords{ {"#genDefine", "#define"} };
 
+ShaderGenerator::ShaderGenerator(const std::string& path)
+{
+	LoadPreSources(path);
+}
+
 ShaderGenerator::~ShaderGenerator()
 {
 	DeinitializeFileObjects();
@@ -18,7 +23,7 @@ void ShaderGenerator::InitializeFileObjects(const std::string& path, const int f
 	}
 }
 
-void ShaderGenerator::DeinitializeFileObjects()
+void ShaderGenerator::DeinitializeFileObjects() noexcept
 {
 	preSourceFiles.clear();
 }
@@ -45,12 +50,12 @@ void ShaderGenerator::ProcessPreSources()
 			{
 				for (size_t customKeyWordIndex = 0; customKeyWordIndex < customKeywords.size(); ++customKeyWordIndex)
 				{
-					size_t pos = buffer.find(customKeywords[customKeyWordIndex].first);
-
-					if (pos != std::string::npos)
+					if (buffer.find(customKeywords[customKeyWordIndex].first) != std::string::npos)
 					{
-						std::string valueName = buffer.substr(buffer.find(' ') + 1, std::string::npos);
-						std::string defaultSubstitute = "";
+						std::string_view bufferView{ buffer };
+
+						std::string_view valueName = bufferView.substr(bufferView.find(' ') + 1, std::string::npos);
+						std::string_view defaultSubstitute;
 
 						if (valueName.find(' ') != std::string::npos)
 						{
@@ -59,7 +64,7 @@ void ShaderGenerator::ProcessPreSources()
 						}
 
 						lineToSubstMap[fileIndex].try_emplace(
-							lineIndex, customKeyWordIndex, valueName, defaultSubstitute
+							lineIndex, customKeyWordIndex, std::string(valueName), std::string(defaultSubstitute)
 						);
 					}
 				}
@@ -73,19 +78,16 @@ void ShaderGenerator::ProcessPreSources()
 
 void ShaderGenerator::InitializeLineMap()
 {
-	for (auto& fileType : fileTypes)
-	{
-		lineToSubstMap.push_back({});
-	}
+	lineToSubstMap.resize(fileTypes.size());
 }
 
-std::generator<std::string_view> ShaderGenerator::GetValuesToDefine()
+std::generator<std::string_view> ShaderGenerator::GetValuesToDefine() const noexcept
 {
 	for (auto& firstMap : lineToSubstMap)
 	{
-		for (auto& secondMap : firstMap)
+		for (auto& [_, info] : firstMap)
 		{
-			co_yield secondMap.second.valueName;
+			co_yield info.valueName;
 		}
 	}
 }
@@ -96,21 +98,22 @@ void ShaderGenerator::GenerateShaderFiles(const std::string& path)
 
 	for (size_t fileIndex = 0; fileIndex < preSourceFiles.size(); ++fileIndex)
 	{
-		std::string newShaderFileType = fileTypes[fileIndex];
-		std::string newShaderFileName = path + '.' + newShaderFileType.erase(0, 1);
+		std::string_view newShaderFileType{ fileTypes[fileIndex] };
+		std::string newShaderFileName = path + '.' + newShaderFileType.substr(1, std::string_view::npos).data();
 		std::fstream newShaderFile(newShaderFileName, std::ios::out);
 
 		for (size_t lineIndex = 0; !preSourceFiles[fileIndex].eof(); ++lineIndex)
 		{
 			std::getline(preSourceFiles[fileIndex], buffer);
 
-			if (lineToSubstMap[fileIndex].find(lineIndex) != lineToSubstMap[fileIndex].end())
+			if (auto iter = lineToSubstMap[fileIndex].find(lineIndex); iter != lineToSubstMap[fileIndex].end())
 			{
-				// In case other special keywords will exist, this will be reworked
-				LineToSubstInfo& substInfo = lineToSubstMap[fileIndex][lineIndex];
 				buffer.clear();
+
+				// In case other special keywords will exist, this will be reworked
+				auto& substInfo = iter->second;
 				
-				buffer +=
+				buffer =
 					customKeywords[substInfo.customKeywordIndex].second +
 					' ' +
 					substInfo.valueName + ' ' +
