@@ -11,7 +11,7 @@
 struct ALCdevice;
 struct ALCcontext;
 
-class SoundSim : public ObjectSim, public ISoundSim
+class SoundSim final : public ObjectSim, public ISoundSim
 {
 private:
 	static inline ALCdevice* device = nullptr;

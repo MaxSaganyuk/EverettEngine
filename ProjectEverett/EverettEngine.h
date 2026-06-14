@@ -48,7 +48,7 @@ namespace LGLStructs
 enum class LightTypes;
 
 // Concrete engine class is for internal use.
-class EverettEngine : public IEverettEngine
+class EverettEngine final : public IEverettEngine
 {
 public:
 	enum class LightTypes

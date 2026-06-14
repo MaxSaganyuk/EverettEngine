@@ -3,7 +3,7 @@
 #include "SolidSim.h"
 #include "external/ICameraSim.h"
 
-class CameraSim : public SolidSim, public ICameraSim
+class CameraSim final : public SolidSim, public ICameraSim
 {
 private:
 	constexpr static char TypeName[] = "Camera";

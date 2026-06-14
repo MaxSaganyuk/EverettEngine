@@ -7,7 +7,7 @@
 class CustomOutput
 {
 private:
-	class StreambufSubstitute : public std::streambuf
+	class StreambufSubstitute final : public std::streambuf
 	{
 	public:
 		using EndlineCallbackFunc = std::function<void(const std::string&)>;

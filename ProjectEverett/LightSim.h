@@ -10,7 +10,7 @@
 
 // Source: https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
 
-class LightSim : public ObjectSim, public ILightSim
+class LightSim final : public ObjectSim, public ILightSim
 {
 public:
 	LightSim() = default;
