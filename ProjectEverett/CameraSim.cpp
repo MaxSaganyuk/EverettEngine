@@ -89,6 +89,9 @@ bool CameraSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, sensitivity, 1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, mode,        1);
 
+	// Unneeded values to save will be removed on CameraSim rework
+	SetAspect();
+
 	return res;
 }
 
