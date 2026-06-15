@@ -74,6 +74,7 @@ BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON1, &CMainWindow::OnEditAmbientLightButton)
 	ON_BN_CLICKED(IDC_CHECK1, &CMainWindow::OnShowGizmoCheckClick)
 	ON_BN_CLICKED(IDC_CHECK2, &CMainWindow::OnShowDebugTextCheckClick)
+	ON_BN_CLICKED(IDC_BUTTON2, &CMainWindow::OnEditBackgroundColorButtonClick)
 END_MESSAGE_MAP()
 
 // CMainWindow diagnostics
@@ -262,19 +263,12 @@ bool CMainWindow::SetSelectedScriptDLLInfo(std::generator<EverettStructs::BasicF
 
 void CMainWindow::OnEditAmbientLightButton()
 {
-	glm::vec3& colorVectorAddr = engineP->GetAmbientLightVectorAddr();
+	MFCUtilities::OpenColorSelection([this]() -> glm::vec3& { return engineP->GetAmbientLightVectorAddr(); });
+}
 
-	std::array<float, 3> colorRaw = MFCUtilities::GetColorFromPickerDlg(
-		{ colorVectorAddr.x, colorVectorAddr.y, colorVectorAddr.z }
-	);
-
-	if (colorRaw.front() > 0.0f)
-	{
-		for (int i = 0; i < colorRaw.size(); ++i)
-		{
-			colorVectorAddr[i] = colorRaw[i];
-		}
-	}
+void CMainWindow::OnEditBackgroundColorButtonClick()
+{
+	MFCUtilities::OpenColorSelection([this]() -> glm::vec3& { return engineP->GetBackgroundColorVectorAddr(); });
 }
 
 void CMainWindow::OnShowGizmoCheckClick()

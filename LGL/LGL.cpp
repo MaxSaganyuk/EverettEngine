@@ -68,7 +68,7 @@ const std::vector<int> LGL::LGLEnumInterpreter::TextureOverlayTypeInter =
 
 LGL::LGL()
 {
-	background = { 0, 0, 0, 1 };
+	background = { 0.0f, 0.0f, 0.0f };
 	windowWidth = -1;
 	windowHeight = -1;
 	currentVAOToRender = {};
@@ -490,7 +490,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 		ProcessInput();
 		glfwPollEvents();
 
-		GLSafeExecute(glClearColor, background.r, background.g, background.b, background.a);
+		GLSafeExecute(glClearColor, background.r, background.g, background.b, 1.0f);
 		GLSafeExecute(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (additionalSteps)
@@ -613,9 +613,9 @@ void LGL::PauseRenderingImpl(bool value)
 	}
 }
 
-void LGL::SetStaticBackgroundColor(const glm::vec4& rgba)
+glm::vec3& LGL::GetBackgroundColorVectorAddr()
 {
-	background = rgba;
+	return background;
 }
 
 void LGL::CreateRenderTextVO()

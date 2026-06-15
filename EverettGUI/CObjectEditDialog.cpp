@@ -349,19 +349,7 @@ void CObjectEditDialog::OnRotEditButtonClick()
 
 void CObjectEditDialog::OnColorEditButtonClick()
 {
-	glm::vec3& colorVectorAddr = castedLightInterface->GetColorVectorAddr();
-
-	std::array<float, 3> colorRaw = MFCUtilities::GetColorFromPickerDlg(
-		{ colorVectorAddr.x, colorVectorAddr.y, colorVectorAddr.z }
-	);
-
-	if (colorRaw.front() > 0.0f)
-	{
-		for (int i = 0; i < colorRaw.size(); ++i)
-		{
-			colorVectorAddr[i] = colorRaw[i];
-		}
-	}
+	MFCUtilities::OpenColorSelection([this]() -> glm::vec3& { return castedLightInterface->GetColorVectorAddr(); });
 }
 
 void CObjectEditDialog::OnAutoScaleButtonClicked()

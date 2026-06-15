@@ -148,7 +148,7 @@ public:
 	LGL_API void RunRenderingCycle(std::function<void()> additionalSteps = nullptr);
 	LGL_API void StopRenderingCycle();
 	LGL_API void PauseRendering(bool value = true);
-	LGL_API void SetStaticBackgroundColor(const glm::vec4& rgba);
+	LGL_API glm::vec3& GetBackgroundColorVectorAddr();
 	LGL_API void EnableVSync(bool value = true);
 
 	// Creates a VAO, VBO and (if indices are given) EBO
@@ -288,7 +288,7 @@ private:
 
 	GLFWwindow* window;
 
-	glm::vec4 background;
+	glm::vec3 background;
 
 	VAOInfo currentVAOToRender;
 	std::vector<VBO> VBOCollection;

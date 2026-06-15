@@ -93,6 +93,7 @@ public:
 	afx_msg void OnRenameNode();
 	afx_msg void OnDeleteNode();
 	afx_msg void OnEditAmbientLightButton();
+	afx_msg void OnEditBackgroundColorButtonClick();
 	afx_msg void OnShowGizmoCheckClick();
 	afx_msg void OnShowDebugTextCheckClick();
 };

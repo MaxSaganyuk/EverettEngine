@@ -96,6 +96,7 @@ public:
 	);
 
 	EVERETT_API glm::vec3& GetAmbientLightVectorAddr(); 
+	EVERETT_API glm::vec3& GetBackgroundColorVectorAddr();
 
 	EVERETT_API IObjectSim* GetObjectInterface(
 		const char* objectName, std::optional<ObjectTypes> hintType = std::nullopt

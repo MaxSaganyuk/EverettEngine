@@ -219,8 +219,6 @@ void EverettEngine::CreateAndSetupMainWindow(
 	camera->SetPositionChangeCallback(SoundSim::UpdateCameraPosition);
 	camera->SetRotationChangeCallback(SoundSim::UpdateCameraPosition);
 
-	mainLGL->SetStaticBackgroundColor({ 0.0f, 0.0f, 0.0f, 0.0f });
-
 	mainLGL->SetCursorPositionCallback(
 		[this](double xpos, double ypos) {
 			camera->RotateByMousePos(static_cast<float>(xpos), static_cast<float>(ypos));
@@ -1015,6 +1013,11 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteCollider(const std::
 glm::vec3& EverettEngine::GetAmbientLightVectorAddr()
 {
 	return LightSim::SGetAmbientLightColorVectorAddr();
+}
+
+glm::vec3& EverettEngine::GetBackgroundColorVectorAddr()
+{
+	return mainLGL->GetBackgroundColorVectorAddr();
 }
 
 IObjectSim* EverettEngine::GetObjectInterface(const char* objectName, std::optional<ObjectTypes> hintType)

@@ -1,8 +1,35 @@
+#pragma once
+
+#include "glm/glm.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
 #include <vector>
 #include <array>
+#include <optional>
+#include <functional>
 
 class MFCUtilities
 {
+private:
+	static std::optional<glm::vec3> GetColorFromPickerDlg(const glm::vec3& initialColor)
+	{
+		CColorDialog colorDlg(RGB(initialColor[0] * 255, initialColor[1] * 255, initialColor[2] * 255), CC_FULLOPEN);
+
+		std::optional<glm::vec3> colorRes;
+
+		if (colorDlg.DoModal() == IDOK)
+		{
+			COLORREF colorRef = colorDlg.GetColor();
+
+			colorRes = {
+				GetRValue(colorRef) / 255.0f,
+				GetGValue(colorRef) / 255.0f,
+				GetBValue(colorRef) / 255.0f
+			};
+		}
+
+		return colorRes;
+	}
 public:
 	static bool EditIsEmpty(const CEdit& edit)
 	{
@@ -61,6 +88,7 @@ public:
 		HGLOBAL hBuffer = GlobalAlloc(GMEM_MOVEABLE, imageSize);
 		if (!hBuffer) return nullptr;
 
+		
 		void* pBuffer = GlobalLock(hBuffer);
 		memcpy(pBuffer, pResourceData, imageSize);
 		GlobalUnlock(hBuffer);
@@ -78,23 +106,15 @@ public:
 		return pBitmap;
 	}
 
-	static std::array<float, 3> GetColorFromPickerDlg(const std::array<float, 3>& initialColor = {0.5f, 0.5f, 0.5f})
+	static void OpenColorSelection(std::function<glm::vec3&()>&& colorVectorGetter)
 	{
-		CColorDialog colorDlg(RGB(initialColor[0] * 255, initialColor[1] * 255, initialColor[2] * 255), CC_FULLOPEN);
+		glm::vec3& colorVectorAddr = colorVectorGetter();
 
-		std::array<float, 3> colorRes = { -1.0f, -1.0f, -1.0f };
+		auto colorRaw = MFCUtilities::GetColorFromPickerDlg(colorVectorAddr);
 
-		if (colorDlg.DoModal() == IDOK)
+		if (colorRaw)
 		{
-			COLORREF colorRef = colorDlg.GetColor();
-			
-			colorRes = {
-				GetRValue(colorRef) / 255.0f,
-				GetGValue(colorRef) / 255.0f,
-				GetBValue(colorRef) / 255.0f
-			};
+			colorVectorAddr = *colorRaw;
 		}
-
-		return colorRes;
 	}
 };
