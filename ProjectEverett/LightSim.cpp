@@ -26,7 +26,7 @@ LightSim::LightSim(
 ) : 
 	lightType(lightType),
 	lightRange(static_cast<int>(range)),
-	color({0.5f, 0.5f, 0.5f}),
+	color(defaultLightColor),
 	ObjectSim(pos, scale, speed)
 {
 	++amountOfLightsByType[lightType];

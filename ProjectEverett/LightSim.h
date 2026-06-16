@@ -6,6 +6,7 @@
 #include <generator>
 
 #include "external/ILightSim.h"
+#include "external/ColorManager.h"
 #include "ObjectSim.h"
 
 // Source: https://wiki.ogre3d.org/tiki-index.php?page=-Point+Light+Attenuation
@@ -62,7 +63,8 @@ private:
 		{ LightSim::LightTypes::Spot,      "Spot"      }
 	};
 
-	static inline glm::vec3 ambientLightColor {0.4f, 0.4f, 0.4f};
+	constinit static inline glm::vec3 ambientLightColor = ColorManager::RGBVal{ 102, 102, 102 };
+	constexpr static inline glm::vec3 defaultLightColor = ColorManager::RGBVal{ 128, 128, 128 };
 
 	LightTypes lightType{};
 	glm::vec3 color;

@@ -6,6 +6,8 @@
 #include "ModelInfo.h"
 #include "PlaybackManager.h"
 
+#include "external/ColorManager.h"
+
 class SolidToModelManager
 {
 public:
@@ -73,7 +75,7 @@ private:
 	PlaybackManager animStates;
 
 	std::vector<bool> meshVisibility;
-	glm::vec4 modelDefaultColor;
+	glm::vec4 modelDefaultColor = ColorManager::GetColorVec4(ColorManager::Colors::WHITE);
 
 	const size_t* startBoneIndexPtr;
 	

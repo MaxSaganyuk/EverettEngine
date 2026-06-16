@@ -192,8 +192,8 @@ void EverettEngine::CreateAndSetupMainWindow(
 			static_cast<float>(windowHeight),
 			fileLoader->fontLoader.GetAllGlyphTextures(loggerFont),
 			defaultRenderTextShaderProgram,
-			[this]() { generalRenderTextBehaviour({ 1.0f, 1.0f, 1.0f, 1.0f }); },
-			[this]() { generalRenderTextBehaviour({ 1.0f, 0.0f, 0.0f, 1.0f }); },
+			[this]() { generalRenderTextBehaviour(ColorManager::GetColorVec4(ColorManager::Colors::WHITE)); },
+			[this]() { generalRenderTextBehaviour(ColorManager::GetColorVec4(ColorManager::Colors::RED)); },
 			[this](const std::string& labelName, LGLStructs::TextInfo& text) { mainLGL->CreateText(labelName, text); },
 			[this](const std::string& labelName) { mainLGL->DeleteText(labelName); }
 		);

@@ -17,6 +17,7 @@
 #include <expected>
 
 #include "external/IEverettEngine.h"
+#include "external/ColorManager.h"
 
 #include "EverettStructs.h"
 
@@ -192,10 +193,10 @@ private:
 
 	constexpr static char gizmoModelFile[] = "box.glb";
 	constexpr static char gizmoModelName[] = "Gizmo";
-	constexpr static glm::vec4 lightGizmoColor            = { 1.0f, 1.0f, 0.0f, 1.0f };
-	constexpr static glm::vec4 soundGizmoColor            = { 0.0f, 0.0f, 1.0f, 1.0f };
-	constexpr static glm::vec4 colliderGizmoColor         = { 0.0f, 1.0f, 0.0f, 1.0f };
-	constexpr static glm::vec4 colliderGizmoColorCollided = { 1.0f, 0.0f, 0.0f, 1.0f };
+	constexpr static glm::vec4 lightGizmoColor            = ColorManager::GetColorVec4(ColorManager::Colors::YELLOW);
+	constexpr static glm::vec4 soundGizmoColor            = ColorManager::GetColorVec4(ColorManager::Colors::BLUE);
+	constexpr static glm::vec4 colliderGizmoColor         = ColorManager::GetColorVec4(ColorManager::Colors::GREEN);
+	constexpr static glm::vec4 colliderGizmoColorCollided = ColorManager::GetColorVec4(ColorManager::Colors::RED);
 
 	static bool CheckHintAndType(
 		const std::optional<ObjectTypes>& hintType, const std::optional<ObjectTypes>& objectType

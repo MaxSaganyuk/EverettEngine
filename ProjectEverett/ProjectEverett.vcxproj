@@ -179,6 +179,7 @@
     <ClInclude Include="EverettException.h" />
     <ClInclude Include="EverettExceptionInternal.h" />
     <ClInclude Include="EverettStructs.h" />
+    <ClInclude Include="external\ColorManager.h" />
     <ClInclude Include="external\ICameraSim.h" />
     <ClInclude Include="external\IColliderSim.h" />
     <ClInclude Include="external\IEverettEngine.h" />
