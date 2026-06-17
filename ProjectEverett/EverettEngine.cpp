@@ -580,8 +580,14 @@ SolidSim* EverettEngine::CreateSolidImpl(
 {
 	if (auto iter = solids.find(solidName); iter != solids.end()) return &iter->second;
 
-	auto modelPtr = models[modelName].GetFullModelInfo().first.lock();
-	auto modelAnimPtr = models[modelName].GetFullModelInfo().second.lock();
+	auto modelIter = models.find(modelName);
+
+	if (modelIter == models.end()) return nullptr;
+
+	auto& [_, model] = *modelIter;
+
+	auto modelPtr = model.GetFullModelInfo().first.lock();
+	auto modelAnimPtr = model.GetFullModelInfo().second.lock();
 
 	auto [iter, success] = solids.try_emplace(
 		solidName, camera->GetPositionVectorAddr() + camera->GetFrontVector()
@@ -591,7 +597,7 @@ SolidSim* EverettEngine::CreateSolidImpl(
 	{ 
 		auto& [solidNameRef, newSolid] = *iter;
 
-		models[modelName].InsertRelatedSolid(newSolid);
+		model.InsertRelatedSolid(newSolid);
 
 		animSystem->IncrementTotalBoneAmount(*modelAnimPtr);
 		// We pass start bone index reference for automated reassignment of start bone index in all created
@@ -644,11 +650,12 @@ void EverettEngine::GenerateShader()
 
 bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightType)
 {
-	bool res = CreateLightImpl(lightName, lightType);
-	
+	LightSim* light = CreateLightImpl(lightName, lightType);
+	bool res = light;
+
 	if (res && gizmoEnabled)
 	{
-		res = CreateGizmoSolid(lightName, lights[lightName], lightGizmoColor);
+		res = CreateGizmoSolid(lightName, *light, lightGizmoColor);
 	}
 
 	return res;
@@ -681,11 +688,12 @@ LightSim* EverettEngine::CreateLightImpl(const std::string& lightName, LightType
 
 bool EverettEngine::CreateSound(const std::string& path, const std::string& soundName)
 {
-	bool res = CreateSoundImpl(path, soundName);
+	SoundSim* sound = CreateSoundImpl(path, soundName);
+	bool res = sound;
 
 	if (res && gizmoEnabled)
 	{
-		res = CreateGizmoSolid(soundName, sounds[soundName], soundGizmoColor);
+		res = CreateGizmoSolid(soundName, *sound, soundGizmoColor);
 	}
 
 	return res;
@@ -722,11 +730,12 @@ SoundSim* EverettEngine::CreateSoundImpl(const std::string& path, const std::str
 
 bool EverettEngine::CreateCollider(const std::string& colliderName)
 {
-	bool res = CreateColliderImpl(colliderName);
+	ColliderSim* collider = CreateColliderImpl(colliderName);
+	bool res = collider;
 
 	if (res && gizmoEnabled)
 	{
-		res = CreateGizmoSolid(colliderName, colliders[colliderName], colliderGizmoColor);
+		res = CreateGizmoSolid(colliderName, *collider, colliderGizmoColor);
 	}
 
 	return res;
