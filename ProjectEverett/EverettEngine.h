@@ -211,9 +211,11 @@ private:
 	ObjectModificationState DeleteCollider(const std::string& colliderName);
 
 	void LoadGizmoModel();
+
+	template<typename Sim>
 	bool CreateGizmoSolid(
 		const std::string& relatedObjModelName, 
-		ObjectSim& relatedObject,
+		Sim& relatedObject,
 		const glm::vec4& gizmoColor
 	);
 
@@ -232,12 +234,12 @@ private:
 	void RemoveSolidPtrFromModel(const std::string& modelName, SolidSim* solidPtr);
 
 	bool CreateModelImpl(const std::string& path, const std::string& name, bool regenerateShader);
-	bool CreateSolidImpl(
+	SolidSim* CreateSolidImpl(
 		const std::string& modelName, const std::string& solidName, bool regenerateShader, bool forceVisible
 	);
-	bool CreateLightImpl(const std::string& lightName, LightTypes lightType);
-	bool CreateSoundImpl(const std::string& path, const std::string& soundName);
-	bool CreateColliderImpl(const std::string& colliderName);
+	LightSim* CreateLightImpl(const std::string& lightName, LightTypes lightType);
+	SoundSim* CreateSoundImpl(const std::string& path, const std::string& soundName);
+	ColliderSim* CreateColliderImpl(const std::string& colliderName);
 	void GenerateShader();
 
 	void LightUpdater();
@@ -267,9 +269,6 @@ private:
 
 	template<typename Sim>
 	void SaveObjectsToFile(std::fstream& file);
-
-	template<typename Sim>
-	void ApplySimInfoFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo, bool& res);
 
 	void CheckAndLoadRequestedWorld();
 	void LoadCameraFromLine(std::string_view& line);

@@ -305,17 +305,19 @@ void EverettEngine::LoadGizmoModel()
 	models[gizmoModelName].GetFullModelInfo().first.lock()->lineMode = true;
 }
 
+template<typename Sim>
 bool EverettEngine::CreateGizmoSolid(
 	const std::string& relatedObjModelName,
-	ObjectSim& relatedObject,
+	Sim& relatedObject,
 	const glm::vec4& gizmoColor
 )
 {
 	std::string gizmoSolidName = relatedObjModelName + gizmoModelName;
 	
-	if (CreateSolidImpl(gizmoModelName, gizmoSolidName, true, gizmoVisible))
+	if (SolidSim* solid = CreateSolidImpl(gizmoModelName, gizmoSolidName, true, gizmoVisible))
 	{
-		SolidSim& gizmoSolid = solids[gizmoSolidName];
+		SolidSim& gizmoSolid = *solid;
+
 		gizmoSolid.GetPositionVectorAddr() = relatedObject.GetPositionVectorAddr();
 		gizmoSolid.GetScaleVectorAddr() = relatedObject.GetScaleVectorAddr();
 		gizmoSolid.SetOrientation(relatedObject.GetOrientationAddr());
@@ -323,11 +325,9 @@ bool EverettEngine::CreateGizmoSolid(
 		gizmoSolid.EnableAutoModelUpdates();
 		gizmoSolid.SetModelDefaultColor(gizmoColor);
 
-		ColliderSim* collider = dynamic_cast<ColliderSim*>(&relatedObject);
-
-		if (collider)
+		if constexpr (std::is_same_v<Sim, ColliderSim>)
 		{
-			collider->AddPersistentCollisionCallback({
+			relatedObject.AddPersistentCollisionCallback({
 				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColorCollided); },
 				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColor); }
 			});
@@ -574,14 +574,11 @@ bool EverettEngine::CreateSolid(const std::string& modelName, const std::string&
 	return CreateSolidImpl(modelName, solidName, true, true);
 }
 
-bool EverettEngine::CreateSolidImpl(
+SolidSim* EverettEngine::CreateSolidImpl(
 	const std::string& modelName, const std::string& solidName, bool regenerateShader, bool forceVisible
 )
 {
-	if (solids.contains(solidName))
-	{
-		return true;
-	}
+	if (auto iter = solids.find(solidName); iter != solids.end()) return &iter->second;
 
 	auto modelPtr = models[modelName].GetFullModelInfo().first.lock();
 	auto modelAnimPtr = models[modelName].GetFullModelInfo().second.lock();
@@ -613,10 +610,10 @@ bool EverettEngine::CreateSolidImpl(
 			GenerateShader();
 		}
 
-		return true;
+		return &newSolid;
 	}
 
-	return false;
+	return nullptr;
 }
 
 void EverettEngine::GenerateShader()
@@ -657,12 +654,9 @@ bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 	return res;
 }
 
-bool EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lightType)
+LightSim* EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lightType)
 {
-	if (lights.contains(lightName))
-	{
-		return true;
-	}
+	if (auto iter = lights.find(lightName); iter != lights.end()) return &iter->second;
 
 	auto [iter, success] = lights.try_emplace(
 		lightName,
@@ -679,10 +673,10 @@ bool EverettEngine::CreateLightImpl(const std::string& lightName, LightTypes lig
 		newLight.SetOrientation(camera->GetOrientationAddr());
 		allNameTracker->Add(lightNameRef);
 
-		return true;
+		return &newLight;
 	}
 
-	return false;
+	return nullptr;
 }
 
 bool EverettEngine::CreateSound(const std::string& path, const std::string& soundName)
@@ -697,12 +691,9 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 	return res;
 }
 
-bool EverettEngine::CreateSoundImpl(const std::string& path, const std::string& soundName)
+SoundSim* EverettEngine::CreateSoundImpl(const std::string& path, const std::string& soundName)
 {
-	if (sounds.find(soundName) != sounds.end())
-	{
-		return true;
-	}
+	if (auto iter = sounds.find(soundName); iter != sounds.end()) return &iter->second;
 
 	std::string pathToUse = CheckIfRelativePathToUse(path, "sounds");
 	WavData wavData = fileLoader->audioLoader.GetWavDataFromFile(pathToUse);
@@ -722,11 +713,11 @@ bool EverettEngine::CreateSoundImpl(const std::string& path, const std::string& 
 			newSound.SetScaleVector(glm::vec3{ 0.25 });
 			allNameTracker->Add(soundNameRef);
 
-			return true;
+			return &newSound;
 		}
 	}
 
-	return false;
+	return nullptr;
 }
 
 bool EverettEngine::CreateCollider(const std::string& colliderName)
@@ -741,25 +732,22 @@ bool EverettEngine::CreateCollider(const std::string& colliderName)
 	return res;
 }
 
-bool EverettEngine::CreateColliderImpl(const std::string& colliderName)
+ColliderSim* EverettEngine::CreateColliderImpl(const std::string& colliderName)
 {
-	if (colliders.contains(colliderName))
-	{
-		return true;
-	}
+	if (auto iter = colliders.find(colliderName); iter != colliders.end()) return &iter->second;
 
 	auto [iter, success] = colliders.try_emplace(colliderName, camera->GetPositionVectorAddr() + camera->GetFrontVector());
 
 	if (success)
 	{
-		auto& [colliderNameRef, _] = *iter;
+		auto& [colliderNameRef, newCollider] = *iter;
 
 		allNameTracker->Add(colliderNameRef);
 
-		return true;
+		return &newCollider;
 	}
 
-	return false;
+	return nullptr;
 }
 
 std::expected<void, std::string> EverettEngine::RenameObject(
@@ -1463,42 +1451,21 @@ bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 
 void EverettEngine::LoadCameraFromLine(std::string_view& line)
 {
-	bool res = false;
-
-	ApplySimInfoFromLine<CameraSim>(line, {"", "", "Camera", ""}, res);
-
-	CheckAndThrowExceptionWMessage(res, "Camera setup from file failed");
-}
-
-template<typename Sim>
-void EverettEngine::ApplySimInfoFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo, bool& res)
-{
-	constexpr ObjectTypes objectType = GetTypeEnumByType<Sim>().value();
-
-	Sim* createdObject = dynamic_cast<Sim*>(GetObjectFromMap(objectType, objectInfo[ObjectInfoNames::ObjectName]));
-
-	if (createdObject)
-	{
-		res = createdObject->SetSimInfoToLoad(line);
-
-		if (!res) return;
-
-		if constexpr (std::is_base_of_v<SolidSim, Sim>) 
-		{
-			createdObject->ForceModelUpdate();
-		}
-	}
+	CheckAndThrowExceptionWMessage((camera->SetSimInfoToLoad(line)), "Camera setup from file failed");
 }
 
 void EverettEngine::LoadSolidFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
 {
 	bool res = false;
 
-	if (CreateModelImpl(objectInfo[ObjectInfoNames::Path], objectInfo[ObjectInfoNames::SubtypeName], false) &&
-		CreateSolidImpl(objectInfo[ObjectInfoNames::SubtypeName], objectInfo[ObjectInfoNames::ObjectName], false, true)
-	)
+	if (CreateModelImpl(objectInfo[ObjectInfoNames::Path], objectInfo[ObjectInfoNames::SubtypeName], false))
 	{
-		ApplySimInfoFromLine<SolidSim>(line, objectInfo, res);
+		if (SolidSim* solid = CreateSolidImpl(
+			objectInfo[ObjectInfoNames::SubtypeName], objectInfo[ObjectInfoNames::ObjectName], false, true
+		))
+		{
+			res = solid->SetSimInfoToLoad(line);
+		}
 	}
 
 	CheckAndThrowExceptionWMessage(res, "Solid creation from file failed");
@@ -1510,12 +1477,13 @@ void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<s
 	std::string lightName = objectInfo[ObjectInfoNames::ObjectName];
 	LightTypes lightType = static_cast<LightTypes>(LightSim::GetTypeToName(objectInfo[ObjectInfoNames::SubtypeName]));
 
-	if (CreateLightImpl(lightName, lightType))
+	if (LightSim* light = CreateLightImpl(lightName, lightType))
 	{
-		ApplySimInfoFromLine<LightSim>(line, objectInfo, res);
-		if (gizmoEnabled)
+		res = light->SetSimInfoToLoad(line);
+
+		if (res && gizmoEnabled)
 		{
-			CreateGizmoSolid(lightName, lights[lightName], lightGizmoColor);
+			res = CreateGizmoSolid(lightName, *light, lightGizmoColor);
 		}
 	}
 
@@ -1527,12 +1495,13 @@ void EverettEngine::LoadSoundFromLine(std::string_view& line, const std::array<s
 	bool res = false;
 	std::string soundName = objectInfo[ObjectInfoNames::ObjectName];
 
-	if (CreateSoundImpl(objectInfo[ObjectInfoNames::Path], soundName))
+	if (SoundSim* sound = CreateSoundImpl(objectInfo[ObjectInfoNames::Path], soundName))
 	{
-		ApplySimInfoFromLine<SoundSim>(line, objectInfo, res);
-		if (gizmoEnabled)
+		res = sound->SetSimInfoToLoad(line);
+
+		if (res && gizmoEnabled)
 		{
-			CreateGizmoSolid(soundName, sounds[soundName], soundGizmoColor);
+			res = CreateGizmoSolid(soundName, *sound, soundGizmoColor);
 		}
 	}
 
@@ -1544,12 +1513,13 @@ void EverettEngine::LoadColliderFromLine(std::string_view& line, const std::arra
 	bool res = false;
 	std::string colliderName = objectInfo[ObjectInfoNames::ObjectName];
 
-	if (CreateColliderImpl(colliderName))
+	if (ColliderSim* collider = CreateColliderImpl(colliderName))
 	{
-		ApplySimInfoFromLine<ColliderSim>(line, objectInfo, res);
-		if (gizmoEnabled)
+		res = collider->SetSimInfoToLoad(line);
+
+		if (res && gizmoEnabled)
 		{
-			CreateGizmoSolid(colliderName, colliders[colliderName], colliderGizmoColor);
+			res = CreateGizmoSolid(colliderName, *collider, colliderGizmoColor);
 		}
 	}
 

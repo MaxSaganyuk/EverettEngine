@@ -119,6 +119,8 @@ bool SolidSim::SetSimInfoToLoad(std::string_view& line)
 
 	res = res && CollectInfoToLoadToSTMM(line);
 
+	ForceModelUpdate();
+
 	return res;
 }
 
