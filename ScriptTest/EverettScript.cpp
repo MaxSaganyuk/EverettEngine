@@ -106,7 +106,6 @@ TestCharHolder testChar;
 ScriptInit()
 {
 	cameraSim = engine.GetCameraInterface();
-	cameraSim->EnableAutoModelUpdates();
 
 	testChar.SetSolidSim(engine.GetSolidInterface("TestChar"));
 	testChar.SetColliderSim(engine.GetColliderInterface("TestCharBox"));

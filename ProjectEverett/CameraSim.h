@@ -1,9 +1,9 @@
 #pragma once
 
-#include "SolidSim.h"
+#include "ObjectSim.h"
 #include "external/ICameraSim.h"
 
-class CameraSim final : public SolidSim, public ICameraSim
+class CameraSim final : public ObjectSim, public ICameraSim
 {
 private:
 	constexpr static char TypeName[] = "Camera";
@@ -48,8 +48,6 @@ public:
 
 	void RotateByMousePos(float xpos, float ypos);
 
-	void ForceModelUpdate() override;
-
 	void MoveInDirection(
 		Direction dir, const glm::vec3& axisToLimit = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) override;
@@ -58,4 +56,7 @@ public:
 	) override;
 	void SetMode(Mode mode) override;
 	void Zoom(float valueDelta) override;
+	float GetFOV() override;
+	void SetFOV(float fov) override;
+	float& GetSensitivityAddr() override;
 };

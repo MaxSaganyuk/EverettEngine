@@ -9,7 +9,7 @@
 
 #include "external/ISolidSim.h"
 
-class SolidSim : public ObjectSim, virtual public ISolidSim
+class SolidSim final : public ObjectSim, public ISolidSim
 {
 private:
 	friend class ModelInfo;

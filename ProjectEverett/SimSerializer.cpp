@@ -100,6 +100,19 @@ void SimSerializer::GetObjectInfo(std::string_view& line, std::array<std::string
 	}
 }
 
+void SimSerializer::SkipValuesInLines(std::string_view& line, size_t amountToSkip, int versionToSkip)
+{
+	if (usedVersion <= versionToSkip)
+	{
+		std::string value;
+
+		for (size_t i = 0; i < amountToSkip; ++i)
+		{
+			UnpackValue(line, value);
+		}
+	}
+}
+
 std::string SimSerializer::GetValueToSaveFrom(const std::string& str)
 {
 	return PackValue(str);

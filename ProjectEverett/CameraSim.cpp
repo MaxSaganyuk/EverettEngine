@@ -8,7 +8,7 @@ CameraSim::CameraSim(
 	const float fov,
 	const float speed
 )
-	: SolidSim(pos, scale, speed),
+	: ObjectSim(pos, scale, speed),
 	  windowHeight(windowHeight), 
 	  windowWidth(windowWidth), 
 	  fov(fov)
@@ -24,12 +24,10 @@ CameraSim::CameraSim(
 
 	SetMode(Mode::Fly);
 
-	SolidSim::LimitRotations(
+	LimitRotations(
 		{ -fullRotation, -fullRotation / 4, -fullRotation},
 		{  fullRotation,  fullRotation / 4,  fullRotation}
 	);
-
-	SolidSim::SetType(SolidType::Dynamic);
 }
 
 std::string CameraSim::GetThisObjectTypeNameStr()
@@ -59,10 +57,8 @@ void CameraSim::SetAspect(const int windowWidth, const int windowHeight)
 
 std::string CameraSim::GetSimInfoToSaveImpl()
 {
-	std::string res = SolidSim::GetSimInfoToSaveImpl();
+	std::string res = ObjectSim::GetSimInfoToSaveImpl();
 
-	res += SimSerializer::GetValueToSaveFrom(view);
-	res += SimSerializer::GetValueToSaveFrom(projection);
 	res += SimSerializer::GetValueToSaveFrom(fov);
 	res += SimSerializer::GetValueToSaveFrom(sensitivity);
 	res += SimSerializer::GetValueToSaveFrom(mode);
@@ -81,16 +77,20 @@ std::string CameraSim::GetSimInfoToSave(const std::string&)
 
 bool CameraSim::SetSimInfoToLoad(std::string_view& line)
 {
-	bool res = SolidSim::SetSimInfoToLoad(line);
+	glm::mat4 legacyMat;
+
+	bool res = ObjectSim::SetSimInfoToLoad(line);
 	
-	res = res && SimSerializer::SetValueToLoadFrom(line, view,        1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, projection,  1);
+	SimSerializer::SkipValuesInLines(line, 2, 12);
+
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyMat,   1, 13);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyMat,   1, 13);
 	res = res && SimSerializer::SetValueToLoadFrom(line, fov,         1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, sensitivity, 1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, mode,        1);
 
-	// Unneeded values to save will be removed on CameraSim rework
 	SetAspect();
+	UpdateViewMatrix();
 
 	return res;
 }
@@ -112,21 +112,15 @@ void CameraSim::UpdateViewMatrix()
 	view = glm::lookAt(pos, pos + GetFrontVector(), GetUpVector());
 }
 
-void CameraSim::ForceModelUpdate()
-{
-	SolidSim::ForceModelUpdate();
-	UpdateViewMatrix();
-}
-
 void CameraSim::MoveInDirection(Direction dir, const glm::vec3& axisToLimit, bool executeLinkedObjects)
 {
-	SolidSim::MoveInDirection(dir, cameraAxisLimit, executeLinkedObjects);
+	ObjectSim::MoveInDirection(dir, cameraAxisLimit, executeLinkedObjects);
 	UpdateViewMatrix();
 }
 
 void CameraSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& axisToLimit, bool executeLinkedObjects)
 {
-	SolidSim::MoveByAxis(axis, cameraAxisLimit, executeLinkedObjects);
+	ObjectSim::MoveByAxis(axis, cameraAxisLimit, executeLinkedObjects);
 	UpdateViewMatrix();
 }
 
@@ -155,7 +149,7 @@ void CameraSim::RotateByMousePos(float xpos, float ypos)
 	}
 
 	orient = glm::normalize(orientRef);
-	SolidSim::Rotate({});
+	ObjectSim::Rotate({});
 	UpdateViewMatrix();
 }
 
@@ -173,4 +167,20 @@ void CameraSim::SetMode(Mode mode)
 {
 	this->mode = mode;
 	cameraAxisLimit = { 1.0f, static_cast<float>(mode == Mode::Fly), 1.0f };
+}
+
+float CameraSim::GetFOV()
+{
+	return fov;
+}
+
+void CameraSim::SetFOV(float fov)
+{
+	this->fov = fov;
+	SetAspect();
+}
+
+float& CameraSim::GetSensitivityAddr()
+{
+	return sensitivity;
 }

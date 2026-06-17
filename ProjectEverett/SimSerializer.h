@@ -34,7 +34,7 @@ private:
 		UnsetCritical
 	};
 
-	constexpr static inline int latestSerializerVersion = 12;
+	constexpr static inline int latestSerializerVersion = 13;
 	static inline int usedVersion = -1;
 	static VersionValidationState ValidateVersion(int requiredVersion, int deprecatedAt);
 	static bool SetUsedVersion(int usedVersionToSet);
@@ -57,6 +57,8 @@ public:
 	static std::string GetLatestVersionStr();
 
 	static void GetObjectInfo(std::string_view& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo);
+
+	static void SkipValuesInLines(std::string_view& line, size_t amountToSkip, int versionToSkip);
 #ifdef _HAS_CXX20
 	template<OnlyFundamental FundamentalType>
 	static std::string GetValueToSaveFrom(FundamentalType f);
