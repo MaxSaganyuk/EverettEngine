@@ -270,6 +270,7 @@ private:
 	template<typename Sim>
 	void SaveObjectsToFile(std::fstream& file);
 
+	void InitializeSpecialWordWorldLoadMap();
 	void CheckAndLoadRequestedWorld();
 	void LoadCameraFromLine(std::string_view& line);
 	void LoadSolidFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
@@ -324,4 +325,5 @@ private:
 
 	std::function<void()> worldLoadCallback;
 	std::string worldToLoad;
+	std::unordered_map<std::string, std::function<void(std::string_view&)>> specialWordWorldLoadMap;
 };

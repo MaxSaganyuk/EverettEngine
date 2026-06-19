@@ -142,6 +142,8 @@ EverettEngine::EverettEngine()
 	allNameTracker = std::make_unique<NameTracker>();
 		
 	ObjectSim::InitializeObjectGraph();
+
+	InitializeSpecialWordWorldLoadMap();
 }
 
 EverettEngine::~EverettEngine()
@@ -1425,6 +1427,34 @@ void EverettEngine::RequestWorldLoad(const char* filePath)
 	worldToLoad = filePath;
 }
 
+// This solution is better than having constantly growing else if and || sections
+// Keeps it in one place and allows to use O(1) hash map avarage search by string instead of worst O(n)
+// No more comparing one by one, which is slow. The indirection of std::function is negligible
+void EverettEngine::InitializeSpecialWordWorldLoadMap()
+{
+	specialWordWorldLoadMap =
+	{
+		{
+			"AmbientLight",
+			[](std::string_view& line) {
+				SimSerializer::SetValueToLoadFrom(line, LightSim::SGetAmbientLightColorVectorAddr(), 4);
+			}
+		},
+		{
+			"BackgroundColor",
+			[this](std::string_view& line) {
+				SimSerializer::SetValueToLoadFrom(line, mainLGL->GetBackgroundColorVectorAddr(), 14);
+			}
+		},
+		{
+			"Keybind", [this](std::string_view& line) { LoadScriptDLLsFromLine(line); }
+		},
+		{
+			"ScriptDLLs", [this](std::string_view& line) { LoadScriptDLLsFromLine(line); }
+		},
+	};
+}
+
 void EverettEngine::CheckAndLoadRequestedWorld()
 {
 	if (!worldToLoad.empty())
@@ -1602,19 +1632,11 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 	{
 		std::getline(file, lineLoader);
 		line = lineLoader;
-		std::string_view lineTitle = line.substr(0, line.find('*'));
+		std::string lineTitle = std::string(line.substr(0, line.find('*')));
 
-		if (lineTitle == "AmbientLight")
+		if (auto iter = specialWordWorldLoadMap.find(lineTitle); iter != specialWordWorldLoadMap.end())
 		{
-			SimSerializer::SetValueToLoadFrom(line, LightSim::SGetAmbientLightColorVectorAddr(), 4);
-		}
-		else if (lineTitle == "BackgroundColor")
-		{
-			SimSerializer::SetValueToLoadFrom(line, mainLGL->GetBackgroundColorVectorAddr(), 14);
-		}
-		else if (lineTitle == "Keybind" || lineTitle == "ScriptDLLs") // Keybind kept for backwards comp.
-		{
-			LoadScriptDLLsFromLine(line);
+			iter->second(line);
 		}
 		else if (!line.empty())
 		{
@@ -1670,10 +1692,9 @@ AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 	{
 		std::getline(file, lineLoader);
 		line = lineLoader;
-		std::string_view lineTitle = line.substr(0, line.find('*'));
+		std::string lineTitle = std::string(line.substr(0, line.find('*')));
 
-		if (!(line.empty() || lineTitle == "AmbientLight" || lineTitle == "BackgroundColor" || lineTitle == "ScriptDLLs" 
-			|| lineTitle == "Keybind"))
+		if (!(line.empty() || specialWordWorldLoadMap.contains(lineTitle)))
 		{
 			SimSerializer::GetObjectInfo(line, objectInfo);
 
