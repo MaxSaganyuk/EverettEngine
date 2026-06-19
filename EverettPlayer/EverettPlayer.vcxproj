@@ -135,13 +135,12 @@
       <AdditionalLibraryDirectories>..\x64\Release</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(TargetDir)..\..\ProjectEverett\fonts $(TargetDir)\fonts /i
-xcopy $(TargetDir)..\..\ProjectEverett\shaders $(TargetDir)\shaders /i
-xcopy $(TargetDir)..\..\ProjectEverett\models $(TargetDir)\models /i
-xcopy $(TargetDir)..\..\ProjectEverett\external $(TargetDir)\external /i
-xcopy $(TargetDir)..\..\ThirdParty\includes\glm $(TargetDir)\external\glm /e /i /k /y
+      <Command>robocopy "$(TargetDir)..\..\ProjectEverett\fonts" "$(TargetDir)\fonts" /E
+robocopy "$(TargetDir)..\..\ProjectEverett\shaders" "$(TargetDir)\shaders" /E
+robocopy "$(TargetDir)..\..\ProjectEverett\models" "$(TargetDir)\models" /E
+robocopy "$(TargetDir)..\..\ProjectEverett\external" "$(TargetDir)\external" /E
+robocopy  "$(TargetDir)..\..\ThirdParty\includes\glm" "$(TargetDir)\external\glm" /E 
 copy $(TargetDir)..\..\ThirdParty\dlls\Release\*.dll $(TargetDir)
-mkdir $(TargetDir)shaders
 del /q "$(TargetDir)*.exp"
 del /q "$(TargetDir)*.lib"
 del /q "$(TargetDir)*.pdb"</Command>
