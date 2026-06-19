@@ -34,7 +34,7 @@ private:
 		UnsetCritical
 	};
 
-	constexpr static inline int latestSerializerVersion = 13;
+	constexpr static inline int latestSerializerVersion = 14;
 	static inline int usedVersion = -1;
 	static VersionValidationState ValidateVersion(int requiredVersion, int deprecatedAt);
 	static bool SetUsedVersion(int usedVersionToSet);

@@ -1441,6 +1441,7 @@ bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 
 	file << SimSerializer::GetLatestVersionStr();
 	file << "AmbientLight*" << SimSerializer::GetValueToSaveFrom(LightSim::SGetAmbientLightColorVectorAddr()) << '\n';
+	file << "BackgroundColor*" << SimSerializer::GetValueToSaveFrom(mainLGL->GetBackgroundColorVectorAddr()) << '\n';
 
 	SaveObjectsToFile<CameraSim>(file);
 	SaveObjectsToFile<SolidSim>(file);
@@ -1607,6 +1608,10 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 		{
 			SimSerializer::SetValueToLoadFrom(line, LightSim::SGetAmbientLightColorVectorAddr(), 4);
 		}
+		else if (lineTitle == "BackgroundColor")
+		{
+			SimSerializer::SetValueToLoadFrom(line, mainLGL->GetBackgroundColorVectorAddr(), 14);
+		}
 		else if (lineTitle == "Keybind" || lineTitle == "ScriptDLLs") // Keybind kept for backwards comp.
 		{
 			LoadScriptDLLsFromLine(line);
@@ -1667,7 +1672,8 @@ AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 		line = lineLoader;
 		std::string_view lineTitle = line.substr(0, line.find('*'));
 
-		if (!(line.empty() || lineTitle == "AmbientLight" || lineTitle == "ScriptDLLs" || lineTitle == "Keybind"))
+		if (!(line.empty() || lineTitle == "AmbientLight" || lineTitle == "BackgroundColor" || lineTitle == "ScriptDLLs" 
+			|| lineTitle == "Keybind"))
 		{
 			SimSerializer::GetObjectInfo(line, objectInfo);
 
