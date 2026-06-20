@@ -417,6 +417,11 @@ void ObjectSim::SetRotationChangeCallback(std::function<void()> callback)
 	rotationChangeCallback = callback;
 }
 
+void ObjectSim::HardLinkObject(IObjectSim& otherObject)
+{
+	objectGraph.SetupRelations(this, dynamic_cast<ObjectSim*>(&otherObject), stdEx::RelationType::LeftToRight, true);
+}
+
 void ObjectSim::LinkObject(IObjectSim& otherObject)
 {
 	objectGraph.SetupRelations(this, dynamic_cast<ObjectSim*>(&otherObject), stdEx::RelationType::LeftToRight);

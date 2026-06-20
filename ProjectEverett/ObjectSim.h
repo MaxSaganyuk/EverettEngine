@@ -101,6 +101,7 @@ public:
 	void SetPositionChangeCallback(std::function<void()> callback);
 	void SetRotationChangeCallback(std::function<void()> callback);
 
+	void HardLinkObject(IObjectSim& otherObject);
 	void LinkObject(IObjectSim& otherObject) override;
 	void UnlinkObject(IObjectSim& objectToUnlink) override;
 	void EnableObjectLinking(bool val = true) override;

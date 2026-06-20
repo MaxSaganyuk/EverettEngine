@@ -335,7 +335,7 @@ bool EverettEngine::CreateGizmoSolid(
 			});
 		}
 
-		relatedObject.LinkObject(gizmoSolid);
+		relatedObject.HardLinkObject(gizmoSolid);
 
 		return true;
 	}
