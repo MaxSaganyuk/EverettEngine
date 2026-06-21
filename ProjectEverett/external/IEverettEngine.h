@@ -8,6 +8,7 @@
 #include "IColliderSim.h"
 
 #include <optional>
+#include <chrono>
 
 // Engine interface is for external use, will only expose necessary calls to the engine from scripting
 class IEverettEngine
@@ -18,6 +19,14 @@ public:
 		Camera, Solid, Light, Sound, Collider, _SIZE
 	};
 
+	struct TimedCallbackSetup
+	{
+		std::chrono::seconds period;
+		std::function<void(size_t)> callback; // size_t will equal to amount of times 'this' callback was called
+		std::optional<size_t> amountOfCalls; // Infinite if not set, stops callbacks on reached amount
+		std::optional<std::reference_wrapper<bool>> endTrigger; // Stops callbacks on 'true' value (regardless on amount of calls)
+	};
+
 	virtual void SetDebugLogVisible(bool value = true) = 0;
 
 	virtual void AddInteractable(
@@ -26,6 +35,7 @@ public:
 		std::function<void()> pressFunc,
 		std::function<void()> releaseFunc = nullptr
 	) = 0;
+	virtual void AddTimedCallback(const TimedCallbackSetup& timedCallbackSetup) = 0;
 	virtual void AddMouseScrollCallback(std::function<void(double)> callback) = 0;
 	virtual void AddMouseMoveCallback(std::function<void(double, double)> callback) = 0;
 

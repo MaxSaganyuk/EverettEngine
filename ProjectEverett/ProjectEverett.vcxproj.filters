@@ -132,6 +132,9 @@
     <ClInclude Include="external\ColorManager.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="TimerManager.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SolidSim.cpp">

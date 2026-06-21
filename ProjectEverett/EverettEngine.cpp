@@ -38,6 +38,7 @@
 #include "ConceptUtils.h"
 
 #include "NameTracker.h"
+#include "TimerManager.h"
 
 using namespace EverettStructs;
 
@@ -138,6 +139,8 @@ EverettEngine::EverettEngine()
 	animSystem = std::make_unique<AnimSystem>();
 	cmdHandler = std::make_unique<CommandHandler>();
 	hwndHolder = std::make_unique<WindowHandleHolder>();
+
+	timerManager = std::make_unique<TimerManager>();
 
 	allNameTracker = std::make_unique<NameTracker>();
 		
@@ -378,6 +381,11 @@ void EverettEngine::AddInteractable(
 	}
 }
 
+void EverettEngine::AddTimedCallback(const TimedCallbackSetup& timedCallbackSetup)
+{
+	timerManager->AddTimedCallback(timedCallbackSetup);
+}
+
 void EverettEngine::AddMouseScrollCallback(std::function<void(double)> callback)
 {
 	mouseScrollScriptFuncs.push_back(callback);
@@ -398,6 +406,7 @@ void EverettEngine::ClearExternallyControlledContainers()
 	keyScriptFuncMap.clear();
 	mouseScrollScriptFuncs.clear();
 	mouseMoveScriptFuncs.clear();
+	timerManager->CleanTimedCallbacks();
 }
 
 void EverettEngine::RunRenderWindow()
@@ -407,6 +416,8 @@ void EverettEngine::RunRenderWindow()
 		nextStartSolidIndex = 0;
 
 		CheckAndLoadRequestedWorld();
+
+		timerManager->ProcessTimedCallbacks();
 
 		ColliderSim::ExecuteBroadCollisionCheck();
 

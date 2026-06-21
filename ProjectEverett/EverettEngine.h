@@ -37,6 +37,7 @@ class CustomOutput;
 class ModelInfo;
 class KeyScriptFuncInfo;
 class NameTracker;
+class TimerManager;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -225,6 +226,7 @@ private:
 		std::function<void()> pressFunc,
 		std::function<void()> releaseFunc = nullptr
 	) override;
+	void AddTimedCallback(const TimedCallbackSetup& timedCallbackSetup) override;
 	void AddMouseScrollCallback(std::function<void(double)> callback) override;
 	void AddMouseMoveCallback(std::function<void(double, double)> callback) override;
 
@@ -300,6 +302,7 @@ private:
 	std::unique_ptr<CommandHandler> cmdHandler;
 	std::unique_ptr<AnimSystem> animSystem;
 	std::unique_ptr<RenderLogger> logger;
+	std::unique_ptr<TimerManager> timerManager;
 
 	ModelCollection models;
 	SolidCollection solids;
