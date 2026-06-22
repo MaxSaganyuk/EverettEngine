@@ -226,7 +226,7 @@ void SoundSim::UpdatePosition()
 
 void SoundSim::SetPlaybackCallback(std::function<void(bool, bool, bool)> callback)
 {
-	sound.playStates.SetStateChangeCallback(callback);
+	sound.playStates.SetStateChangeCallback(std::move(callback));
 }
 
 SoundSim::SoundSim(WavData&& wavData)

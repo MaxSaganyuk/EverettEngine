@@ -363,12 +363,12 @@ void EverettEngine::AddInteractable(
 
 	if (pressFunc)
 	{
-		keyScriptFuncMap[key].AddPressedFunc(pressFunc, holdable);
+		keyScriptFuncMap[key].AddPressedFunc(std::move(pressFunc), holdable);
 	}
 
 	if (releaseFunc)
 	{
-		keyScriptFuncMap[key].AddReleasedFunc(releaseFunc);
+		keyScriptFuncMap[key].AddReleasedFunc(std::move(releaseFunc));
 	}
 
 	if (addNew)
@@ -381,19 +381,19 @@ void EverettEngine::AddInteractable(
 	}
 }
 
-void EverettEngine::AddTimedCallback(const TimedCallbackSetup& timedCallbackSetup)
+void EverettEngine::AddTimedCallback(TimedCallbackSetup timedCallbackSetup)
 {
-	timerManager->AddTimedCallback(timedCallbackSetup);
+	timerManager->AddTimedCallback(std::move(timedCallbackSetup));
 }
 
 void EverettEngine::AddMouseScrollCallback(std::function<void(double)> callback)
 {
-	mouseScrollScriptFuncs.push_back(callback);
+	mouseScrollScriptFuncs.push_back(std::move(callback));
 }
 
 void EverettEngine::AddMouseMoveCallback(std::function<void(double, double)> callback)
 {
-	mouseMoveScriptFuncs.push_back(callback);
+	mouseMoveScriptFuncs.push_back(std::move(callback));
 }
 
 // Since some containers are controlled externally (via script funcs by user)
@@ -1430,7 +1430,7 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 
 void EverettEngine::AddWorldLoadCallback(std::function<void()> callback)
 {
-	worldLoadCallback = callback;
+	worldLoadCallback = std::move(callback);
 }
 
 void EverettEngine::RequestWorldLoad(const char* filePath)

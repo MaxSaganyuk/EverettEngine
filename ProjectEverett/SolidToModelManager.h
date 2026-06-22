@@ -47,7 +47,7 @@ public:
 	bool IsAnimationPlaying();
 	bool IsAnimationPaused();
 	bool IsAnimationLooped();
-	void SetAnimationPlaybackCallback(std::function<void(bool, bool, bool)> callback);
+	void SetAnimationPlaybackCallback(std::function<void(bool, bool, bool)>&& callback);
 
 	double GetCurrentAnimationTime();
 	void SetStartBoneIndexRef(const size_t& startingBoneIndex);

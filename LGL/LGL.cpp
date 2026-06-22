@@ -287,7 +287,7 @@ void LGL::CaptureMouse(bool value)
 
 void LGL::SetFramebufferSizeCallback(std::function<void(int, int)> callbackFunc)
 {
-	framebufferSizeFunc = callbackFunc;
+	framebufferSizeFunc = std::move(callbackFunc);
 
 	std::cout << "Framebuffer size callback\n";
 }
@@ -295,7 +295,7 @@ void LGL::SetFramebufferSizeCallback(std::function<void(int, int)> callbackFunc)
 void LGL::SetCursorPositionCallback(std::function<void(double, double)> callbackFunc)
 {
 	glfwSetCursorPosCallback(window, callbackFunc ? CursorPositionCallback : nullptr);
-	cursorPositionFunc = callbackFunc;
+	cursorPositionFunc = std::move(callbackFunc);
 
 	std::cout << "Cursor callback set\n";
 }
@@ -303,7 +303,7 @@ void LGL::SetCursorPositionCallback(std::function<void(double, double)> callback
 void LGL::SetScrollCallback(std::function<void(double, double)> callbackFunc)
 {
 	glfwSetScrollCallback(window, callbackFunc ? ScrollCallback : nullptr);
-	scrollCallbackFunc = callbackFunc;
+	scrollCallbackFunc = std::move(callbackFunc);
 
 	std::cout << "Scroll callback set\n";
 }
@@ -311,14 +311,14 @@ void LGL::SetScrollCallback(std::function<void(double, double)> callbackFunc)
 void LGL::SetKeyPressCallback(std::function<void(int, int, int, int)> callbackFunc)
 {
 	glfwSetKeyCallback(window, callbackFunc ? KeyPressCallback : nullptr);
-	keyPressCallbackFunc = callbackFunc;
+	keyPressCallbackFunc = std::move(callbackFunc);
 
 	std::cout << "Key press callback set\n";
 }
 
 void LGL::SetRenderDeltaCallback(std::function<void(float)> callbackFunc)
 {
-	renderTimeCallbackFunc = callbackFunc;
+	renderTimeCallbackFunc = std::move(callbackFunc);
 
 	std::cout << "Render delta callback set\n";
 }
@@ -1322,11 +1322,11 @@ bool LGL::LoadAndCompileShader(const std::string& name)
 void LGL::SetInteractable(
 	int keyID,
 	bool holdable,
-	const std::function<void()>& pressedFunc,
-	const std::function<void()>& releasedFunc
+	std::function<void()> pressedFunc,
+	std::function<void()> releasedFunc
 )
 {
-	interactCollection[keyID] = { false, holdable, pressedFunc, releasedFunc };
+	interactCollection[keyID] = { false, holdable, std::move(pressedFunc), std::move(releasedFunc) };
 	
 	std::cout << "Interactable for keyId " << keyID << " set\n";
 }

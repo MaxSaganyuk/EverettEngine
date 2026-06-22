@@ -139,14 +139,14 @@ void ColliderSim::DeleteFromSortedVectorOfColliders()
 	lastGeneralCollisionState.resize(lastGeneralCollisionState.size() - 1);
 }
 
-void ColliderSim::AddPersistentCollisionCallback(const CollisionCallbackOptions& collisionOpts)
+void ColliderSim::AddPersistentCollisionCallback(CollisionCallbackOptions&& collisionOpts)
 {
-	AddCollisionCallbackImpl({ collisionOpts, false, true });
+	AddCollisionCallbackImpl({ std::move(collisionOpts), false, true });
 }
 
-void ColliderSim::AddCollisionCallback(const CollisionCallbackOptions& collisionOpts)
+void ColliderSim::AddCollisionCallback(CollisionCallbackOptions collisionOpts)
 {
-	AddCollisionCallbackImpl({ collisionOpts });
+	AddCollisionCallbackImpl({ std::move(collisionOpts) });
 }
 
 void ColliderSim::SetColliderActive(bool value)
@@ -165,13 +165,13 @@ void ColliderSim::ClearCollisionCallbacks()
 	}
 }
 
-void ColliderSim::AddCollisionCallbackImpl(const CollisionCallback& colCallback)
+void ColliderSim::AddCollisionCallbackImpl(CollisionCallback&& colCallback)
 {
 	if (!colCallback.collisionStart && !colCallback.collisionStop) return;
 
 	if (!colCallback.colliderToBindTo)
 	{
-		anyCollisionCallbacks.push_back(colCallback);
+		anyCollisionCallbacks.push_back(std::move(colCallback));
 	}
 	else
 	{
@@ -182,7 +182,7 @@ void ColliderSim::AddCollisionCallbackImpl(const CollisionCallback& colCallback)
 			bindedCollisionCallbacks.emplace(colCallback.colliderToBindTo, std::vector<CollisionCallback>{});
 		}
 
-		bindedCollisionCallbacks[colCallback.colliderToBindTo].push_back(colCallback);
+		bindedCollisionCallbacks[colCallback.colliderToBindTo].push_back(std::move(colCallback));
 	}
 }
 

@@ -5,18 +5,18 @@ RenderLogger::RenderLogger(
 	const float windowHeight,
 	const LGLStructs::GlyphInfo& glyphs,
 	const std::string& shader,
-	const ShaderBehaviourLog shaderBehaviourLog,
-	const ShaderBehaviourError shaderBehaviourError,
-	const RenderTextCreateFunc createFunc,
-	const RenderTextDeleteFunc deleteFunc
+	ShaderBehaviourLog&& shaderBehaviourLog,
+	ShaderBehaviourError&& shaderBehaviourError,
+	RenderTextCreateFunc&& createFunc,
+	RenderTextDeleteFunc&& deleteFunc
 )
 	: 
 	glyphs(glyphs), 
 	shader(shader),
-	shaderBehaviourLog(shaderBehaviourLog),
-	shaderBehaviourError(shaderBehaviourError),
-	createFunc(createFunc), 
-	deleteFunc(deleteFunc),
+	shaderBehaviourLog(std::move(shaderBehaviourLog)),
+	shaderBehaviourError(std::move(shaderBehaviourError)),
+	createFunc(std::move(createFunc)), 
+	deleteFunc(std::move(deleteFunc)),
 	counter(0),
 	isRenderEnabled(true)
 {

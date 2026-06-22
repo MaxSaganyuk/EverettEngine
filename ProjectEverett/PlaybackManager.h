@@ -118,8 +118,8 @@ public:
 		return std::chrono::duration<double>(currentPlaybackTime - startPlaybackTime).count();
 	}
 
-	void SetStateChangeCallback(StateChangeCallback callback)
+	void SetStateChangeCallback(StateChangeCallback&& callback)
 	{
-		stateChangeCallback = callback;
+		stateChangeCallback = std::move(callback);
 	}
 };

@@ -35,7 +35,7 @@ public:
 		std::function<void()> pressFunc,
 		std::function<void()> releaseFunc = nullptr
 	) = 0;
-	virtual void AddTimedCallback(const TimedCallbackSetup& timedCallbackSetup) = 0;
+	virtual void AddTimedCallback(TimedCallbackSetup timedCallbackSetup) = 0;
 	virtual void AddMouseScrollCallback(std::function<void(double)> callback) = 0;
 	virtual void AddMouseMoveCallback(std::function<void(double, double)> callback) = 0;
 

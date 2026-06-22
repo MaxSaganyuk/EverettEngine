@@ -252,9 +252,9 @@ bool SolidToModelManager::IsAnimationLooped()
 	return animStates.IsLooped();
 }
 
-void SolidToModelManager::SetAnimationPlaybackCallback(std::function<void(bool, bool, bool)> callback)
+void SolidToModelManager::SetAnimationPlaybackCallback(std::function<void(bool, bool, bool)>&& callback)
 {
-	animStates.SetStateChangeCallback(callback);
+	animStates.SetStateChangeCallback(std::move(callback));
 }
 
 double SolidToModelManager::GetAnimationTimeTicks(double currentTime)

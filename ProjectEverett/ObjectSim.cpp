@@ -409,12 +409,12 @@ void ObjectSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 
 void ObjectSim::SetPositionChangeCallback(std::function<void()> callback)
 {
-	positionChangeCallback = callback;
+	positionChangeCallback = std::move(callback);
 }
 
 void ObjectSim::SetRotationChangeCallback(std::function<void()> callback)
 {
-	rotationChangeCallback = callback;
+	rotationChangeCallback = std::move(callback);
 }
 
 void ObjectSim::HardLinkObject(IObjectSim& otherObject)

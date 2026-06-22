@@ -17,7 +17,7 @@ public:
 		bool holdable = false;
 	};
 
-	virtual void AddCollisionCallback(const CollisionCallbackOptions& callbackOpts) = 0;
+	virtual void AddCollisionCallback(CollisionCallbackOptions callbackOpts) = 0;
 	virtual void SetColliderActive(bool value = true) = 0;
 	virtual void ClearCollisionCallbacks() = 0;
 };

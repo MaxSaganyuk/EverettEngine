@@ -18,9 +18,9 @@ class TimerManager
 	}
 
 public:
-	void AddTimedCallback(const IEverettEngine::TimedCallbackSetup& timedCallbackSetup)
+	void AddTimedCallback(IEverettEngine::TimedCallbackSetup&& timedCallbackSetup)
 	{
-		timedCallbacks.push_front(TimedCallback{ timedCallbackSetup });
+		timedCallbacks.push_front(TimedCallback{ std::move(timedCallbackSetup) });
 	}
 
 	void ProcessTimedCallbacks()

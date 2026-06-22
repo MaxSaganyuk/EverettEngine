@@ -226,7 +226,7 @@ private:
 		std::function<void()> pressFunc,
 		std::function<void()> releaseFunc = nullptr
 	) override;
-	void AddTimedCallback(const TimedCallbackSetup& timedCallbackSetup) override;
+	void AddTimedCallback(TimedCallbackSetup timedCallbackSetup) override;
 	void AddMouseScrollCallback(std::function<void(double)> callback) override;
 	void AddMouseMoveCallback(std::function<void(double, double)> callback) override;
 

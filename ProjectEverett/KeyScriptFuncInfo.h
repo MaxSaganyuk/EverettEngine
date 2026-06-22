@@ -10,12 +10,12 @@ class KeyScriptFuncInfo
 	std::vector<std::function<void()>> releasedFuncs;
 
 public:
-	void AddPressedFunc(std::function<void()> func, bool holdable)
+	void AddPressedFunc(std::function<void()>&& func, bool holdable)
 	{
 		pressedFuncs.push_back({ std::move(func), holdable });
 	}
 
-	void AddReleasedFunc(std::function<void()> func)
+	void AddReleasedFunc(std::function<void()>&& func)
 	{
 		releasedFuncs.push_back(std::move(func));
 	}

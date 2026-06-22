@@ -25,9 +25,9 @@ public:
 	void DeleteFromSortedVectorOfColliders();
 
 	// Persistent collision callbacks are engine only to keep gizmo color change after clean, for example.
-	void AddPersistentCollisionCallback(const CollisionCallbackOptions& collisionOpts);
+	void AddPersistentCollisionCallback(CollisionCallbackOptions&& collisionOpts);
 	
-	void AddCollisionCallback(const CollisionCallbackOptions& collisionOpts) override;
+	void AddCollisionCallback(CollisionCallbackOptions collisionOpts) override;
 	void SetColliderActive(bool value = true) override;
 	void ClearCollisionCallbacks() override;
 
@@ -44,7 +44,7 @@ private:
 
 	using CollisionSet = std::set<std::pair<size_t, size_t>>;
 
-	void AddCollisionCallbackImpl(const CollisionCallback& colCallback);
+	void AddCollisionCallbackImpl(CollisionCallback&& colCallback);
 
 	static void ResortCollidersByPos();
 	static bool ByPosSorter(ColliderSim* firstCollider, ColliderSim* secondCollider);

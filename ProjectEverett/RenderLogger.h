@@ -16,10 +16,10 @@ public:
 		const float windowHeight,
 		const LGLStructs::GlyphInfo& glyphs,
 		const std::string& shader,
-		const ShaderBehaviourLog shaderBehaviourLog,
-		const ShaderBehaviourError shaderBehaviourError,
-		const RenderTextCreateFunc createFunc, 
-		const RenderTextDeleteFunc deleteFunc
+		ShaderBehaviourLog&& shaderBehaviourLog,
+		ShaderBehaviourError&& shaderBehaviourError,
+		RenderTextCreateFunc&& createFunc, 
+		RenderTextDeleteFunc&& deleteFunc
 	);
 
 	void CreateLogMessage(const std::string& str);

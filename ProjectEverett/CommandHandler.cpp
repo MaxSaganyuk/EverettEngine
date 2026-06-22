@@ -22,7 +22,7 @@ void CommandHandler::AddCommandLambda(const std::string& commandName, std::funct
 {
 	if (commands.find(commandName) == commands.end())
 	{
-		commands[commandName] = command;
+		commands[commandName] = std::move(command);
 		std::cout << "Added command " + commandName << '\n';
 	}
 	else

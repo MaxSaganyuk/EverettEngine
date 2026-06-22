@@ -185,8 +185,8 @@ public:
 	LGL_API void SetInteractable(
 		int keyID, 
 		bool holdable,
-		const std::function<void()>& pressedFunc, 
-		const std::function<void()>& releasedFunc = nullptr
+		std::function<void()> pressedFunc, 
+		std::function<void()> releasedFunc = nullptr
 	);
 	
 	LGL_API static std::string ConvertKeyTo(int keyId);

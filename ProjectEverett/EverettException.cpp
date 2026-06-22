@@ -38,7 +38,7 @@ std::string EverettException::CreateTheMessage(
 
 void EverettException::SetLogReportCreator(std::function<void()> logReportCreatorFuncToSet)
 {
-	logReportCreatorFunc = logReportCreatorFuncToSet;
+	logReportCreatorFunc = std::move(logReportCreatorFuncToSet);
 }
 
 EverettException::EverettException(const std::source_location& currentSourceLocation, const std::string& additionalMessage)
