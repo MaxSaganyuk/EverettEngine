@@ -41,6 +41,11 @@ class TestCharHolder
 	bool linkedToCamera{};
 
 public:
+	void Rotate(const IObjectSim::RotationDegrees& rotate)
+	{
+		testCharSolid->Rotate(rotate, false);
+	}
+
 	void SetSolidSim(ISolidSim* testCharSolid)
 	{
 		CheckIfPtrValid(testCharSolid);
@@ -156,6 +161,10 @@ ScriptInit()
 	engine.AddInteractable(
 		engine.ConvertKeyTo('C'), false,
 		[]() { testChar.LinkCharToCamera(*cameraSim); }, nullptr
+	);
+
+	engine.AddInteractable(
+		engine.ConvertKeyTo('R'), true, []() { testChar.Rotate({ 0.0f, 1.0f, 0.0f }); }
 	);
 
 	engine.AddMouseScrollCallback([](double value) { cameraSim->Zoom(static_cast<float>(value)); });

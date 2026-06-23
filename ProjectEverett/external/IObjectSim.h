@@ -27,18 +27,20 @@ public:
 		X, Y, Z
 	};
 
-	struct Rotation : public glm::vec3
+	// Radians are stored
+	struct Rotation : glm::vec3
 	{
-		Rotation(const glm::vec3& axis = {}) : glm::vec3(axis) {}
-		Rotation(float pitch, float yaw, float roll) : Rotation(glm::vec3{ pitch, yaw, roll }) {}
+		constexpr Rotation(const glm::vec3& axis = {}) : glm::vec3(axis) {}
+		constexpr Rotation(float pitch, float yaw, float roll) : Rotation(glm::vec3{ pitch, yaw, roll }) {}
 
-		float GetPitch() const { return x; };
-		float GetYaw() const   { return y; };
-		float GetRoll() const  { return z; };
+		constexpr float GetPitch() const { return x; };
+		constexpr float GetYaw()   const { return y; };
+		constexpr float GetRoll()  const { return z; };
 
-		bool Zeroed() const { return (x + y + z) == 0.0f; }
+		constexpr bool Zeroed() const { return (x + y + z) == 0.0f; }
+		constexpr void ZeroOut() { x = y = z = 0.0f; }
 
-		Rotation& operator+=(const Rotation& toRotate)
+		constexpr Rotation& operator+=(const Rotation& toRotate)
 		{
 			x += toRotate.x;
 			y += toRotate.y;
@@ -46,6 +48,13 @@ public:
 
 			return *this;
 		}
+	};
+
+	// Automatic degree to radian converter constructor
+	struct RotationDegrees : Rotation
+	{
+		constexpr RotationDegrees(float pitchDegrees, float yawDegrees, float rollDegrees)
+			: Rotation(glm::radians(pitchDegrees), glm::radians(yawDegrees), glm::radians(rollDegrees)) {}
 	};
 
 	constexpr static float fullRotation = 2.0f * glm::pi<float>();
