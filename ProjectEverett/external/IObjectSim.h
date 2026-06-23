@@ -102,6 +102,9 @@ public:
 		const Rotation& min, const Rotation& max, bool executeLinkedObjects = true
 	) = 0;
 	Linkable virtual void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) = 0;
+	Linkable virtual void RevolveAround(
+		const Rotation& toRotate, const glm::vec3& centerPos, bool executeLinkedObjects = true
+	) = 0;
 
 	virtual void LinkObject(IObjectSim& objectToLink) = 0;
 	virtual void UnlinkObject(IObjectSim& objectToUnlink) = 0;

@@ -37,6 +37,7 @@ class TestCharHolder
 {
 	ISolidSim* testCharSolid{};
 	IColliderSim* testCharCollider{};
+	ISolidSim* sateliteBox{};
 	bool moving{};
 	bool linkedToCamera{};
 
@@ -44,6 +45,19 @@ public:
 	void Rotate(const IObjectSim::RotationDegrees& rotate)
 	{
 		testCharSolid->Rotate(rotate, false);
+	}
+
+	void SetSateliteBox(ISolidSim* sateliteBox)
+	{
+		CheckIfPtrValid(sateliteBox);
+
+		this->sateliteBox = sateliteBox;
+		testCharSolid->LinkObject(*sateliteBox);
+	}
+
+	void RevolveAroundChar()
+	{
+		sateliteBox->RevolveAround(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, testCharSolid->GetPositionVectorAddr());
 	}
 
 	void SetSolidSim(ISolidSim* testCharSolid)
@@ -82,12 +96,10 @@ public:
 
 	void LinkCharToCamera(ICameraSim& camera)
 	{
-		std::cout << "Camera link to char";
-
 		linkedToCamera ? testCharSolid->UnlinkObject(camera) : testCharSolid->LinkObject(camera);
 
 		linkedToCamera = !linkedToCamera;
-		std::cout << linkedToCamera ? " on\n" : " off\n";
+		std::cout << "Camera link to char" << linkedToCamera ? " on\n" : " off\n";
 	}
 
 	void Go(float rotation)
@@ -132,6 +144,7 @@ ScriptInit()
 	cameraSim = engine.GetCameraInterface();
 
 	testChar.SetSolidSim(engine.GetSolidInterface("TestChar"));
+	testChar.SetSateliteBox(engine.GetSolidInterface("RevolveBox"));
 	testChar.SetColliderSim(engine.GetColliderInterface("TestCharBox"));
 	testChar.SetupBlockCollision(engine.GetColliderInterface("BlockBox"));
 
@@ -195,6 +208,11 @@ ScriptInit()
 	);
 
 	engineInter = &engine;
+}
+
+MainScriptLoop()
+{
+	testChar.RevolveAroundChar();
 }
 
 ScriptCleanUp()

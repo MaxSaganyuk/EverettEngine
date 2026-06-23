@@ -381,12 +381,16 @@ void ObjectSim::LimitRotations(const Rotation& min, const Rotation& max, bool ex
 
 void ObjectSim::RotateImpl(const Rotation& toRotate)
 {
+	orient = glm::normalize(CalcOrientationFromRotation(toRotate) * orient.GetValue());
+}
+
+glm::quat ObjectSim::CalcOrientationFromRotation(const Rotation& toRotate)
+{
 	glm::quat pitch = glm::angleAxis(toRotate.GetPitch(), worldRight);
 	glm::quat yaw   = glm::angleAxis(toRotate.GetYaw(),   worldUp);
 	glm::quat roll  = glm::angleAxis(toRotate.GetRoll(),  worldFront);
 
-	glm::quat& orientRef = orient;
-	orient = glm::normalize(pitch * yaw * roll * orientRef);
+	return pitch * yaw * roll;
 }
 
 void ObjectSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
@@ -404,6 +408,18 @@ void ObjectSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
 		ExecuteLinkedObjects(&ObjectSim::Rotate, toRotate, true);
+	}
+}
+
+void ObjectSim::RevolveAround(const Rotation& toRotate, const glm::vec3& centerPos, bool executeLinkedObjects)
+{
+	glm::vec3 offset = CalcOrientationFromRotation(toRotate) * (pos.GetValue() - centerPos);
+
+	accumPos += (centerPos + offset) - pos.GetValue();
+
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::RevolveAround, toRotate, centerPos, true);
 	}
 }
 

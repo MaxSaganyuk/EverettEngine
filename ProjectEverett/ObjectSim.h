@@ -16,6 +16,7 @@ private:
 	void ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... values);
 
 	void RotateImpl(const Rotation& toRotate);
+	glm::quat CalcOrientationFromRotation(const Rotation& toRotate);
 protected:
 	static inline float renderDeltaTime = 1.0f;
 
@@ -96,6 +97,7 @@ public:
 
 	void LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects = true) override;
 	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;
+	void RevolveAround(const Rotation& toRotate, const glm::vec3& centerPos, bool executeLinkedObjects = true) override;
 
 	// Callback setter
 	void SetPositionChangeCallback(std::function<void()> callback);
