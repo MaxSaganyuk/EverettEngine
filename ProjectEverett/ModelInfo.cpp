@@ -1,12 +1,21 @@
 #include "SolidSim.h"
 #include "ModelInfo.h"
 
+#include <algorithm>
+
 ModelInfo::ModelInfo(const std::string& modelPath, FullModelInfo&& model)
 	: modelPath(modelPath), model(std::move(model)) {}
 
 ModelInfo::~ModelInfo()
 {
 	SetupModelInfo(false);
+}
+
+void ModelInfo::RecheckIfAllRelatedSolidsAreVisible()
+{
+	model.first.lock()->render = std::any_of(
+		relatedSolids.begin(), relatedSolids.end(), [](SolidSim* solid) { return solid->GetModelVisibility(); }
+	);
 }
 
 void ModelInfo::SetModelNamePtr(const std::string& modelAddr)
@@ -26,11 +35,6 @@ const std::string& ModelInfo::GetModelPath() const
 	return modelPath;
 }
 
-const ModelInfo::FullModelInfo& ModelInfo::GetFullModelInfo() const
-{
-	return model;
-}
-
 void ModelInfo::InsertRelatedSolid(SolidSim& solid)
 {
 	CheckModelNamePtrSet();
@@ -40,7 +44,7 @@ void ModelInfo::InsertRelatedSolid(SolidSim& solid)
 		SetupModelInfo(true);
 	}
 
-	solid.STMM.InitializeSTMM(model, modelNamePtr);
+	solid.STMM.InitializeSTMM(*this, modelNamePtr);
 	relatedSolids.insert(&solid);
 }
 

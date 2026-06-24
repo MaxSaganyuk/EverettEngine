@@ -500,9 +500,13 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 		for (auto& currentModelToProcess : internalModelMap)
 		{
-			SetCurrentShaderProg(currentModelToProcess.second.GetModelPtr()->shaderProgram);
+			auto currentModel = currentModelToProcess.second.GetModelPtr();
 
-			std::function<void()>& modelBeh = currentModelToProcess.second.GetModelPtr()->modelBehaviour;
+			if (!currentModel->render) continue;
+
+			SetCurrentShaderProg(currentModel->shaderProgram);
+
+			std::function<void()>& modelBeh = currentModel->modelBehaviour;
 			if (modelBeh)
 			{
 				modelBeh();

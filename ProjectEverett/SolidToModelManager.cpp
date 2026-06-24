@@ -1,13 +1,17 @@
 #include "SolidToModelManager.h"
 #include "EverettExceptionInternal.h"
 
+#include <algorithm>
+
 SolidToModelManager::SolidToModelManager() 
 	: initialized(false) {}
 
-void SolidToModelManager::InitializeSTMM(ModelInfo::FullModelInfo& fullModelInfoRef, const std::string* modelName)
+void SolidToModelManager::InitializeSTMM(ModelInfo& modelInfo, const std::string* modelName)
 {
-	fullModelInfoP = &fullModelInfoRef;
+	modelInfoPtr = &modelInfo;
+	fullModelInfoP = &modelInfoPtr->GetFullModelInfo();
 	this->modelName = modelName;
+	modelVisibility = true;
 	meshVisibility.resize(fullModelInfoP->first.lock()->meshes.size());
 	std::fill(meshVisibility.begin(), meshVisibility.end(), true);
 	currentAnimationIndex = 0;
@@ -56,11 +60,21 @@ size_t SolidToModelManager::GetMeshAmount()
 	return fullModelInfoP->first.lock()->meshes.size();
 }
 
-void SolidToModelManager::SetAllMeshVisibility(bool value)
+void SolidToModelManager::SetModelVisibility(bool value)
 {
 	CheckIfInitialized();
 
 	std::fill(meshVisibility.begin(), meshVisibility.end(), value);
+	modelVisibility = value;
+
+	modelInfoPtr->RecheckIfAllRelatedSolidsAreVisible();
+}
+
+bool SolidToModelManager::GetModelVisibility()
+{
+	CheckIfInitialized();
+
+	return modelVisibility;
 }
 
 template<typename Type>
@@ -84,6 +98,8 @@ void SolidToModelManager::SetMeshVisibility(size_t index, bool value)
 	CheckIfInitialized();
 
 	meshVisibility[index] = value;
+
+	CheckIfModelVisible();
 }
 
 void SolidToModelManager::SetMeshVisibility(const std::string& name, bool value)
@@ -94,6 +110,8 @@ void SolidToModelManager::SetMeshVisibility(const std::string& name, bool value)
 	{
 		meshVisibility[GetIndexByName(name, GetMeshNames())] = value;
 	}
+
+	CheckIfModelVisible();
 }
 
 bool SolidToModelManager::GetMeshVisibility(size_t index)
@@ -321,5 +339,16 @@ bool SolidToModelManager::IsAnimationResetRequired()
 void SolidToModelManager::CheckIfInitialized()
 {
 	CheckAndThrowExceptionWMessage(initialized, "SolidToModelManager is uninitialized");
+}
+
+void SolidToModelManager::CheckIfModelVisible()
+{
+	bool previousModelVisibility = modelVisibility;
+	modelVisibility = std::any_of(meshVisibility.begin(), meshVisibility.end(), [](bool vis) { return vis; });
+
+	if (modelVisibility != previousModelVisibility)
+	{
+		modelInfoPtr->RecheckIfAllRelatedSolidsAreVisible();
+	}
 }
 

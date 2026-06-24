@@ -19,10 +19,17 @@ public:
 
 	~ModelInfo();
 
+	void RecheckIfAllRelatedSolidsAreVisible();
 	void SetModelNamePtr(const std::string& modelAddr);
 	const std::string& GetModelName() const;
 	const std::string& GetModelPath() const;
-	const FullModelInfo& GetFullModelInfo() const;
+
+	template<typename Self>
+	auto&& GetFullModelInfo(this Self&& self)
+	{
+		return std::forward<Self>(self).model;
+	}
+
 	void InsertRelatedSolid(SolidSim& solid);
 	void EraseFromRelatedSolids(SolidSim& solid);
 	void SetModelBehaviour(std::function<void(const ModelInfo&)> func);

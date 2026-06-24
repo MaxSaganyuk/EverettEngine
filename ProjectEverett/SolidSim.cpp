@@ -84,6 +84,8 @@ bool SolidSim::CollectInfoToLoadToSTMM(std::string_view& line)
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped,              1);
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility,                 1);
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.modelDefaultColor,              8);
+
+		STMM.CheckIfModelVisible();
 	}
 
 	return res;
@@ -168,9 +170,14 @@ size_t SolidSim::GetMeshAmount()
 	return STMM.GetMeshAmount();
 }
 
-void SolidSim::SetAllMeshVisibility(bool value)
+void SolidSim::SetModelVisibility(bool value)
 {
-	STMM.SetAllMeshVisibility(value);
+	STMM.SetModelVisibility(value);
+}
+
+bool SolidSim::GetModelVisibility()
+{
+	return STMM.GetModelVisibility();
 }
 
 std::vector<std::string> SolidSim::GetModelMeshNames()

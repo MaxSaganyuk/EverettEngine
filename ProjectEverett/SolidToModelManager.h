@@ -15,13 +15,12 @@ public:
 
 	bool IsInitialized();
 
-	void InitializeSTMM(ModelInfo::FullModelInfo& fullModelInfoRef, const std::string* modelName);
+	void InitializeSTMM(ModelInfo& modelInfo, const std::string* modelName);
 
 	const std::string& GetModelName();
 
 	std::vector<std::string> GetMeshNames();
 	size_t GetMeshAmount();
-	void SetAllMeshVisibility(bool value);
 	void SetMeshVisibility(size_t intex, bool value);
 	void SetMeshVisibility(const std::string& name, bool value);
 	bool GetMeshVisibility(size_t intex);
@@ -31,6 +30,8 @@ public:
 
 	glm::vec3 GetAutoScaleVector();
 
+	void SetModelVisibility(bool value);
+	bool GetModelVisibility();
 	void SetModelDefaultColor(const glm::vec4& color);
 	glm::vec4 GetModelDefaultColor();
 
@@ -58,6 +59,7 @@ private:
 	friend class SolidSim;
 
 	void CheckIfInitialized();
+	void CheckIfModelVisible();
 
 	double GetAnimationTimeTicks(double currentTime);
 	void ResetAnimationTime();
@@ -74,10 +76,12 @@ private:
 	size_t currentAnimationIndex;
 	PlaybackManager animStates;
 
+	bool modelVisibility;
 	std::vector<bool> meshVisibility;
 	glm::vec4 modelDefaultColor = ColorManager::GetColorVec4(ColorManager::Colors::WHITE);
 
 	const size_t* startBoneIndexPtr;
 	
+	ModelInfo* modelInfoPtr;
 	ModelInfo::FullModelInfo* fullModelInfoP;
 };

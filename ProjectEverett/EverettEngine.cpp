@@ -531,20 +531,23 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 			{
 				SolidSim& solid = *solidPtr;
 
-				glm::mat4& modelMatrix = solid.GetModelMatrixAddr();
-
-				LGLUtils::SetShaderUniformArrayAt(*mainLGL, "models", index, modelMatrix);
-				LGLUtils::SetShaderUniformArrayAt(*mainLGL, "invs", index, glm::inverse(modelMatrix));
-				if (solid.GetModelAnimationAmount())
+				if (solid.GetModelVisibility())
 				{
-					LGLUtils::SetShaderUniformArrayAt(
-						*mainLGL, "startingBoneIndexes", index, static_cast<int>(solid.GetModelCurrentStartingBoneIndex())
-					);
-				}
+					glm::mat4& modelMatrix = solid.GetModelMatrixAddr();
 
-				if (modelPtr->isTextureless)
-				{
-					LGLUtils::SetShaderUniformArrayAt(*mainLGL, "defaultColors", index, solid.GetModelDefaultColor());
+					LGLUtils::SetShaderUniformArrayAt(*mainLGL, "models", index, modelMatrix);
+					LGLUtils::SetShaderUniformArrayAt(*mainLGL, "invs", index, glm::inverse(modelMatrix));
+					if (solid.GetModelAnimationAmount())
+					{
+						LGLUtils::SetShaderUniformArrayAt(
+							*mainLGL, "startingBoneIndexes", index, static_cast<int>(solid.GetModelCurrentStartingBoneIndex())
+						);
+					}
+
+					if (modelPtr->isTextureless)
+					{
+						LGLUtils::SetShaderUniformArrayAt(*mainLGL, "defaultColors", index, solid.GetModelDefaultColor());
+					}
 				}
 
 				++index;
@@ -561,12 +564,15 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		{
 			SolidSim& solid = *solidPtr;
 
-			mainLGL->SetShaderUniformValue("solidIndex", static_cast<int>(index));
-			mainLGL->SetShaderUniformValue("meshVisibility", static_cast<int>(solid.GetModelMeshVisibility(meshIndex)));
-			mainLGL->SetShaderUniformValue(
-				lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[2], 
-				solid.GetModelMeshShininess(meshIndex)
-			);
+			if (solid.GetModelVisibility())
+			{
+				mainLGL->SetShaderUniformValue("solidIndex", static_cast<int>(index));
+				mainLGL->SetShaderUniformValue("meshVisibility", static_cast<int>(solid.GetModelMeshVisibility(meshIndex)));
+				mainLGL->SetShaderUniformValue(
+					lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[2],
+					solid.GetModelMeshShininess(meshIndex)
+				);
+			}
 
 			++index;
 		}

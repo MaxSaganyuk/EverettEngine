@@ -52,7 +52,6 @@ public:
 	// Mesh access; available through interface
 	std::vector<std::string> GetModelMeshNames() override;
 	size_t GetMeshAmount() override;
-	void SetAllMeshVisibility(bool value) override;
 	void SetModelMeshVisibility(const std::string name, bool value) override;
 	void SetModelMeshVisibility(size_t index, bool value) override;
 	bool GetModelMeshVisibility(const std::string name) override;
@@ -63,6 +62,8 @@ public:
 	float GetModelMeshShininess(size_t index);
 
 	// Model access; available through interface
+	void SetModelVisibility(bool value) override;
+	bool GetModelVisibility() override;
 	void InvokeAutoScale() override;
 
 	// Model access; engine only
