@@ -208,11 +208,9 @@ void SoundSim::UpdateCurrentPlaybackTime()
 	}
 }
 
-void SoundSim::UpdatePosition()
+bool SoundSim::UpdatePosition()
 {
-	ObjectSim::UpdatePosition();
-
-	if (sound.playStates.IsPlaying())
+	if (ObjectSim::UpdatePosition() && sound.playStates.IsPlaying())
 	{
 		ContextLock
 
@@ -221,7 +219,11 @@ void SoundSim::UpdatePosition()
 		const glm::vec3& currentPos = pos;
 		alSource3f(sound.source, AL_POSITION, currentPos.x, currentPos.y, currentPos.z);
 		alSource3f(sound.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+
+		return true;
 	}
+
+	return false;
 }
 
 void SoundSim::SetPlaybackCallback(std::function<void(bool, bool, bool)> callback)

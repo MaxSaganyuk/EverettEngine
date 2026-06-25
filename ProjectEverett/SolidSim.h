@@ -17,6 +17,11 @@ private:
 	constexpr static char TypeName[] = "Solid";
 
 	glm::mat4 model;
+
+	// No need to store in world file, calculated from model matrix
+	glm::mat4 invModel;
+	bool recalcInv{};
+
 	SolidType type;
 	SolidToModelManager STMM;
 
@@ -35,12 +40,14 @@ public:
 	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
-	void UpdatePosition() override;
+	bool UpdatePosition() override;
 
 	std::string GetSimInfoToSave(const std::string& modelSolidName);
 	bool SetSimInfoToLoad(std::string_view& line);
 
 	glm::mat4& GetModelMatrixAddr() override;
+	// Inverse matrix is recalculated only on call if model matrix was updated
+	glm::mat4 GetInverseModelMatrix();
 	void ForceModelUpdate() override;
 	void SetType(SolidType type) override;
 

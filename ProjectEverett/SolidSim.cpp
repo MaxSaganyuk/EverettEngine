@@ -16,6 +16,8 @@ void SolidSim::ResetModelMatrix()
 	model = glm::translate(model, posRef);
 	model *= glm::mat4_cast(orientRef);
 	model = glm::scale(model, scaleRef);
+
+	recalcInv = true;
 }
 
 void SolidSim::EnableAutoModelUpdates(bool value)
@@ -100,6 +102,8 @@ std::string SolidSim::GetSimInfoToSaveImpl()
 
 	res += CollectInfoToSaveFromSTMM();
 
+	recalcInv = true;
+
 	return res;
 }
 
@@ -131,27 +135,32 @@ glm::mat4& SolidSim::GetModelMatrixAddr()
 	return model;
 }
 
+glm::mat4 SolidSim::GetInverseModelMatrix()
+{
+	if (recalcInv)
+	{
+		recalcInv = false;
+		invModel = glm::inverse(model);
+	}
+
+	return invModel;
+}
+
 void SolidSim::SetType(SolidType type)
 {
 	this->type = type;
 }
 
-void SolidSim::UpdatePosition()
+bool SolidSim::UpdatePosition()
 {
-	ObjectSim::UpdatePosition();
-
-	if (type == SolidType::Static)
+	if (ObjectSim::UpdatePosition())
 	{
 		ResetModelMatrix();
-	}
-	else
-	{
-		const glm::vec3& posRef = pos;
 
-		model[3].x = posRef.x;
-		model[3].y = posRef.y;
-		model[3].z = posRef.z;
+		return true;
 	}
+
+	return false;
 }
 
 void SolidSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)

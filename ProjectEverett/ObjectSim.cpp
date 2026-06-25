@@ -282,16 +282,25 @@ size_t ObjectSim::GetAmountOfDisabledDirs()
 	return amount;
 }
 
-void ObjectSim::UpdatePosition()
+bool ObjectSim::UpdatePosition()
 {
-	lastPos = pos;
-	pos += accumPos;
-	accumPos = {};
+	constexpr static glm::vec3 zeroVector{};
 
-	if (positionChangeCallback)
+	if (accumPos != zeroVector)
 	{
-		positionChangeCallback();
+		lastPos = pos;
+		pos += accumPos;
+		accumPos = zeroVector;
+
+		if (positionChangeCallback)
+		{
+			positionChangeCallback();
+		}
+
+		return true;
 	}
+
+	return false;
 }
 
 void ObjectSim::SetLastPosition(bool executeLinkedObjects)

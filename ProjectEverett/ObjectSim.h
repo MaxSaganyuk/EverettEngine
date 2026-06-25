@@ -60,7 +60,8 @@ public:
 	static void SetRenderDeltaTime(float deltaTime);
 	static const glm::vec3& GetWorldAxisVector(Axis axis);
 
-	virtual void UpdatePosition();
+	// True if values updated
+	virtual bool UpdatePosition();
 
 	void InvertMovement(bool value = true, bool executeLinkedObjects = true) override;
 	bool IsMovementInverted() override;

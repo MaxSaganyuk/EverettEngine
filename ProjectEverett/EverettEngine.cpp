@@ -533,10 +533,9 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 				if (solid.GetModelVisibility())
 				{
-					glm::mat4& modelMatrix = solid.GetModelMatrixAddr();
+					LGLUtils::SetShaderUniformArrayAt(*mainLGL, "models", index, solid.GetModelMatrixAddr());
+					LGLUtils::SetShaderUniformArrayAt(*mainLGL, "invs", index, solid.GetInverseModelMatrix());
 
-					LGLUtils::SetShaderUniformArrayAt(*mainLGL, "models", index, modelMatrix);
-					LGLUtils::SetShaderUniformArrayAt(*mainLGL, "invs", index, glm::inverse(modelMatrix));
 					if (solid.GetModelAnimationAmount())
 					{
 						LGLUtils::SetShaderUniformArrayAt(
