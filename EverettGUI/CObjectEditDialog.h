@@ -66,6 +66,7 @@ private:
 	CStatic meshText;
 	CComboBox meshComboBox;
 	CButton meshVisCheck;
+	CButton modelVisibleButton;
 
 	// Light property objects
 	CButton colorEditButton;
@@ -90,7 +91,9 @@ private:
 	afx_msg void OnPosEditButtonClick();
 	afx_msg void OnScaEditButtonClick();
 	afx_msg void OnRotEditButtonClick();
-
+	afx_msg void OnColorEditButtonClick();
+	afx_msg void OnAutoScaleButtonClicked();
+	afx_msg void OnApplyVisibilityToAllButtonClick();
 
 	class PlaybackCallAdapter
 	{
@@ -169,7 +172,4 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
-public:
-	afx_msg void OnColorEditButtonClick();
-	afx_msg void OnAutoScaleButtonClicked();
 };

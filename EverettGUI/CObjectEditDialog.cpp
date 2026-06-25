@@ -64,6 +64,7 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON12, colorEditButton);
 	DDX_Control(pDX, IDC_BUTTON13, autoScaleButton);
 	DDX_Control(pDX, IDC_BUTTON10, rotationEditButton);
+	DDX_Control(pDX, IDC_BUTTON2, modelVisibleButton);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -97,6 +98,7 @@ void CObjectEditDialog::SetupObjectParams()
 	meshComboBox.ShowWindow (isSolid);
 	meshVisCheck.ShowWindow (isSolid);
 	meshText.ShowWindow     (isSolid);
+	modelVisibleButton.ShowWindow(isSolid);
 
 	colorEditButton.ShowWindow(isLight);
 
@@ -217,6 +219,7 @@ BEGIN_MESSAGE_MAP(CObjectEditDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON10, &CObjectEditDialog::OnRotEditButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON12, &CObjectEditDialog::OnColorEditButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON13, &CObjectEditDialog::OnAutoScaleButtonClicked)
+	ON_BN_CLICKED(IDC_BUTTON2, &CObjectEditDialog::OnApplyVisibilityToAllButtonClick)
 END_MESSAGE_MAP()
 
 
@@ -359,5 +362,13 @@ void CObjectEditDialog::OnAutoScaleButtonClicked()
 		castedSolidInterface->InvokeAutoScale();
 		castedSolidInterface->ForceModelUpdate();
 		UpdateParams();
+	}
+}
+
+void CObjectEditDialog::OnApplyVisibilityToAllButtonClick()
+{
+	if (castedSolidInterface)
+	{
+		castedSolidInterface->SetModelVisibility(meshVisCheck.GetCheck());
 	}
 }
