@@ -50,7 +50,7 @@ std::vector<std::string> SolidToModelManager::GetMeshNames()
 		return fullModelInfoP->first.lock()->GetMeshNames();
 	}
 
-	return std::vector<std::string>();
+	return std::vector<std::string>{};
 }
 
 size_t SolidToModelManager::GetMeshAmount()
@@ -65,9 +65,13 @@ void SolidToModelManager::SetModelVisibility(bool value)
 	CheckIfInitialized();
 
 	std::fill(meshVisibility.begin(), meshVisibility.end(), value);
+	bool previousModelVisibility = modelVisibility;
 	modelVisibility = value;
 
-	modelInfoPtr->RecheckIfAllRelatedSolidsAreVisible();
+	if (previousModelVisibility != modelVisibility)
+	{
+		modelInfoPtr->RecheckIfAllRelatedSolidsAreVisible();
+	}
 }
 
 bool SolidToModelManager::GetModelVisibility()
@@ -90,7 +94,6 @@ size_t SolidToModelManager::GetIndexByName(const std::string& name, const std::v
 	}
 
 	ThrowExceptionWMessage("Index outside of container range");
-	return 0;
 }
 
 void SolidToModelManager::SetMeshVisibility(size_t index, bool value)
@@ -168,9 +171,11 @@ std::vector<std::string> SolidToModelManager::GetAnimationNames()
 {
 	CheckIfInitialized();
 
+	auto& animInfoVect = fullModelInfoP->second.lock()->animInfoVect;
 	std::vector<std::string> res;
+	res.reserve(animInfoVect.size());
 
-	for (auto& animInfo : fullModelInfoP->second.lock()->animInfoVect)
+	for (auto& animInfo : animInfoVect)
 	{
 		res.push_back(animInfo.animName);
 	}
@@ -208,11 +213,15 @@ size_t SolidToModelManager::GetAnimation()
 
 double SolidToModelManager::GetAnimationSpeed()
 {
+	CheckIfInitialized();
+
 	return animationSpeed;
 }
 
 void SolidToModelManager::SetAnimationSpeed(double speed)
 {
+	CheckIfInitialized();
+
 	animationSpeed = speed;
 
 	//auto requiredDiff = currentAnimationTime - startAnimationTime;
@@ -272,6 +281,8 @@ bool SolidToModelManager::IsAnimationLooped()
 
 void SolidToModelManager::SetAnimationPlaybackCallback(std::function<void(bool, bool, bool)>&& callback)
 {
+	CheckIfInitialized();
+
 	animStates.SetStateChangeCallback(std::move(callback));
 }
 
