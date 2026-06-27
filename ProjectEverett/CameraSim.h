@@ -43,8 +43,8 @@ public:
 	void SetAspect();
 	void SetAspect(const int windowWidth, const int windowHeight);
 
-	glm::mat4& GetViewMatrixAddr();
-	glm::mat4& GetProjectionMatrixAddr();
+	const glm::mat4& GetViewMatrixAddr();
+	const glm::mat4& GetProjectionMatrixAddr();
 
 	void RotateByMousePos(float xpos, float ypos);
 

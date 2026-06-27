@@ -30,16 +30,10 @@ protected:
 	ValueObserver<glm::vec3> scale;
 	ValueObserver<glm::quat> orient;
 
-	glm::vec3 lastPos;
-	glm::vec3 accumPos;
 	float speed;
 
 	std::unordered_map<Direction, bool> disabledDirs;
 	std::pair<Rotation, Rotation> rotationLimits;
-
-	// Callbacks
-	std::function<void()> positionChangeCallback;
-	std::function<void()> rotationChangeCallback;
 
 	static inline stdEx::RelationGraph<ObjectSim*> objectGraph;
 	bool visited; // Utility bool to prevent infinite loops of linked object traversal
@@ -61,7 +55,7 @@ public:
 	static const glm::vec3& GetWorldAxisVector(Axis axis);
 
 	// True if values updated
-	virtual bool UpdatePosition();
+	virtual bool UpdateTransform();
 
 	void InvertMovement(bool value = true, bool executeLinkedObjects = true) override;
 	bool IsMovementInverted() override;
@@ -73,9 +67,9 @@ public:
 	glm::vec3 GetFrontVector() override;
 	glm::vec3 GetUpVector() override;
 
-	glm::vec3& GetPositionVectorAddr() override;
-	glm::vec3& GetScaleVectorAddr() override;
-	glm::quat& GetOrientationAddr() override;
+	const glm::vec3& GetPositionVectorAddr() override;
+	const glm::vec3& GetScaleVectorAddr() override;
+	const glm::quat& GetOrientationAddr() override;
 
 	void SetMovementSpeed(float speed, bool executeLinkedObjects = true) override;
 	float GetMovementSpeed() override;
@@ -86,6 +80,8 @@ public:
 	size_t GetAmountOfDisabledDirs() override;
 
 	void SetLastPosition(bool executeLinkedObjects = true) override;
+	void SetLastScale(bool executeLinkedObjects = true) override;
+	void SetLastOrientation(bool executeLinkedObjects = true) override;
 	void MoveInDirection(
 		Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) override;
@@ -102,6 +98,7 @@ public:
 
 	// Callback setter
 	void SetPositionChangeCallback(std::function<void()> callback);
+	void SetScaleChangeCallback(std::function<void()> callback);
 	void SetRotationChangeCallback(std::function<void()> callback);
 
 	void HardLinkObject(IObjectSim& otherObject);

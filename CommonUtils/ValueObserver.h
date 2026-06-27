@@ -5,72 +5,115 @@
 template<typename Type>
 class ValueObserver
 {
-	Type value{};
-	std::function<void()> callback;
-public:
-	ValueObserver(const Type& value)
-		: value(value) {}
+	bool updateRequired{};
 
-	void SetCallback(const std::function<void()>& callback)
-	{
-		this->callback = callback;
-	}
+	Type lastValue{};
+	Type currentValue{};
+	Type accumulatedValue{};
 
-	void ExecuteCallback()
+	std::function<void()> valueUpdateCallback;
+
+	void ExecuteValueUpdateCallback()
 	{
-		if (callback)
+		if (valueUpdateCallback)
 		{
-			callback();
+			valueUpdateCallback();
 		}
 	}
 
-	template<typename IndexerType> requires requires(IndexerType indexer) { value[indexer]; }
-	auto& operator[](IndexerType index) 
-	{ 
-		return value[index]; 
+public:
+	ValueObserver() = default;
+	ValueObserver(const Type& value)
+		: currentValue(value), lastValue(value) {}
+
+	ValueObserver(const ValueObserver&) = delete;
+	ValueObserver(ValueObserver&&) = delete;
+
+	// Can't meaningfully reason about comparison
+	bool operator<=>(const ValueObserver&) const = delete;
+
+	void SetValueUpdateCallback(std::function<void()> callback) noexcept
+	{
+		valueUpdateCallback = std::move(callback);
 	}
 
-	template<typename IndexerType> requires requires(IndexerType indexer) { value[indexer]; }
-	const auto operator[](IndexerType index) const
+	// Accumulated setters for gradual framerate dependant change
+	void operator+=(const Type& value)
 	{
-		return value[index];
+		updateRequired = true;
+		accumulatedValue += value;
 	}
 
-	void operator=(const Type& otherValue)
+	void operator-=(const Type& value)
 	{
-		value = otherValue;
-		ExecuteCallback();
-	} 
-	
-	void operator+=(const Type& otherValue) 
-	{
-		value += otherValue; 
-		ExecuteCallback();
-	} 
-	
-	void operator-=(const Type& otherValue) 
-	{ 
-		value -= otherValue; 
-		ExecuteCallback();
+		updateRequired = true;
+		accumulatedValue -= value;
 	}
 
-	Type& GetValue()
+	// Instant setter for on demand framerate independant change
+	void operator=(const Type& value)
 	{
-		return value;
+		lastValue = currentValue;
+		currentValue = value;
+
+		ExecuteValueUpdateCallback();
 	}
 
-	const Type& GetValue() const
+	template<typename Self, typename... IndexerType> requires requires(Self&& self, IndexerType&&... index) {
+		std::forward<Self>(self).currentValue[std::forward<IndexerType>(index)...];
+	}
+	decltype(auto) operator[](this Self&& self, IndexerType&&... index)
+		noexcept(noexcept(std::forward<Self>(self).currentValue[std::forward<IndexerType>(index)...]))
 	{
-		return value;
+		return std::forward<Self>(self).currentValue[std::forward<IndexerType>(index)...];
 	}
 
-	operator Type&()
+	bool Update()
 	{
-		return value;
+		constexpr static Type zeroedOutValue{};
+
+		if (updateRequired)
+		{
+			updateRequired = false;
+
+			lastValue = currentValue;
+			currentValue += accumulatedValue;
+			accumulatedValue = zeroedOutValue;
+
+			ExecuteValueUpdateCallback();
+
+			return true;
+		}
+
+		return false;
 	}
 
-	operator const Type&() const
+	void SetLastValue()
 	{
-		return value;
+		currentValue = lastValue;
+
+		ExecuteValueUpdateCallback();
+	}
+
+	const Type& GetLastValue() const noexcept
+	{
+		return lastValue;
+	}
+
+	// Underlying current data getter, value change tracking will not apply on non-const
+	template<typename Self>
+	auto&& GetValue(this Self&& self) noexcept
+	{
+		return std::forward<Self>(self).currentValue;
+	}
+
+	operator Type&() noexcept
+	{
+		return currentValue;
+	}
+
+	operator const Type&() const noexcept
+	{
+		return currentValue;
 	}
 };

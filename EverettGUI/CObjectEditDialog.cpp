@@ -254,15 +254,10 @@ void CObjectEditDialog::OnUpdateParamsButtonClick()
 		}
 	}
 
-	currentObjectInterface.GetPositionVectorAddr() = valuesToSet[0];
-	currentObjectInterface.GetScaleVectorAddr()    = valuesToSet[1];
+	currentObjectInterface.SetPositionVector(valuesToSet[0]);
+	currentObjectInterface.SetScaleVector(valuesToSet[1]);
 	// Front vector GUI display should be changed to rotation anyway
 	//currentObjectInterface.GetFrontVectorAddr()    = valuesToSet[2];
-
-	if (castedSolidInterface)
-	{
-		castedSolidInterface->ForceModelUpdate();
-	}
 }
 
 void CObjectEditDialog::OnBnClickedCheck3()
@@ -360,7 +355,6 @@ void CObjectEditDialog::OnAutoScaleButtonClicked()
 	if (castedSolidInterface)
 	{
 		castedSolidInterface->InvokeAutoScale();
-		castedSolidInterface->ForceModelUpdate();
 		UpdateParams();
 	}
 }

@@ -323,11 +323,9 @@ bool EverettEngine::CreateGizmoSolid(
 	{
 		SolidSim& gizmoSolid = *solid;
 
-		gizmoSolid.GetPositionVectorAddr() = relatedObject.GetPositionVectorAddr();
-		gizmoSolid.GetScaleVectorAddr() = relatedObject.GetScaleVectorAddr();
+		gizmoSolid.SetPositionVector(relatedObject.GetPositionVectorAddr());
+		gizmoSolid.SetScaleVector(relatedObject.GetScaleVectorAddr());
 		gizmoSolid.SetOrientation(relatedObject.GetOrientationAddr());
-		gizmoSolid.ForceModelUpdate();
-		gizmoSolid.EnableAutoModelUpdates();
 		gizmoSolid.SetModelDefaultColor(gizmoColor);
 
 		if constexpr (std::is_same_v<Sim, ColliderSim>)
@@ -421,7 +419,7 @@ void EverettEngine::RunRenderWindow()
 
 		ColliderSim::ExecuteBroadCollisionCheck();
 
-		ExecuteFuncForAllSimObjects(&ObjectSim::UpdatePosition);
+		ExecuteFuncForAllSimObjects(&ObjectSim::UpdateTransform);
 
 		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();
 

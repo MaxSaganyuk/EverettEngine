@@ -29,14 +29,12 @@ ObjectSim::ObjectSim(
 	const float speed
 )
 	: pos(pos), scale(scale), speed(speed), visited(false), objectLinkingEnabled(true), 
-	  orient({1.0f, 0.0f, 0.0f, 0.0f}), accumPos({})
+	  orient({1.0f, 0.0f, 0.0f, 0.0f})
 {
 	rotationLimits = {
 		{-fullRotation, -fullRotation, -fullRotation},
 		{ fullRotation,  fullRotation,  fullRotation}
 	};
-
-	lastPos = pos;
 
 	for (size_t i = 0; i < realDirectionAmount; ++i)
 	{
@@ -75,7 +73,6 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 
 	res += SimSerializer::GetValueToSaveFrom(scale.GetValue());
 	res += SimSerializer::GetValueToSaveFrom(pos.GetValue());
-	res += SimSerializer::GetValueToSaveFrom(lastPos);
 	res += SimSerializer::GetValueToSaveFrom(speed);
 	res += SimSerializer::GetValueToSaveFrom(disabledDirs);
 	res += SimSerializer::GetValueToSaveFrom(rotationLimits);
@@ -97,8 +94,8 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, scale.GetValue(),                        1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
-	res = res && SimSerializer::SetValueToLoadFrom(line, pos.GetValue(), 1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, lastPos,                                 1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, pos.GetValue(),                          1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 15);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyRotationVectGetter,                1, 7);
 	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityBool,                 1, 10);
 	res = res && SimSerializer::SetValueToLoadFrom(line, speed,                                   1);
@@ -174,11 +171,6 @@ void ObjectSim::SetPositionVector(const glm::vec3& vect, bool executeLinkedObjec
 {
 	pos = vect;
 
-	if (positionChangeCallback)
-	{
-		positionChangeCallback();
-	}
-
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
 		ExecuteLinkedObjects(&ObjectSim::SetPositionVector, vect, true);
@@ -199,11 +191,6 @@ void ObjectSim::SetOrientation(const glm::quat& quat, bool executeLinkedObjects)
 {
 	orient = quat;
 
-	if (rotationChangeCallback)
-	{
-		rotationChangeCallback();
-	}
-
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
 		ExecuteLinkedObjects(&ObjectSim::SetOrientation, quat, true);
@@ -222,17 +209,17 @@ glm::vec3 ObjectSim::GetUpVector()
 	return oreintRef * worldUp;
 }
 
-glm::vec3& ObjectSim::GetPositionVectorAddr()
+const glm::vec3& ObjectSim::GetPositionVectorAddr()
 {
 	return pos;
 }
 
-glm::vec3& ObjectSim::GetScaleVectorAddr()
+const glm::vec3& ObjectSim::GetScaleVectorAddr()
 {
 	return scale;
 }
 
-glm::quat& ObjectSim::GetOrientationAddr()
+const glm::quat& ObjectSim::GetOrientationAddr()
 {
 	return orient;
 }
@@ -282,35 +269,15 @@ size_t ObjectSim::GetAmountOfDisabledDirs()
 	return amount;
 }
 
-bool ObjectSim::UpdatePosition()
+bool ObjectSim::UpdateTransform()
 {
-	constexpr static glm::vec3 zeroVector{};
-
-	if (accumPos != zeroVector)
-	{
-		lastPos = pos;
-		pos += accumPos;
-		accumPos = zeroVector;
-
-		if (positionChangeCallback)
-		{
-			positionChangeCallback();
-		}
-
-		return true;
-	}
-
-	return false;
+	// Bitwise is intended, yes. Check all and if any changed return true
+	return pos.Update() | scale.Update() | orient.Update();
 }
 
 void ObjectSim::SetLastPosition(bool executeLinkedObjects)
 {
-	pos = lastPos;
-
-	if (positionChangeCallback)
-	{
-		positionChangeCallback();
-	}
+	pos.SetLastValue();
 
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
@@ -318,38 +285,54 @@ void ObjectSim::SetLastPosition(bool executeLinkedObjects)
 	}
 }
 
+void ObjectSim::SetLastScale(bool executeLinkedObjects)
+{
+	scale.SetLastValue();
+
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::SetLastScale, true);
+	}
+}
+
+void ObjectSim::SetLastOrientation(bool executeLinkedObjects)
+{
+	orient.SetLastValue();
+
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects(&ObjectSim::SetLastOrientation, true);
+	}
+}
+
 void ObjectSim::MoveInDirection(Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects)
 {
-	if (disabledDirs[dir])
-	{
-		return;
-	}
+	if (disabledDirs[dir]) return;
 
 	float correctedSpeed = speed * renderDeltaTime;
 
 	switch (dir)
 	{
 	case Direction::Forward:
-		accumPos += correctedSpeed * GetFrontVector() * limitAxis;
+		pos += correctedSpeed * GetFrontVector() * limitAxis;
 		break;
 	case Direction::Backward:
-		accumPos -= correctedSpeed * GetFrontVector() * limitAxis;
+		pos -= correctedSpeed * GetFrontVector() * limitAxis;
 		break;
 	case Direction::Left:
-		accumPos -= correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
+		pos -= correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
 		break;
 	case Direction::Right:
-		accumPos += correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
+		pos += correctedSpeed * glm::normalize(glm::cross(GetFrontVector(), GetUpVector()));
 		break;
 	case Direction::Up:
-		accumPos += glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
+		pos += glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
 		break;
 	case Direction::Down:
-		accumPos -= glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
+		pos -= glm::abs(correctedSpeed * glm::normalize(GetFrontVector() * GetUpVector()));
 		break;
 	default:
-		ThrowExceptionWMessage("Undefined direction");
-		return;
+		std::unreachable();
 	}
 
 	if (objectLinkingEnabled && executeLinkedObjects)
@@ -362,7 +345,7 @@ void ObjectSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& limitAxis, bo
 {
 	float correctedSpeed = speed * renderDeltaTime;
 
-	accumPos += correctedSpeed * axis * limitAxis;
+	pos += correctedSpeed * axis * limitAxis;
 
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
@@ -390,7 +373,7 @@ void ObjectSim::LimitRotations(const Rotation& min, const Rotation& max, bool ex
 
 void ObjectSim::RotateImpl(const Rotation& toRotate)
 {
-	orient = glm::normalize(CalcOrientationFromRotation(toRotate) * orient.GetValue());
+	orient += (glm::normalize(CalcOrientationFromRotation(toRotate) * orient.GetValue()) - orient.GetValue());
 }
 
 glm::quat ObjectSim::CalcOrientationFromRotation(const Rotation& toRotate)
@@ -409,11 +392,6 @@ void ObjectSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 		RotateImpl(toRotate);
 	}
 
-	if (rotationChangeCallback)
-	{
-		rotationChangeCallback();
-	}
-
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
 		ExecuteLinkedObjects(&ObjectSim::Rotate, toRotate, true);
@@ -424,7 +402,7 @@ void ObjectSim::RevolveAround(const Rotation& toRotate, const glm::vec3& centerP
 {
 	glm::vec3 offset = CalcOrientationFromRotation(toRotate) * (pos.GetValue() - centerPos);
 
-	accumPos += (centerPos + offset) - pos.GetValue();
+	pos += (centerPos + offset) - pos.GetValue();
 
 	if (objectLinkingEnabled && executeLinkedObjects)
 	{
@@ -434,12 +412,17 @@ void ObjectSim::RevolveAround(const Rotation& toRotate, const glm::vec3& centerP
 
 void ObjectSim::SetPositionChangeCallback(std::function<void()> callback)
 {
-	positionChangeCallback = std::move(callback);
+	pos.SetValueUpdateCallback(std::move(callback));
+}
+
+void ObjectSim::SetScaleChangeCallback(std::function<void()> callback)
+{
+	scale.SetValueUpdateCallback(std::move(callback));
 }
 
 void ObjectSim::SetRotationChangeCallback(std::function<void()> callback)
 {
-	rotationChangeCallback = std::move(callback);
+	orient.SetValueUpdateCallback(std::move(callback));
 }
 
 void ObjectSim::HardLinkObject(IObjectSim& otherObject)

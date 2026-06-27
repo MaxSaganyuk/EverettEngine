@@ -208,9 +208,9 @@ void SoundSim::UpdateCurrentPlaybackTime()
 	}
 }
 
-bool SoundSim::UpdatePosition()
+bool SoundSim::UpdateTransform()
 {
-	if (ObjectSim::UpdatePosition() && sound.playStates.IsPlaying())
+	if (ObjectSim::UpdateTransform() && sound.playStates.IsPlaying())
 	{
 		ContextLock
 

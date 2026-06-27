@@ -154,11 +154,6 @@ void CObjectMoveDialog::TransformObject(const std::array<DirectionType, 3>& dire
 				object.SetScaleVector(vector);
 			}
 		}
-
-		if (isSolid)
-		{
-			dynamic_cast<ISolidSim&>(object).ForceModelUpdate();
-		}
 	}
 }
 

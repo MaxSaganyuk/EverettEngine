@@ -95,12 +95,12 @@ bool CameraSim::SetSimInfoToLoad(std::string_view& line)
 	return res;
 }
 
-glm::mat4& CameraSim::GetViewMatrixAddr()
+const glm::mat4& CameraSim::GetViewMatrixAddr()
 {
 	return view;
 }
 
-glm::mat4& CameraSim::GetProjectionMatrixAddr()
+const glm::mat4& CameraSim::GetProjectionMatrixAddr()
 {
 	return projection;
 }

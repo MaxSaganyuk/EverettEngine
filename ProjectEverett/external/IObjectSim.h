@@ -78,9 +78,9 @@ public:
 	virtual glm::vec3 GetUpVector() = 0;
 	virtual glm::vec3 GetFrontVector() = 0;
 
-	virtual glm::vec3& GetPositionVectorAddr() = 0;
-	virtual glm::vec3& GetScaleVectorAddr() = 0;
-	virtual glm::quat& GetOrientationAddr() = 0;
+	virtual const glm::vec3& GetPositionVectorAddr() = 0;
+	virtual const glm::vec3& GetScaleVectorAddr() = 0;
+	virtual const glm::quat& GetOrientationAddr() = 0;
 
 	Linkable virtual void DisableDirection(Direction dir, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void EnableDirection(Direction dir, bool executeLinkedObjects = true) = 0;
@@ -88,6 +88,8 @@ public:
 	virtual size_t GetAmountOfDisabledDirs() = 0;
 
 	Linkable virtual void SetLastPosition(bool executeLinkedObjects = true) = 0;
+	Linkable virtual void SetLastScale(bool executeLinkedObjects = true) = 0;
+	Linkable virtual void SetLastOrientation(bool executeLinkedObjects = true) = 0;
 	Linkable virtual void MoveInDirection(
 		Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) = 0;

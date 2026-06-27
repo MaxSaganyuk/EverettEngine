@@ -1,10 +1,5 @@
 #include "SolidSim.h"
 
-void SolidSim::ForceModelUpdate()
-{
-	ResetModelMatrix();
-}
-
 void SolidSim::ResetModelMatrix()
 {
 	model = glm::mat4(1.0f);
@@ -20,16 +15,6 @@ void SolidSim::ResetModelMatrix()
 	recalcInv = true;
 }
 
-void SolidSim::EnableAutoModelUpdates(bool value)
-{
-	std::function<void()> resetModelMatrixWrapper = 
-		value ? [this]() { ResetModelMatrix(); } : std::function<void()>(nullptr);
-
-	pos.SetCallback(resetModelMatrixWrapper);
-	scale.SetCallback(resetModelMatrixWrapper);
-	orient.SetCallback(resetModelMatrixWrapper);
-}
-
 SolidSim::SolidSim(
 	const glm::vec3& pos,
 	const glm::vec3& scale,
@@ -38,7 +23,24 @@ SolidSim::SolidSim(
 	: ObjectSim(pos, scale, speed)
 {
 	ResetModelMatrix();
-	type = SolidType::Static;
+}
+
+void SolidSim::SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects)
+{
+	ObjectSim::SetPositionVector(vect, executeLinkedObjects);
+	ResetModelMatrix();
+}
+
+void SolidSim::SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects)
+{
+	ObjectSim::SetScaleVector(vect, executeLinkedObjects);
+	ResetModelMatrix();
+}
+
+void SolidSim::SetOrientation(const glm::quat& quat, bool executeLinkedObjects)
+{
+	ObjectSim::SetOrientation(quat, executeLinkedObjects);
+	ResetModelMatrix();
 }
 
 std::string SolidSim::GetThisObjectTypeNameStr()
@@ -98,7 +100,6 @@ std::string SolidSim::GetSimInfoToSaveImpl()
 	std::string res = ObjectSim::GetSimInfoToSaveImpl();
 
 	res += SimSerializer::GetValueToSaveFrom(model);
-	res += SimSerializer::GetValueToSaveFrom(type);
 
 	res += CollectInfoToSaveFromSTMM();
 
@@ -118,19 +119,21 @@ std::string SolidSim::GetSimInfoToSave(const std::string& modelSolidName)
 
 bool SolidSim::SetSimInfoToLoad(std::string_view& line)
 {
+	int legacyInt;
+
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 
-	res = res && SimSerializer::SetValueToLoadFrom(line, model, 1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, type,  1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, model,      1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, legacyInt,  1, 15);
 
 	res = res && CollectInfoToLoadToSTMM(line);
 
-	ForceModelUpdate();
+	ResetModelMatrix();
 
 	return res;
 }
 
-glm::mat4& SolidSim::GetModelMatrixAddr()
+const glm::mat4& SolidSim::GetModelMatrixAddr()
 {
 	return model;
 }
@@ -146,14 +149,9 @@ glm::mat4 SolidSim::GetInverseModelMatrix()
 	return invModel;
 }
 
-void SolidSim::SetType(SolidType type)
+bool SolidSim::UpdateTransform()
 {
-	this->type = type;
-}
-
-bool SolidSim::UpdatePosition()
-{
-	if (ObjectSim::UpdatePosition())
+	if (ObjectSim::UpdateTransform())
 	{
 		ResetModelMatrix();
 
@@ -161,17 +159,6 @@ bool SolidSim::UpdatePosition()
 	}
 
 	return false;
-}
-
-void SolidSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
-{
-	ObjectSim::Rotate(toRotate, executeLinkedObjects);
-
-	if (type != SolidType::Static)
-	{
-		const glm::quat& orientRef = orient;
-		model *= glm::mat4_cast(renderDeltaTime * orientRef);
-	}
 }
 
 size_t SolidSim::GetMeshAmount()

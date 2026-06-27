@@ -65,7 +65,6 @@ public:
 		CheckIfPtrValid(testCharSolid);
 
 		this->testCharSolid = testCharSolid;
-		this->testCharSolid->EnableAutoModelUpdates();
 	}
 
 	void SetColliderSim(IColliderSim* testCharCollider)

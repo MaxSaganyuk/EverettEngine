@@ -22,7 +22,6 @@ private:
 	glm::mat4 invModel;
 	bool recalcInv{};
 
-	SolidType type;
 	SolidToModelManager STMM;
 
 	void ResetModelMatrix();
@@ -37,23 +36,21 @@ public:
 		const float speed = 1.0f
 	);
 
+	void SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
+	void SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
+	void SetOrientation(const glm::quat& quat, bool executeLinkedObjects = true) override;
+
 	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
-	bool UpdatePosition() override;
+	bool UpdateTransform() override;
 
 	std::string GetSimInfoToSave(const std::string& modelSolidName);
 	bool SetSimInfoToLoad(std::string_view& line);
 
-	glm::mat4& GetModelMatrixAddr() override;
+	const glm::mat4& GetModelMatrixAddr();
 	// Inverse matrix is recalculated only on call if model matrix was updated
 	glm::mat4 GetInverseModelMatrix();
-	void ForceModelUpdate() override;
-	void SetType(SolidType type) override;
-
-	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;
-
-	void EnableAutoModelUpdates(bool value = true) override;
 	
 	// Solid to model access section
 	// Mesh access; available through interface
