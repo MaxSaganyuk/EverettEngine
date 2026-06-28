@@ -276,15 +276,30 @@ void EverettEngine::SetDebugLogVisible(bool value)
 
 void EverettEngine::SetDefaultWASDControls(bool value)
 {
-	std::string walkingDirections = "WSAD";
-	for (size_t i = 0; i < walkingDirections.size(); ++i)
+	// Since the value is std::optional, has 3 states
+	if (!defaultWASDControlsEnabled && value)
 	{
-		mainLGL->SetInteractable(
-			walkingDirections[i],
-			true,
-			value ? 
-			[this, i]() { camera->MoveInDirection(static_cast<CameraSim::Direction>(i)); } : std::function<void()>(nullptr)
-		);
+		defaultWASDControlsEnabled = true;
+
+		std::string walkingDirections = "WSAD";
+
+		for (size_t i = 0; i < walkingDirections.size(); ++i)
+		{
+			AddInteractableImpl(
+				ConvertKeyTo(walkingDirections[i]), true,
+				[this, i]() { 
+					if (*defaultWASDControlsEnabled) 
+					{ 
+						camera->MoveInDirection(static_cast<ObjectSim::Direction>(i)); 
+					} 
+				}, 
+				nullptr, true
+			);
+		}
+	}
+	else if (defaultWASDControlsEnabled)
+	{
+		defaultWASDControlsEnabled = value;
 	}
 }
 
@@ -351,6 +366,13 @@ void EverettEngine::AddInteractable(
 	std::function<void()> releaseFunc
 )
 {
+	AddInteractableImpl(key, holdable, std::move(pressFunc), std::move(releaseFunc), false);
+}
+
+void EverettEngine::AddInteractableImpl(
+	int key, bool holdable, std::function<void()> pressFunc, std::function<void()> releaseFunc, bool persistent
+)
+{
 	bool addNew = false;
 
 	if (!keyScriptFuncMap.contains(key))
@@ -361,7 +383,7 @@ void EverettEngine::AddInteractable(
 
 	if (pressFunc)
 	{
-		keyScriptFuncMap[key].AddPressedFunc(std::move(pressFunc), holdable);
+		keyScriptFuncMap[key].AddPressedFunc({ std::move(pressFunc), holdable, persistent });
 	}
 
 	if (releaseFunc)
@@ -372,7 +394,7 @@ void EverettEngine::AddInteractable(
 	if (addNew)
 	{
 		mainLGL->SetInteractable(
-			key, true, 
+			key, true,
 			[this, key]() { keyScriptFuncMap[key].ButtonPressed();  },
 			[this, key]() { keyScriptFuncMap[key].ButtonReleased(); }
 		);
@@ -401,7 +423,7 @@ void EverettEngine::ClearExternallyControlledContainers()
 {
 	ExecuteFuncForAllSimObjects(&ColliderSim::ClearCollisionCallbacks);
 	ObjectSim::ResetObjectLinking();
-	keyScriptFuncMap.clear();
+	std::erase_if(keyScriptFuncMap, [](decltype(keyScriptFuncMap)::value_type& info) { return info.second.Clear(); });
 	mouseScrollScriptFuncs.clear();
 	mouseMoveScriptFuncs.clear();
 	timerManager->CleanTimedCallbacks();

@@ -173,6 +173,7 @@ private:
 	bool gizmoVisible = false;
 	bool gizmoEnabled = false;
 
+	std::optional<bool> defaultWASDControlsEnabled;
 	bool panicOnFailedInterfaceGet = false;
 
 	struct ObjectTypeInfo;
@@ -224,11 +225,11 @@ private:
 	);
 
 	void AddInteractable(
-		int key,
-		bool holdable,
-		std::function<void()> pressFunc,
-		std::function<void()> releaseFunc = nullptr
+		int key, bool holdable, std::function<void()> pressFunc, std::function<void()> releaseFunc = nullptr
 	) override;
+	void AddInteractableImpl(
+		int key, bool holdable, std::function<void()> pressFunc, std::function<void()> releaseFunc, bool persistent
+	);
 	void AddTimedCallback(TimedCallbackSetup timedCallbackSetup) override;
 	void AddMouseScrollCallback(std::function<void(double)> callback) override;
 	void AddMouseMoveCallback(std::function<void(double, double)> callback) override;
