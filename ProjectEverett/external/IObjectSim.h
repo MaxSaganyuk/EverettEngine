@@ -27,6 +27,27 @@ public:
 		X, Y, Z
 	};
 
+	enum class LinkableFuncNames
+	{
+		InvertMovement,
+		SetMovementSpeed,
+		SetPositionVector,
+		SetScaleVector,
+		SetOrientation,
+		DisableDirection,
+		EnableDirection,
+		EnableAllDirections,
+		SetLastPosition,
+		SetLastScale,
+		SetLastOrientation,
+		MoveInDirection,
+		MoveByAxis,
+		LimitRotations,
+		Rotate,
+		RevolveAround,
+		_SIZE
+	};
+
 	// Radians are stored
 	struct Rotation : glm::vec3
 	{
@@ -111,4 +132,6 @@ public:
 	virtual void LinkObject(IObjectSim& objectToLink) = 0;
 	virtual void UnlinkObject(IObjectSim& objectToUnlink) = 0;
 	virtual void EnableObjectLinking(bool val = true) = 0; // By default enabled.
+	// All enabled by default
+	virtual void EnableLinkedExecutionForFunc(LinkableFuncNames linkFuncName, bool value = true) = 0;
 };

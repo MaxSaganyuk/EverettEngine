@@ -40,6 +40,13 @@ class TestCharHolder
 	ISolidSim* sateliteBox{};
 	bool moving{};
 	bool linkedToCamera{};
+	bool linkedMovementState = true;
+
+	void SwitchLinkedMovementFor(IObjectSim& obj, bool value)
+	{
+		obj.EnableLinkedExecutionForFunc(IObjectSim::LinkableFuncNames::MoveByAxis, value);
+		obj.EnableLinkedExecutionForFunc(IObjectSim::LinkableFuncNames::SetLastPosition, value);
+	}
 
 public:
 	void Rotate(const IObjectSim::RotationDegrees& rotate)
@@ -79,9 +86,24 @@ public:
 	{
 		CheckIfPtrValid(blockCollider);
 
-		testCharCollider->AddCollisionCallback(
-			{ [this]() { testCharSolid->SetLastPosition(); }, nullptr, blockCollider, true }
-		);
+		testCharCollider->AddCollisionCallback({
+			[this]() {
+				testCharSolid->SetLastPosition();
+				if (linkedMovementState)
+				{
+					linkedMovementState = false;
+					SwitchLinkedMovementFor(*sateliteBox, linkedMovementState);
+					SwitchLinkedMovementFor(*cameraSim, linkedMovementState);
+				}
+			}, 
+			[this]() {
+				linkedMovementState = true;
+				SwitchLinkedMovementFor(*sateliteBox, linkedMovementState);
+				SwitchLinkedMovementFor(*cameraSim, linkedMovementState);
+			}, 
+			blockCollider, 
+			true
+		});
 	}
 
 	void SetupWorldSwitchCollision(IColliderSim* worldSwitchCollider)

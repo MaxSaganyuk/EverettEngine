@@ -12,7 +12,7 @@
 class ObjectSim : virtual public IObjectSim
 {
 private:
-	template<typename MemberFuncType, typename... ParamTypes>
+	template<LinkableFuncNames funcName, typename MemberFuncType, typename... ParamTypes>
 	void ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... values);
 
 	void RotateImpl(const Rotation& toRotate);
@@ -38,7 +38,7 @@ protected:
 	static inline stdEx::RelationGraph<ObjectSim*> objectGraph;
 	bool visited; // Utility bool to prevent infinite loops of linked object traversal
 	bool objectLinkingEnabled;
-
+	std::array<bool, std::to_underlying(LinkableFuncNames::_SIZE)> objectLinkingForFuncTracker;
 public:
 	ObjectSim(
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
@@ -105,4 +105,5 @@ public:
 	void LinkObject(IObjectSim& otherObject) override;
 	void UnlinkObject(IObjectSim& objectToUnlink) override;
 	void EnableObjectLinking(bool val = true) override;
+	void EnableLinkedExecutionForFunc(LinkableFuncNames linkFuncName, bool value = true) override;
 };
