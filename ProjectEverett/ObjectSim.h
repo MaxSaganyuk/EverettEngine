@@ -95,6 +95,7 @@ public:
 	void LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects = true) override;
 	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;
 	void RevolveAround(const Rotation& toRotate, const glm::vec3& centerPos, bool executeLinkedObjects = true) override;
+	void LookAt(const glm::vec3& pointToLookAt, bool executeLinkedObjects = true) override;
 
 	// Callback setter
 	void SetPositionChangeCallback(std::function<void()> callback);

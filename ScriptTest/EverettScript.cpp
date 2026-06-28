@@ -54,6 +54,7 @@ public:
 	void RevolveAroundChar()
 	{
 		sateliteBox->RevolveAround(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, testCharSolid->GetPositionVectorAddr());
+		sateliteBox->LookAt(testCharSolid->GetPositionVectorAddr());
 	}
 
 	void SetSolidSim(ISolidSim* testCharSolid)

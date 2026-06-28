@@ -415,6 +415,16 @@ void ObjectSim::RevolveAround(const Rotation& toRotate, const glm::vec3& centerP
 	}
 }
 
+void ObjectSim::LookAt(const glm::vec3& pointToLookAt, bool executeLinkedObjects)
+{
+	orient += glm::quatLookAt(glm::normalize(pointToLookAt - pos.GetValue()), worldUp) - orient.GetValue();
+
+	if (objectLinkingEnabled && executeLinkedObjects)
+	{
+		ExecuteLinkedObjects<LinkableFuncNames::LookAt>(&ObjectSim::LookAt, pointToLookAt, true);
+	}
+}
+
 void ObjectSim::SetPositionChangeCallback(std::function<void()> callback)
 {
 	pos.SetValueUpdateCallback(std::move(callback));

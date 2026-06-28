@@ -45,6 +45,7 @@ public:
 		LimitRotations,
 		Rotate,
 		RevolveAround,
+		LookAt,
 		_SIZE
 	};
 
@@ -128,6 +129,7 @@ public:
 	Linkable virtual void RevolveAround(
 		const Rotation& toRotate, const glm::vec3& centerPos, bool executeLinkedObjects = true
 	) = 0;
+	Linkable virtual void LookAt(const glm::vec3& pointToLookAt, bool executeLinkedObjects = true) = 0;
 
 	virtual void LinkObject(IObjectSim& objectToLink) = 0;
 	virtual void UnlinkObject(IObjectSim& objectToUnlink) = 0;
