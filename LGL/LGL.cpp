@@ -157,6 +157,7 @@ void LGL::DeleteGLObjects()
 		}
 		GLSafeExecute(glDeleteProgram, shaderProgInfo.second.first);
 	}
+	shaderInfoCollection.clear();
 
 	if (uniformHasher)
 	{

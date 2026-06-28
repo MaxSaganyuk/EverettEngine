@@ -11,15 +11,6 @@ bool stopSwitchColors = false;
 size_t amountOfTimesColorChanged{};
 ILightSim* light = nullptr;
 
-void CheckIfPtrValid(IObjectSim* ptr)
-{
-	if (!ptr)
-	{
-		std::cerr << "Invalid ptr. Cannot continue\n";
-		std::terminate();
-	}
-}
-
 glm::vec3 GetRandomColor()
 {
 	static std::random_device rd;
@@ -56,8 +47,6 @@ public:
 
 	void SetSateliteBox(ISolidSim* sateliteBox)
 	{
-		CheckIfPtrValid(sateliteBox);
-
 		this->sateliteBox = sateliteBox;
 		testCharSolid->LinkObject(*sateliteBox);
 	}
@@ -69,23 +58,17 @@ public:
 
 	void SetSolidSim(ISolidSim* testCharSolid)
 	{
-		CheckIfPtrValid(testCharSolid);
-
 		this->testCharSolid = testCharSolid;
 	}
 
 	void SetColliderSim(IColliderSim* testCharCollider)
 	{
-		CheckIfPtrValid(testCharCollider);
-
 		this->testCharCollider = testCharCollider;
 		testCharSolid->LinkObject(*testCharCollider);
 	}
 
 	void SetupBlockCollision(IColliderSim* blockCollider)
 	{
-		CheckIfPtrValid(blockCollider);
-
 		testCharCollider->AddCollisionCallback({
 			[this]() {
 				testCharSolid->SetLastPosition();
@@ -108,8 +91,6 @@ public:
 
 	void SetupWorldSwitchCollision(IColliderSim* worldSwitchCollider)
 	{
-		CheckIfPtrValid(worldSwitchCollider);
-
 		testCharCollider->AddCollisionCallback(
 			{ []() { engineInter->RequestWorldLoad("E:\\WorldSwitchTest.esav"); }, nullptr, worldSwitchCollider, false }
 		);
@@ -162,6 +143,8 @@ TestCharHolder testChar;
 
 ScriptInit()
 {
+	engine.PanicOnFailedInterfaceGet(true);
+
 	cameraSim = engine.GetCameraInterface();
 
 	testChar.SetSolidSim(engine.GetSolidInterface("TestChar"));
@@ -172,7 +155,7 @@ ScriptInit()
 	// Delibirate hintless interface get test
 	testChar.SetupWorldSwitchCollision(dynamic_cast<IColliderSim*>(engine.GetObjectInterface("WorldSwitchBox")));
 
-	CheckIfPtrValid(light = engine.GetLightInterface("Spot"));
+	light = engine.GetLightInterface("Spot");
 
 	auto testCharStopFunc = []() { testChar.Stop(); };
 

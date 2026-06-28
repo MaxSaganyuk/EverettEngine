@@ -54,4 +54,8 @@ public:
 	virtual void RequestWorldLoad(const char* path) = 0;
 
 	virtual void CreateLogReport() = 0;
+
+	// False by default. If true, will throw on failed interface get. 
+	// On false, responsibility of handling nullptrs is on developer writing the script. 
+	virtual void PanicOnFailedInterfaceGet(bool value = false) = 0;
 };

@@ -159,6 +159,7 @@ public:
 	EVERETT_API void ResetEngine(const std::optional<EverettStructs::AssetPaths>& assetPaths = std::nullopt);
 
 	EVERETT_API void CreateLogReport() override;
+	EVERETT_API void PanicOnFailedInterfaceGet(bool value = false) override;
 private:
 	enum ObjectModificationState : bool
 	{
@@ -171,6 +172,8 @@ private:
 
 	bool gizmoVisible = false;
 	bool gizmoEnabled = false;
+
+	bool panicOnFailedInterfaceGet = false;
 
 	struct ObjectTypeInfo;
 
