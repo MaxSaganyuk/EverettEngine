@@ -5,6 +5,8 @@
 #include "CDLLLoaderDlg.h"
 #include "CBrowseDialog.h"
 
+#include "EverettException.h"
+
 IMPLEMENT_DYNAMIC(CDLLLoaderDlg, CDialogEx)
 
 BEGIN_MESSAGE_MAP(CDLLLoaderDlg, CDialogEx)
@@ -87,7 +89,18 @@ void CDLLLoaderDlg::OnLoadScriptButtonClick()
 {
 	int curSel = dllComboBox.GetCurSel();
 
-	engineRef.SetupScriptDLL(selectedScriptDllInfo[curSel].first);
+	// One of the few good use cases for exceptions in C++ (specifically C++, since throwing is so expensive)
+	// Here if we panic on "s. object get" during ScriptInit call, we can protect
+	// execution from calling on a null ptr to s. object instantly. 
+	// Essentially, creating safe transition from soon to be crash causing code to regular engine execution smoothly 
+	try
+	{
+		engineRef.SetupScriptDLL(selectedScriptDllInfo[curSel].first);
+	}
+	catch (const EverettException&)
+	{
+		engineRef.UnsetScript(selectedScriptDllInfo[curSel].first);
+	}
 
 	UpdateScriptButtons();
 }
