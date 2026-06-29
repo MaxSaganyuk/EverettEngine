@@ -42,6 +42,7 @@ void CMainWindow::OnInitialUpdate()
 
 	showGizmoCheck.SetCheck(true);
 	showDebugTextCheck.SetCheck(true);
+	wasdControlsCheck.SetCheck(true);
 }
 
 BOOL CMainWindow::Create(
@@ -63,6 +64,7 @@ void CMainWindow::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_TREE1, objectTree.GetTreeCtrl());
 	DDX_Control(pDX, IDC_CHECK1, showGizmoCheck);
 	DDX_Control(pDX, IDC_CHECK2, showDebugTextCheck);
+	DDX_Control(pDX, IDC_CHECK3, wasdControlsCheck);
 }
 
 BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
@@ -75,6 +77,7 @@ BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
 	ON_BN_CLICKED(IDC_CHECK1, &CMainWindow::OnShowGizmoCheckClick)
 	ON_BN_CLICKED(IDC_CHECK2, &CMainWindow::OnShowDebugTextCheckClick)
 	ON_BN_CLICKED(IDC_BUTTON2, &CMainWindow::OnEditBackgroundColorButtonClick)
+	ON_BN_CLICKED(IDC_CHECK3, &CMainWindow::OnWASDControlsCheckClick)
 END_MESSAGE_MAP()
 
 // CMainWindow diagnostics
@@ -279,4 +282,9 @@ void CMainWindow::OnShowGizmoCheckClick()
 void CMainWindow::OnShowDebugTextCheckClick()
 {
 	engineP->SetDebugLogVisible(showDebugTextCheck.GetCheck());
+}
+
+void CMainWindow::OnWASDControlsCheckClick()
+{
+	engineP->SetDefaultWASDControls(wasdControlsCheck.GetCheck());
 }

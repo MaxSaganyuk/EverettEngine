@@ -83,6 +83,7 @@ private:
 
 	CButton showGizmoCheck;
 	CButton showDebugTextCheck;
+	CButton wasdControlsCheck;
 
 	constexpr static int RenameNode = WM_USER + 4;
 	constexpr static int DeleteNode = WM_USER + 5;
@@ -96,6 +97,7 @@ public:
 	afx_msg void OnEditBackgroundColorButtonClick();
 	afx_msg void OnShowGizmoCheckClick();
 	afx_msg void OnShowDebugTextCheckClick();
+	afx_msg void OnWASDControlsCheckClick();
 };
 
 
