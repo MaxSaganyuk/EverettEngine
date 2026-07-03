@@ -28,7 +28,8 @@ class TestCharHolder
 {
 	ISolidSim* testCharSolid{};
 	IColliderSim* testCharCollider{};
-	ISolidSim* sateliteBox{};
+	ISolidSim* satelliteBox{};
+	ILightSim* satelliteBoxLight{};
 	bool moving{};
 	bool linkedToCamera{};
 	bool linkedMovementState = true;
@@ -39,22 +40,34 @@ class TestCharHolder
 		obj.EnableLinkedExecutionForFunc(IObjectSim::LinkableFuncNames::SetLastPosition, value);
 	}
 
+	void TriggerSwitchLinkedMovement(bool value)
+	{
+		SwitchLinkedMovementFor(*satelliteBox, value);
+		SwitchLinkedMovementFor(*cameraSim, value);
+	}
+
 public:
 	void Rotate(const IObjectSim::RotationDegrees& rotate)
 	{
 		testCharSolid->Rotate(rotate, false);
 	}
 
-	void SetSateliteBox(ISolidSim* sateliteBox)
+	void SetSatelliteBox(ISolidSim* satelliteBox, ILightSim* satelliteBoxLight)
 	{
-		this->sateliteBox = sateliteBox;
-		testCharSolid->LinkObject(*sateliteBox);
+		this->satelliteBox = satelliteBox;
+		this->satelliteBoxLight = satelliteBoxLight;
+
+		satelliteBoxLight->SetPositionVector(satelliteBox->GetPositionVectorAddr());
+		satelliteBoxLight->GetColorVectorAddr() = ColorManager::GetColorVec3(ColorManager::Colors::MAGENTA);
+
+		testCharSolid->LinkObject(*satelliteBox);
+		satelliteBox->LinkObject(*satelliteBoxLight);
 	}
 
 	void RevolveAroundChar()
 	{
-		sateliteBox->RevolveAround(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, testCharSolid->GetPositionVectorAddr());
-		sateliteBox->LookAt(testCharSolid->GetPositionVectorAddr());
+		satelliteBox->RevolveAround(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, testCharSolid->GetPositionVectorAddr());
+		satelliteBox->LookAt(testCharSolid->GetPositionVectorAddr());
 	}
 
 	void SetSolidSim(ISolidSim* testCharSolid)
@@ -73,17 +86,15 @@ public:
 		testCharCollider->AddCollisionCallback({
 			[this]() {
 				testCharSolid->SetLastPosition();
+
 				if (linkedMovementState)
 				{
-					linkedMovementState = false;
-					SwitchLinkedMovementFor(*sateliteBox, linkedMovementState);
-					SwitchLinkedMovementFor(*cameraSim, linkedMovementState);
+					TriggerSwitchLinkedMovement(linkedMovementState = false);
 				}
 			}, 
-			[this]() {
-				linkedMovementState = true;
-				SwitchLinkedMovementFor(*sateliteBox, linkedMovementState);
-				SwitchLinkedMovementFor(*cameraSim, linkedMovementState);
+			[this]() { 
+				TriggerSwitchLinkedMovement(linkedMovementState = true); 
+				testCharSolid->SetLastPosition();
 			}, 
 			blockCollider, 
 			true
@@ -149,7 +160,7 @@ ScriptInit()
 	cameraSim = engine.GetCameraInterface();
 
 	testChar.SetSolidSim(engine.GetSolidInterface("TestChar"));
-	testChar.SetSateliteBox(engine.GetSolidInterface("RevolveBox"));
+	testChar.SetSatelliteBox(engine.GetSolidInterface("RevolveBox"), engine.GetLightInterface("RevolveBoxLight"));
 	testChar.SetColliderSim(engine.GetColliderInterface("TestCharBox"));
 	testChar.SetupBlockCollision(engine.GetColliderInterface("BlockBox"));
 
