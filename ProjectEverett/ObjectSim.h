@@ -13,7 +13,7 @@ class ObjectSim : virtual public IObjectSim
 {
 private:
 	template<LinkableFuncNames funcName, typename MemberFuncType, typename... ParamTypes>
-	void ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... values);
+	void ExecuteLinkedObjects(MemberFuncType memberFunc, bool executeLinkedObjs, ParamTypes&&... values);
 
 	void RotateImpl(const Rotation& toRotate);
 	glm::quat CalcOrientationFromRotation(const Rotation& toRotate);

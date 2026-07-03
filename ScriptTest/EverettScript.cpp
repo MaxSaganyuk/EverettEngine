@@ -4,12 +4,13 @@
 #include <iostream>
 #include <random>
 
-IEverettEngine* engineInter = nullptr;
-ICameraSim* cameraSim = nullptr;
+IEverettEngine* engineInter{};
+ICameraSim* cameraSim{};
+IColliderSim* hardLinkTest{};
 
-bool stopSwitchColors = false;
+bool stopSwitchColors{};
 size_t amountOfTimesColorChanged{};
-ILightSim* light = nullptr;
+ILightSim* light{};
 
 glm::vec3 GetRandomColor()
 {
@@ -47,11 +48,6 @@ class TestCharHolder
 	}
 
 public:
-	void Rotate(const IObjectSim::RotationDegrees& rotate)
-	{
-		testCharSolid->Rotate(rotate, false);
-	}
-
 	void SetSatelliteBox(ISolidSim* satelliteBox, ILightSim* satelliteBoxLight)
 	{
 		this->satelliteBox = satelliteBox;
@@ -159,6 +155,8 @@ ScriptInit()
 
 	cameraSim = engine.GetCameraInterface();
 
+	hardLinkTest = engine.GetColliderInterface("HardLinkTest");
+
 	testChar.SetSolidSim(engine.GetSolidInterface("TestChar"));
 	testChar.SetSatelliteBox(engine.GetSolidInterface("RevolveBox"), engine.GetLightInterface("RevolveBoxLight"));
 	testChar.SetColliderSim(engine.GetColliderInterface("TestCharBox"));
@@ -193,7 +191,8 @@ ScriptInit()
 	);
 
 	engine.AddInteractable(
-		engine.ConvertKeyTo('R'), true, []() { testChar.Rotate({ 0.0f, 1.0f, 0.0f }); }
+		engine.ConvertKeyTo('R'), true, 
+		[]() { hardLinkTest->Rotate(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, false); }
 	);
 
 	engine.AddMouseScrollCallback([](double value) { cameraSim->Zoom(static_cast<float>(value)); });
