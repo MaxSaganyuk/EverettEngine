@@ -15,7 +15,7 @@ void ObjectSim::ExecuteLinkedObjects(MemberFuncType memberFunc, ParamTypes&&... 
 	// There must be another way of doing this
 	ObjectSim* thisPtr = this;
 
-	for (ObjectSim* linkedObject : objectGraph.ViewValuesRelatedTo(thisPtr))
+	for (auto&& [_, linkedObject] : objectGraph.ViewValuesRelatedTo(thisPtr))
 	{
 		if (linkedObject->objectLinkingForFuncTracker[funcNameID])
 		{
