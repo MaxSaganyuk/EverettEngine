@@ -46,8 +46,9 @@ private:
 	void SetupSound(WavData&& wavData);
 	bool CreateBufferAndSource();
 	std::string GetSimInfoForSaveImpl();
-	void UpdateCurrentPlaybackTime();
 public:
+	void UpdateCurrentPlaybackTime();
+
 	std::string GetThisObjectTypeNameStr() override;
 
 	std::string GetSimInfoToSave(const std::string& soundName);

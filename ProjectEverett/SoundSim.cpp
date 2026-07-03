@@ -214,8 +214,6 @@ bool SoundSim::UpdateTransform()
 	{
 		ContextLock
 
-		UpdateCurrentPlaybackTime();
-
 		const glm::vec3& currentPos = pos;
 		alSource3f(sound.source, AL_POSITION, currentPos.x, currentPos.y, currentPos.z);
 		alSource3f(sound.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
