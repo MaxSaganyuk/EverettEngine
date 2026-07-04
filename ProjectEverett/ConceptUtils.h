@@ -4,10 +4,11 @@
 #include "glm/gtc/type_ptr.hpp"
 
 template<typename FundamentalType>
-concept OnlyFundamental = std::is_fundamental_v<FundamentalType>;
+concept OnlyFundamental = std::is_fundamental_v<std::remove_cvref_t<FundamentalType>>;
 
 template<typename FundamentalType>
-concept OnlyFundamentalNotBool = std::is_fundamental_v<FundamentalType> && !std::is_same_v<FundamentalType, bool>;
+concept OnlyFundamentalNotBool = 
+	std::is_fundamental_v<std::remove_cvref_t<FundamentalType>> && !std::is_same_v<FundamentalType, bool>;
 
 template<typename EnumType>
 concept OnlyEnums = std::is_enum_v<EnumType>;

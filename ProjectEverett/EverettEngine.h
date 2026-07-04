@@ -38,6 +38,7 @@ class ModelInfo;
 class KeyScriptFuncInfo;
 class NameTracker;
 class TimerManager;
+class ShaderCodeHolder;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -307,6 +308,7 @@ private:
 	std::unique_ptr<AnimSystem> animSystem;
 	std::unique_ptr<RenderLogger> logger;
 	std::unique_ptr<TimerManager> timerManager;
+	std::unique_ptr<ShaderCodeHolder> shaderCodeHolder;
 
 	ModelCollection models;
 	SolidCollection solids;

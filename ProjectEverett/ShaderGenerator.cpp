@@ -3,7 +3,9 @@
 #include <fstream>
 
 std::vector<std::string> ShaderGenerator::fileTypes { "evert", "efrag" };
-std::vector<std::pair<std::string, std::string>> ShaderGenerator::customKeywords{ {"#genDefine", "#define"} };
+std::vector<std::pair<std::string, std::string>> ShaderGenerator::customKeywords{ 
+	{"#genDefine", "#define"}, {"#genSubst", ""}
+};
 
 ShaderGenerator::ShaderGenerator(const std::string& path)
 {
@@ -64,7 +66,8 @@ void ShaderGenerator::ProcessPreSources()
 						}
 
 						lineToSubstMap[fileIndex].try_emplace(
-							lineIndex, customKeyWordIndex, std::string(valueName), std::string(defaultSubstitute)
+							lineIndex, static_cast<Keywords>(customKeyWordIndex), 
+							std::string(valueName), std::string(defaultSubstitute)
 						);
 					}
 				}
@@ -74,6 +77,26 @@ void ShaderGenerator::ProcessPreSources()
 		preSourceFiles[fileIndex].clear();
 		preSourceFiles[fileIndex].seekg(0);
 	}
+}
+
+bool ShaderGenerator::SetValueImpl(const std::string& valueName, std::string&& value)
+{
+	bool success = false;
+
+	for (auto& collectionOfNames : lineToSubstMap)
+	{
+		for (auto& [_, info] : collectionOfNames)
+		{
+			if (info.valueName == valueName)
+			{
+				info.substitute = value;
+
+				success = true;
+			}
+		}
+	}
+
+	return success;
 }
 
 void ShaderGenerator::InitializeLineMap()
@@ -90,6 +113,11 @@ std::generator<std::string_view> ShaderGenerator::GetValuesToDefine() const noex
 			co_yield info.valueName;
 		}
 	}
+}
+
+bool ShaderGenerator::SetValueToSubst(const std::string& valueName, std::string code)
+{
+	return SetValueImpl(valueName, std::move(code));
 }
 
 void ShaderGenerator::GenerateShaderFiles(const std::string& path)
@@ -110,14 +138,19 @@ void ShaderGenerator::GenerateShaderFiles(const std::string& path)
 			{
 				buffer.clear();
 
-				// In case other special keywords will exist, this will be reworked
 				auto& substInfo = iter->second;
-				
-				buffer =
-					customKeywords[substInfo.customKeywordIndex].second +
-					' ' +
-					substInfo.valueName + ' ' +
-					substInfo.substitute;
+
+				switch (substInfo.customKeywordIndex)
+				{
+				case Keywords::Define:
+					buffer = customKeywords[0].second + ' ' + substInfo.valueName + ' ' + substInfo.substitute;
+					break;
+				case Keywords::Subst:
+					buffer = substInfo.substitute;
+					break;
+				default:
+					std::unreachable();
+				}
 			}
 
 			newShaderFile << buffer << '\n';

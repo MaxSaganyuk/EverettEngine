@@ -175,6 +175,7 @@
     <ClInclude Include="CommonStructs.h" />
     <ClInclude Include="ConceptUtils.h" />
     <ClInclude Include="CustomOutput.h" />
+    <ClInclude Include="ShaderCodeHolder.h" />
     <ClInclude Include="EverettEngine.h" />
     <ClInclude Include="EverettException.h" />
     <ClInclude Include="EverettExceptionInternal.h" />
@@ -228,6 +229,10 @@
     <ClCompile Include="WindowHandleHolder.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaderDetails\AmbientLight" />
+    <None Include="shaderDetails\DirectionLight" />
+    <None Include="shaderDetails\PointLight" />
+    <None Include="shaderDetails\SpotLight" />
     <None Include="shaders\boneTest.frag" />
     <None Include="shaders\boneTest.vert" />
     <None Include="shaders\colorChange.frag" />

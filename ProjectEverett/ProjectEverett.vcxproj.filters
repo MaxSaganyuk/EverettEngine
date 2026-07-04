@@ -22,6 +22,9 @@
     <Filter Include="Interfaces">
       <UniqueIdentifier>{bfa763e5-8b52-4ec0-bbea-bbc17afe5f61}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ShaderDetails">
+      <UniqueIdentifier>{508e34a6-019e-4563-8ec4-151c0235fa6a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MaterialSim.h">
@@ -133,6 +136,9 @@
       <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="TimerManager.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderCodeHolder.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
@@ -270,6 +276,18 @@
     </None>
     <None Include="shaders\rText.vert">
       <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaderDetails\AmbientLight">
+      <Filter>ShaderDetails</Filter>
+    </None>
+    <None Include="shaderDetails\DirectionLight">
+      <Filter>ShaderDetails</Filter>
+    </None>
+    <None Include="shaderDetails\PointLight">
+      <Filter>ShaderDetails</Filter>
+    </None>
+    <None Include="shaderDetails\SpotLight">
+      <Filter>ShaderDetails</Filter>
     </None>
   </ItemGroup>
 </Project>

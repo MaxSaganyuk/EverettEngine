@@ -35,6 +35,7 @@
 #include "KeyScriptFuncInfo.h"
 
 #include "ShaderGenerator.h"
+#include "ShaderCodeHolder.h"
 #include "ConceptUtils.h"
 
 #include "NameTracker.h"
@@ -139,6 +140,8 @@ EverettEngine::EverettEngine()
 	animSystem = std::make_unique<AnimSystem>();
 	cmdHandler = std::make_unique<CommandHandler>();
 	hwndHolder = std::make_unique<WindowHandleHolder>();
+
+	shaderCodeHolder = std::make_unique<ShaderCodeHolder>();
 
 	timerManager = std::make_unique<TimerManager>();
 
@@ -680,6 +683,15 @@ void EverettEngine::GenerateShader()
 	if (totalSolidAmount > 1)
 	{
 		CheckAndThrowExceptionWMessage(shaderGen.SetValueToDefine("SOLID_AMOUNT", totalSolidAmount), genDefineError);
+	}
+
+	for (int i = 0; i < std::to_underlying(ShaderCodeHolder::ShaderCodeSection::_SIZE); ++i)
+	{
+		ShaderCodeHolder::ShaderCodeSection sect = static_cast<ShaderCodeHolder::ShaderCodeSection>(i);
+
+		shaderGen.SetValueToSubst(
+			shaderCodeHolder->GetStringForCodeSection(sect), shaderCodeHolder->GetShaderCodeForSection(sect)
+		);
 	}
 
 	shaderGen.GenerateShaderFiles(filePath);

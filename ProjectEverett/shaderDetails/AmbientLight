@@ -1,0 +1,5 @@
+R"(
+    vec3 amb = (ambient * vec3(texture(material.diffuse, TexCoords)));
+
+    return amb;
+)"

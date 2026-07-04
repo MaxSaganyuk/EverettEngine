@@ -6,6 +6,8 @@
 #include <fstream>
 #include <generator>
 
+#include "ConceptUtils.h"
+
 class ShaderGenerator
 {
 public:
@@ -14,8 +16,9 @@ public:
 
 	std::generator<std::string_view> GetValuesToDefine() const noexcept;
 
-	template<typename Type>
+	template<OnlyFundamental Type>
 	bool SetValueToDefine(const std::string& valueName, Type&& value);
+	bool SetValueToSubst(const std::string& valueName, std::string code);
 
 	void GenerateShaderFiles(const std::string& path);
 private:
@@ -25,12 +28,19 @@ private:
 	void InitializeLineMap();
 	void ProcessPreSources();
 
+	enum class Keywords
+	{
+		Define, Subst
+	};
+
 	struct LineToSubstInfo
 	{
-		size_t customKeywordIndex{};
+		Keywords customKeywordIndex;
 		std::string valueName;
 		std::string substitute;
 	};
+
+	bool SetValueImpl(const std::string& valueName, std::string&& value);
 
 	std::string preSourcePath;
 	std::vector<std::fstream> preSourceFiles;
@@ -40,23 +50,8 @@ private:
 	static std::vector<std::pair<std::string, std::string>> customKeywords;
 };
 
-template<typename Type>
+template<OnlyFundamental Type>
 bool ShaderGenerator::SetValueToDefine(const std::string& valueName, Type&& value)
 {
-	bool success = false;
-
-	for (auto& collectionOfNames : lineToSubstMap)
-	{
-		for (auto& [_, info] : collectionOfNames)
-		{
-			if (info.valueName == valueName)
-			{
-				info.substitute = std::to_string(std::forward<Type>(value));
-
-				success = true;
-			}
-		}
-	}
-
-	return success;
+	return SetValueImpl(valueName, std::to_string(std::forward<Type>(value)));
 }
