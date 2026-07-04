@@ -74,9 +74,14 @@ void ShaderGenerator::ProcessPreSources()
 			}
 		}
 
-		preSourceFiles[fileIndex].clear();
-		preSourceFiles[fileIndex].seekg(0);
+		PutAtFileBegin(preSourceFiles[fileIndex]);
 	}
+}
+
+void ShaderGenerator::PutAtFileBegin(std::fstream& file)
+{
+	file.clear();
+	file.seekg(0);
 }
 
 bool ShaderGenerator::SetValueImpl(const std::string& valueName, std::string&& value)
@@ -155,5 +160,7 @@ void ShaderGenerator::GenerateShaderFiles(const std::string& path)
 
 			newShaderFile << buffer << '\n';
 		}
+
+		PutAtFileBegin(preSourceFiles[fileIndex]);
 	}
 }

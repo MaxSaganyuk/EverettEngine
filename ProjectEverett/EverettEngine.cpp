@@ -687,18 +687,41 @@ void EverettEngine::GenerateShader()
 		CheckAndThrowExceptionWMessage(shaderGen.SetValueToDefine("SOLID_AMOUNT", totalSolidAmount), genDefineError);
 	}
 
+	ExecuteInShaderSubstitutions(shaderGen, filePath);
+
+	bool customShader = shaderCodeHolder->IsCustomCodeInSection();
+
+	if (customShader)
+	{
+		if (!mainLGL->RecompileShader(defaultShaderProgram))
+		{
+			customShader = false;
+			std::cerr << "Failed to compile custom shader code, falling back to default shader\n";
+
+			ExecuteInShaderSubstitutions(shaderGen, filePath, true);
+		}
+	}
+
+	if (!customShader)
+	{
+		CheckAndThrowExceptionWMessage(mainLGL->RecompileShader(defaultShaderProgram), "Failed to compile default shader");
+	}
+}
+
+void EverettEngine::ExecuteInShaderSubstitutions(
+	ShaderGenerator& shaderGen, const std::string& filePath, bool forceDefault
+)
+{
 	for (int i = 0; i < std::to_underlying(IEverettEngine::ShaderCodeSection::_SIZE); ++i)
 	{
 		IEverettEngine::ShaderCodeSection sect = static_cast<IEverettEngine::ShaderCodeSection>(i);
 
 		shaderGen.SetValueToSubst(
-			shaderCodeHolder->GetStringForCodeSection(sect), shaderCodeHolder->GetShaderCodeForSection(sect)
+			shaderCodeHolder->GetStringForCodeSection(sect), shaderCodeHolder->GetShaderCodeForSection(sect, forceDefault)
 		);
 	}
 
 	shaderGen.GenerateShaderFiles(filePath);
-
-	mainLGL->RecompileShader(defaultShaderProgram);
 }
 
 bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightType)
@@ -1483,7 +1506,7 @@ bool EverettEngine::SetShaderCodeSectionTo(ShaderCodeSection shaderCodeSect, con
 	return true;
 }
 
-bool EverettEngine::IsCustomShaderCodeSectionFor(ShaderCodeSection shaderCodeSect)
+bool EverettEngine::IsCustomShaderCodeSectionFor(std::optional<ShaderCodeSection> shaderCodeSect)
 {
 	return shaderCodeHolder->IsCustomCodeInSection(shaderCodeSect);
 }

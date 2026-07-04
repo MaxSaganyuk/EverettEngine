@@ -39,6 +39,7 @@ class KeyScriptFuncInfo;
 class NameTracker;
 class TimerManager;
 class ShaderCodeHolder;
+class ShaderGenerator;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -160,7 +161,9 @@ public:
 	EVERETT_API void ResetEngine(const std::optional<EverettStructs::AssetPaths>& assetPaths = std::nullopt);
 
 	EVERETT_API bool SetShaderCodeSectionTo(ShaderCodeSection shaderCodeSect, const char* code) override;
-	EVERETT_API bool IsCustomShaderCodeSectionFor(ShaderCodeSection shaderCodeSect) override;
+	EVERETT_API bool IsCustomShaderCodeSectionFor(
+		std::optional<ShaderCodeSection> shaderCodeSect = std::nullopt
+	) override;
 	EVERETT_API void ResetShadersToDefault() override;
 
 	EVERETT_API void CreateLogReport() override;
@@ -252,6 +255,7 @@ private:
 	SoundSim* CreateSoundImpl(const std::string& path, const std::string& soundName);
 	ColliderSim* CreateColliderImpl(const std::string& colliderName);
 	void GenerateShader();
+	void ExecuteInShaderSubstitutions(ShaderGenerator& shaderGen, const std::string& filePath, bool forceDefault = false);
 
 	void LightUpdater();
 

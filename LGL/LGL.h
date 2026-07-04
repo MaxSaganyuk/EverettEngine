@@ -196,7 +196,7 @@ public:
 	LGL_API void SetAssetOnOpenGLFailure(bool value);
 
 	LGL_API void SetShaderFolder(const std::string& path);
-	LGL_API void RecompileShader(const std::string& shaderName);
+	LGL_API bool RecompileShader(const std::string& shaderName);
 
 	LGL_API void ResetLGL();
 

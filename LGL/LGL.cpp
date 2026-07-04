@@ -1258,7 +1258,7 @@ void LGL::SetShaderFolder(const std::string& path)
 	shaderPath = path;
 }
 
-void LGL::RecompileShader(const std::string& shaderName)
+bool LGL::RecompileShader(const std::string& shaderName)
 {
 	HandshakeContextLock
 
@@ -1266,7 +1266,7 @@ void LGL::RecompileShader(const std::string& shaderName)
 
 	shaderInfoCollection.erase(shaderName);
 
-	LoadAndCompileShader(shaderName);
+	return LoadAndCompileShader(shaderName);
 }
 
 void LGL::DeleteShader(const std::string& shaderName)

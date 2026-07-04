@@ -63,7 +63,8 @@ public:
 	virtual void RequestWorldLoad(const char* path) = 0;
 
 	virtual bool SetShaderCodeSectionTo(ShaderCodeSection shaderCodeSect, const char* code) = 0;
-	virtual bool IsCustomShaderCodeSectionFor(ShaderCodeSection shaderCodeSect) = 0;
+	// Pass nothing to check for all code sections
+	virtual bool IsCustomShaderCodeSectionFor(std::optional<ShaderCodeSection> shaderCodeSect = std::nullopt) = 0;
 	virtual void ResetShadersToDefault() = 0;
 
 	virtual void CreateLogReport() = 0;

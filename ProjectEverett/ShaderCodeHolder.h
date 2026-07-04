@@ -25,9 +25,14 @@ public:
 		return enumStrs[std::to_underlying(codeSect)];
 	}
 
-	bool IsCustomCodeInSection(IEverettEngine::ShaderCodeSection codeSect)
+	bool IsCustomCodeInSection(std::optional<IEverettEngine::ShaderCodeSection> codeSect = std::nullopt)
 	{
-		return !customCode[std::to_underlying(codeSect)].empty();
+		if (!codeSect)
+		{
+			return std::any_of(customCode.begin(), customCode.end(), [](const std::string& str) { return !str.empty(); });
+		}
+
+		return !customCode[std::to_underlying(*codeSect)].empty();
 	}
 
 	void ClearCustomCode()

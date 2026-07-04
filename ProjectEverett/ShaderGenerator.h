@@ -27,6 +27,7 @@ private:
 	void DeinitializeFileObjects() noexcept;
 	void InitializeLineMap();
 	void ProcessPreSources();
+	void PutAtFileBegin(std::fstream& file);
 
 	enum class Keywords
 	{
