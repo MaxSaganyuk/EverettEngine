@@ -12,6 +12,23 @@ bool stopSwitchColors{};
 size_t amountOfTimesColorChanged{};
 ILightSim* light{};
 
+static void ShaderSwitch()
+{
+	constexpr auto ambientShaderCodeSection = IEverettEngine::ShaderCodeSection::AmbientLight;
+	constexpr const char* grayAmbientShader = R"(
+		vec3 tex = vec3(texture(material.diffuse, TexCoords));
+		const vec3 lum = vec3(0.299, 0.587, 0.114);
+		float gray = dot(tex, lum);
+
+		return vec3(gray);
+	)";
+
+	engineInter->SetShaderCodeSectionTo(
+		ambientShaderCodeSection, 
+		engineInter->IsCustomShaderCodeSectionFor(ambientShaderCodeSection) ? "" : grayAmbientShader
+	);
+}
+
 glm::vec3 GetRandomColor()
 {
 	static std::random_device rd;
@@ -194,6 +211,8 @@ ScriptInit()
 		engine.ConvertKeyTo('R'), true, 
 		[]() { hardLinkTest->Rotate(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, false); }
 	);
+
+	engine.AddInteractable(engine.ConvertKeyTo("Space"), false, ShaderSwitch);
 
 	engine.AddMouseScrollCallback([](double value) { cameraSim->Zoom(static_cast<float>(value)); });
 

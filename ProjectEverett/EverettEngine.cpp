@@ -430,6 +430,8 @@ void EverettEngine::ClearExternallyControlledContainers()
 	mouseScrollScriptFuncs.clear();
 	mouseMoveScriptFuncs.clear();
 	timerManager->CleanTimedCallbacks();
+
+	ResetShadersToDefault();
 }
 
 void EverettEngine::RunRenderWindow()
@@ -685,9 +687,9 @@ void EverettEngine::GenerateShader()
 		CheckAndThrowExceptionWMessage(shaderGen.SetValueToDefine("SOLID_AMOUNT", totalSolidAmount), genDefineError);
 	}
 
-	for (int i = 0; i < std::to_underlying(ShaderCodeHolder::ShaderCodeSection::_SIZE); ++i)
+	for (int i = 0; i < std::to_underlying(IEverettEngine::ShaderCodeSection::_SIZE); ++i)
 	{
-		ShaderCodeHolder::ShaderCodeSection sect = static_cast<ShaderCodeHolder::ShaderCodeSection>(i);
+		IEverettEngine::ShaderCodeSection sect = static_cast<IEverettEngine::ShaderCodeSection>(i);
 
 		shaderGen.SetValueToSubst(
 			shaderCodeHolder->GetStringForCodeSection(sect), shaderCodeHolder->GetShaderCodeForSection(sect)
@@ -1470,6 +1472,27 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 	}
 
 	mainLGL->PauseRendering(false);
+}
+
+bool EverettEngine::SetShaderCodeSectionTo(ShaderCodeSection shaderCodeSect, const char* code)
+{
+	shaderCodeHolder->SetShaderCodeForSection(shaderCodeSect, code);
+
+	GenerateShader();
+
+	return true;
+}
+
+bool EverettEngine::IsCustomShaderCodeSectionFor(ShaderCodeSection shaderCodeSect)
+{
+	return shaderCodeHolder->IsCustomCodeInSection(shaderCodeSect);
+}
+
+void EverettEngine::ResetShadersToDefault()
+{
+	shaderCodeHolder->ClearCustomCode();
+
+	GenerateShader();
 }
 
 void EverettEngine::AddWorldLoadCallback(std::function<void()> callback)

@@ -3,33 +3,31 @@
 #include <array>
 #include <string>
 
+#include "external/IEverettEngine.h"
+
 class ShaderCodeHolder
 {
 public:
-	enum class ShaderCodeSection
-	{
-		AmbientLight,
-		DirectionLight,
-		PointLight,
-		SpotLight,
-		_SIZE
-	};
-
-	void SetShaderCodeForSection(ShaderCodeSection codeSect, std::string code)
+	void SetShaderCodeForSection(IEverettEngine::ShaderCodeSection codeSect, std::string code)
 	{
 		customCode[std::to_underlying(codeSect)] = std::move(code);
 	}
 
-	const char* GetShaderCodeForSection(ShaderCodeSection codeSect)
+	const char* GetShaderCodeForSection(IEverettEngine::ShaderCodeSection codeSect, bool forceDefault = false)
 	{
 		auto codeSectID = std::to_underlying(codeSect);
 
-		return !customCode[codeSectID].empty() ? customCode[codeSectID].c_str() : defaultCode[codeSectID];
+		return !(forceDefault || customCode[codeSectID].empty()) ? customCode[codeSectID].c_str() : defaultCode[codeSectID];
 	}
 
-	constexpr const char* GetStringForCodeSection(ShaderCodeSection codeSect)
+	constexpr const char* GetStringForCodeSection(IEverettEngine::ShaderCodeSection codeSect)
 	{
 		return enumStrs[std::to_underlying(codeSect)];
+	}
+
+	bool IsCustomCodeInSection(IEverettEngine::ShaderCodeSection codeSect)
+	{
+		return !customCode[std::to_underlying(codeSect)].empty();
 	}
 
 	void ClearCustomCode()
@@ -38,7 +36,7 @@ public:
 	}
 
 private:
-	constexpr static auto CodeSectionAmount = std::to_underlying(ShaderCodeSection::_SIZE);
+	constexpr static auto CodeSectionAmount = std::to_underlying(IEverettEngine::ShaderCodeSection::_SIZE);
 
 	static inline std::array<std::string, CodeSectionAmount> customCode{};
 	

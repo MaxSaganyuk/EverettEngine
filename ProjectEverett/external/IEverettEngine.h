@@ -19,6 +19,15 @@ public:
 		Camera, Solid, Light, Sound, Collider, _SIZE
 	};
 
+	enum class ShaderCodeSection
+	{
+		AmbientLight,
+		DirectionLight,
+		PointLight,
+		SpotLight,
+		_SIZE
+	};
+
 	struct TimedCallbackSetup
 	{
 		std::chrono::seconds period;
@@ -52,6 +61,10 @@ public:
 	virtual int ConvertKeyTo(const char* keyName) = 0;
 
 	virtual void RequestWorldLoad(const char* path) = 0;
+
+	virtual bool SetShaderCodeSectionTo(ShaderCodeSection shaderCodeSect, const char* code) = 0;
+	virtual bool IsCustomShaderCodeSectionFor(ShaderCodeSection shaderCodeSect) = 0;
+	virtual void ResetShadersToDefault() = 0;
 
 	virtual void CreateLogReport() = 0;
 
