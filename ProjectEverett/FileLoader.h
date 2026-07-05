@@ -130,7 +130,7 @@ class FileLoader
 			RawFuncPtr<void> cleanUpFunc{};
 
 			template<typename FuncType, typename... ParamTypes>
-			void ExecuteFunc(FuncType func, ParamTypes&&... values) const;
+			void ExecuteFunc(FuncType&& func, ParamTypes&&... values) const;
 
 			template<typename FuncType>
 			bool ReadFuncFromDLLByName(FuncType& func, const char* name);

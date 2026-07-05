@@ -624,7 +624,7 @@ bool FileLoader::ModelLoader::LoadModel(
 }
 
 template<typename FuncType, typename... ParamTypes>
-void FileLoader::DLLLoader::ScriptDLLInfo::ExecuteFunc(FuncType func, ParamTypes&&... values) const
+void FileLoader::DLLLoader::ScriptDLLInfo::ExecuteFunc(FuncType&& func, ParamTypes&&... values) const
 {
 	mux.lock();
 	if (func)
