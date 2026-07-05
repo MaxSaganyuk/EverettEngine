@@ -623,6 +623,85 @@ bool FileLoader::ModelLoader::LoadModel(
 	return true;
 }
 
+template<typename FuncType, typename... ParamTypes>
+void FileLoader::DLLLoader::ScriptDLLInfo::ExecuteFunc(FuncType func, ParamTypes&&... values) const
+{
+	mux.lock();
+	if (func)
+	{
+		func(std::forward<ParamTypes>(values)...);
+	}
+	mux.unlock();
+}
+
+template<typename FuncType>
+bool FileLoader::DLLLoader::ScriptDLLInfo::ReadFuncFromDLLByName(FuncType& func, const char* name)
+{
+	return (func = reinterpret_cast<FuncType>(GetProcAddress(dllHandle, name)));
+}
+
+FileLoader::DLLLoader::ScriptDLLInfo::~ScriptDLLInfo()
+{
+	Unload();
+}
+
+void FileLoader::DLLLoader::ScriptDLLInfo::SetDLLHandle(HMODULE dllHandle)
+{
+	this->dllHandle = dllHandle;
+}
+
+bool FileLoader::DLLLoader::ScriptDLLInfo::ReadInitFuncFromDLL()
+{
+	return ReadFuncFromDLLByName(scriptInitFunc, scriptInitFuncName);
+}
+
+bool FileLoader::DLLLoader::ScriptDLLInfo::ReadMainFuncFromDLL()
+{
+	return ReadFuncFromDLLByName(mainFunc, mainScriptFuncName);
+}
+
+bool FileLoader::DLLLoader::ScriptDLLInfo::ReadCleanupFuncFromDLL()
+{
+	return ReadFuncFromDLLByName(cleanUpFunc, cleanUpFuncName);
+}
+
+HMODULE FileLoader::DLLLoader::ScriptDLLInfo::GetDllHandle() const noexcept
+{
+	return dllHandle;
+}
+
+void FileLoader::DLLLoader::ScriptDLLInfo::ExecuteInitFunc(void* engineInter) const
+{
+	ExecuteFunc(scriptInitFunc, engineInter);
+}
+
+void FileLoader::DLLLoader::ScriptDLLInfo::ExecuteMainFunc() const
+{
+	ExecuteFunc(mainFunc);
+}
+
+void FileLoader::DLLLoader::ScriptDLLInfo::Unload()
+{
+	if (dllHandle)
+	{
+		mux.lock();
+
+		if (cleanUpFunc)
+		{
+			cleanUpFunc();
+		}
+
+		FreeLibrary(dllHandle);
+
+		dllHandle = nullptr;
+		scriptInitFunc = nullptr;
+		mainFunc = nullptr;
+		cleanUpFunc = nullptr;
+
+		mux.unlock();
+	}
+}
+
 bool FileLoader::DLLLoader::LoadDLL(const std::string& dllPath)
 {
 	HMODULE dllHandle = GetModuleHandleA(dllPath.c_str());
@@ -639,68 +718,48 @@ bool FileLoader::DLLLoader::LoadDLL(const std::string& dllPath)
 		if (dllHandleMap.contains(dllPath))
 		{
 			dllInfo = &dllHandleMap.at(dllPath);
-
-			if (dllHandle != dllInfo->dllHandle)
-			{
-				SetNewDLLHandle(dllPath, dllHandle, *dllInfo);
-			}
 		}
 		else
 		{
-			dllInfo = &dllHandleMap.emplace(dllPath, ScriptDLLInfo{}).first->second;
-			SetNewDLLHandle(dllPath, dllHandle, *dllInfo);
+			dllInfo = &dllHandleMap.try_emplace(dllPath).first->second;
 		}
-	}
 
+		SetNewDLLHandle(dllPath, dllHandle, *dllInfo);
+	}
+	
 	return dllHandle;
 }
 
 void FileLoader::DLLLoader::ExecuteScriptInitFor(const std::string& dllPath, IEverettEngine& engine)
 {
-	dllHandleMap[dllPath].scriptInitFunc(&engine);
+	dllHandleMap[dllPath].ExecuteInitFunc(&engine);
 }
 
 void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo)
 {
-	dllInfo.dllHandle = dllHandle;
+	dllInfo.SetDLLHandle(dllHandle);
+
 	std::cout << "Loaded " << GetFileFromPath(dllPath) << '\n';
 
 	using ParamlessFuncType = void(*)();
 
-	ParamlessFuncType mainFunc = reinterpret_cast<ParamlessFuncType>(
-		GetProcAddress(dllInfo.dllHandle, mainScriptFuncName)
-	);
-
-	if (mainFunc)
+	if (dllInfo.ReadMainFuncFromDLL())
 	{
 		std::cout << "Loaded main script func\n";
-		dllInfo.mainFunc = mainFunc;
 	}
 
-	ParamlessFuncType cleanUpFunc = reinterpret_cast<ParamlessFuncType>(
-		GetProcAddress(dllInfo.dllHandle, cleanUpFuncName)
-	);
-
-	if (cleanUpFunc)
+	if (dllInfo.ReadCleanupFuncFromDLL())
 	{
 		std::cout << "Loaded cleanup script func\n";
-		dllInfo.cleanUpFunc = cleanUpFunc;
 	}
 	else
 	{
 		std::cerr << "Cleanup script does not exist\n";
 	}
 
-	using ParamfulFuncType = void(*)(void*);
-
-	ParamfulFuncType scriptFuncInitFunc = reinterpret_cast<ParamfulFuncType>(
-		GetProcAddress(dllInfo.dllHandle, scriptInitFuncName)
-	);
-
-	if (scriptFuncInitFunc)
+	if (dllInfo.ReadInitFuncFromDLL())
 	{
 		std::cout << "Loaded script init func\n";
-		dllInfo.scriptInitFunc = scriptFuncInitFunc;
 	}
 	else
 	{
@@ -710,9 +769,9 @@ void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE 
 
 bool FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
 {
-	if (dllHandleMap.contains(dllPath))
+	if (auto iter = dllHandleMap.find(dllPath); iter != dllHandleMap.end())
 	{
-		return dllHandleMap.at(dllPath).dllHandle;
+		return iter->second.GetDllHandle();
 	}
 
 	return false;
@@ -720,15 +779,9 @@ bool FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
 
 bool FileLoader::DLLLoader::AnyDLLLoaded()
 {
-	for (auto& [dllName, dllInfo] : dllHandleMap)
-	{
-		if (dllInfo.dllHandle)
-		{
-			return true;
-		}
-	}
-
-	return false;
+	return std::any_of(
+		dllHandleMap.begin(), dllHandleMap.end(), [](const auto& info) { return info.second.GetDllHandle(); }
+	);
 }
 
 void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
@@ -739,18 +792,7 @@ void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
 
 void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
 {
-	if (dllInfo.dllHandle)
-	{
-		if (dllInfo.cleanUpFunc)
-		{
-			dllInfo.cleanUpFunc();
-		}
-
-		FreeLibrary(dllInfo.dllHandle);
-		dllInfo.dllHandle = nullptr;
-		dllInfo.mainFunc = nullptr;
-		dllInfo.cleanUpFunc = nullptr;
-	}
+	dllInfo.Unload();
 }
 
 std::generator<EverettStructs::BasicFileInfo> FileLoader::DLLLoader::GetLoadedScriptDlls()
@@ -775,10 +817,7 @@ void FileLoader::DLLLoader::ExecuteAllMainScriptFuncs()
 {
 	for (auto& [_, dllInfo] : dllHandleMap)
 	{
-		if (dllInfo.mainFunc)
-		{
-			dllInfo.mainFunc();
-		}
+		dllInfo.ExecuteMainFunc();
 	}
 }
 

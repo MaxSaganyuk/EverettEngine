@@ -11,6 +11,7 @@
 #include <functional>
 #include <generator>
 #include <span>
+#include <mutex>
 
 #include "AnimSystem.h"
 
@@ -113,12 +114,46 @@ class FileLoader
 	class DLLLoader
 	{
 	private:
-		struct ScriptDLLInfo
+		class ScriptDLLInfo
 		{
-			HMODULE dllHandle;
-			std::function<void(void*)> scriptInitFunc;
-			std::function<void()> mainFunc;
-			std::function<void()> cleanUpFunc;
+			template<typename ParamType>
+			using RawFuncPtr = void(*)(ParamType);
+
+			constexpr static char scriptInitFuncName[] = "ScriptInitFunc";
+			constexpr static char mainScriptFuncName[] = "Main";
+			constexpr static char cleanUpFuncName[] = "CleanUp";
+
+			mutable std::mutex mux{};
+			HMODULE dllHandle{};
+			RawFuncPtr<void*> scriptInitFunc{};
+			RawFuncPtr<void> mainFunc{};
+			RawFuncPtr<void> cleanUpFunc{};
+
+			template<typename FuncType, typename... ParamTypes>
+			void ExecuteFunc(FuncType func, ParamTypes&&... values) const;
+
+			template<typename FuncType>
+			bool ReadFuncFromDLLByName(FuncType& func, const char* name);
+		public:
+			ScriptDLLInfo() = default;
+			~ScriptDLLInfo();
+
+			ScriptDLLInfo(const ScriptDLLInfo&) = delete;
+			ScriptDLLInfo(ScriptDLLInfo&&) noexcept = delete;
+			ScriptDLLInfo& operator=(const ScriptDLLInfo&) = delete;
+			ScriptDLLInfo&& operator=(ScriptDLLInfo&&) noexcept = delete;
+
+			void SetDLLHandle(HMODULE dllHandle);
+			bool ReadInitFuncFromDLL();
+			bool ReadMainFuncFromDLL();
+			bool ReadCleanupFuncFromDLL();
+
+			HMODULE GetDllHandle() const noexcept;
+
+			void ExecuteInitFunc(void* engineInter) const;
+			void ExecuteMainFunc() const;
+
+			void Unload();
 		};
 
 		using ScriptDLLPath = std::string;
@@ -126,10 +161,6 @@ class FileLoader
 
 		void SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo);
 		void UnloadScriptDLL(ScriptDLLInfo& dllInfo);
-
-		constexpr static char scriptInitFuncName[] = "ScriptInitFunc";
-		constexpr static char mainScriptFuncName[] = "Main";
-		constexpr static char cleanUpFuncName[] = "CleanUp";
 
 		ScriptMap dllHandleMap;
 	public:
