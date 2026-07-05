@@ -254,7 +254,9 @@ private:
 	LightSim* CreateLightImpl(const std::string& lightName, LightTypes lightType);
 	SoundSim* CreateSoundImpl(const std::string& path, const std::string& soundName);
 	ColliderSim* CreateColliderImpl(const std::string& colliderName);
-	void GenerateShader();
+
+	// Returns true if custom shader is compiled
+	bool GenerateShader();
 	void ExecuteInShaderSubstitutions(ShaderGenerator& shaderGen, const std::string& filePath, bool forceDefault = false);
 
 	void LightUpdater();

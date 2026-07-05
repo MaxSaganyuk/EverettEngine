@@ -666,7 +666,7 @@ SolidSim* EverettEngine::CreateSolidImpl(
 	return nullptr;
 }
 
-void EverettEngine::GenerateShader()
+bool EverettEngine::GenerateShader()
 {
 	constexpr char genDefineError[] = "Shader generation failed, no genDefine";
 
@@ -693,9 +693,8 @@ void EverettEngine::GenerateShader()
 
 	if (customShader)
 	{
-		if (!mainLGL->RecompileShader(defaultShaderProgram))
+		if (!(customShader = mainLGL->RecompileShader(defaultShaderProgram)))
 		{
-			customShader = false;
 			std::cerr << "Failed to compile custom shader code, falling back to default shader\n";
 
 			ExecuteInShaderSubstitutions(shaderGen, filePath, true);
@@ -706,6 +705,8 @@ void EverettEngine::GenerateShader()
 	{
 		CheckAndThrowExceptionWMessage(mainLGL->RecompileShader(defaultShaderProgram), "Failed to compile default shader");
 	}
+
+	return customShader;
 }
 
 void EverettEngine::ExecuteInShaderSubstitutions(
@@ -1501,9 +1502,7 @@ bool EverettEngine::SetShaderCodeSectionTo(ShaderCodeSection shaderCodeSect, con
 {
 	shaderCodeHolder->SetShaderCodeForSection(shaderCodeSect, code);
 
-	GenerateShader();
-
-	return true;
+	return GenerateShader();
 }
 
 bool EverettEngine::IsCustomShaderCodeSectionFor(std::optional<ShaderCodeSection> shaderCodeSect)
