@@ -227,9 +227,8 @@ private:
 
 	template<typename Sim>
 	bool CreateGizmoSolid(
-		const std::string& relatedObjModelName, 
-		Sim& relatedObject,
-		const glm::vec4& gizmoColor
+		const std::string& relatedObjModelName, Sim& relatedObject, 
+		const glm::vec4& gizmoColor, bool regenerateShader = false
 	);
 
 	void AddInteractable(

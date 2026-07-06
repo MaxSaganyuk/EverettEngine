@@ -330,14 +330,12 @@ void EverettEngine::LoadGizmoModel()
 
 template<typename Sim>
 bool EverettEngine::CreateGizmoSolid(
-	const std::string& relatedObjModelName,
-	Sim& relatedObject,
-	const glm::vec4& gizmoColor
+	const std::string& relatedObjModelName, Sim& relatedObject, const glm::vec4& gizmoColor, bool regenerateShader
 )
 {
 	std::string gizmoSolidName = relatedObjModelName + gizmoModelName;
 	
-	if (SolidSim* solid = CreateSolidImpl(gizmoModelName, gizmoSolidName, true, gizmoVisible))
+	if (SolidSim* solid = CreateSolidImpl(gizmoModelName, gizmoSolidName, regenerateShader, gizmoVisible))
 	{
 		SolidSim& gizmoSolid = *solid;
 
@@ -732,7 +730,7 @@ bool EverettEngine::CreateLight(const std::string& lightName, LightTypes lightTy
 
 	if (res && gizmoEnabled)
 	{
-		res = CreateGizmoSolid(lightName, *light, lightGizmoColor);
+		res = CreateGizmoSolid(lightName, *light, lightGizmoColor, true);
 	}
 
 	return res;
@@ -770,7 +768,7 @@ bool EverettEngine::CreateSound(const std::string& path, const std::string& soun
 
 	if (res && gizmoEnabled)
 	{
-		res = CreateGizmoSolid(soundName, *sound, soundGizmoColor);
+		res = CreateGizmoSolid(soundName, *sound, soundGizmoColor, true);
 	}
 
 	return res;
@@ -812,7 +810,7 @@ bool EverettEngine::CreateCollider(const std::string& colliderName)
 
 	if (res && gizmoEnabled)
 	{
-		res = CreateGizmoSolid(colliderName, *collider, colliderGizmoColor);
+		res = CreateGizmoSolid(colliderName, *collider, colliderGizmoColor, true);
 	}
 
 	return res;
