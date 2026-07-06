@@ -57,16 +57,18 @@ uniform vec3 ambient;
 uniform Material material;
 uniform DirLight dirLight;
 
-#define LIGHT_MAX_AMOUNT 10
+#genDefine DIR_LIGHT_AMOUNT 1
+#genDefine POINT_LIGHT_AMOUNT 1
+#genDefine SPOT_LIGHT_AMOUNT 1
 
 uniform int dirLightAmount; 
-uniform DirLight dirLights[LIGHT_MAX_AMOUNT];
+uniform DirLight dirLights[DIR_LIGHT_AMOUNT];
 
 uniform int pointLightAmount;
-uniform PointLight pointLights[LIGHT_MAX_AMOUNT];
+uniform PointLight pointLights[POINT_LIGHT_AMOUNT];
 
 uniform int spotLightAmount;
-uniform SpotLight spotLights[LIGHT_MAX_AMOUNT];
+uniform SpotLight spotLights[SPOT_LIGHT_AMOUNT];
 
 uniform int textureless;
 

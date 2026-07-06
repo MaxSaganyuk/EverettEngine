@@ -666,23 +666,37 @@ SolidSim* EverettEngine::CreateSolidImpl(
 
 bool EverettEngine::GenerateShader()
 {
-	constexpr char genDefineError[] = "Shader generation failed, no genDefine";
+	static auto GenDefineCall = []<OnlyFundamental Type>(
+		ShaderGenerator& shaderGen, const std::string& name, Type&& value
+	)
+	{
+		if (std::forward<Type>(value) > std::remove_cvref_t<Type>{})
+		{
+			CheckAndThrowExceptionWMessage(
+				shaderGen.SetValueToDefine(name, std::forward<Type>(value)), "Shader generation failed, no genDefine"
+			);
+		}
+	};
 
-	size_t totalBoneAmount = animSystem->GetTotalBoneAmount();
-	size_t totalSolidAmount = solids.size();
+	constexpr size_t genDefineAmount = 5;
+	constexpr std::array<const char*, genDefineAmount> genDefineNames{
+		"BONE_AMOUNT", "SOLID_AMOUNT", "DIR_LIGHT_AMOUNT", "POINT_LIGHT_AMOUNT", "SPOT_LIGHT_AMOUNT"
+	};
+
+	std::array<size_t, genDefineAmount> genDefineVals{ animSystem->GetTotalBoneAmount(), solids.size() };
+
+	for (int i = 0; i < std::to_underlying(LightSim::LightTypes::_SIZE); ++i)
+	{
+		genDefineVals[2 + i] = LightSim::GetAmountOfLightsByType(static_cast<LightSim::LightTypes>(i));
+	}
 
 	std::string filePath = FileLoader::GetCurrentDir() + '\\' + shaderPath + '\\' + defaultShaderProgram;
 
 	ShaderGenerator shaderGen{ filePath };
 
-	// In the future, genDefine section might have various types, so generalization here is excessive
-	if (totalBoneAmount > 1)
+	for (size_t i = 0; i < genDefineAmount; ++i)
 	{
-		CheckAndThrowExceptionWMessage(shaderGen.SetValueToDefine("BONE_AMOUNT", totalBoneAmount), genDefineError);
-	}
-	if (totalSolidAmount > 1)
-	{
-		CheckAndThrowExceptionWMessage(shaderGen.SetValueToDefine("SOLID_AMOUNT", totalSolidAmount), genDefineError);
+		GenDefineCall(shaderGen, genDefineNames[i], genDefineVals[i]);
 	}
 
 	ExecuteInShaderSubstitutions(shaderGen, filePath);
