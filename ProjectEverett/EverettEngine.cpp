@@ -679,7 +679,7 @@ bool EverettEngine::GenerateShader()
 	};
 
 	constexpr size_t genDefineAmount = 5;
-	constexpr std::array<const char*, genDefineAmount> genDefineNames{
+	constexpr static std::array<const char*, genDefineAmount> genDefineNames{
 		"BONE_AMOUNT", "SOLID_AMOUNT", "DIR_LIGHT_AMOUNT", "POINT_LIGHT_AMOUNT", "SPOT_LIGHT_AMOUNT"
 	};
 
@@ -864,7 +864,7 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 	auto TryRenameKey = [&]<typename Type>(
 		std::unordered_map<std::string, Type>& cont
 	){ 
-		constexpr std::optional<ObjectTypes> objectType = GetTypeEnumByType<Type>();
+		constexpr static std::optional<ObjectTypes> objectType = GetTypeEnumByType<Type>();
 
 		if (CheckHintAndType(hintType, objectType) && cont.contains(oldName))
 		{

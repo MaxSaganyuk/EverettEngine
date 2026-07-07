@@ -4,7 +4,7 @@
 template<ObjectSim::LinkableFuncNames funcName, typename MemberFuncType, typename... ParamTypes>
 void ObjectSim::ExecuteLinkedObjects(MemberFuncType memberFunc, bool executeLinkedObjs, ParamTypes&&... values)
 {
-	constexpr auto funcNameID = std::to_underlying(funcName);
+	constexpr static auto funcNameID = std::to_underlying(funcName);
 
 	if (visited) return;
 

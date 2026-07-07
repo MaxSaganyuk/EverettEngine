@@ -15,7 +15,7 @@ ILightSim* light{};
 static void ShaderSwitch()
 {
 	constexpr auto ambientShaderCodeSection = IEverettEngine::ShaderCodeSection::AmbientLight;
-	constexpr const char* grayAmbientShader = R"(
+	constexpr static const char* grayAmbientShader = R"(
 		vec3 tex = vec3(texture(material.diffuse, TexCoords));
 		const vec3 lum = vec3(0.299, 0.587, 0.114);
 		float gray = dot(tex, lum);

@@ -277,7 +277,7 @@ bool ColliderSim::ExecuteOBBCheck(ColliderSim& firstCollider, ColliderSim& secon
 
 bool ColliderSim::ExecuteNarrowCollisionCheck(ColliderSim& firstCollider, ColliderSim& secondCollider)
 {
-	constexpr glm::quat identityQuat = glm::identity<glm::quat>();
+	constexpr static glm::quat identityQuat = glm::identity<glm::quat>();
 
 	// Use simpler AABB check for unrotated colliders, otherwise go with OBB
 	// It's expected to execute OBB for any collider that was rotated at all, even if re-rotated back to default orientation
