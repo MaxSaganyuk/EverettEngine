@@ -60,9 +60,15 @@ public:
 	void InvertMovement(bool value = true, bool executeLinkedObjects = true) override;
 	bool IsMovementInverted() override;
 
+	void SetPositionVector(IObjectSim& obj, bool executeLinkedObjects = true) override;
+	void SetScaleVector(IObjectSim& obj, bool executeLinkedObjects = true) override;
+	void SetOrientation(IObjectSim& obj, bool executeLinkedObjects = true) override;
+
 	void SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
 	void SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
 	void SetOrientation(const glm::quat& quat, bool executeLinkedObjects = true) override;
+
+	void SetTransform(IObjectSim& obj, bool executeLinkedObjects = true) override;
 		
 	glm::vec3 GetFrontVector() override;
 	glm::vec3 GetUpVector() override;
@@ -82,6 +88,8 @@ public:
 	void SetLastPosition(bool executeLinkedObjects = true) override;
 	void SetLastScale(bool executeLinkedObjects = true) override;
 	void SetLastOrientation(bool executeLinkedObjects = true) override;
+	void SetLastTransform(bool executeLinkedObjects = true) override;
+
 	void MoveInDirection(
 		Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) override;
@@ -94,7 +102,9 @@ public:
 
 	void LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects = true) override;
 	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;
+	void RevolveAround(const Rotation& toRotate, IObjectSim& obj, bool executeLinkedObjects = true) override;
 	void RevolveAround(const Rotation& toRotate, const glm::vec3& centerPos, bool executeLinkedObjects = true) override;
+	void LookAt(IObjectSim& obj, bool executeLinkedObjects = true) override;
 	void LookAt(const glm::vec3& pointToLookAt, bool executeLinkedObjects = true) override;
 
 	// Callback setter

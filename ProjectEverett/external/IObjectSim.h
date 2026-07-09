@@ -34,12 +34,14 @@ public:
 		SetPositionVector,
 		SetScaleVector,
 		SetOrientation,
+		SetTransform,
 		DisableDirection,
 		EnableDirection,
 		EnableAllDirections,
 		SetLastPosition,
 		SetLastScale,
 		SetLastOrientation,
+		SetLastTransform,
 		MoveInDirection,
 		MoveByAxis,
 		LimitRotations,
@@ -93,9 +95,15 @@ public:
 	Linkable virtual void SetMovementSpeed(float speed, bool executeLinkedObjects = true) = 0;
 	virtual float GetMovementSpeed() = 0;
 
+	Linkable virtual void SetPositionVector(IObjectSim& obj, bool executeLinkedObjects = true) = 0;
+	Linkable virtual void SetScaleVector(IObjectSim& obj, bool executeLinkedObjects = true) = 0;
+	Linkable virtual void SetOrientation(IObjectSim& obj, bool executeLinkedObjects = true) = 0;
+
 	Linkable virtual void SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void SetOrientation(const glm::quat& quat, bool executeLinkedObjects = true) = 0;
+
+	Linkable virtual void SetTransform(IObjectSim& obj, bool executeLinkedObjects = true) = 0;
 
 	virtual glm::vec3 GetUpVector() = 0;
 	virtual glm::vec3 GetFrontVector() = 0;
@@ -112,6 +120,7 @@ public:
 	Linkable virtual void SetLastPosition(bool executeLinkedObjects = true) = 0;
 	Linkable virtual void SetLastScale(bool executeLinkedObjects = true) = 0;
 	Linkable virtual void SetLastOrientation(bool executeLinkedObjects = true) = 0;
+	Linkable virtual void SetLastTransform(bool executeLinkedObjects = true) = 0;
 	Linkable virtual void MoveInDirection(
 		Direction dir, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) = 0;
@@ -126,9 +135,11 @@ public:
 		const Rotation& min, const Rotation& max, bool executeLinkedObjects = true
 	) = 0;
 	Linkable virtual void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) = 0;
+	Linkable virtual void RevolveAround(const Rotation& toRotate, IObjectSim& obj, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void RevolveAround(
 		const Rotation& toRotate, const glm::vec3& centerPos, bool executeLinkedObjects = true
 	) = 0;
+	Linkable virtual void LookAt(IObjectSim& obj, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void LookAt(const glm::vec3& pointToLookAt, bool executeLinkedObjects = true) = 0;
 
 	virtual void LinkObject(IObjectSim& objectToLink) = 0;

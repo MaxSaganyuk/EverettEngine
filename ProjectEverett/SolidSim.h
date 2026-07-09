@@ -36,9 +36,15 @@ public:
 		const float speed = 1.0f
 	);
 
+	void SetPositionVector(IObjectSim& obj, bool executeLinkedObjects = true) override;
+	void SetScaleVector(IObjectSim& obj, bool executeLinkedObjects = true) override;
+	void SetOrientation(IObjectSim& obj, bool executeLinkedObjects = true) override;
+
 	void SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
 	void SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects = true) override;
 	void SetOrientation(const glm::quat& quat, bool executeLinkedObjects = true) override;
+
+	void SetTransform(IObjectSim& obj, bool executeLinkedObjects = true) override;
 
 	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();

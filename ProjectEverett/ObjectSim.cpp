@@ -172,12 +172,28 @@ bool ObjectSim::IsMovementInverted()
 	return speed < 0.0f;
 }
 
+void ObjectSim::SetPositionVector(IObjectSim& obj, bool executeLinkedObjects)
+{
+	SetPositionVector(obj.GetPositionVectorAddr(), executeLinkedObjects);
+}
+
+void ObjectSim::SetScaleVector(IObjectSim& obj, bool executeLinkedObjects)
+{
+	SetScaleVector(obj.GetScaleVectorAddr(), executeLinkedObjects);
+}
+
+void ObjectSim::SetOrientation(IObjectSim& obj, bool executeLinkedObjects)
+{
+	SetOrientation(obj.GetOrientationAddr(), executeLinkedObjects);
+}
+
 void ObjectSim::SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects)
 {
 	pos = vect;
 
 	ExecuteLinkedObjects<LinkableFuncNames::SetPositionVector>(
-		&ObjectSim::SetPositionVector, executeLinkedObjects, vect, true
+		static_cast<void(ObjectSim::*)(const glm::vec3&, bool)>(&ObjectSim::SetPositionVector), executeLinkedObjects, 
+		vect, true
 	);
 }
 
@@ -186,7 +202,8 @@ void ObjectSim::SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects)
 	scale = vect;
 
 	ExecuteLinkedObjects<LinkableFuncNames::SetScaleVector>(
-		&ObjectSim::SetScaleVector, executeLinkedObjects, vect, true
+		static_cast<void(ObjectSim::*)(const glm::vec3&, bool)>(&ObjectSim::SetScaleVector), executeLinkedObjects, 
+		vect, true
 	);
 }
 
@@ -195,7 +212,19 @@ void ObjectSim::SetOrientation(const glm::quat& quat, bool executeLinkedObjects)
 	orient = quat;
 
 	ExecuteLinkedObjects<LinkableFuncNames::SetOrientation>(
-		&ObjectSim::SetOrientation, executeLinkedObjects, quat, true
+		static_cast<void(ObjectSim::*)(const glm::quat&, bool)>(&ObjectSim::SetOrientation), executeLinkedObjects, 
+		quat, true
+	);
+}
+
+void ObjectSim::SetTransform(IObjectSim& obj, bool executeLinkedObjects)
+{
+	pos = obj.GetPositionVectorAddr();
+	scale = obj.GetScaleVectorAddr();
+	orient = obj.GetOrientationAddr();
+
+	ExecuteLinkedObjects<LinkableFuncNames::SetTransform>(
+		&ObjectSim::SetTransform, executeLinkedObjects, obj, true
 	);
 }
 
@@ -301,6 +330,17 @@ void ObjectSim::SetLastOrientation(bool executeLinkedObjects)
 	);
 }
 
+void ObjectSim::SetLastTransform(bool executeLinkedObjects)
+{
+	pos.SetLastValue();
+	scale.SetLastValue();
+	orient.SetLastValue();
+
+	ExecuteLinkedObjects<LinkableFuncNames::SetLastTransform>(
+		&ObjectSim::SetLastTransform, executeLinkedObjects, true
+	);
+}
+
 void ObjectSim::MoveInDirection(Direction dir, const glm::vec3& limitAxis, bool executeLinkedObjects)
 {
 	if (disabledDirs[dir]) return;
@@ -388,6 +428,11 @@ void ObjectSim::Rotate(const Rotation& toRotate, bool executeLinkedObjects)
 	);
 }
 
+void ObjectSim::RevolveAround(const Rotation& toRotate, IObjectSim& obj, bool executeLinkedObjects)
+{
+	RevolveAround(toRotate, obj.GetPositionVectorAddr(), executeLinkedObjects);
+}
+
 void ObjectSim::RevolveAround(const Rotation& toRotate, const glm::vec3& centerPos, bool executeLinkedObjects)
 {
 	glm::vec3 offset = CalcOrientationFromRotation(toRotate) * (pos.GetValue() - centerPos);
@@ -395,8 +440,14 @@ void ObjectSim::RevolveAround(const Rotation& toRotate, const glm::vec3& centerP
 	pos += (centerPos + offset) - pos.GetValue();
 
 	ExecuteLinkedObjects<LinkableFuncNames::RevolveAround>(
-		&ObjectSim::RevolveAround, executeLinkedObjects, toRotate, centerPos, true
+		static_cast<void(ObjectSim::*)(const Rotation&, const glm::vec3&, bool)>(&ObjectSim::RevolveAround), 
+		executeLinkedObjects, toRotate, centerPos, true
 	);
+}
+
+void ObjectSim::LookAt(IObjectSim& obj, bool executeLinkedObjects)
+{
+	LookAt(obj.GetPositionVectorAddr(), executeLinkedObjects);
 }
 
 void ObjectSim::LookAt(const glm::vec3& pointToLookAt, bool executeLinkedObjects)
@@ -404,7 +455,8 @@ void ObjectSim::LookAt(const glm::vec3& pointToLookAt, bool executeLinkedObjects
 	orient += glm::quatLookAt(glm::normalize(pos.GetValue() - pointToLookAt), worldUp) - orient.GetValue();
 
 	ExecuteLinkedObjects<LinkableFuncNames::LookAt>(
-		&ObjectSim::LookAt, executeLinkedObjects, pointToLookAt, true
+		static_cast<void(ObjectSim::*)(const glm::vec3&, bool)>(&ObjectSim::LookAt), executeLinkedObjects, 
+		pointToLookAt, true
 	);
 }
 

@@ -70,7 +70,7 @@ public:
 		this->satelliteBox = satelliteBox;
 		this->satelliteBoxLight = satelliteBoxLight;
 
-		satelliteBoxLight->SetPositionVector(satelliteBox->GetPositionVectorAddr());
+		satelliteBoxLight->SetPositionVector(*satelliteBox);
 		satelliteBoxLight->GetColorVectorAddr() = ColorManager::GetColorVec3(ColorManager::Colors::MAGENTA);
 
 		testCharSolid->LinkObject(*satelliteBox);
@@ -79,8 +79,8 @@ public:
 
 	void RevolveAroundChar()
 	{
-		satelliteBox->RevolveAround(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, testCharSolid->GetPositionVectorAddr());
-		satelliteBox->LookAt(testCharSolid->GetPositionVectorAddr());
+		satelliteBox->RevolveAround(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, *testCharSolid);
+		satelliteBox->LookAt(*testCharSolid);
 	}
 
 	void SetSolidSim(ISolidSim* testCharSolid)

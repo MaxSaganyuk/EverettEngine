@@ -25,6 +25,21 @@ SolidSim::SolidSim(
 	ResetModelMatrix();
 }
 
+void SolidSim::SetPositionVector(IObjectSim& obj, bool executeLinkedObjects)
+{
+	SetPositionVector(obj.GetPositionVectorAddr(), executeLinkedObjects);
+}
+
+void SolidSim::SetScaleVector(IObjectSim& obj, bool executeLinkedObjects)
+{
+	SetScaleVector(obj.GetScaleVectorAddr(), executeLinkedObjects);
+}
+
+void SolidSim::SetOrientation(IObjectSim& obj, bool executeLinkedObjects)
+{
+	SetOrientation(obj.GetOrientationAddr(), executeLinkedObjects);
+}
+
 void SolidSim::SetPositionVector(const glm::vec3& vect, bool executeLinkedObjects)
 {
 	ObjectSim::SetPositionVector(vect, executeLinkedObjects);
@@ -40,6 +55,12 @@ void SolidSim::SetScaleVector(const glm::vec3& vect, bool executeLinkedObjects)
 void SolidSim::SetOrientation(const glm::quat& quat, bool executeLinkedObjects)
 {
 	ObjectSim::SetOrientation(quat, executeLinkedObjects);
+	ResetModelMatrix();
+}
+
+void SolidSim::SetTransform(IObjectSim& obj, bool executeLinkedObjects)
+{
+	ObjectSim::SetTransform(obj, executeLinkedObjects);
 	ResetModelMatrix();
 }
 

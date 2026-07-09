@@ -339,9 +339,7 @@ bool EverettEngine::CreateGizmoSolid(
 	{
 		SolidSim& gizmoSolid = *solid;
 
-		gizmoSolid.SetPositionVector(relatedObject.GetPositionVectorAddr());
-		gizmoSolid.SetScaleVector(relatedObject.GetScaleVectorAddr());
-		gizmoSolid.SetOrientation(relatedObject.GetOrientationAddr());
+		gizmoSolid.SetTransform(relatedObject);
 		gizmoSolid.SetModelDefaultColor(gizmoColor);
 
 		if constexpr (std::is_same_v<Sim, ColliderSim>)
