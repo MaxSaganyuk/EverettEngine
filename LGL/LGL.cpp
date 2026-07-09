@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <sstream>
 
 #include "LGLUniformHasher.h"
 
@@ -1033,7 +1034,39 @@ bool LGL::CompileShader(ShaderType shaderType, const std::string& name)
 	ShaderID* newShader = &currentShaderInfo.shaderId;
 
 	GLSafeExecute(glShaderSource, *newShader, 1, &shaderToC, nullptr);
-	bool shaderCompiled = GLSafeExecute(glCompileShader, *newShader);
+	GLSafeExecute(glCompileShader, *newShader);
+
+	int shaderCompiled{};
+
+	glGetShaderiv(*newShader, GL_COMPILE_STATUS, &shaderCompiled);
+
+	if (!shaderCompiled)
+	{
+		int maxLen{};
+		GLSafeExecute(glGetShaderiv, *newShader, GL_INFO_LOG_LENGTH, &maxLen);
+
+		std::string error;
+		error.resize(maxLen);
+		GLSafeExecute(glGetShaderInfoLog, *newShader, maxLen, &maxLen, &error[0]);
+
+		std::string line;
+		line.reserve(maxLen);
+		for (char c : error)
+		{
+			if (c == '\n')
+			{				
+				if (!line.empty())
+				{
+					std::cerr << line << '\n';
+					line.clear();
+				}
+
+				continue;
+			}
+
+			line += c;
+		}
+	}
 
 	return shaderCompiled;
 }
@@ -1317,11 +1350,13 @@ bool LGL::LoadAndCompileShader(const std::string& name)
 		if (!LoadShaderFromFile(name, shaderPath + '\\' + name + '.' + shaderFileType.first, shaderFileType.first)) continue;
 		if (!CompileShader(shaderFileType.second, name)) // remove if did not compile
 		{
-			shaderInfoCollection[name].second.erase(shaderFileType.second);
+			shaderInfoCollection.erase(name);
+			break;
 		}
 	}
 
-	return shaderInfoCollection[name].second.size() && CreateShaderProgram(name);
+	auto iter = shaderInfoCollection.find(name);
+	return iter != shaderInfoCollection.end() && !iter->second.second.empty() && CreateShaderProgram(name);
 }
 
 void LGL::SetInteractable(

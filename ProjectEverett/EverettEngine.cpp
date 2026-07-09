@@ -707,7 +707,8 @@ bool EverettEngine::GenerateShader()
 		{
 			std::cerr << "Failed to compile custom shader code, falling back to default shader\n";
 
-			ExecuteInShaderSubstitutions(shaderGen, filePath, true);
+			shaderCodeHolder->ClearCustomCode();
+			ExecuteInShaderSubstitutions(shaderGen, filePath);
 		}
 	}
 
