@@ -234,7 +234,7 @@ float SolidSim::GetModelMeshShininess(size_t index)
 
 void SolidSim::InvokeAutoScale()
 {
-	scale = STMM.GetAutoScaleVector();
+	SetScaleVector(STMM.GetAutoScaleVector(), false);
 }
 
 std::vector<std::string> SolidSim::GetModelAnimationNames()
