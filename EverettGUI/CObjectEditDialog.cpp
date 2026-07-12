@@ -114,8 +114,8 @@ void CObjectEditDialog::SetupObjectParams()
 	playerPlayButton.EnableWindow(false);
 	playerPauseButton.EnableWindow(false);
 	playerStopButton.EnableWindow(false);
-	playerLoopCheck.EnableWindow(false);
-	playerSpeedEdit.EnableWindow(false);
+	playerLoopCheck.EnableWindow(true);
+	playerSpeedEdit.EnableWindow(true);
 
 	switch (objectType)
 	{
@@ -172,8 +172,6 @@ void CObjectEditDialog::SetupObjectParams()
 			if (!animNames.empty())
 			{
 				playerComboBox.SetCurSel(static_cast<int>(castedSolidInterface->GetModelAnimation()));
-				playerLoopCheck.EnableWindow(true);
-				playerSpeedEdit.EnableWindow(true);
 
 				playbackCallAdapt = std::make_unique<PlaybackCallAdapter>(*this, castedSolidInterface);
 			}
