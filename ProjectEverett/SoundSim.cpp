@@ -138,6 +138,7 @@ void SoundSim::Play(bool loop)
 
 	sound.playStates.Play(loop);
 	UpdateCameraPosition();
+	UpdateSourcePosForAL();
 }
 
 bool SoundSim::IsPlaying()
@@ -202,7 +203,7 @@ float SoundSim::GetPlaybackSpeed()
 
 void SoundSim::UpdateCurrentPlaybackTime()
 {
-	if (sound.duration < sound.playStates.GetCurrentTime())
+	if (!sound.playStates.IsLooped() && sound.duration * (1.0f / sound.playbackSpeed) < sound.playStates.GetCurrentTime())
 	{
 		Stop();
 	}
@@ -212,16 +213,21 @@ bool SoundSim::UpdateTransform()
 {
 	if (ObjectSim::UpdateTransform() && sound.playStates.IsPlaying())
 	{
-		ContextLock
-
-		const glm::vec3& currentPos = pos;
-		alSource3f(sound.source, AL_POSITION, currentPos.x, currentPos.y, currentPos.z);
-		alSource3f(sound.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+		UpdateSourcePosForAL();
 
 		return true;
 	}
 
 	return false;
+}
+
+void SoundSim::UpdateSourcePosForAL()
+{
+	ContextLock
+
+	const glm::vec3& currentPos = pos;
+	alSource3f(sound.source, AL_POSITION, currentPos.x, currentPos.y, currentPos.z);
+	alSource3f(sound.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 }
 
 void SoundSim::SetPlaybackCallback(std::function<void(bool, bool, bool)> callback)

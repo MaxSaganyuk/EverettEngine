@@ -55,6 +55,7 @@ public:
 	bool SetSimInfoToLoad(std::string_view& line);
 
 	bool UpdateTransform() override;
+	void UpdateSourcePosForAL();
 
 	static void InitOpenAL();
 	static void TerminateOpenAL();

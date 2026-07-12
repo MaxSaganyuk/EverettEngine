@@ -53,7 +53,7 @@ public:
 	// Instant setter for on demand framerate independant change
 	void operator=(const Type& value)
 	{
-		lastValue = currentValue;
+		updateRequired = true;
 		currentValue = value;
 
 		ExecuteValueUpdateCallback();
