@@ -21,6 +21,7 @@
 #include "LGLStructs.h"
 
 #define CALLBACK static void
+#define MAIN_THRD_ONLY // Indicates that function must be called from main thread
 
 struct GLFWwindow;
 class LGLUniformHasher;
@@ -138,9 +139,12 @@ public:
 
 	// Public functions
 	LGL_API LGL();
-	LGL_API ~LGL();
+	LGL_API ~LGL(); // Will call DestroyWindow automatically if destruction is on main thread
 
-	LGL_API bool CreateWindow(const int width, const int height, const std::string& title, bool fullscreen = false);
+	MAIN_THRD_ONLY LGL_API bool CreateWindow(
+		const int width, const int height, const std::string& title, bool fullscreen = false
+	);
+	MAIN_THRD_ONLY LGL_API bool DestroyWindow();
 
 	LGL_API int GetCurrentWindowWidth();
 	LGL_API int GetCurrentWindowHeight();
@@ -174,16 +178,19 @@ public:
 #endif
 	LGL_API bool ConfigureTexture(const std::string& modelName, const LGLStructs::Texture& texture);
 
-	LGL_API static void InitOpenGL(int major, int minor);
-
-	LGL_API static void TerminateOpenGL();
+	// Providing main thread id will enable safety on GLFW main thread only function calls
+	// On Debug will assert, on release only prevent execution and log
+	// Ensure that id provided is actually main thread id
+	LGL_API static void SetMainThreadID(std::thread::id id); 
+	MAIN_THRD_ONLY LGL_API static void InitOpenGL(int major, int minor);
+	MAIN_THRD_ONLY LGL_API static void TerminateOpenGL();
 
 	LGL_API void SetDepthTest(DepthTestMode depthTestMode);
 
 	LGL_API int GetMaxAmountOfVertexAttr();
 
 	LGL_API bool IsMouseCaptured();
-	LGL_API void CaptureMouse(bool value);
+	MAIN_THRD_ONLY LGL_API void CaptureMouse(bool value);
 
 	LGL_API void SetInteractable(
 		int keyID, 
@@ -268,6 +275,8 @@ private:
 
 	std::function<void(float)> renderTimeCallbackFunc;
 
+	static bool CheckIfMainThread(const char* funcName);
+
 	static LGL* CheckAndGetInstanceByContext(GLFWwindow* window);
 	static std::map<GLFWwindow*, LGL*> contextToInstance;
 
@@ -324,6 +333,9 @@ private:
 	std::unordered_set<size_t> uniformLocationTracker;
 	std::unordered_map<ShaderProgramID, std::unordered_map<std::string, int>> uniformLocationCache;
 	std::unique_ptr<LGLUniformHasher> uniformHasher;
+
+	static std::thread::id mainThreadID;
 };
 
 #undef CALLBACK
+#undef MAIN_THRD_ONLY

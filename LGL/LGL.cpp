@@ -27,6 +27,8 @@ PauseRenderingInternal(false);
 
 using namespace LGLStructs;
 
+std::thread::id LGL::mainThreadID = std::thread::id{};
+
 std::map<GLFWwindow*, LGL*> LGL::contextToInstance;
 
 std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
@@ -95,9 +97,10 @@ LGL::~LGL()
 		StopRenderingCycle();
 	}
 
-	contextToInstance.erase(window);
-	glfwDestroyWindow(window);
-	window = nullptr;
+	if (std::this_thread::get_id() == mainThreadID)
+	{
+		DestroyWindow();
+	}
 
 	std::cout << "LambdaGL instance destroyed\n";
 }
@@ -170,6 +173,8 @@ void LGL::DeleteGLObjects()
 
 bool LGL::CreateWindow(const int width, const int height, const std::string& title, bool fullscreen)
 {
+	if (!CheckIfMainThread("CreateWindow")) return false;
+
 	if (window)
 	{
 		std::cout << "Window already created\n";
@@ -205,6 +210,22 @@ bool LGL::CreateWindow(const int width, const int height, const std::string& tit
 	return true;
 }
 
+bool LGL::DestroyWindow()
+{
+	if (!CheckIfMainThread("DestroyWindow")) return false;
+
+	if (window)
+	{
+		contextToInstance.erase(window);
+		glfwDestroyWindow(window);
+		window = nullptr;
+
+		return true;
+	}
+
+	return false;
+}
+
 int LGL::GetCurrentWindowWidth()
 {
 	return windowWidth;
@@ -217,6 +238,8 @@ int LGL::GetCurrentWindowHeight()
 
 void LGL::InitOpenGL(int major, int minor)
 {
+	if (!CheckIfMainThread("InitOpenGL")) return;
+
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
@@ -255,8 +278,15 @@ void LGL::InitCallbacks()
 	glfwSetErrorCallback(GLFWErrorCallback);
 }
 
+void LGL::SetMainThreadID(std::thread::id id)
+{
+	mainThreadID = id;
+}
+
 void LGL::TerminateOpenGL()
 {
+	if (!CheckIfMainThread("TerminateOpenGL")) return;
+
 	glfwTerminate();
 
 	std::cout << "Terminate OpenGL\n";
@@ -284,6 +314,8 @@ bool LGL::IsMouseCaptured()
 
 void LGL::CaptureMouse(bool value)
 {
+	if (!CheckIfMainThread("CaptureMouse")) return;
+
 	mouseCaptured = value;
 
 	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, mouseCaptured);
@@ -1409,6 +1441,29 @@ int LGL::ConvertKeyTo(const std::string& keyName)
 void LGL::GLFWErrorCallback(int errorCode, const char* description)
 {
 	int x = errorCode;
+}
+
+bool LGL::CheckIfMainThread(const char* funcName)
+{
+	bool mainThreadIDNotSet = mainThreadID == std::thread::id{};
+
+	if (mainThreadIDNotSet)
+	{
+		assert(false && "Cannot continue execution, mainThreadID not set");
+		std::cerr << "Cannot continue execution, mainThreadID not set" << '\n';
+
+		std::terminate();
+	}
+
+	bool currentThreadIsMainOne = mainThreadID == std::this_thread::get_id();
+
+	if (!currentThreadIsMainOne)
+	{
+		assert(false && "This function must be executed on main thread. Check the log.");
+		std::cerr << "Function " << funcName << " must be executed on main thread\n";
+	}
+
+	return currentThreadIsMainOne;
 }
 
 LGL* LGL::CheckAndGetInstanceByContext(GLFWwindow* window)

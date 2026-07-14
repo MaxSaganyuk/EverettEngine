@@ -131,7 +131,8 @@ EverettEngine::EverettEngine()
 	stdErrStreamBuffer = std::cerr.rdbuf();
 
 	SetLogCallback();
-	
+
+	LGL::SetMainThreadID(std::this_thread::get_id());
 	LGL::InitOpenGL(3, 3);
 	SoundSim::InitOpenAL();
 
