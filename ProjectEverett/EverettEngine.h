@@ -78,7 +78,7 @@ public:
 	EVERETT_API void SetFontPath(const std::string& fontPath);
 	EVERETT_API void SetModelPath(const std::string& modelPath);
 
-	EVERETT_API void SetDefaultWASDControls(bool value = true);
+	EVERETT_API void SetDefaultControls(bool value = true);
 	
 	EVERETT_API void EnableGizmoCreation();
 	EVERETT_API void SetGizmoVisible(bool value = true);
@@ -143,6 +143,8 @@ public:
 	EVERETT_API void RemoveWindowHandler(const std::string& name);
 	EVERETT_API void AddCurrentWindowHandler(const std::string& name);
 	EVERETT_API void CloseWindow(const std::string& name);
+	// If engine's render thread runs in non main thread, set to have correct GLFW behaviour
+	EVERETT_API void SetMainThreadInfo(const std::string& windowName, size_t id);
 
 	EVERETT_API std::string GetAvailableObjectName(const std::string& name);
 
@@ -181,7 +183,7 @@ private:
 	bool gizmoVisible = false;
 	bool gizmoEnabled = false;
 
-	std::optional<bool> defaultWASDControlsEnabled;
+	std::optional<bool> defaultControlsEnabled;
 	bool panicOnFailedInterfaceGet = false;
 
 	struct ObjectTypeInfo;

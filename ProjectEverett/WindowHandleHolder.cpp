@@ -27,11 +27,39 @@ void WindowHandleHolder::BringWindowOnTop(const std::string& name)
 	BringWindowToTop(windowHandleMap[name]);
 }
 
+void WindowHandleHolder::ExecuteFuncOnMainThread(const std::function<void()>& func)
+{
+	if (mainThreadExecuteInfo)
+	{
+		const auto& [name, id] = *mainThreadExecuteInfo;
+		PostMessageToWindow(name, id, &func);
+	}
+}
+
 void WindowHandleHolder::CloseWindow(const std::string& name)
 {
-	if(windowHandleMap.contains(name))
-	{ 
-		PostMessage(windowHandleMap[name], WM_CLOSE, 0, 0);
+	if (PostMessageToWindow(name, WM_CLOSE))
+	{
 		windowHandleMap.erase(name);
 	}
+}
+
+bool WindowHandleHolder::PostMessageToWindow(const std::string& name, size_t messageID, const void* data)
+{
+	if (auto iter = windowHandleMap.find(name); iter != windowHandleMap.end())
+	{
+		return PostMessage(iter->second, static_cast<UINT>(messageID), reinterpret_cast<WPARAM>(data), 0);
+	}
+
+	return false;
+}
+
+bool WindowHandleHolder::IsMainThreadInfoSet()
+{
+	return static_cast<bool>(mainThreadExecuteInfo);
+}
+
+void WindowHandleHolder::SetMainThreadInfo(const std::string& windowName, size_t mainThreadPostID)
+{
+	mainThreadExecuteInfo = { windowName, mainThreadPostID };
 }

@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
 
 			if (config.defaultWASD)
 			{
-				engine.SetDefaultWASDControls();
+				engine.SetDefaultControls();
 			}
 
 			engine.LoadWorldFromFile(config.startSave);

@@ -53,8 +53,12 @@ protected:
 	bool LoadObjectNamesToTree();
 
 private:
+	constexpr static char windowName[] = "EverettGUI";
+
 	constexpr static int mainWindowWidth  = 475;
 	constexpr static int mainWindowHeight = 600;
+
+	constexpr static int ExecuteOnMainThreadID = WM_USER + 6;
 
 	void OnLoadSave(bool load, std::function<bool(const std::string&)> loadSaveFunc);
 	void OnLoad();
@@ -68,6 +72,8 @@ private:
 	void OnCameraOptions();
 	void OnScriptOptions();
 	void OnGameProduce();
+
+	afx_msg LRESULT ExecuteOnMainThread(WPARAM wParam, LPARAM lParam);
 	EverettEngine engine;
 	CMainWindow* mainWindow; // not owner
 	std::thread engineRenderThread;

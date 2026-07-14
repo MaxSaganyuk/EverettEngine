@@ -42,6 +42,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_BUTTON32774, &CMainFrame::OnCameraOptions)
 	ON_COMMAND(ID_BUTTON32775, &CMainFrame::OnScriptOptions)
 	ON_COMMAND(ID_BUTTON32778, &CMainFrame::OnGameProduce)
+	ON_MESSAGE(ExecuteOnMainThreadID, &CMainFrame::ExecuteOnMainThread)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -67,9 +68,10 @@ CMainFrame::CMainFrame() noexcept
 			ClearTree() && LoadObjectNamesToTree() && mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
 		});
 		engine.CreateAndSetupMainWindow(800, 600, "Everett");
+		engine.SetMainThreadInfo(windowName, ExecuteOnMainThreadID);
 		// Allowing custom icons for games will probably have this removed
 		GetActiveWindow()->SetIcon(AfxGetApp()->LoadIconW(IDR_MAINFRAME), false);
-		engine.SetDefaultWASDControls();
+		engine.SetDefaultControls();
 		engine.EnableGizmoCreation();
 	}
 	catch (const EverettException&)
@@ -81,7 +83,7 @@ CMainFrame::CMainFrame() noexcept
 		try
 		{
 			engine.RunRenderWindow();
-			engine.CloseWindow("EverettGUI");
+			engine.CloseWindow(windowName);
 		}
 		catch (const EverettException&)
 		{
@@ -94,7 +96,7 @@ CMainFrame::CMainFrame() noexcept
 
 CMainFrame::~CMainFrame()
 {
-	engine.RemoveWindowHandler("EverettGUI");
+	engine.RemoveWindowHandler(windowName);
 	engine.StopRenderWindow();
 	engineRenderThread.join();
 }
@@ -137,7 +139,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	SetActiveView(mainWindow);
 	BringWindowToTop();
-	engine.AddCurrentWindowHandler("EverettGUI");
+	engine.AddCurrentWindowHandler(windowName);
 	RecalcLayout();
 
 	// TODO: Delete these three lines if you don't want the toolbar to be dockable
@@ -410,4 +412,16 @@ void CMainFrame::OnGameProduce()
 	CGameProducerDlg gameProducerDlg(engine);
 
 	gameProducerDlg.DoModal();
+}
+
+LRESULT CMainFrame::ExecuteOnMainThread(WPARAM wParam, LPARAM lParam)
+{
+	std::function<void()>* funcPtr = reinterpret_cast<std::function<void()>*>(wParam);
+
+	if (funcPtr)
+	{
+		(*funcPtr)();
+	}
+		
+	return 0;
 }

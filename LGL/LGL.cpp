@@ -83,6 +83,7 @@ LGL::LGL()
 	useVSync = true;
 	renderDeltaTime = 1.0f;
 	renderTextVOCreated = false;
+	mouseCaptured = false;
 
 	std::cout << "Created LambdaGL instance\n";
 }
@@ -252,8 +253,6 @@ void LGL::InitCallbacks()
 
 	glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
 	glfwSetErrorCallback(GLFWErrorCallback);
-
-	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, true);
 }
 
 void LGL::TerminateOpenGL()
@@ -278,10 +277,16 @@ void LGL::SetDepthTest(DepthTestMode depthTestMode)
 	}
 }
 
+bool LGL::IsMouseCaptured()
+{
+	return mouseCaptured;
+}
+
 void LGL::CaptureMouse(bool value)
 {
-	HandshakeContextLock
+	mouseCaptured = value;
 
+	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, mouseCaptured);
 	glfwSetInputMode(window, GLFW_CURSOR, value ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 
 	std::cout << "Mouse has been captured\n";
@@ -337,11 +342,11 @@ int LGL::GetMaxAmountOfVertexAttr()
 	return attr;
 }
 
-void LGL::ProcessInput()
+void LGL::ProcessInput(std::map<size_t, InteractableInfo>& interCollection, InteractableFunc&& interFunc)
 {
-	for (auto& interact : interactCollection)
+	for (auto& interact : interCollection)
 	{
-		int retCode = glfwGetKey(window, static_cast<int>(interact.first));
+		int retCode = interFunc(window, static_cast<int>(interact.first));
 
 		if (retCode == GLFW_PRESS)
 		{
@@ -362,6 +367,16 @@ void LGL::ProcessInput()
 			}
 		}
 	}
+}
+
+void LGL::ProcessKeyPress()
+{
+	ProcessInput(keyInteractCollection, glfwGetKey);
+}
+
+void LGL::ProcessMousePress()
+{
+	ProcessInput(mouseInterctCollection, glfwGetMouseButton);
 }
 
 void LGL::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
@@ -489,7 +504,9 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 		std::chrono::system_clock::time_point renderStartTime = std::chrono::system_clock::now();
 		glfwSwapInterval(useVSync);
 
-		ProcessInput();
+		ProcessKeyPress();
+		ProcessMousePress();
+
 		glfwPollEvents();
 
 		GLSafeExecute(glClearColor, background.r, background.g, background.b, 1.0f);
@@ -1366,42 +1383,27 @@ void LGL::SetInteractable(
 	std::function<void()> releasedFunc
 )
 {
-	interactCollection[keyID] = { false, holdable, std::move(pressedFunc), std::move(releasedFunc) };
-	
+	if (keyID < 0) return;
+
+	(keyID <= 2 ? mouseInterctCollection[keyID] : keyInteractCollection[keyID]) =
+		{ false, holdable, std::move(pressedFunc), std::move(releasedFunc) };
+
 	std::cout << "Interactable for keyId " << keyID << " set\n";
 }
 
 std::string LGL::ConvertKeyTo(int keyId)
 {
-	auto& keyToCharMap = LGLKeyToStringMap::keyToCharMap;
-
-	if (keyToCharMap.Exists(keyId))
-	{
-		return std::to_string(keyToCharMap[keyId]);
-	}
-
-	auto& keyToStringMap = LGLKeyToStringMap::keyToStringMap;
-
-	return keyToStringMap.Exists(keyId) ? keyToStringMap[keyId] : "InvalidKey";
+	return LGLKeyToStringMap::Get(keyId);
 }
 
 int LGL::ConvertKeyTo(char c)
 {
-	auto& keyToCharMap = LGLKeyToStringMap::keyToCharMap;
-
-	return keyToCharMap.Exists(c) ? keyToCharMap[c] : -1;
+	return LGLKeyToStringMap::Get(c);
 }
 
 int LGL::ConvertKeyTo(const std::string& keyName)
 {
-	if (keyName.size() == 1)
-	{
-		return ConvertKeyTo(keyName[0]);
-	}
-
-	auto& keyToStringMap = LGLKeyToStringMap::keyToStringMap;
-
-	return keyToStringMap.Exists(keyName) ? keyToStringMap[keyName] : -1;
+	return LGLKeyToStringMap::Get(keyName);
 }
 
 void LGL::GLFWErrorCallback(int errorCode, const char* description)

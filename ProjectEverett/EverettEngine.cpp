@@ -229,10 +229,14 @@ void EverettEngine::CreateAndSetupMainWindow(
 
 	mainLGL->SetCursorPositionCallback(
 		[this](double xpos, double ypos) {
-			camera->RotateByMousePos(static_cast<float>(xpos), static_cast<float>(ypos));
-			ExecuteVectorOfFuncs(mouseMoveScriptFuncs, xpos, ypos); 
+			if (mainLGL->IsMouseCaptured())
+			{
+				camera->RotateByMousePos(static_cast<float>(xpos), static_cast<float>(ypos));
+				ExecuteVectorOfFuncs(mouseMoveScriptFuncs, xpos, ypos);
+			}
 		}
 	);
+	
 	mainLGL->SetScrollCallback([this](double xpos, double ypos) { ExecuteVectorOfFuncs(mouseScrollScriptFuncs, ypos); });
 
 	mainLGL->SetRenderDeltaCallback(ObjectSim::SetRenderDeltaTime);
@@ -269,6 +273,14 @@ void EverettEngine::CreateAndSetupMainWindow(
 	mainLGL->EnableUniformValueHashing(ENABLE_OPTIMIZATIONS);
 }
 
+void EverettEngine::SetMainThreadInfo(const std::string& windowName, size_t id)
+{
+	if (hwndHolder)
+	{
+		hwndHolder->SetMainThreadInfo(windowName, id);
+	}
+}
+
 void EverettEngine::SetDebugLogVisible(bool value)
 {
 	if (logger)
@@ -277,12 +289,12 @@ void EverettEngine::SetDebugLogVisible(bool value)
 	}
 }
 
-void EverettEngine::SetDefaultWASDControls(bool value)
+void EverettEngine::SetDefaultControls(bool value)
 {
 	// Since the value is std::optional, has 3 states
-	if (!defaultWASDControlsEnabled && value)
+	if (!defaultControlsEnabled && value)
 	{
-		defaultWASDControlsEnabled = true;
+		defaultControlsEnabled = true;
 
 		std::string walkingDirections = "WSAD";
 
@@ -291,7 +303,7 @@ void EverettEngine::SetDefaultWASDControls(bool value)
 			AddInteractableImpl(
 				ConvertKeyTo(walkingDirections[i]), true,
 				[this, i]() { 
-					if (*defaultWASDControlsEnabled) 
+					if (*defaultControlsEnabled) 
 					{ 
 						camera->MoveInDirection(static_cast<ObjectSim::Direction>(i)); 
 					} 
@@ -299,10 +311,30 @@ void EverettEngine::SetDefaultWASDControls(bool value)
 				nullptr, true
 			);
 		}
+
+		AddInteractableImpl(
+			ConvertKeyTo("MouseRight"), false,
+			[this]() {
+				static std::function<void()> captureMouseSwitch = [this]() { mainLGL->CaptureMouse(!mainLGL->IsMouseCaptured()); };
+
+				if (*defaultControlsEnabled)
+				{
+					if (hwndHolder && hwndHolder->IsMainThreadInfoSet())
+					{
+						hwndHolder->ExecuteFuncOnMainThread(captureMouseSwitch);
+					}
+					else
+					{
+						captureMouseSwitch();
+					}
+				}
+			},
+			nullptr, true
+		);
 	}
-	else if (defaultWASDControlsEnabled)
+	else if (defaultControlsEnabled)
 	{
-		defaultWASDControlsEnabled = value;
+		defaultControlsEnabled = value;
 	}
 }
 

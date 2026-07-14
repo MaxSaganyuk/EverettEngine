@@ -72,6 +72,8 @@ private:
 		ShaderCode shaderCode;
 	};
 
+	using InteractableFunc = int(*)(GLFWwindow*, int);
+
 	struct InteractableInfo
 	{
 		bool pressed = false;
@@ -180,6 +182,7 @@ public:
 
 	LGL_API int GetMaxAmountOfVertexAttr();
 
+	LGL_API bool IsMouseCaptured();
 	LGL_API void CaptureMouse(bool value);
 
 	LGL_API void SetInteractable(
@@ -268,7 +271,10 @@ private:
 	static LGL* CheckAndGetInstanceByContext(GLFWwindow* window);
 	static std::map<GLFWwindow*, LGL*> contextToInstance;
 
-	void ProcessInput();
+	void ProcessInput(std::map<size_t, InteractableInfo>& interCollection, InteractableFunc&& interFunc);
+
+	void ProcessKeyPress();
+	void ProcessMousePress();
 	void Render();
 	void RenderText();
 	void PauseRenderingImpl(bool value);
@@ -279,6 +285,7 @@ private:
 
 	float renderDeltaTime;
 
+	bool mouseCaptured;
 	bool useVSync; // Passed value is not bool, but will do for on/off switch
 	bool pauseRendering;
 	bool externalRenderPauseActive;
@@ -308,7 +315,8 @@ private:
 	std::string lastProgram;
 	std::map<ShaderName, std::pair<ShaderProgramID, std::map<ShaderType, ShaderInfo>>> shaderInfoCollection;
 
-	std::map<size_t, InteractableInfo> interactCollection;
+	std::map<size_t, InteractableInfo> keyInteractCollection;
+	std::map<size_t, InteractableInfo> mouseInterctCollection;
 
 	bool batchUniformVals;
 	bool hashUniformVals;
