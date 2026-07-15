@@ -91,10 +91,20 @@ private:
 
 	struct AtlasInfo
 	{
+		// std::flat_map not used for lower C++ standard compitablity of the header
+		using FlatCharMap = std::vector<float>;
+
+		constexpr static size_t maxASCIIVal = 255;
+
 		TextureID tex{};
 		float width{};
 		float height{};
-		std::map<char, float> charPos;
+		FlatCharMap charPos;
+
+		AtlasInfo()
+		{
+			charPos.resize(maxASCIIVal + 1);
+		}
 	};
 
 	class InternalModelInfo
@@ -108,7 +118,7 @@ private:
 
 		bool IsSmartPtrUsed();
 
-		void SetModelPtr(LGLStructs::ModelInfo* modelRawPtr);
+		void SetModelPtr(LGLStructs::ModelInfo& modelRawPtr);
 		void SetModelPtr(std::weak_ptr<LGLStructs::ModelInfo> modelWeakPtr);
 
 		LGLStructs::ModelInfo* GetModelPtr();
@@ -242,6 +252,9 @@ private:
 	);
 
 	void CreateRenderTextVO();
+
+	template<typename ModelType>
+	void CreateModelImpl(const std::string& modelName, ModelType& model);
 
 	// If no name is given will compile last loaded shader
 	bool CompileShader(ShaderType shaderType, const std::string& name = "");

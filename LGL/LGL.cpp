@@ -43,9 +43,9 @@ bool LGL::InternalModelInfo::IsSmartPtrUsed()
 	return isSmartPtrUsed;
 }
 
-void LGL::InternalModelInfo::SetModelPtr(LGLStructs::ModelInfo* modelRawPtr)
+void LGL::InternalModelInfo::SetModelPtr(LGLStructs::ModelInfo& modelRawPtr)
 {
-	this->modelRawPtr = modelRawPtr;
+	this->modelRawPtr = &modelRawPtr;
 }
 
 void LGL::InternalModelInfo::SetModelPtr(std::weak_ptr<LGLStructs::ModelInfo> modelWeakPtr)
@@ -808,26 +808,23 @@ void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 
 void LGL::CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model)
 {
-	if (internalModelMap.find(modelName) == internalModelMap.end())
-	{
-		internalModelMap.emplace(modelName, InternalModelInfo{});
-		internalModelMap[modelName].SetModelPtr(&model);
-
-		for (auto& mesh : internalModelMap[modelName].GetModelPtr()->meshes)
-		{
-			CreateMesh(modelName, mesh);
-		}
-	}
+	CreateModelImpl(modelName, model);
 }
 
 void LGL::CreateModel(const std::string& modelName, std::weak_ptr<LGLStructs::ModelInfo> model)
 {
+	CreateModelImpl(modelName, model);
+}
+
+template<typename RefType>
+void LGL::CreateModelImpl(const std::string& modelName, RefType& model)
+{
 	if (internalModelMap.find(modelName) == internalModelMap.end())
 	{
-		internalModelMap.emplace(modelName, InternalModelInfo{});
-		internalModelMap[modelName].SetModelPtr(model);
+		auto modelIter = internalModelMap.try_emplace(modelName).first;
+		modelIter->second.SetModelPtr(model);
 
-		for (auto& mesh : internalModelMap[modelName].GetModelPtr()->meshes)
+		for (auto& mesh : modelIter->second.GetModelPtr()->meshes)
 		{
 			CreateMesh(modelName, mesh);
 		}
@@ -860,15 +857,15 @@ void LGL::DeleteModel(const std::string& modelName)
 {
 	HandshakeContextLock
 
-	if(internalModelMap.find(modelName) != internalModelMap.end())
+	if (auto modelIter = internalModelMap.find(modelName); modelIter != internalModelMap.end())
 	{
 		GLSafeExecute(glBindVertexArray, 0);
 
-		for (auto& VAO : internalModelMap[modelName].VAOs)
+		for (auto& VAO : modelIter->second.VAOs)
 		{
 			GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
 		}
-		for (auto& texture : internalModelMap[modelName].textureIDs)
+		for (auto& texture : modelIter->second.textureIDs)
 		{
 			GLSafeExecute(glDeleteTextures, 1, &texture.second);
 		}
@@ -1071,13 +1068,15 @@ bool LGL::CompileShader(ShaderType shaderType, const std::string& name)
 
 	HandshakeContextLock
 
-	if (shaderInfoCollection.find(name) == shaderInfoCollection.end())
+	auto shaderInfoIter = shaderInfoCollection.find(name);
+
+	if (shaderInfoIter == shaderInfoCollection.end())
 	{
 		std::cerr << "Shader " + name + "not found\n";
 		return false;
 	}
 
-	ShaderInfo& currentShaderInfo = shaderInfoCollection[name].second[shaderType];
+	ShaderInfo& currentShaderInfo = shaderInfoIter->second.second[shaderType];
 	AcceptableShaderCode shaderToC = currentShaderInfo.shaderCode.c_str();
 
 	ShaderID* newShader = &currentShaderInfo.shaderId;
@@ -1157,9 +1156,10 @@ bool LGL::LoadShaderFromFile(const std::string& name, const std::string& file, c
 LGL::ShaderProgramID LGL::SetCurrentShaderProg(const std::string& shaderProg)
 {
 	ShaderProgramID shaderProgID = ~ShaderProgramID{};
-	if (shaderInfoCollection.find(shaderProg) != shaderInfoCollection.end())
+
+	if (auto shaderInfoIter = shaderInfoCollection.find(shaderProg); shaderInfoIter != shaderInfoCollection.end())
 	{
-		shaderProgID = shaderInfoCollection[shaderProg].first;
+		shaderProgID = shaderInfoIter->second.first;
 
 		if (lastProgram != shaderProg)
 		{
@@ -1267,14 +1267,15 @@ bool LGL::ConfigureTextureImpl(TextureID& newTextureID, const Texture& texture)
 
 bool LGL::ConfigureTexture(const std::string& modelName, const LGLStructs::Texture& texture)
 {
-	if (internalModelMap[modelName].textureIDs.find(texture.name) != internalModelMap[modelName].textureIDs.end())
-	{
-		return true;
-	}
+	auto modelIter = internalModelMap.find(modelName);
 
-	internalModelMap[modelName].textureIDs[texture.name] = TextureID();
+	if (modelIter == internalModelMap.end()) return false;
 
-	TextureID& newTextureID = internalModelMap[modelName].textureIDs[texture.name];
+	auto textureIter = modelIter->second.textureIDs.find(texture.name);
+
+	if (textureIter != modelIter->second.textureIDs.end()) return true;
+
+	TextureID& newTextureID = modelIter->second.textureIDs.try_emplace(texture.name).first->second;
 
 	return ConfigureTextureImpl(newTextureID, texture);
 }
@@ -1317,10 +1318,12 @@ bool LGL::CreateShaderProgram(const std::string& name, const std::vector<std::st
 {	
 	HandshakeContextLock
 
-	shaderInfoCollection[name].first = GLSafeExecuteRet(glCreateProgram);
-	ShaderProgramID* newShaderProgram = &shaderInfoCollection[name].first;
+	auto shaderInfoIter = shaderInfoCollection.try_emplace(name).first;
 
-	for (auto& shaderInfo : shaderInfoCollection[name].second)
+	shaderInfoIter->second.first = GLSafeExecuteRet(glCreateProgram);
+	ShaderProgramID* newShaderProgram = &shaderInfoIter->second.first;
+
+	for (auto& shaderInfo : shaderInfoIter->second.second)
 	{
 		GLSafeExecute(glAttachShader, *newShaderProgram, shaderInfo.second.shaderId);
 	}
@@ -1353,21 +1356,25 @@ bool LGL::RecompileShader(const std::string& shaderName)
 
 void LGL::DeleteShader(const std::string& shaderName)
 {
+	auto shaderInfoIter = shaderInfoCollection.find(shaderName);
+
+	if (shaderInfoIter == shaderInfoCollection.end()) return;
+
 	lastProgram.clear();
 	if (uniformHasher)
 	{
-		uniformHasher->ResetHashesByShader(shaderInfoCollection[shaderName].first);
-		uniformLocationCache.erase(shaderInfoCollection[shaderName].first);
+		uniformHasher->ResetHashesByShader(shaderInfoIter->second.first);
+		uniformLocationCache.erase(shaderInfoIter->second.first);
 	}
 
 	GLSafeExecute(glUseProgram, 0);
 
-	for (auto& shaderInfo : shaderInfoCollection[shaderName].second)
+	for (auto& shaderInfo : shaderInfoIter->second.second)
 	{
 		GLSafeExecute(glDeleteShader, shaderInfo.second.shaderId);
 	}
 
-	GLSafeExecute(glDeleteProgram, shaderInfoCollection[shaderName].first);
+	GLSafeExecute(glDeleteProgram, shaderInfoIter->second.first);
 }
 
 void LGL::UpdateWindowSize(int width, int height)
@@ -1392,7 +1399,7 @@ bool LGL::LoadAndCompileShader(const std::string& name)
 		return true;
 	}
 
-	shaderInfoCollection[name] = {};
+	shaderInfoCollection.try_emplace(name);
 
 	for (const auto& shaderFileType : shaderTypeChoice)
 	{
@@ -1468,9 +1475,9 @@ bool LGL::CheckIfMainThread(const char* funcName)
 
 LGL* LGL::CheckAndGetInstanceByContext(GLFWwindow* window)
 {
-	if (contextToInstance.find(window) != contextToInstance.end() && contextToInstance[window])
+	if (auto contextIter = contextToInstance.find(window); contextIter != contextToInstance.end() && contextIter->second)
 	{
-		return contextToInstance[window];
+		return contextIter->second;
 	}
 
 	return nullptr;
@@ -1614,18 +1621,17 @@ int LGL::CheckUniformValueLocation(
 
 	if ((shaderProgramID = SetCurrentShaderProg(shaderProgramNameToUse)) != ~ShaderProgramID{})
 	{
-		if (uniformLocationCache.find(shaderProgramID) == uniformLocationCache.end())
+		auto uniformLocationIter = uniformLocationCache.try_emplace(shaderProgramID).first;
+		auto uniformValueIter = uniformLocationIter->second.find(valueName);
+
+		if (uniformValueIter == uniformLocationIter->second.end())
 		{
-			uniformLocationCache[shaderProgramID] = std::unordered_map<std::string, int>{};
+			uniformValueIter = uniformLocationIter->second.emplace(
+				valueName, GLSafeExecuteRet(glGetUniformLocation, shaderProgramID, valueName.c_str())
+			).first;
 		}
 
-		if (uniformLocationCache[shaderProgramID].find(valueName) == uniformLocationCache[shaderProgramID].end())
-		{
-			uniformLocationCache[shaderProgramID][valueName] =
-				GLSafeExecuteRet(glGetUniformLocation, shaderProgramID, valueName.c_str());
-		}
-
-		int uniformValueLocation = uniformLocationCache[shaderProgramID][valueName];
+		int uniformValueLocation = uniformValueIter->second;
 
 		if (uniformValueLocation == -1)
 		{
