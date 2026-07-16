@@ -230,10 +230,22 @@ void EverettEngine::CreateAndSetupMainWindow(
 
 	mainLGL->SetCursorPositionCallback(
 		[this](double xpos, double ypos) {
+			static bool firstCapturedCall = true;
+
 			if (mainLGL->IsMouseCaptured())
 			{
+				if (firstCapturedCall)
+				{
+					camera->ForceLastPos(static_cast<float>(xpos), static_cast<float>(ypos));
+					firstCapturedCall = false;
+				}
+
 				camera->RotateByMousePos(static_cast<float>(xpos), static_cast<float>(ypos));
 				ExecuteVectorOfFuncs(mouseMoveScriptFuncs, xpos, ypos);
+			}
+			else
+			{
+				firstCapturedCall = true;
 			}
 		}
 	);

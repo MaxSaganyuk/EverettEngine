@@ -47,6 +47,7 @@ public:
 	const glm::mat4& GetProjectionMatrixAddr();
 
 	void RotateByMousePos(float xpos, float ypos);
+	void ForceLastPos(float xpos, float ypos);
 
 	void MoveInDirection(
 		Direction dir, const glm::vec3& axisToLimit = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true

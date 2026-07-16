@@ -153,6 +153,12 @@ void CameraSim::RotateByMousePos(float xpos, float ypos)
 	UpdateViewMatrix();
 }
 
+void CameraSim::ForceLastPos(float xpos, float ypos)
+{
+	lastX = xpos;
+	lastY = ypos;
+}
+
 void CameraSim::Zoom(float valueDelta)
 {
 	if (fov - valueDelta > 1.0f && fov - valueDelta < 45.0f)
