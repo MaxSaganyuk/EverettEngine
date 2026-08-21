@@ -144,6 +144,11 @@ const glm::vec3& ObjectSim::GetWorldAxisVector(Axis axis)
 	}
 }
 
+void ObjectSim::SetRayQueueFunc(std::function<void(const Ray&)> func)
+{
+	rayQueueFunc = std::move(func);
+}
+
 void ObjectSim::SetMovementSpeed(float speed, bool executeLinkedObjects)
 {
 	this->speed = speed;
@@ -391,6 +396,14 @@ void ObjectSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& limitAxis, bo
 void ObjectSim::MoveByAxis(Axis axis, const glm::vec3& limitAxis, bool executeLinkedObjects)
 {
 	MoveByAxis(GetWorldAxisVector(axis), limitAxis, executeLinkedObjects);
+}
+
+void ObjectSim::SendRayFromFront(size_t rayID)
+{
+	if (rayQueueFunc)
+	{
+		rayQueueFunc({ rayID, GetPositionVectorAddr(), GetFrontVector() });
+	}
 }
 
 void ObjectSim::LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects)

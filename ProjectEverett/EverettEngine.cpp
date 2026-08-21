@@ -227,6 +227,7 @@ void EverettEngine::CreateAndSetupMainWindow(
 	SoundSim::SetCamera(camera);
 	camera->SetPositionChangeCallback(SoundSim::UpdateCameraPosition);
 	camera->SetRotationChangeCallback(SoundSim::UpdateCameraPosition);
+	ObjectSim::SetRayQueueFunc(ColliderSim::AddRayToTheQueue);
 
 	mainLGL->SetCursorPositionCallback(
 		[this](double xpos, double ypos) {
@@ -486,6 +487,7 @@ void EverettEngine::RunRenderWindow()
 		timerManager->ProcessTimedCallbacks();
 
 		ColliderSim::ExecuteBroadCollisionCheck();
+		ColliderSim::CheckRayAgainstColliders(camera->GetPositionVectorAddr(), camera->GetFrontVector());
 
 		ExecuteFuncForAllSimObjects(&ObjectSim::UpdateTransform);
 		ExecuteFuncForAllSimObjects(&SoundSim::UpdateCurrentPlaybackTime);

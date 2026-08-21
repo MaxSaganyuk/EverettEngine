@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <queue>
 
 #include "ObjectSim.h"
 #include "external/IColliderSim.h"
@@ -20,6 +21,8 @@ public:
 	static std::string GetObjectTypeNameStr();
 
 	static void ExecuteBroadCollisionCheck();
+	static void ProcessRaysAgainstColliders();
+	static void AddRayToTheQueue(const Ray& ray);
 
 	void AppendToSortedVectorOfColliders();
 	void DeleteFromSortedVectorOfColliders();
@@ -53,10 +56,12 @@ private:
 	static glm::vec3 GetCurrentAxis(ColliderSim& firstCollider, ColliderSim& secondCollider, int index);
 
 	static bool ExecuteAABBCheck(ColliderSim& firstCollider, ColliderSim& secondCollider);
+	static bool ExecuteAABBCheck(ColliderSim& collider, const glm::vec3& rayOrigin, const glm::vec3& rayDir);
 	static bool ExecuteOBBCheck(ColliderSim& firstCollider, ColliderSim& secondCollider);
 	static bool ExecuteNarrowCollisionCheck(ColliderSim& firstCollider, ColliderSim& secondCollider);
+	static bool ExecuteNarrowCollisionCheck(ColliderSim& collider, const glm::vec3& rayOrigin, const glm::vec3& rayDir);
 
-	static void ExecuteStartCallbacksFor(ColliderSim& colliderToExe, ColliderSim& bindedCollider);
+	static void ExecuteStartCallbacksFor(ColliderSim* colliderToExe, ColliderSim* bindedCollider);
 	static void ExecuteEndBindedCallbacksFor(ColliderSim& firstCollider, ColliderSim& secondCollider);
 	static void ExecuteEndAnyCallbacksFor(ColliderSim& colliderToExe);
 
@@ -73,10 +78,13 @@ private:
 	bool isCollided;
 	std::vector<CollisionCallback> anyCollisionCallbacks;
 	std::unordered_map<IColliderSim*, std::vector<CollisionCallback>> bindedCollisionCallbacks;
+	std::unordered_map<size_t, std::vector<RayCollisionCallbackOptions>> rayCollisionCallbacks;
 
 	static inline std::vector<bool> lastGeneralCollisionState;
 	static inline CollisionSet lastCollisionState;
 
 	constexpr static size_t axisToSortBy = static_cast<size_t>(Axis::X);
 	static inline std::vector<ColliderSim*> collidersByAxis;
+
+	static inline std::queue<Ray> rayQueue;
 };

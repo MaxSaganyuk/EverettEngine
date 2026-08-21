@@ -5,7 +5,6 @@
 #include "external/ISoundSim.h"
 #include "CameraSim.h"
 
-#include "CommonStructs.h"
 #include "PlaybackManager.h"
 
 struct ALCdevice;

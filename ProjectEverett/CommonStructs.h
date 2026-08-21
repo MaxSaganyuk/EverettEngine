@@ -36,3 +36,10 @@ struct WavData : WavDataRaw
 		return data.lock().get();
 	}
 };
+
+struct Ray
+{
+	size_t ID;
+	glm::vec3 rayOrigin;
+	glm::vec3 rayDirection;
+};

@@ -8,6 +8,7 @@
 
 #include "SimSerializer.h"
 #include "ValueObserver.h"
+#include "CommonStructs.h"
 
 class ObjectSim : virtual public IObjectSim
 {
@@ -39,6 +40,8 @@ protected:
 	bool visited; // Utility bool to prevent infinite loops of linked object traversal
 	bool objectLinkingEnabled;
 	std::array<bool, std::to_underlying(LinkableFuncNames::_SIZE)> objectLinkingForFuncTracker;
+
+	static inline std::function<void(const Ray&)> rayQueueFunc;
 public:
 	ObjectSim(
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
@@ -53,6 +56,7 @@ public:
 	static void ResetObjectLinking();
 	static void SetRenderDeltaTime(float deltaTime);
 	static const glm::vec3& GetWorldAxisVector(Axis axis);
+	static void SetRayQueueFunc(std::function<void(const Ray&)> func);
 
 	// True if values updated
 	virtual bool UpdateTransform();
@@ -99,6 +103,8 @@ public:
 	void MoveByAxis(
 		Axis axis, const glm::vec3& limitAxis = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
 	) override;
+
+	void SendRayFromFront(size_t rayID) override;
 
 	void LimitRotations(const Rotation& min, const Rotation& max, bool executeLinkedObjects = true) override;
 	void Rotate(const Rotation& toRotate, bool executeLinkedObjects = true) override;

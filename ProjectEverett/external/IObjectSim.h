@@ -142,6 +142,9 @@ public:
 	Linkable virtual void LookAt(IObjectSim& obj, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void LookAt(const glm::vec3& pointToLookAt, bool executeLinkedObjects = true) = 0;
 
+	// If ray collides with a collider 
+	virtual void SendRayFromFront(size_t rayID) = 0;
+
 	virtual void LinkObject(IObjectSim& objectToLink) = 0;
 	virtual void UnlinkObject(IObjectSim& objectToUnlink) = 0;
 	virtual void EnableObjectLinking(bool val = true) = 0; // By default enabled.

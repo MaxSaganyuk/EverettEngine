@@ -17,6 +17,12 @@ public:
 		bool holdable = false;
 	};
 
+	struct RayCollisionCallbackOptions
+	{
+		std::function<void()> collision;
+		size_t rayID{};
+	};
+
 	virtual void AddCollisionCallback(CollisionCallbackOptions callbackOpts) = 0;
 	virtual void SetColliderActive(bool value = true) = 0;
 	virtual void ClearCollisionCallbacks() = 0;

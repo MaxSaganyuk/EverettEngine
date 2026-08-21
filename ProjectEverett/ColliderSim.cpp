@@ -125,6 +125,33 @@ void ColliderSim::ExecuteBroadCollisionCheck()
 	lastCollisionState = currentCollisionState;
 }
 
+void ColliderSim::ProcessRaysAgainstColliders()
+{
+
+}
+
+void ColliderSim::AddRayToTheQueue(const Ray& ray)
+{
+	rayQueue.push(ray);
+}
+
+bool ColliderSim::CheckRayAgainstColliders(const glm::vec3& rayOrigin, const glm::vec3& rayDir)
+{
+	for (size_t i = 0; i < collidersByAxis.size(); ++i)
+	{
+		if (!ExecuteNarrowCollisionCheck(*collidersByAxis[i], rayOrigin, rayDir))
+		{
+			ExecuteEndAnyCallbacksFor(*collidersByAxis[i]);
+		}
+		else
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void ColliderSim::AppendToSortedVectorOfColliders()
 {
 	collidersByAxis.emplace_back(this);
@@ -204,7 +231,7 @@ float ColliderSim::CalcProjectionRadius(ColliderSim& collider, const glm::vec3& 
 	for (int i = 0; i <3; ++i)
 	{
 		projRad += 
-			((collider.scale[i] / 2.0f) * 
+			((collider.scale[i] * 0.5f) * 
 			glm::abs(glm::dot(axis, collider.orient.GetValue() * GetWorldAxisVector(static_cast<Axis>(i)))));
 	}
 
@@ -253,6 +280,23 @@ bool ColliderSim::ExecuteAABBCheck(ColliderSim& firstCollider, ColliderSim& seco
 	return res;
 }
 
+bool ColliderSim::ExecuteAABBCheck(ColliderSim& collider, const glm::vec3& rayOrigin, const glm::vec3& rayDir)
+{
+	glm::vec3 colliderMin = collider.pos.GetValue() - collider.scale.GetValue() * 0.5f;
+	glm::vec3 colliderMax = collider.pos.GetValue() + collider.scale.GetValue() * 0.5f;
+
+	glm::vec3 tMin = (colliderMin - rayOrigin) / rayDir;
+	glm::vec3 tMax = (colliderMax - rayOrigin) / rayDir;
+
+	glm::vec3 t1 = glm::min(tMin, tMax);
+	glm::vec3 t2 = glm::max(tMin, tMax);
+
+	float tNear = glm::max(glm::max(t1.x, t1.y), t1.z);
+	float tFar  = glm::min(glm::min(t2.x, t2.y), t2.z);
+
+	return (tNear <= tFar && tFar >= 0.0f);
+}
+
 bool ColliderSim::ExecuteOBBCheck(ColliderSim& firstCollider, ColliderSim& secondCollider)
 {
 	constexpr int FaceAmount = 3 * 2;
@@ -286,18 +330,34 @@ bool ColliderSim::ExecuteNarrowCollisionCheck(ColliderSim& firstCollider, Collid
 
 	if (res)
 	{
-		ExecuteStartCallbacksFor(firstCollider, secondCollider);
-		ExecuteStartCallbacksFor(secondCollider, firstCollider);
+		ExecuteStartCallbacksFor(&firstCollider, &secondCollider);
+		ExecuteStartCallbacksFor(&secondCollider, &firstCollider);
 	}
 
 	return res;
 }
 
-void ColliderSim::ExecuteStartCallbacksFor(ColliderSim& colliderToExe, ColliderSim& bindedCollider)
+bool ColliderSim::ExecuteNarrowCollisionCheck(
+	ColliderSim& collider, const glm::vec3& rayOrigin, const glm::vec3& rayDir
+)
 {
-	if (!colliderToExe.isCollided)
+	bool res = ExecuteAABBCheck(collider, rayOrigin, rayDir);
+
+	if (res)
 	{
-		for (auto& anyCollisionCallback : colliderToExe.anyCollisionCallbacks)
+		ExecuteStartCallbacksFor(&collider, nullptr);
+	}
+
+	return res;
+}
+
+void ColliderSim::ExecuteStartCallbacksFor(ColliderSim* colliderToExe, ColliderSim* bindedCollider)
+{
+	if (!colliderToExe) return;
+
+	if (!colliderToExe->isCollided)
+	{
+		for (auto& anyCollisionCallback : colliderToExe->anyCollisionCallbacks)
 		{
 			if (anyCollisionCallback.collisionStart &&
 				(anyCollisionCallback.holdable || !anyCollisionCallback.started))
@@ -308,9 +368,11 @@ void ColliderSim::ExecuteStartCallbacksFor(ColliderSim& colliderToExe, ColliderS
 		}
 	}
 
-	auto iter = colliderToExe.bindedCollisionCallbacks.find(&bindedCollider);
+	auto iter = 
+		bindedCollider ? 
+		colliderToExe->bindedCollisionCallbacks.find(bindedCollider) : colliderToExe->bindedCollisionCallbacks.end();
 
-	if (iter != colliderToExe.bindedCollisionCallbacks.end())
+	if (iter != colliderToExe->bindedCollisionCallbacks.end())
 	{
 		for (auto& bindedCollisionCallback : iter->second)
 		{
@@ -323,7 +385,7 @@ void ColliderSim::ExecuteStartCallbacksFor(ColliderSim& colliderToExe, ColliderS
 		}
 	}
 
-	colliderToExe.isCollided = true;
+	colliderToExe->isCollided = true;
 }
 
 void ColliderSim::ExecuteEndAnyCallbacksFor(ColliderSim& colliderToExe)
