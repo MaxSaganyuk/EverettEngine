@@ -46,9 +46,13 @@ private:
 	using TextureID = unsigned int;
 	using TextureData = unsigned char*;
 
-	struct VAOInfo;
-	class InternalModelInfo;
+	struct InternalModelInfo;
+
+	template<typename InfoType>
+	class PtrWrapper;
+
 	using InternalModelMap = std::map<std::string, InternalModelInfo>;
+	using InternalTextMap = std::map<std::string, PtrWrapper<LGLStructs::TextInfo>>;
 
 	// Structs for internal use
 	struct VAOInfo
@@ -107,21 +111,45 @@ private:
 		}
 	};
 
-	class InternalModelInfo
+	template<typename InfoType>
+	class PtrWrapper
 	{
-		LGLStructs::ModelInfo* modelRawPtr = nullptr;
-		std::weak_ptr<LGLStructs::ModelInfo> modelWeakPtr;
+		InfoType* rawPtr = nullptr;
+		std::weak_ptr<InfoType> weakPtr;
 		bool isSmartPtrUsed = false;
 	public:
+		bool IsSmartPtrUsed() const noexcept
+		{
+			return isSmartPtrUsed;
+		}
+
+		void SetPtr(InfoType& rawRef) noexcept
+		{
+			rawPtr = &rawRef;
+		}
+
+		void SetPtr(std::weak_ptr<InfoType> weakPtrPass) noexcept
+		{
+			isSmartPtrUsed = true;
+			weakPtr = weakPtrPass;
+		}
+
+		InfoType* GetPtr() const noexcept
+		{
+			if (isSmartPtrUsed)
+			{
+				return !weakPtr.expired() ? weakPtr.lock().get() : nullptr;
+			}
+
+			return rawPtr;
+		}
+	};
+
+	struct InternalModelInfo
+	{
+		PtrWrapper<LGLStructs::ModelInfo> modelInfo;
 		std::vector<VAOInfo> VAOs;
 		std::map<std::string, TextureID> textureIDs;
-
-		bool IsSmartPtrUsed();
-
-		void SetModelPtr(LGLStructs::ModelInfo& modelRawPtr);
-		void SetModelPtr(std::weak_ptr<LGLStructs::ModelInfo> modelWeakPtr);
-
-		LGLStructs::ModelInfo* GetModelPtr();
 	};
 
 	class LGLEnumInterpreter
@@ -182,6 +210,7 @@ public:
 	LGL_API void CreateModel(const std::string& modelName, LGLStructs::ModelInfo& model);
 	LGL_API void CreateModel(const std::string& modelName, std::weak_ptr<LGLStructs::ModelInfo> model);
 	LGL_API void CreateText(const std::string& textLabel, LGLStructs::TextInfo& text);
+	LGL_API void CreateText(const std::string& textLabel, std::weak_ptr<LGLStructs::TextInfo> text);
 
 	LGL_API void DeleteModel(const std::string& modelName);
 	LGL_API void DeleteText(const std::string& textLabel);
@@ -256,6 +285,12 @@ private:
 	template<typename ModelType>
 	void CreateModelImpl(const std::string& modelName, ModelType& model);
 
+	template<typename TextType>
+	void CreateTextImpl(const std::string& textName, TextType& text);
+
+	void DeleteModelImpl(InternalModelMap::iterator& modelIter);
+	void DeleteTextImpl(InternalTextMap::iterator& textIter);
+
 	// If no name is given will compile last loaded shader
 	bool CompileShader(ShaderType shaderType, const std::string& name = "");
 	bool LoadShaderFromFile(const std::string& name, const std::string& file, const std::string& shaderType);
@@ -328,7 +363,7 @@ private:
 	VAO renderTextVAO;
 	VBO renderTextVBO;
 	bool renderTextVOCreated;
-	std::map<std::string, LGLStructs::TextInfo*> internalTextMap;
+	InternalTextMap internalTextMap;
 	std::map<std::string, AtlasInfo> fontnameToAltasInfo;
 
 	// Shader

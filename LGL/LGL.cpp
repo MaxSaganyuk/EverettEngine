@@ -38,27 +38,6 @@ std::map<std::string, LGL::ShaderType> LGL::shaderTypeChoice =
 	{"geom", GL_GEOMETRY_SHADER},
 };
 
-bool LGL::InternalModelInfo::IsSmartPtrUsed()
-{
-	return isSmartPtrUsed;
-}
-
-void LGL::InternalModelInfo::SetModelPtr(LGLStructs::ModelInfo& modelRawPtr)
-{
-	this->modelRawPtr = &modelRawPtr;
-}
-
-void LGL::InternalModelInfo::SetModelPtr(std::weak_ptr<LGLStructs::ModelInfo> modelWeakPtr)
-{
-	isSmartPtrUsed = true;
-	this->modelWeakPtr = modelWeakPtr;
-}
-
-LGLStructs::ModelInfo* LGL::InternalModelInfo::GetModelPtr()
-{
-	return IsSmartPtrUsed() ? modelWeakPtr.lock().get() : modelRawPtr;
-}
-
 const std::vector<int> LGL::LGLEnumInterpreter::DepthTestModeInter =
 {
 	{0, GL_ALWAYS, GL_NEVER, GL_LESS, GL_GREATER, GL_EQUAL, GL_NOTEQUAL, GL_LEQUAL, GL_GEQUAL}
@@ -438,62 +417,73 @@ void LGL::RenderText()
 	std::vector<RenderCharVertex> currentRenderCharVertVec;
 	currentRenderCharVertVec.reserve(6 * RenderTextBufferSize);
 
-	for (auto& text : internalTextMap)
+	for (auto textIter = internalTextMap.begin(); textIter != internalTextMap.end();)
 	{
-		if (!text.second->render) continue;
+		auto textPtr = textIter->second.GetPtr();
 
-		SetCurrentShaderProg(text.second->shaderProgram);
-
-		GLSafeExecute(glActiveTexture, GL_TEXTURE0);
-		GLSafeExecute(glBindVertexArray, renderTextVAO);
-
-		if (text.second->behaviour)
+		if (!textPtr)
 		{
-			text.second->behaviour();
+			DeleteTextImpl(textIter);
+			continue;
 		}
 
-		glm::vec3 pos = text.second->position;
-
-		const LGLStructs::GlyphInfo& currentGlyphInfo = *text.second->glyphInfo;
-		const AtlasInfo& currentAtlasInfo = fontnameToAltasInfo[currentGlyphInfo.fontName];
-
-		for (auto c : text.second->text)
+		if (textPtr->render)
 		{
-			const LGLStructs::GlyphTexture& glyph = currentGlyphInfo.glyphs.at(c);
+			SetCurrentShaderProg(textPtr->shaderProgram);
 
-			float xpos = pos.x + glyph.bitmap_left * pos.z;
-			float ypos = pos.y - (glyph.height - glyph.bitmap_top) * pos.z;
-			float wpos = glyph.width * pos.z;
-			float hpos = glyph.height * pos.z;
+			GLSafeExecute(glActiveTexture, GL_TEXTURE0);
+			GLSafeExecute(glBindVertexArray, renderTextVAO);
 
-			float atlasXPos = currentAtlasInfo.charPos.at(c);
-			float atlasYPos = 0.0f;
-			float atlasWPos = static_cast<float>(glyph.width) / currentAtlasInfo.width;
-			float atlasHPos = static_cast<float>(glyph.height) / currentAtlasInfo.height;
+			if (textPtr->behaviour)
+			{
+				textPtr->behaviour();
+			}
 
-			currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        },{ atlasXPos,  atlasYPos                        }});
-			currentRenderCharVertVec.push_back({{ xpos, ypos               },{ atlasXPos,  atlasYPos + atlasHPos            }});
-			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        },{ atlasXPos + atlasWPos, atlasYPos + atlasHPos }});
-			currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        },{ atlasXPos,  atlasYPos                        }});
-			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        },{ atlasXPos + atlasWPos, atlasYPos + atlasHPos }});
-			currentRenderCharVertVec.push_back({{ xpos + wpos, ypos + hpos },{ atlasXPos + atlasWPos, atlasYPos             }});
-		
-			pos.x += (glyph.advanceX >> 6);
+			glm::vec3 pos = textPtr->position;
+
+			const LGLStructs::GlyphInfo& currentGlyphInfo = *textPtr->glyphInfo;
+			const AtlasInfo& currentAtlasInfo = fontnameToAltasInfo[currentGlyphInfo.fontName];
+
+			for (auto c : textPtr->text)
+			{
+				const LGLStructs::GlyphTexture& glyph = currentGlyphInfo.glyphs.at(c);
+
+				float xpos = pos.x + glyph.bitmap_left * pos.z;
+				float ypos = pos.y - (glyph.height - glyph.bitmap_top) * pos.z;
+				float wpos = glyph.width * pos.z;
+				float hpos = glyph.height * pos.z;
+
+				float atlasXPos = currentAtlasInfo.charPos.at(c);
+				float atlasYPos = 0.0f;
+				float atlasWPos = static_cast<float>(glyph.width) / currentAtlasInfo.width;
+				float atlasHPos = static_cast<float>(glyph.height) / currentAtlasInfo.height;
+
+				currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        },{ atlasXPos,  atlasYPos                        }});
+				currentRenderCharVertVec.push_back({{ xpos, ypos               },{ atlasXPos,  atlasYPos + atlasHPos            }});
+				currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        },{ atlasXPos + atlasWPos, atlasYPos + atlasHPos }});
+				currentRenderCharVertVec.push_back({{ xpos, ypos + hpos        },{ atlasXPos,  atlasYPos                        }});
+				currentRenderCharVertVec.push_back({{ xpos + wpos, ypos        },{ atlasXPos + atlasWPos, atlasYPos + atlasHPos }});
+				currentRenderCharVertVec.push_back({{ xpos + wpos, ypos + hpos },{ atlasXPos + atlasWPos, atlasYPos             }});
+
+				pos.x += (glyph.advanceX >> 6);
+			}
+
+			GLSafeExecute(glBindTexture, GL_TEXTURE_2D, currentAtlasInfo.tex);
+			GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, renderTextVBO);
+
+			GLSafeExecute(
+				glBufferData,
+				GL_ARRAY_BUFFER,
+				currentRenderCharVertVec.size() * sizeof(RenderCharVertex),
+				currentRenderCharVertVec.data(),
+				GL_DYNAMIC_DRAW
+			);
+
+			GLSafeExecute(glDrawArrays, GL_TRIANGLES, 0, currentRenderCharVertVec.size());
+			currentRenderCharVertVec.clear();
 		}
 
-		GLSafeExecute(glBindTexture, GL_TEXTURE_2D, currentAtlasInfo.tex);
-		GLSafeExecute(glBindBuffer, GL_ARRAY_BUFFER, renderTextVBO);
-
-		GLSafeExecute(
-			glBufferData,
-			GL_ARRAY_BUFFER,
-			currentRenderCharVertVec.size() * sizeof(RenderCharVertex),
-			currentRenderCharVertVec.data(),
-			GL_DYNAMIC_DRAW
-		);
-
-		GLSafeExecute(glDrawArrays, GL_TRIANGLES, 0, currentRenderCharVertVec.size());
-		currentRenderCharVertVec.clear();
+		++textIter;
 	}
 
 	GLSafeExecute(glActiveTexture, GL_TEXTURE0);
@@ -549,73 +539,83 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 			additionalSteps();
 		}
 
-		for (auto& currentModelToProcess : internalModelMap)
+		for (auto currentModelIter = internalModelMap.begin(); currentModelIter != internalModelMap.end();)
 		{
-			auto currentModel = currentModelToProcess.second.GetModelPtr();
+			auto& currentModelToProcess = currentModelIter->second;
+			auto currentModelPtr = currentModelToProcess.modelInfo.GetPtr();
 
-			if (!currentModel->render) continue;
-
-			SetCurrentShaderProg(currentModel->shaderProgram);
-
-			std::function<void()>& modelBeh = currentModel->modelBehaviour;
-			if (modelBeh)
+			if (!currentModelPtr)
 			{
-				modelBeh();
+				DeleteModelImpl(currentModelIter);
+				continue;
 			}
 
-			for (size_t meshIndex = 0; meshIndex < currentModelToProcess.second.VAOs.size(); ++meshIndex)
+			if (currentModelPtr->render)
 			{
-				auto& currentVAO = currentModelToProcess.second.VAOs[meshIndex];
+				SetCurrentShaderProg(currentModelPtr->shaderProgram);
 
-				if (currentVAO.meshInfo->render)
+				std::function<void()>& modelBeh = currentModelPtr->modelBehaviour;
+				if (modelBeh)
 				{
-					if (lineModeActive != currentVAO.meshInfo->lineMode)
+					modelBeh();
+				}
+
+				for (size_t meshIndex = 0; meshIndex < currentModelToProcess.VAOs.size(); ++meshIndex)
+				{
+					auto& currentVAO = currentModelToProcess.VAOs[meshIndex];
+
+					if (currentVAO.meshInfo->render)
 					{
-						lineModeActive = currentVAO.meshInfo->lineMode;
-						GLSafeExecute(glPolygonMode, GL_FRONT_AND_BACK, lineModeActive ? GL_LINE : GL_FILL);
-					}
-
-					currentVAOToRender = currentVAO;
-
-					SetCurrentShaderProg(currentVAO.meshInfo->shaderProgram);
-
-					GLSafeExecute(glBindVertexArray, currentVAO.vboId);
-
-					for (auto& texture : currentVAO.meshInfo->mesh.textures)
-					{
-						auto currentTextureIter = currentModelToProcess.second.textureIDs.find(texture.name);
-						if (currentTextureIter != currentModelToProcess.second.textureIDs.end())
+						if (lineModeActive != currentVAO.meshInfo->lineMode)
 						{
-							TextureID textureID = (*currentTextureIter).second;
-							int convertedTextureType = static_cast<int>(texture.type);
-							GLSafeExecute(glActiveTexture, GL_TEXTURE0 + convertedTextureType);
-							GLSafeExecute(glBindTexture, GL_TEXTURE_2D, textureID);
-
-							textureTypesToUnbind[convertedTextureType] = true;
+							lineModeActive = currentVAO.meshInfo->lineMode;
+							GLSafeExecute(glPolygonMode, GL_FRONT_AND_BACK, lineModeActive ? GL_LINE : GL_FILL);
 						}
-					}
 
-					std::function<void(int)>& behaviourToCheck = currentVAO.meshInfo->behaviour;
-					if (behaviourToCheck)
-					{
-						behaviourToCheck(static_cast<int>(meshIndex));
-					}
+						currentVAOToRender = currentVAO;
 
-					Render();
+						SetCurrentShaderProg(currentVAO.meshInfo->shaderProgram);
 
-					for (auto& textureTypeToUnbind : textureTypesToUnbind)
-					{
-						if (textureTypeToUnbind)
+						GLSafeExecute(glBindVertexArray, currentVAO.vboId);
+
+						for (auto& texture : currentVAO.meshInfo->mesh.textures)
 						{
-							GLSafeExecute(glActiveTexture, GL_TEXTURE0 + textureTypeToUnbind);
-							GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
-							textureTypeToUnbind = false;
+							auto currentTextureIter = currentModelToProcess.textureIDs.find(texture.name);
+							if (currentTextureIter != currentModelToProcess.textureIDs.end())
+							{
+								TextureID textureID = (*currentTextureIter).second;
+								int convertedTextureType = static_cast<int>(texture.type);
+								GLSafeExecute(glActiveTexture, GL_TEXTURE0 + convertedTextureType);
+								GLSafeExecute(glBindTexture, GL_TEXTURE_2D, textureID);
+
+								textureTypesToUnbind[convertedTextureType] = true;
+							}
+						}
+
+						std::function<void(int)>& behaviourToCheck = currentVAO.meshInfo->behaviour;
+						if (behaviourToCheck)
+						{
+							behaviourToCheck(static_cast<int>(meshIndex));
+						}
+
+						Render();
+
+						for (auto& textureTypeToUnbind : textureTypesToUnbind)
+						{
+							if (textureTypeToUnbind)
+							{
+								GLSafeExecute(glActiveTexture, GL_TEXTURE0 + textureTypeToUnbind);
+								GLSafeExecute(glBindTexture, GL_TEXTURE_2D, 0);
+								textureTypeToUnbind = false;
+							}
 						}
 					}
 				}
 			}
 
 			currentVAOToRender = {};
+
+			++currentModelIter;
 		}
 
 		if (lineModeActive)
@@ -822,9 +822,9 @@ void LGL::CreateModelImpl(const std::string& modelName, RefType& model)
 	if (internalModelMap.find(modelName) == internalModelMap.end())
 	{
 		auto modelIter = internalModelMap.try_emplace(modelName).first;
-		modelIter->second.SetModelPtr(model);
+		modelIter->second.modelInfo.SetPtr(model);
 
-		for (auto& mesh : modelIter->second.GetModelPtr()->meshes)
+		for (auto& mesh : modelIter->second.modelInfo.GetPtr()->meshes)
 		{
 			CreateMesh(modelName, mesh);
 		}
@@ -833,55 +833,79 @@ void LGL::CreateModelImpl(const std::string& modelName, RefType& model)
 
 void LGL::CreateText(const std::string& textLabel, LGLStructs::TextInfo& text)
 {
-	if (!text.glyphInfo)
-	{
-		return;
-	}
+	CreateTextImpl(textLabel, text);
+}
 
-	if (!renderTextVOCreated)
-	{
-		CreateRenderTextVO();
-		renderTextVOCreated = true;
-	}
+void LGL::CreateText(const std::string& textLabel, std::weak_ptr<LGLStructs::TextInfo> text)
+{
+	CreateTextImpl(textLabel, text);
+}
 
-	LoadAndCompileShader(text.shaderProgram);
-	if (!fontnameToAltasInfo.contains(text.glyphInfo->fontName) && text.glyphInfo)
+template<typename TextType>
+void LGL::CreateTextImpl(const std::string& textName, TextType& text)
+{
+	if (internalTextMap.find(textName) == internalTextMap.end())
 	{
-		ProduceTextTexAtlas(*text.glyphInfo, fontnameToAltasInfo[text.glyphInfo->fontName]);
-	}
+		PtrWrapper<LGLStructs::TextInfo>& ptrWrap = internalTextMap.try_emplace(textName).first->second;
+		ptrWrap.SetPtr(text);
 
-	internalTextMap[textLabel] = &text;
+		LGLStructs::TextInfo* textInfo = ptrWrap.GetPtr();
+
+		if (!textInfo->glyphInfo) return;
+
+		if (!renderTextVOCreated)
+		{
+			CreateRenderTextVO();
+			renderTextVOCreated = true;
+		}
+
+		LoadAndCompileShader(textInfo->shaderProgram);
+		if (!fontnameToAltasInfo.contains(textInfo->glyphInfo->fontName) && textInfo->glyphInfo)
+		{
+			ProduceTextTexAtlas(*textInfo->glyphInfo, fontnameToAltasInfo[textInfo->glyphInfo->fontName]);
+		}
+	}
 }
 
 void LGL::DeleteModel(const std::string& modelName)
 {
-	HandshakeContextLock
-
 	if (auto modelIter = internalModelMap.find(modelName); modelIter != internalModelMap.end())
 	{
-		GLSafeExecute(glBindVertexArray, 0);
-
-		for (auto& VAO : modelIter->second.VAOs)
-		{
-			GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
-		}
-		for (auto& texture : modelIter->second.textureIDs)
-		{
-			GLSafeExecute(glDeleteTextures, 1, &texture.second);
-		}
-
-		internalModelMap.erase(modelName);
+		DeleteModelImpl(modelIter);
 	}
+}
+
+void LGL::DeleteModelImpl(InternalModelMap::iterator& modelIter)
+{
+	HandshakeContextLock
+
+	GLSafeExecute(glBindVertexArray, 0);
+
+	for (auto& VAO : modelIter->second.VAOs)
+	{
+		GLSafeExecute(glDeleteVertexArrays, 1, &VAO.vboId);
+	}
+	for (auto& texture : modelIter->second.textureIDs)
+	{
+		GLSafeExecute(glDeleteTextures, 1, &texture.second);
+	}
+
+	modelIter = internalModelMap.erase(modelIter);
 }
 
 void LGL::DeleteText(const std::string& textLabel)
 {
 	HandshakeContextLock
 
-	if (internalTextMap.find(textLabel) != internalTextMap.end())
+	if (auto textIter = internalTextMap.find(textLabel); textIter != internalTextMap.end())
 	{
-		internalTextMap.erase(textLabel);
+		DeleteTextImpl(textIter);
 	}
+}
+
+void LGL::DeleteTextImpl(InternalTextMap::iterator& textIter)
+{
+	textIter = internalTextMap.erase(textIter);
 }
 
 #ifdef ENABLE_OLD_MODEL_IMPORT
