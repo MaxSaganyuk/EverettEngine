@@ -711,18 +711,7 @@ bool FileLoader::DLLLoader::LoadDLL(const std::string& dllPath)
 
 	if (dllHandle)
 	{
-		ScriptDLLInfo* dllInfo = nullptr;
-
-		if (dllHandleMap.contains(dllPath))
-		{
-			dllInfo = &dllHandleMap.at(dllPath);
-		}
-		else
-		{
-			dllInfo = &dllHandleMap.try_emplace(dllPath).first->second;
-		}
-
-		SetNewDLLHandle(dllPath, dllHandle, *dllInfo);
+		SetNewDLLHandle(dllPath, dllHandle, dllHandleMap.try_emplace(dllPath).first->second);
 	}
 	
 	return dllHandle;
