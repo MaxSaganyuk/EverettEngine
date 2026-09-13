@@ -626,12 +626,12 @@ bool FileLoader::ModelLoader::LoadModel(
 template<typename FuncType, typename... ParamTypes>
 void FileLoader::DLLLoader::ScriptDLLInfo::ExecuteFunc(FuncType&& func, ParamTypes&&... values) const
 {
-	mux.lock();
+	std::lock_guard<std::mutex> lock(mux);
+
 	if (func)
 	{
 		func(std::forward<ParamTypes>(values)...);
 	}
-	mux.unlock();
 }
 
 template<typename FuncType>
@@ -684,7 +684,7 @@ void FileLoader::DLLLoader::ScriptDLLInfo::Unload()
 {
 	if (dllHandle)
 	{
-		mux.lock();
+		std::lock_guard<std::mutex> lock(mux);
 
 		if (cleanUpFunc)
 		{
@@ -697,8 +697,6 @@ void FileLoader::DLLLoader::ScriptDLLInfo::Unload()
 		scriptInitFunc = nullptr;
 		mainFunc = nullptr;
 		cleanUpFunc = nullptr;
-
-		mux.unlock();
 	}
 }
 
