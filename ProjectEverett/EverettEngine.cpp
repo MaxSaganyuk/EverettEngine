@@ -203,8 +203,7 @@ void EverettEngine::CreateAndSetupMainWindow(
 			defaultRenderTextShaderProgram,
 			[this]() { generalRenderTextBehaviour(ColorManager::GetColorVec4(ColorManager::Colors::WHITE)); },
 			[this]() { generalRenderTextBehaviour(ColorManager::GetColorVec4(ColorManager::Colors::RED)); },
-			[this](const std::string& labelName, LGLStructs::TextInfo& text) { mainLGL->CreateText(labelName, text); },
-			[this](const std::string& labelName) { mainLGL->DeleteText(labelName); }
+			[this](const std::string& labelName, LGLStructs::TextInfo& text) { mainLGL->CreateText(labelName, text); }
 		);
 
 		fileLoader->fontLoader.FreeFaceInfoByFont(loggerFont, true);

@@ -9,7 +9,6 @@ public:
 	using ShaderBehaviourLog   = std::function<void()>;
 	using ShaderBehaviourError = std::function<void()>;
 	using RenderTextCreateFunc = std::function<void(const std::string&, LGLStructs::TextInfo&)>;
-	using RenderTextDeleteFunc = std::function<void(const std::string&)>;
 
 	RenderLogger(
 		const float windowWidth,
@@ -18,8 +17,7 @@ public:
 		const std::string& shader,
 		ShaderBehaviourLog&& shaderBehaviourLog,
 		ShaderBehaviourError&& shaderBehaviourError,
-		RenderTextCreateFunc&& createFunc, 
-		RenderTextDeleteFunc&& deleteFunc
+		RenderTextCreateFunc&& createFunc
 	);
 
 	void CreateLogMessage(const std::string& str);
@@ -42,9 +40,10 @@ private:
 	ShaderBehaviourLog shaderBehaviourLog;
 	ShaderBehaviourError shaderBehaviourError;
 	RenderTextCreateFunc createFunc;
-	RenderTextDeleteFunc deleteFunc;
 
-	size_t counter;
 	bool isRenderEnabled;
-	stdEx::RingBuffer<std::pair<size_t, LGLStructs::TextInfo>, maxAmountOfMessages> renderMessageCollection;
+
+	// std::inplace_vector would be better here, but that is only in C++26
+	stdEx::RingBuffer<LGLStructs::TextInfo, maxAmountOfMessages> textInfoCollection;
+	stdEx::RingBuffer<std::pair<std::string*, std::function<void()>*>, maxAmountOfMessages> renderMessageContentCollection;
 };
