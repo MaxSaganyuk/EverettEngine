@@ -46,7 +46,8 @@ void RenderLogger::CreateMessage(const std::string& str, const std::function<voi
 	}
 
 	renderMessageCollection.PushBack(
-		{ counter++, { str, GetCurrentTextPosition(), isRenderEnabled, shader, glyphs, behaviourToUse} }
+		std::pair<size_t, LGLStructs::TextInfo>
+			{ counter++, { str, GetCurrentTextPosition(), isRenderEnabled, shader, glyphs, behaviourToUse } }
 	);
 	createFunc(std::to_string(renderMessageCollection.GetBack().first), renderMessageCollection.GetBack().second);
 }
