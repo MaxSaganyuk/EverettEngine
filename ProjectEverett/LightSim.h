@@ -30,16 +30,19 @@ public:
 	std::string GetSimInfoToSave(const std::string& lightName);
 	bool SetSimInfoToLoad(std::string_view& line);
 
-	LightTypes GetLightType();
+	LightTypes GetLightType() override;
 	static size_t GetAmountOfLightsByType(LightTypes lightType);
 
 	static std::generator<std::string_view> GetLightTypeNames();
-	std::string GetCurrentLightType() override;
+	std::string GetLightTypeStr() override;
 
 	static LightTypes GetTypeToName(const std::string& name);
 	static std::string GetTypeToName(LightTypes lightType);
 
-	int lightRange{};
+	float GetInnerCutoff() override;
+	void SetInnerCutoff(float radians) override;
+	float GetOuterCutoff() override;
+	void SetOuterCutoff(float radians) override;
 
 	static Attenuation GetAttenuation(int range);
 	Attenuation GetAttenuation() override;
@@ -51,10 +54,15 @@ public:
 private:
 	constexpr static char TypeName[] = "Light";
 
+	constexpr static float defaultInnerCutoffRad = glm::radians(12.5f);
+	constexpr static float defaultOuterCutoffRad = glm::radians(17.5f);
+
+	void CheckForSpotLightType();
+	void AdjustCutoffRange(float& radians);
 	std::string GetSimInfoToSaveImpl();
 
 	static std::map<int, Attenuation> attenuationVals;
-	static inline std::array<size_t, ILightSim::LightTypes::_SIZE> amountOfLightsByType { 0, 0, 0 };
+	static inline std::array<size_t, ILightSim::LightTypes::_SIZE> amountOfLightsByType{ 0, 0, 0 };
 
 	static inline std::vector<std::pair<LightTypes, std::string>> lightTypeToName
 	{
@@ -66,6 +74,9 @@ private:
 	constinit static inline glm::vec3 ambientLightColor = ColorManager::RGBVal{ 102, 102, 102 };
 	constexpr static inline glm::vec3 defaultLightColor = ColorManager::RGBVal{ 128, 128, 128 };
 
+	int lightRange{};
+	float innerCutoffRad = defaultInnerCutoffRad;
+	float outerCutoffRad = defaultOuterCutoffRad;
 	LightTypes lightType{};
 	glm::vec3 color;
 };

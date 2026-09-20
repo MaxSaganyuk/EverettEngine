@@ -1249,19 +1249,22 @@ void EverettEngine::LightUpdater()
 				lightShaderValueNames[lightIndex].second,
 				light.GetPositionVectorAddr(), light.GetFrontVector(),
 				light.GetColorVectorAddr(), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f,
-				atten.linear, atten.quadratic, glm::cos(glm::radians(12.5f)),
-				glm::cos(glm::radians(17.5f))
+				atten.linear, atten.quadratic, glm::cos(light.GetInnerCutoff()),
+				glm::cos(light.GetOuterCutoff())
 			);
 			break;
 		default:
-			break;
+			std::unreachable();
 		}
 	}
 
 	mainLGL->SetShaderUniformValue("viewPos", camera->GetPositionVectorAddr());
 
-	mainLGL->SetShaderUniformValue(lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[0], 0);
-	mainLGL->SetShaderUniformValue(lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[1], 1);
+	static std::string diffuseTextureIDValue = lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[0];
+	static std::string specularTextureIDValue = lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[1];
+
+	mainLGL->SetShaderUniformValue(diffuseTextureIDValue, 0);
+	mainLGL->SetShaderUniformValue(specularTextureIDValue, 1);
 }
 
 void EverettEngine::SetupScriptDLL(const std::string& dllPath)
@@ -1482,7 +1485,7 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 	{
 		for (auto& [lightName, light] : lights)
 		{
-			file << light.GetSimInfoToSave(light.GetCurrentLightType() + '*' + lightName);
+			file << light.GetSimInfoToSave(light.GetLightTypeStr() + '*' + lightName);
 		}
 	}
 	else if constexpr (std::is_same_v<Sim, SoundSim>)
@@ -2002,7 +2005,7 @@ std::generator<std::string_view> EverettEngine::GetLightList(bool getLightTypes)
 	{
 		for (auto& [lightName, light] : lights)
 		{
-			co_yield (light.GetCurrentLightType() + '.' + lightName);
+			co_yield (light.GetLightTypeStr() + '.' + lightName);
 		}
 	};
 

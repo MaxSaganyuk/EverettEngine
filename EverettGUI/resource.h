@@ -61,6 +61,11 @@
 #define IDC_SPEED_TEXT                  1037
 #define IDC_SL_FILENAME_TEXT            1038
 #define IDC_RENAME_WARNING              1044
+#define IDC_SLIDER1                     1045
+#define IDC_SLIDER2                     1046
+#define IDC_INNER_SLIDER_LABEL          1047
+#define IDC_OUTER_SLIDER_LABEL          1048
+#define IDC_CUTOFF_TITLE_LABEL          1049
 #define ID_BUTTON32771                  32771
 #define ID_BUTTON32772                  32772
 #define ID_BUTTON32773                  32773
@@ -77,7 +82,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        334
 #define _APS_NEXT_COMMAND_VALUE         32780
-#define _APS_NEXT_CONTROL_VALUE         1045
+#define _APS_NEXT_CONTROL_VALUE         1050
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

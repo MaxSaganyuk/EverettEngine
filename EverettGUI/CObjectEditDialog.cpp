@@ -65,6 +65,11 @@ void CObjectEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON13, autoScaleButton);
 	DDX_Control(pDX, IDC_BUTTON10, rotationEditButton);
 	DDX_Control(pDX, IDC_BUTTON2, modelVisibleButton);
+	DDX_Control(pDX, IDC_SLIDER1, innerCutoffSlider);
+	DDX_Control(pDX, IDC_SLIDER2, outerCutoffSlider);
+	DDX_Control(pDX, IDC_INNER_SLIDER_LABEL, innerSliderLabel);
+	DDX_Control(pDX, IDC_OUTER_SLIDER_LABEL, outerSliderLabel);
+	DDX_Control(pDX, IDC_CUTOFF_TITLE_LABEL, cutoffTitleLabel);
 }
 
 CString CObjectEditDialog::GenerateTitle()
@@ -138,7 +143,35 @@ void CObjectEditDialog::SetupObjectParams()
 		std::unreachable();
 	}
 
-	if (isSolid || isSound)
+	if (isLight && castedLightInterface->GetLightType() == ILightSim::LightTypes::Spot)
+	{
+		float innerCutoffValue = castedLightInterface->GetInnerCutoff();
+		float outerCutoffValue = castedLightInterface->GetOuterCutoff();
+
+		int innerPos = static_cast<int>(innerCutoffValue / (glm::pi<float>() / 2) * descreteSliderMaxRange);
+		int outerPos = static_cast<int>(outerCutoffValue / (glm::pi<float>() / 2) * descreteSliderMaxRange);
+
+		cutoffTitleLabel.ShowWindow(true);
+
+		innerCutoffSlider.ShowWindow(true);
+		outerCutoffSlider.ShowWindow(true);
+
+		innerCutoffSlider.SetRangeMin(0);
+		innerCutoffSlider.SetRangeMax(descreteSliderMaxRange);
+		innerCutoffSlider.SetPos(innerPos);
+
+		outerCutoffSlider.SetRangeMin(0);
+		outerCutoffSlider.SetRangeMax(descreteSliderMaxRange);
+		outerCutoffSlider.SetPos(outerPos);
+
+		innerSliderLabel.SetWindowTextW(AdString(std::to_string(innerCutoffValue)));
+
+		outerSliderLabel.SetWindowTextW(AdString(std::to_string(outerCutoffValue)));
+
+		innerSliderLabel.ShowWindow(true);
+		outerSliderLabel.ShowWindow(true);
+	}
+	else if (isSolid || isSound)
 	{
 		CString speedValue;
 		speedValue.Format(_T("%.2f"), castedSolidInterface ? 
@@ -198,10 +231,53 @@ BOOL CObjectEditDialog::OnInitDialog()
 
 	SetWindowText(GenerateTitle());
 
+	cutoffTitleLabel.ShowWindow(false);
+	innerCutoffSlider.ShowWindow(false);
+	outerCutoffSlider.ShowWindow(false);
+	innerSliderLabel.ShowWindow(false);
+	outerSliderLabel.ShowWindow(false);
+
 	UpdateParams();
 	SetupObjectParams();
 
 	return true;
+}
+
+void CObjectEditDialog::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	CSliderCtrl* currentSlider = reinterpret_cast<CSliderCtrl*>(pScrollBar);
+
+	if (currentSlider && castedLightInterface)
+	{
+		float innerCutoffRad = innerCutoffSlider.GetPos() * (glm::pi<float>() / 2 / descreteSliderMaxRange);
+		float outerCutoffRad = outerCutoffSlider.GetPos() * (glm::pi<float>() / 2 / descreteSliderMaxRange);
+
+		CString innerCutoffStr = AdString(std::to_string(innerCutoffRad));
+		CString outerCutoffStr = AdString(std::to_string(outerCutoffRad));
+
+		if (currentSlider->GetSafeHwnd() == innerCutoffSlider.GetSafeHwnd())
+		{
+			castedLightInterface->SetInnerCutoff(innerCutoffRad);
+			innerSliderLabel.SetWindowTextW(innerCutoffStr);
+		}
+		else if (currentSlider->GetSafeHwnd() == outerCutoffSlider.GetSafeHwnd())
+		{
+			castedLightInterface->SetOuterCutoff(outerCutoffRad);
+			outerSliderLabel.SetWindowTextW(outerCutoffStr);
+		}
+
+		if (outerCutoffRad < innerCutoffRad)
+		{
+			castedLightInterface->SetOuterCutoff(innerCutoffRad);
+			outerSliderLabel.SetWindowTextW(innerCutoffStr);
+
+			outerCutoffSlider.SetPos(innerCutoffSlider.GetPos());
+			outerCutoffSlider.Invalidate();
+			outerCutoffSlider.UpdateWindow();
+		}
+	}
+
+	CDialog::OnHScroll(nSBCode, nPos, pScrollBar);
 }
 
 BEGIN_MESSAGE_MAP(CObjectEditDialog, CDialogEx)
@@ -218,6 +294,7 @@ BEGIN_MESSAGE_MAP(CObjectEditDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON12, &CObjectEditDialog::OnColorEditButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON13, &CObjectEditDialog::OnAutoScaleButtonClicked)
 	ON_BN_CLICKED(IDC_BUTTON2, &CObjectEditDialog::OnApplyVisibilityToAllButtonClick)
+	ON_WM_HSCROLL()
 END_MESSAGE_MAP()
 
 

@@ -31,7 +31,10 @@ public:
 #endif
 
 private:
+	constexpr static size_t descreteSliderMaxRange = 100;
+
 	BOOL OnInitDialog() override;
+	void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 
 	void SetObjectParams(const std::vector<glm::vec3>& params);
 	CString GenerateTitle();
@@ -70,6 +73,11 @@ private:
 
 	// Light property objects
 	CButton colorEditButton;
+	CStatic cutoffTitleLabel;
+	CSliderCtrl innerCutoffSlider;
+	CSliderCtrl outerCutoffSlider;
+	CStatic innerSliderLabel;
+	CStatic outerSliderLabel;
 
 	// Player property objects
 	CStatic playerText;

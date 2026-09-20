@@ -56,12 +56,34 @@ std::string LightSim::GetSimInfoToSave(const std::string& lightName)
 	return info + '\n';
 }
 
+void LightSim::CheckForSpotLightType()
+{
+	if (lightType != LightTypes::Spot)
+	{
+		std::cerr << "Retrieved inner cutoff value from non spot light\n";
+	}
+}
+
+void LightSim::AdjustCutoffRange(float& radians)
+{
+	if (radians < 0.0f)
+	{
+		radians = 0.0f;
+	}
+	else if (radians > glm::pi<float>() / 2)
+	{
+		radians = glm::pi<float>() / 2;
+	}
+}
+
 std::string LightSim::GetSimInfoToSaveImpl()
 {
 	std::string res = ObjectSim::GetSimInfoToSaveImpl();
 
 	res += SimSerializer::GetValueToSaveFrom(lightRange);
 	res += SimSerializer::GetValueToSaveFrom(color);
+	res += SimSerializer::GetValueToSaveFrom(innerCutoffRad);
+	res += SimSerializer::GetValueToSaveFrom(outerCutoffRad);
 
 	return res;
 }
@@ -72,6 +94,8 @@ bool LightSim::SetSimInfoToLoad(std::string_view& line)
 	
 	res = res && SimSerializer::SetValueToLoadFrom(line, lightRange, 1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, color, 3);
+	res = res && SimSerializer::SetValueToLoadFrom(line, innerCutoffRad, 16);
+	res = res && SimSerializer::SetValueToLoadFrom(line, outerCutoffRad, 16);
 
 	return res;
 }
@@ -84,6 +108,41 @@ LightSim::LightTypes LightSim::GetLightType()
 size_t LightSim::GetAmountOfLightsByType(LightTypes lightType)
 {
 	return amountOfLightsByType[lightType];
+}
+
+float LightSim::GetInnerCutoff()
+{
+	CheckForSpotLightType();
+
+	return innerCutoffRad;
+}
+
+void LightSim::SetInnerCutoff(float radians)
+{
+	CheckForSpotLightType();
+	AdjustCutoffRange(radians);
+
+	innerCutoffRad = radians;
+}
+
+float LightSim::GetOuterCutoff()
+{
+	CheckForSpotLightType();
+
+	return outerCutoffRad;
+}
+
+void LightSim::SetOuterCutoff(float radians)
+{
+	CheckForSpotLightType();
+	AdjustCutoffRange(radians);
+
+	if (radians < innerCutoffRad)
+	{
+		radians = innerCutoffRad;
+	}
+
+	outerCutoffRad = radians;
 }
 
 LightSim::Attenuation LightSim::GetAttenuation(int range)
@@ -138,7 +197,7 @@ std::string LightSim::GetTypeToName(LightSim::LightTypes lightType)
 	ThrowExceptionWMessage("Nonexistent type");
 }
 
-std::string LightSim::GetCurrentLightType()
+std::string LightSim::GetLightTypeStr()
 {
 	return GetTypeToName(lightType);
 }

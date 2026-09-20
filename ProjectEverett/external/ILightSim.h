@@ -19,7 +19,14 @@ public:
 		float quadratic;
 	};
 
-	virtual std::string GetCurrentLightType() = 0;
+	virtual LightTypes GetLightType() = 0;
+	virtual std::string GetLightTypeStr() = 0;
+
+	// Range is 0 to Pi / 2 radians
+	virtual float GetInnerCutoff() = 0;
+	virtual void SetInnerCutoff(float radians) = 0;
+	virtual float GetOuterCutoff() = 0;
+	virtual void SetOuterCutoff(float radians) = 0;
 
 	virtual Attenuation GetAttenuation() = 0;
 	virtual glm::vec3& GetAmbientLightColorVectorAddr() = 0;
