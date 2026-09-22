@@ -129,6 +129,11 @@ namespace LGLStructs
 			return memberAmount;
 		}
 
+		constexpr static size_t GetFullMemberAmount()
+		{
+			return BasicVertex::GetLocalMemberAmount() + Vertex::GetLocalMemberAmount();
+		}
+
 		constexpr static size_t GetMemberElementSize()
 		{
 			return maxWeightPerVertex;

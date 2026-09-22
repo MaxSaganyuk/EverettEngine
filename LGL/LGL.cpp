@@ -27,6 +27,41 @@ PauseRenderingInternal(false);
 
 using namespace LGLStructs;
 
+struct LGLLayoutInfo
+{
+	std::array<size_t, Vertex::GetFullMemberAmount()> steps{};
+	std::array<size_t, Vertex::GetFullMemberAmount()> byteOffset{};
+	size_t stride{};
+};
+
+constexpr void PopulateLayoutInfo(
+	LGLLayoutInfo& layout, size_t startIndex, size_t memberAmount, size_t elementMemberSize
+)
+{
+	for (size_t i = 0; i < memberAmount; ++i)
+	{
+		size_t currentIndex = startIndex + i;
+
+		layout.steps[currentIndex] = elementMemberSize;
+		layout.byteOffset[currentIndex] = layout.stride;
+		layout.stride += layout.steps[currentIndex] * sizeof(float);
+	}
+}
+
+constexpr auto GetLayoutInfo()
+{
+	LGLLayoutInfo layout;
+
+	PopulateLayoutInfo(
+		layout, 0, BasicVertex::GetLocalMemberAmount(), BasicVertex::GetMemberElementSize()
+	);
+	PopulateLayoutInfo(
+		layout, BasicVertex::GetLocalMemberAmount(), Vertex::GetLocalMemberAmount(), Vertex::GetMemberElementSize()
+	);
+
+	return layout;
+}
+
 std::thread::id LGL::mainThreadID = std::thread::id{};
 
 std::map<GLFWwindow*, LGL*> LGL::contextToInstance;
@@ -688,23 +723,9 @@ void LGL::CreateRenderTextVO()
 
 void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 {
+	constexpr static auto layout = GetLayoutInfo();
+
 	HandshakeContextLock
-
-	auto CollectSteps = []() {
-		std::vector<size_t> steps;
-
-		for (size_t i = 0; i < LGLStructs::BasicVertex::GetLocalMemberAmount(); ++i)
-		{
-			steps.push_back(LGLStructs::BasicVertex::GetMemberElementSize());
-		}
-
-		for (size_t i = 0; i < LGLStructs::Vertex::GetLocalMemberAmount(); ++i)
-		{
-			steps.push_back(LGLStructs::Vertex::GetMemberElementSize());
-		}
-
-		return steps;
-	};
 
 	if (internalModelMap.find(modelName) == internalModelMap.end())
 	{
@@ -713,8 +734,6 @@ void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 	}
 
 	auto& newVAOInfo = internalModelMap[modelName];
-
-	std::vector<size_t> steps = CollectSteps();
 
 	newVAOInfo.VAOs.push_back({});
 	VAO* newVAO = &newVAOInfo.VAOs.back().vboId;
@@ -758,43 +777,25 @@ void LGL::CreateMesh(const std::string& modelName, MeshInfo& meshInfo)
 
 	newVAOInfo.VAOs.back().meshInfo = &meshInfo;
 
-
-	// The whole secton needs to be generalized more
-	size_t step = 0;
-	size_t stride = 0;
-	for (int i = 0; i < steps.size(); ++i)
+	for (int i = 0; i < Vertex::GetFullMemberAmount(); ++i)
 	{
-		if (i == 5)
-		{
-			stride += steps[i] * sizeof(int);
-		}
-		else
-		{
-			stride += steps[i] * sizeof(float);
-		}
-	}
-
-	size_t byteOffset = 0;
-	for (int i = 0; i < steps.size(); ++i)
-	{
-		glEnableVertexAttribArray(i);
+		GLSafeExecute(glEnableVertexAttribArray, i);
 
 		if (i == 5)
 		{
-			GLSafeExecute(glVertexAttribIPointer, i, static_cast<int>(steps[i]), GL_INT, stride, (void*)(byteOffset));
-			byteOffset += steps[i] * sizeof(int);
+			GLSafeExecute(
+				glVertexAttribIPointer, i, static_cast<int>(layout.steps[i]), GL_INT, 
+				static_cast<int>(layout.stride), reinterpret_cast<void*>(layout.byteOffset[i])
+			);
 		}
 		else
 		{
 			GLSafeExecute(
-				glVertexAttribPointer, i, static_cast<int>(steps[i]), GL_FLOAT, GL_FALSE, stride, (void*)(byteOffset)
+				glVertexAttribPointer, i, static_cast<int>(layout.steps[i]), GL_FLOAT, GL_FALSE, 
+				static_cast<int>(layout.stride), reinterpret_cast<void*>(layout.byteOffset[i])
 			);
-			byteOffset += steps[i] * sizeof(float);
 		}
 	}
-
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//glBindVertexArray(0);
 
 	size_t polygons = newVAOInfo.VAOs.back().pointAmount / 3;
 	std::cout << "Mesh with " << newVAOInfo.VAOs.back().pointAmount << " point(s) / " << polygons << " polygons created\n";
