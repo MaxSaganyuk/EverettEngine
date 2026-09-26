@@ -16,7 +16,8 @@ std::string SimSerializer::PackValue(const std::string& value)
 
 void SimSerializer::UnpackValue(std::string_view& line, std::string& value, bool severalVals)
 {
-	value = line.substr(line.find('{') + 1, line.find('}') - 1);
+	size_t leftSidePos = line.find('{') + 1;
+	value = line.substr(leftSidePos, line.find('}') - leftSidePos);
 	
 	if (!value.empty() && severalVals)
 	{
@@ -129,16 +130,15 @@ bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::string& str,
 
 std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs)
 {
-	std::string res = "";
+	ParserTracker<int> pt;
+	std::string res;
 
 	for (auto& disabledDir : disabledDirs)
 	{
-		res += (StringCast::ToString(static_cast<int>(disabledDir.first)) + 
-			' ' + 
-			StringCast::ToString(static_cast<int>(disabledDir.second))) + 
-			' ';
+		pt.ToString(static_cast<int>(disabledDir.first), res);
+		pt.ToString(static_cast<int>(disabledDir.second), res);
 	}
-	res.pop_back();
+	pt.FinalizeToString(res);
 
 	return PackValue(res);
 }
@@ -155,29 +155,23 @@ bool SimSerializer::SetValueToLoadFrom(
 
 	UnpackValue(line, values);
 
+	ParserTracker<int> pt;
 	std::string value;
 	IObjectSim::Direction currentDirection;
 	size_t i = 0;
 
-	for (auto c : values)
+	for (auto value : pt.FromString(values))
 	{
-		if (c == ' ')
+		if (!(i % 2))
 		{
-			if (!(i % 2))
-			{
-				currentDirection = static_cast<IObjectSim::Direction>(StringCast::FromString<int>(value));
-			}
-			else
-			{
-				disabledDirs.emplace(currentDirection, StringCast::FromString<int>(value));
-			}
-
-			++i;
-			value.clear();
-			continue;
+			currentDirection = static_cast<IObjectSim::Direction>(value);
+		}
+		else
+		{
+			disabledDirs.emplace(currentDirection, value);
 		}
 
-		value += c;
+		++i;
 	}
 
 	return AssertAndReturn(!(i % 2));
@@ -185,17 +179,18 @@ bool SimSerializer::SetValueToLoadFrom(
 
 std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits)
 {
+	ParserTracker<IObjectSim::Rotation::value_type> pt;
 	std::string res;
 
 	for (size_t i = 0; i < rotationLimits.first.length(); ++i)
 	{
-		res += StringCast::ToString(rotationLimits.first[i]) + ' ';
+		pt.ToString(rotationLimits.first[i], res);
 	}
 	for (size_t i = 0; i < rotationLimits.second.length(); ++i)
 	{
-		res += StringCast::ToString(rotationLimits.second[i]) + ' ';
+		pt.ToString(rotationLimits.second[i], res);
 	}
-	res.pop_back();
+	pt.FinalizeToString(res);
 
 	return PackValue(res);
 }
@@ -212,34 +207,28 @@ bool SimSerializer::SetValueToLoadFrom(
 
 	UnpackValue(line, values);
 
+	ParserTracker<IObjectSim::Rotation::value_type> pt;
 	std::string value;
 	IObjectSim::Rotation currentRotation;
 	size_t i = 0;
 
-	for (auto c : values)
+	for (auto value : pt.FromString(values))
 	{
-		if (c == ' ')
+		currentRotation[i % 3] = value;
+
+		if (!((i + 1) % 3))
 		{
-			currentRotation[i % 3] = StringCast::FromString<float>(value);
-
-			if (!((i + 1) % 3))
+			if (i < 4)
 			{
-				if (i < 4)
-				{
-					rotationLimits.first = currentRotation;
-				}
-				else
-				{
-					rotationLimits.second = currentRotation;
-				}
+				rotationLimits.first = currentRotation;
 			}
-
-			++i;
-			value.clear();
-			continue;
+			else
+			{
+				rotationLimits.second = currentRotation;
+			}
 		}
 
-		value += c;
+		++i;
 	}
 
 	return AssertAndReturn(i == 6);

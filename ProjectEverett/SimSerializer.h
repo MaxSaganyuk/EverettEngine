@@ -23,6 +23,84 @@ private:
 		return versionValidation != VersionValidationState::UnsetCritical; \
 	} 
 
+	template<OnlyFundamental Type>
+	class ParserTracker
+	{
+		Type valueBuffer{};
+		size_t counter{};
+
+		void TryFormRepeatValue(std::string& res)
+		{
+			if (counter > 1)
+			{
+				res += '[' + StringCast::ToString(counter) + "] ";
+			}
+
+			counter = 0;
+		}
+
+	public:
+		void ToString(Type value, std::string& res)
+		{
+			if (!counter || valueBuffer != value)
+			{
+				TryFormRepeatValue(res);
+
+				res += StringCast::ToString<Type>(value) + ' ';
+				valueBuffer = value;
+			}
+
+			++counter;
+		}
+
+		void FinalizeToString(std::string& res)
+		{
+			TryFormRepeatValue(res);
+
+			if (res.size() > 1)
+			{
+				res.pop_back();
+			}
+		}
+
+		std::generator<Type> FromString(std::string_view values)
+		{
+			std::string value;
+
+			for (auto c : values)
+			{
+				if (counter)
+				{
+					for (size_t i = 0; i < counter; ++i)
+					{
+						co_yield valueBuffer;
+					}
+
+					counter = 0;
+				}
+				else
+				{
+					switch (c)
+					{
+					case '[':
+						break;
+					case ']':
+						counter = StringCast::FromString<size_t>(value) - 1;
+						value.clear();
+						break;
+					case ' ':
+						valueBuffer = StringCast::FromString<Type>(value);
+						co_yield valueBuffer;
+						value.clear();
+						break;
+					default:
+						value += c;
+					}
+				}
+			}
+		}
+	};
+
 	// OlderInvalid - required version should skip serialization of current line
     // Unset state should fail and stop serialization
 	enum class VersionValidationState
@@ -33,10 +111,13 @@ private:
 		UnsetCritical
 	};
 
-	constexpr static inline int latestSerializerVersion = 16;
+	constexpr static inline int latestSerializerVersion = 17;
 	static inline int usedVersion = -1;
 	static VersionValidationState ValidateVersion(int requiredVersion);
 	static bool SetUsedVersion(int usedVersionToSet);
+
+	template<OnlyFundamental Type>
+	static void FromValue(Type value, std::string& res);
 
 	static std::string PackValue(const std::string& value);
 	static void UnpackValue(std::string_view& line, std::string& value, bool severalVals = true);
@@ -146,7 +227,6 @@ public:
 
 #ifdef _HAS_CXX20
 
-
 template<OnlyFundamental FundamentalType>
 std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 {
@@ -194,16 +274,14 @@ bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int 
 template<OnlyFundamental FundamentalType>
 std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>& vector)
 {
+	ParserTracker<FundamentalType> pt;
 	std::string res;
 
 	for (const auto iter : vector)
 	{
-		res += StringCast::ToString<FundamentalType>(iter) + ' ';
+		pt.ToString(iter, res);
 	}
-	if (res.size() > 1)
-	{
-		res.pop_back();
-	}
+	pt.FinalizeToString(res);
 
 	return PackValue(res);
 }
@@ -215,31 +293,25 @@ bool SimSerializer::SetValueToLoadFrom(
 {
 	ValidateVersionCheck(requiredVersion)
 
+	ParserTracker<FundamentalType> pt;
 	std::string values;
 
 	UnpackValue(line, values);
 
-	std::string value;
-	size_t i = 0;
+	size_t i{};
 
-	for (auto c : values)
+	for (auto value : pt.FromString(values))
 	{
-		if (c == ' ')
+		if (i >= vector.size())
 		{
-			if (i >= vector.size())
-			{
-				vector.push_back(StringCast::FromString<FundamentalType>(value));
-			}
-			else
-			{
-				vector[i] = StringCast::FromString<FundamentalType>(value);
-			}
-			++i;
-			value.clear();
-			continue;
+			vector.push_back(value);
+		}
+		else
+		{
+			vector[i] = value;
 		}
 
-		value += c;
+		++i;
 	}
 
 	return AssertAndReturn(i == vector.size());
@@ -248,14 +320,17 @@ bool SimSerializer::SetValueToLoadFrom(
 template<OnlyGLMs GLMType>
 std::string SimSerializer::GetValueToSaveFrom(const GLMType& cont)
 {
-	std::string res = "";
-	const typename GLMType::value_type* ptr = glm::value_ptr(cont);
+	using ValueType = typename GLMType::value_type;
 
-	for (size_t i = 0; i < sizeof(GLMType) / sizeof(typename GLMType::value_type); ++i)
+	ParserTracker<ValueType> pt;
+	std::string res;
+	const ValueType* ptr = glm::value_ptr(cont);
+
+	for (size_t i = 0; i < sizeof(GLMType) / sizeof(ValueType); ++i)
 	{
-		res += StringCast::ToString(*(ptr + i)) + ' ';
+		pt.ToString(ptr[i], res);
 	}
-	res.pop_back();
+	pt.FinalizeToString(res);
 
 	return PackValue(res);
 }
@@ -263,29 +338,24 @@ std::string SimSerializer::GetValueToSaveFrom(const GLMType& cont)
 template<OnlyGLMs GLMType>
 bool SimSerializer::SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion)
 {
+	using ValueType = typename GLMType::value_type;
+
 	ValidateVersionCheck(requiredVersion)
 
+	ParserTracker<ValueType> pt;
 	std::string values;
 
 	UnpackValue(line, values);
 
-	std::string value;
-	typename GLMType::value_type* ptr = glm::value_ptr(cont);
+	ValueType* ptr = glm::value_ptr(cont);
 	size_t i = 0;
 
-	for (auto c : values)
+	for (auto value : pt.FromString(values))
 	{
-		if (c == ' ')
-		{
-			*(ptr + i++) = StringCast::FromString<typename GLMType::value_type>(value);
-			value.clear();
-			continue;
-		}
-
-		value += c;
+		ptr[i++] = value;
 	}
 
-	return AssertAndReturn(i == sizeof(GLMType) / sizeof(typename GLMType::value_type));
+	return AssertAndReturn(i == sizeof(GLMType) / sizeof(ValueType));
 }
 
 #else
