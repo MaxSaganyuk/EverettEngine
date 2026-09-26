@@ -107,12 +107,10 @@ std::string SolidSim::GetSimInfoToSave(const std::string& modelSolidName)
 
 bool SolidSim::SetSimInfoToLoad(std::string_view& line)
 {
-	int legacyInt;
-
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 
 	res = res && SimSerializer::SetValueToLoadFrom(line, model,      1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyInt,  1, 15);
+	SimSerializer::SkipDeprecatedValue(line, 1, 15);
 
 	res = res && CollectInfoToLoadToSTMM(line);
 

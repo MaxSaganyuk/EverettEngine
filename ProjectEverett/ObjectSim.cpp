@@ -92,34 +92,22 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = true;
-	bool legacyCompatibilityBool{};
-	glm::vec3 legacyCompatibilityVect;
-	glm::vec3 legacyRotationVectGetter{};
-	Direction legacyCompatibilityDir{};
-	std::vector<std::pair<std::string, std::string>> legacyCompatVectOfPairs{};
 
-	res = res && SimSerializer::SetValueToLoadFrom(line, scale.GetValue(),                        1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 7);
-	res = res && SimSerializer::SetValueToLoadFrom(line, pos.GetValue(),                          1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityVect,                 1, 15);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyRotationVectGetter,                1, 7);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityBool,                 1, 10);
-	res = res && SimSerializer::SetValueToLoadFrom(line, speed,                                   1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityBool,                 1, 8);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatibilityDir,                  1, 10);
-	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs,                            1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits,                          1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyCompatVectOfPairs,                 2, 11);
-	res = res && SimSerializer::SetValueToLoadFrom(line, objectLinkingEnabled,                    5);
-	res = res && SimSerializer::SetValueToLoadFrom(line, orient.GetValue(),                       6);
-
-	Rotation legacyRotationVect = legacyRotationVectGetter;
-
-	if (!legacyRotationVect.Zeroed())
-	{
-		RotateImpl(legacyRotationVect);
-	}
+	res = res && SimSerializer::SetValueToLoadFrom(line, scale.GetValue(), 1);
+	SimSerializer::SkipDeprecatedValue(line, 1, 7);
+	SimSerializer::SkipDeprecatedValue(line, 1, 7);
+	res = res && SimSerializer::SetValueToLoadFrom(line, pos.GetValue(), 1);
+	SimSerializer::SkipDeprecatedValue(line, 1, 15);
+	SimSerializer::SkipDeprecatedValue(line, 1, 7);
+	SimSerializer::SkipDeprecatedValue(line, 1, 10);
+	res = res && SimSerializer::SetValueToLoadFrom(line, speed, 1);
+	SimSerializer::SkipDeprecatedValue(line, 1, 8);
+	SimSerializer::SkipDeprecatedValue(line, 1, 10);
+	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs, 1);
+	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits, 1);
+	SimSerializer::SkipDeprecatedValue(line, 2, 11);
+	res = res && SimSerializer::SetValueToLoadFrom(line, objectLinkingEnabled, 5);
+	res = res && SimSerializer::SetValueToLoadFrom(line, orient.GetValue(), 6);
 
 	return res;
 }

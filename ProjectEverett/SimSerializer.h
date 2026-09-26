@@ -16,8 +16,8 @@
 class SimSerializer
 {
 private:
-	#define ValidateVersionCheck(version, deprecated)                      \
-	auto versionValidation = ValidateVersion(version, deprecated);         \
+	#define ValidateVersionCheck(version)                                  \
+	auto versionValidation = ValidateVersion(version);                     \
 	if (versionValidation > VersionValidationState::NewerValid)            \
 	{                                                                      \
 		return versionValidation != VersionValidationState::UnsetCritical; \
@@ -30,17 +30,17 @@ private:
 		ExactValid,
 		NewerValid,
 		OlderInvalid,
-		DeprecatedInvalid,
 		UnsetCritical
 	};
 
 	constexpr static inline int latestSerializerVersion = 16;
 	static inline int usedVersion = -1;
-	static VersionValidationState ValidateVersion(int requiredVersion, int deprecatedAt);
+	static VersionValidationState ValidateVersion(int requiredVersion);
 	static bool SetUsedVersion(int usedVersionToSet);
 
 	static std::string PackValue(const std::string& value);
 	static void UnpackValue(std::string_view& line, std::string& value, bool severalVals = true);
+	static void UnpackValue(std::string_view& line);
 
 	static bool AssertAndReturn(bool evaluation);
 public:
@@ -53,6 +53,8 @@ public:
 		_SIZE
 	};
 
+	static int GetUsedVersion();
+
 	static bool GetVersionFromLine(std::string_view& line);
 	static std::string GetLatestVersionStr();
 
@@ -63,21 +65,23 @@ public:
 	template<OnlyFundamental FundamentalType>
 	static std::string GetValueToSaveFrom(FundamentalType f);
 
+	static void SkipDeprecatedValue(std::string_view& line, int requiredVersion, int deprecatedAt);
+
 	template<OnlyFundamental FundamentalType>
-	static bool SetValueToLoadFrom(std::string_view& line, FundamentalType& f, int requiredVersion, int deprecatedAt = 0);
+	static bool SetValueToLoadFrom(std::string_view& line, FundamentalType& f, int requiredVersion);
 
 	template<OnlyEnums EnumType>
 	static std::string GetValueToSaveFrom(EnumType e);
 
 	template<OnlyEnums EnumType>
-	static bool SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion, int deprecatedAt = 0);
+	static bool SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion);
 
 	template<OnlyFundamental FundamentalType>
 	static std::string GetValueToSaveFrom(const std::vector<FundamentalType>& vector);
 
 	template<OnlyFundamental FundamentalType>
 	static bool SetValueToLoadFrom(
-		std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion, int deprecatedAt = 0
+		std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion
 	);
 #else
 	template<typename FundamentalType, typename std::enable_if_t<std::is_fundamental_v<FundamentalType>, bool> = false>
@@ -100,14 +104,14 @@ public:
 #endif
 	// String
 	static std::string GetValueToSaveFrom(const std::string& str);
-	static bool SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion, int deprecatedAt = 0);
+	static bool SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion);
 
 	// GLM
 	template<OnlyGLMs GLMType>
 	static std::string GetValueToSaveFrom(const GLMType& cont);
 
 	template<OnlyGLMs GLMType>
-	static bool SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion, int depricatedAt = 0);
+	static bool SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion);
 
 	// Special cases
 	static std::string GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
@@ -118,25 +122,25 @@ public:
 	static std::string GetValueToSaveFrom(std::generator<EverettStructs::BasicFileInfo>&& vectOfFileInfo);
 	static bool SetValueToLoadFrom(
 		std::string_view& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs, 
-		int requiredVersion, int deprecatedAt = 0
+		int requiredVersion
 	);
 	static bool SetValueToLoadFrom(
 		std::string_view& line, std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits, 
-		int requiredVersion, int deprecatedAt = 0
+		int requiredVersion
 	);
 	static bool SetValueToLoadFrom(
-		std::string_view& line, std::vector<std::string>& vectorStr, int requiredVersion, int deprecatedAt = 0
+		std::string_view& line, std::vector<std::string>& vectorStr, int requiredVersion
 	);
 	static bool SetValueToLoadFrom(
 		std::string_view& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr, 
-		int requiredVersion, int deprecatedAt = 0
+		int requiredVersion
 	);
 	static bool SetValueToLoadFrom(
-		std::string_view& line, std::chrono::system_clock::time_point& timePoint, int requiredVersion, int deprecatedAt = 0
+		std::string_view& line, std::chrono::system_clock::time_point& timePoint, int requiredVersion
 	);
 	static bool SetValueToLoadFrom(
 		std::string_view& line, std::vector<EverettStructs::BasicFileInfo>& vectOfFileInfo, 
-		int requiredVersion, int deprecatedAt = 0
+		int requiredVersion
 	);
 };
 
@@ -151,10 +155,10 @@ std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 
 template<OnlyFundamental FundamentalType>
 bool SimSerializer::SetValueToLoadFrom(
-	std::string_view& line, FundamentalType& f, int requiredVersion, int deprecatedAt
+	std::string_view& line, FundamentalType& f, int requiredVersion
 )
 {
-	ValidateVersionCheck(requiredVersion, deprecatedAt)
+	ValidateVersionCheck(requiredVersion)
 
 	std::string value;
 
@@ -172,9 +176,9 @@ std::string SimSerializer::GetValueToSaveFrom(EnumType e)
 }
 
 template<OnlyEnums EnumType>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion, int deprecatedAt)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion)
 {
-	ValidateVersionCheck(requiredVersion, deprecatedAt)
+	ValidateVersionCheck(requiredVersion)
 
 	int preEnumValue;
 	std::string value;
@@ -206,10 +210,10 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>
 
 template<OnlyFundamental FundamentalType>
 bool SimSerializer::SetValueToLoadFrom(
-	std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion, int deprecatedAt
+	std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion
 )
 {
-	ValidateVersionCheck(requiredVersion, deprecatedAt)
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 
@@ -257,9 +261,9 @@ std::string SimSerializer::GetValueToSaveFrom(const GLMType& cont)
 }
 
 template<OnlyGLMs GLMType>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion, int deprecatedAt)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion)
 {
-	ValidateVersionCheck(requiredVersion, deprecatedAt)
+	ValidateVersionCheck(requiredVersion)
 
 	std::string values;
 

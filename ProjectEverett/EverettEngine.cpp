@@ -1740,9 +1740,7 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 	std::vector<std::pair<std::string, std::string>> legacyDllInfo;
 	std::vector<EverettStructs::BasicFileInfo> dllInfo;
 
-	SimSerializer::SetValueToLoadFrom(line, legacyDllInfo, 2, 12);
-
-	if (legacyDllInfo.empty())
+	if (SimSerializer::GetUsedVersion() >= 12)
 	{
 		SimSerializer::SetValueToLoadFrom(line, dllInfo, 12);
 
@@ -1758,6 +1756,8 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 	}
 	else
 	{
+		SimSerializer::SetValueToLoadFrom(line, legacyDllInfo, 2);
+
 		for (auto& [dllName, dllPath] : legacyDllInfo)
 		{
 			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"));

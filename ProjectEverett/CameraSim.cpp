@@ -77,14 +77,12 @@ std::string CameraSim::GetSimInfoToSave(const std::string&)
 
 bool CameraSim::SetSimInfoToLoad(std::string_view& line)
 {
-	glm::mat4 legacyMat;
-
 	bool res = ObjectSim::SetSimInfoToLoad(line);
-	
-	SimSerializer::SkipValuesInLines(line, 2, 12);
 
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyMat,   1, 13);
-	res = res && SimSerializer::SetValueToLoadFrom(line, legacyMat,   1, 13);
+	SimSerializer::SkipDeprecatedValue(line, 1, 13);
+	SimSerializer::SkipDeprecatedValue(line, 1, 13);
+	SimSerializer::SkipDeprecatedValue(line, 1, 13);
+	SimSerializer::SkipDeprecatedValue(line, 1, 13);
 	res = res && SimSerializer::SetValueToLoadFrom(line, fov,         1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, sensitivity, 1);
 	res = res && SimSerializer::SetValueToLoadFrom(line, mode,        1);
