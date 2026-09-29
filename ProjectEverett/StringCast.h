@@ -5,13 +5,10 @@
 #include "EverettExceptionInternal.h"
 #include "ConceptUtils.h"
 
-class StringCast
+namespace StringCast
 {
-	constexpr static size_t ConverterBufferSize = 1024;
-	static inline char ConverterBuffer[ConverterBufferSize];
-public:
 	template<OnlyFundamentalNotBool Type>
-	static Type FromString(const std::string_view str)
+	Type FromString(const std::string_view str)
 	{
 		Type value{};
 
@@ -26,8 +23,11 @@ public:
 	}
 
 	template<OnlyFundamentalNotBool Type>
-	static std::string ToString(const Type value)
+	std::string ToString(const Type value)
 	{
+		constexpr size_t ConverterBufferSize = 32;
+		char ConverterBuffer[ConverterBufferSize];
+
 		auto [lineEndPtr, errorCode] = std::to_chars(ConverterBuffer, ConverterBuffer + ConverterBufferSize, value);
 
 		CheckAndThrowExceptionWMessage(
@@ -39,13 +39,13 @@ public:
 	}
 
 	template<typename>
-	static bool FromString(const std::string_view str)
+	bool FromString(const std::string_view str)
 	{
 		return FromString<int>(str);
 	}
 
 	template<typename>
-	static std::string ToString(const bool value)
+	std::string ToString(const bool value)
 	{
 		return ToString(static_cast<int>(value));
 	}
