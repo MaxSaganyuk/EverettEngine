@@ -1,6 +1,7 @@
 #pragma once
 #include "afxdialogex.h"
 #include "EverettEngine.h"
+#include "MFCUtilities.h"
 
 #include <array>
 #include <map>
@@ -83,7 +84,7 @@ private:
 		{ ZMinus, { None,    None,    Back    } }
 	};
 	
-	Gdiplus::Bitmap* coordBitmap;
+	MFCUtilities::BitmapWrapper coordBitmap;
 
 	afx_msg void OnXPlusButtonClick();
 	afx_msg void OnXMinusButtonClick();

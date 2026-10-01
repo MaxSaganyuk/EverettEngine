@@ -5,8 +5,8 @@
 #include "EverettGUI.h"
 #include "afxdialogex.h"
 #include "CObjectMoveDialog.h"
-#include "MFCUtilities.h"
 
+#include <iostream>
 #include <gdiplus.h>
 
 // CObjectMoveDialog dialog
@@ -32,10 +32,6 @@ CObjectMoveDialog::CObjectMoveDialog(
 
 CObjectMoveDialog::~CObjectMoveDialog()
 {
-	if (coordBitmap)
-	{
-		delete coordBitmap;
-	}
 }
 
 void CObjectMoveDialog::DoDataExchange(CDataExchange* pDX)
@@ -60,15 +56,24 @@ void CObjectMoveDialog::OnPaint()
 {
 	if (!coordBitmap)
 	{
-		coordBitmap = MFCUtilities::LoadPNGFromResource(AfxGetResourceHandle(), IDB_PNG1, _T("PNG"));
+		auto coordBitmapRes = MFCUtilities::LoadPNGFromResource(AfxGetResourceHandle(), IDB_PNG1, _T("PNG"));
+
+		if (coordBitmapRes)
+		{
+			coordBitmap = std::move(*coordBitmapRes);
+		}
+		else
+		{
+			std::cerr << coordBitmapRes.error() << '\n';
+		}
 	}
+
+	CPaintDC dc(this);
+	Gdiplus::Graphics graphics(dc.GetSafeHdc());
 
 	if (coordBitmap)
 	{
-		CPaintDC dc(this);
-		Gdiplus::Graphics graphics(dc.GetSafeHdc());
-
-		graphics.DrawImage(coordBitmap, 75, 10, 200, 200);
+		graphics.DrawImage(coordBitmap.GetBitmapPtr(), 75, 10, 200, 200);
 	}
 }
 

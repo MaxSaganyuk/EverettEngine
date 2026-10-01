@@ -62,26 +62,47 @@ namespace MFCUtilities
 		return res;
 	}
 
-	// Yields owner, must be deleted
-	Gdiplus::Bitmap* LoadPNGFromResource(HMODULE hModule, unsigned int resourceID, LPCTSTR resourceType)
+	BitmapWrapper::BitmapWrapper(void* hbuffer, IStream* stream, Gdiplus::Bitmap* bitmap)
 	{
+		this->hBuffer.reset(hbuffer);
+		this->stream.reset(stream);
+		this->bitmap.reset(bitmap);
+	}
+
+	Gdiplus::Bitmap* BitmapWrapper::GetBitmapPtr()
+	{
+		return bitmap.get();
+	}
+
+	BitmapWrapper::operator bool()
+	{
+		return hBuffer && stream && bitmap;
+	}
+
+	std::expected<BitmapWrapper, std::string> LoadPNGFromResource(
+		HMODULE hModule, unsigned int resourceID, LPCTSTR resourceType
+	)
+	{
+		constexpr const char* errorMes = "Failed to load PNG from Resource.";
+		
 		HRSRC hResource = FindResourceW(hModule, MAKEINTRESOURCE(resourceID), resourceType);
-		if (!hResource) return nullptr;
+		if (!hResource) return std::unexpected{ errorMes + std::string("Reason: Can't find resource") };
 
 		DWORD imageSize = SizeofResource(hModule, hResource);
-		if (!imageSize) return nullptr;
+		if (!imageSize) return std::unexpected{ errorMes + std::string("Reason: Can't get image size") };
 
 		HGLOBAL hMemory = LoadResource(hModule, hResource);
-		if (!hMemory) return nullptr;
+		if (!hMemory) return std::unexpected{ errorMes + std::string("Reason: Can't load resource") };
 
 		void* pResourceData = LockResource(hMemory);
-		if (!pResourceData) return nullptr;
+		if (!pResourceData) return std::unexpected{ errorMes + std::string("Reason: Can't lock resource") };
 
 		HGLOBAL hBuffer = GlobalAlloc(GMEM_MOVEABLE, imageSize);
-		if (!hBuffer) return nullptr;
-
+		if (!hBuffer) return std::unexpected{ errorMes + std::string("Reason: Can't allocate global") };
 
 		void* pBuffer = GlobalLock(hBuffer);
+		if (!pBuffer) return std::unexpected{ errorMes + std::string("Reason: Can't lock global") };
+
 		memcpy(pBuffer, pResourceData, imageSize);
 		GlobalUnlock(hBuffer);
 
@@ -89,13 +110,10 @@ namespace MFCUtilities
 		if (FAILED(CreateStreamOnHGlobal(hBuffer, true, &pStream)))
 		{
 			GlobalFree(hBuffer);
-			return nullptr;
+			return std::unexpected{ errorMes + std::string("Reason: Can't create stream") };
 		}
 
-		Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromStream(pStream);
-		pStream->Release();
-
-		return pBitmap;
+		return BitmapWrapper{ hBuffer, pStream, Gdiplus::Bitmap::FromStream(pStream) };
 	}
 
 	void OpenColorSelection(std::function<glm::vec3& ()>&& colorVectorGetter)

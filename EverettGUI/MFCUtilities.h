@@ -7,6 +7,9 @@
 #include <array>
 #include <optional>
 #include <functional>
+#include <string>
+#include <memory>
+#include <expected>
 
 namespace MFCUtilities
 {
@@ -14,8 +17,31 @@ namespace MFCUtilities
 	bool EditsAllEmpty(const std::vector<CEdit*>& edits);
 	bool EditsAnyEmpty(const std::vector<CEdit*>& edits);
 
-	// Yields owner, must be deleted
-	Gdiplus::Bitmap* LoadPNGFromResource(HMODULE hModule, unsigned int resourceID, LPCTSTR resourceType);
+	class BitmapWrapper
+	{
+		using HBufferDeleter = decltype([](void* hBuffer) { if (hBuffer) { GlobalFree(hBuffer); } });
+		using IStreamDeleter = decltype([](IStream* stream) { if (stream) { stream->Release(); } });
+
+		std::unique_ptr<void, HBufferDeleter> hBuffer;
+		std::unique_ptr<IStream, IStreamDeleter> stream;
+		std::unique_ptr<Gdiplus::Bitmap> bitmap;
+	public:
+		BitmapWrapper() = default;
+		BitmapWrapper(void* hbuffer, IStream* stream, Gdiplus::Bitmap* bitmap);
+
+		BitmapWrapper(const BitmapWrapper&) = delete;
+		BitmapWrapper(BitmapWrapper&&) noexcept = default;
+		BitmapWrapper& operator=(const BitmapWrapper&) = delete;
+		BitmapWrapper& operator=(BitmapWrapper&&) noexcept = default;
+
+		Gdiplus::Bitmap* GetBitmapPtr();
+
+		explicit operator bool();
+	};
+
+	std::expected<BitmapWrapper, std::string> LoadPNGFromResource(
+		HMODULE hModule, unsigned int resourceID, LPCTSTR resourceType
+	);
 
 	void OpenColorSelection(std::function<glm::vec3&()>&& colorVectorGetter);
 };
