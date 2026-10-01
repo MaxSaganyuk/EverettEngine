@@ -5,43 +5,49 @@
 #include "NameEditChecker.h"
 #include "AdString.h"
 
-void NameEditChecker::CheckAndEditName(CEdit& nameEdit, CStatic& nameWarning)
+namespace NameEditChecker
 {
-	if (nameCheckFunc)
+	std::string restrictedSymbs = "{}* ";
+	NameCheckFunc nameCheckFunc = nullptr;
+
+	void RemoveRestrictedSymbs(AdString& str)
 	{
-		AdString nameStr;
-		nameEdit.GetWindowTextW(nameStr);
+		std::string& stdStr = str;
 
-		AdString digitlessNameStdStr = CommonStrEdits::RemoveDigitsFromStringEnd(nameStr);
-		RemoveRestrictedSymbs(digitlessNameStdStr);
-
-		if (nameStr != digitlessNameStdStr)
+		for (auto c : restrictedSymbs)
 		{
-			nameEdit.SetWindowTextW(digitlessNameStdStr);
+			stdStr.erase(std::remove(stdStr.begin(), stdStr.end(), c), stdStr.end());
 		}
-
-		AdString nameStdStrChecked = nameCheckFunc(digitlessNameStdStr);
-
-		nameWarning.ShowWindow(digitlessNameStdStr != nameStdStrChecked);
 	}
-}
 
-void NameEditChecker::SetNameCheckFunc(NameCheckFunc nameCheckFuncInp)
-{
-	nameCheckFunc = nameCheckFuncInp;
-}
-
-AdString NameEditChecker::GetNameCheckedString(const AdString& str)
-{
-	return nameCheckFunc(str);
-}
-
-void NameEditChecker::RemoveRestrictedSymbs(AdString& str)
-{
-	std::string& stdStr = str;
-
-	for (auto c : restrictedSymbs)
+	void CheckAndEditName(CEdit& nameEdit, CStatic& nameWarning)
 	{
-		stdStr.erase(std::remove(stdStr.begin(), stdStr.end(), c), stdStr.end());
+		if (nameCheckFunc)
+		{
+			AdString nameStr;
+			nameEdit.GetWindowTextW(nameStr);
+
+			AdString digitlessNameStdStr = CommonStrEdits::RemoveDigitsFromStringEnd(nameStr);
+			RemoveRestrictedSymbs(digitlessNameStdStr);
+
+			if (nameStr != digitlessNameStdStr)
+			{
+				nameEdit.SetWindowTextW(digitlessNameStdStr);
+			}
+
+			AdString nameStdStrChecked = nameCheckFunc(digitlessNameStdStr);
+
+			nameWarning.ShowWindow(digitlessNameStdStr != nameStdStrChecked);
+		}
+	}
+
+	void SetNameCheckFunc(NameCheckFunc nameCheckFuncInp)
+	{
+		nameCheckFunc = nameCheckFuncInp;
+	}
+
+	AdString GetNameCheckedString(const AdString& str)
+	{
+		return nameCheckFunc(str);
 	}
 }

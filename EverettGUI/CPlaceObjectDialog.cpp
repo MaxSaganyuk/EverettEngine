@@ -5,6 +5,7 @@
 #include "EverettGUI.h"
 #include "afxdialogex.h"
 #include "CPlaceObjectDialog.h"
+#include "MFCUtilities.h"
 
 // CPlaceObjectDialog dialog
 

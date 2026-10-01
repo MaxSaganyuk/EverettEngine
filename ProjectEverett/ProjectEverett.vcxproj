@@ -218,6 +218,7 @@
     <ClCompile Include="CameraSim.cpp" />
     <ClCompile Include="CommandHandler.cpp" />
     <ClCompile Include="LightSim.cpp" />
+    <ClCompile Include="MaterialSim.cpp" />
     <ClCompile Include="ModelInfo.cpp" />
     <ClCompile Include="ObjectSim.cpp" />
     <ClCompile Include="RenderLogger.cpp" />

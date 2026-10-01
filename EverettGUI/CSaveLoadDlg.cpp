@@ -6,6 +6,7 @@
 #include "afxdialogex.h"
 #include "CSaveLoadDlg.h"
 #include "CBrowseDialog.h"
+#include "MFCUtilities.h"
 
 
 // CSaveLoadDlg dialog

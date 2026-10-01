@@ -5,6 +5,7 @@
 #include "EverettGUI.h"
 #include "afxdialogex.h"
 #include "CGameProducerDlg.h"
+#include "MFCUtilities.h"
 
 #include "CBrowseDialog.h"
 

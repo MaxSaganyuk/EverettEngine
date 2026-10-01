@@ -5,6 +5,7 @@
 #include "EverettGUI.h"
 #include "afxdialogex.h"
 #include "CObjectMoveDialog.h"
+#include "MFCUtilities.h"
 
 #include <gdiplus.h>
 

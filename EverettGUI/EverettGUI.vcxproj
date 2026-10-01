@@ -248,6 +248,7 @@
     <ClCompile Include="CDLLLoaderDlg.cpp" />
     <ClCompile Include="EverettGUI.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="MFCUtilities.cpp" />
     <ClCompile Include="NameEditChecker.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

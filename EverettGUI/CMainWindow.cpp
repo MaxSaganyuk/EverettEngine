@@ -6,6 +6,7 @@
 #include "CMainWindow.h"
 #include "CObjectEditDialog.h"
 #include "CRenameObjDlg.h"
+#include "MFCUtilities.h"
 
 #include "EverettException.h"
 

@@ -5,6 +5,7 @@
 #include "resource.h"
 #include "afxdialogex.h"
 #include "CObjectEditDialog.h"
+#include "MFCUtilities.h"
 
 
 // CObjectEditDialog dialog
