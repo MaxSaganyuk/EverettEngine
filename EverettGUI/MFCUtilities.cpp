@@ -62,46 +62,51 @@ namespace MFCUtilities
 		return res;
 	}
 
-	BitmapWrapper::BitmapWrapper(void* hbuffer, IStream* stream, Gdiplus::Bitmap* bitmap)
+	BitmapWrapper::BitmapWrapper(void* hbuffer, IStream* stream, Gdiplus::Bitmap* bitmap) noexcept
 	{
 		this->hBuffer.reset(hbuffer);
 		this->stream.reset(stream);
 		this->bitmap.reset(bitmap);
 	}
 
-	Gdiplus::Bitmap* BitmapWrapper::GetBitmapPtr()
+	Gdiplus::Bitmap* BitmapWrapper::GetBitmapPtr() const noexcept
 	{
 		return bitmap.get();
 	}
 
-	BitmapWrapper::operator bool()
+	BitmapWrapper::operator bool() const noexcept
 	{
 		return hBuffer && stream && bitmap;
+	}
+
+	std::unexpected<std::string> FormLoadPNGError(std::string&& error)
+	{
+		constexpr static const char errorMes[] = "Failed to load PNG from Resource. Reason: ";
+
+		return std::unexpected{ errorMes + error };
 	}
 
 	std::expected<BitmapWrapper, std::string> LoadPNGFromResource(
 		HMODULE hModule, unsigned int resourceID, LPCTSTR resourceType
 	)
 	{
-		constexpr const char* errorMes = "Failed to load PNG from Resource.";
-		
 		HRSRC hResource = FindResourceW(hModule, MAKEINTRESOURCE(resourceID), resourceType);
-		if (!hResource) return std::unexpected{ errorMes + std::string("Reason: Can't find resource") };
+		if (!hResource) return FormLoadPNGError("Can't find resource"); 
 
 		DWORD imageSize = SizeofResource(hModule, hResource);
-		if (!imageSize) return std::unexpected{ errorMes + std::string("Reason: Can't get image size") };
+		if (!imageSize) return FormLoadPNGError("Can't get image size");
 
 		HGLOBAL hMemory = LoadResource(hModule, hResource);
-		if (!hMemory) return std::unexpected{ errorMes + std::string("Reason: Can't load resource") };
+		if (!hMemory) return FormLoadPNGError("Can't load resource");
 
 		void* pResourceData = LockResource(hMemory);
-		if (!pResourceData) return std::unexpected{ errorMes + std::string("Reason: Can't lock resource") };
+		if (!pResourceData) return FormLoadPNGError("Can't lock resource");
 
 		HGLOBAL hBuffer = GlobalAlloc(GMEM_MOVEABLE, imageSize);
-		if (!hBuffer) return std::unexpected{ errorMes + std::string("Reason: Can't allocate global") };
+		if (!hBuffer) return FormLoadPNGError("Can't allocate global");
 
 		void* pBuffer = GlobalLock(hBuffer);
-		if (!pBuffer) return std::unexpected{ errorMes + std::string("Reason: Can't lock global") };
+		if (!pBuffer) return FormLoadPNGError("Can't lock global");
 
 		memcpy(pBuffer, pResourceData, imageSize);
 		GlobalUnlock(hBuffer);
@@ -110,10 +115,13 @@ namespace MFCUtilities
 		if (FAILED(CreateStreamOnHGlobal(hBuffer, true, &pStream)))
 		{
 			GlobalFree(hBuffer);
-			return std::unexpected{ errorMes + std::string("Reason: Can't create stream") };
+			return FormLoadPNGError("Can't create stream");
 		}
 
-		return BitmapWrapper{ hBuffer, pStream, Gdiplus::Bitmap::FromStream(pStream) };
+		Gdiplus::Bitmap* bitmap = Gdiplus::Bitmap::FromStream(pStream);
+		if (!bitmap) return FormLoadPNGError("Can't get bitmap from stream");
+
+		return BitmapWrapper{ hBuffer, pStream, bitmap };
 	}
 
 	void OpenColorSelection(std::function<glm::vec3& ()>&& colorVectorGetter)

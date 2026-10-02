@@ -27,16 +27,16 @@ namespace MFCUtilities
 		std::unique_ptr<Gdiplus::Bitmap> bitmap;
 	public:
 		BitmapWrapper() = default;
-		BitmapWrapper(void* hbuffer, IStream* stream, Gdiplus::Bitmap* bitmap);
+		BitmapWrapper(void* hbuffer, IStream* stream, Gdiplus::Bitmap* bitmap) noexcept;
 
 		BitmapWrapper(const BitmapWrapper&) = delete;
 		BitmapWrapper(BitmapWrapper&&) noexcept = default;
 		BitmapWrapper& operator=(const BitmapWrapper&) = delete;
 		BitmapWrapper& operator=(BitmapWrapper&&) noexcept = default;
 
-		Gdiplus::Bitmap* GetBitmapPtr();
+		Gdiplus::Bitmap* GetBitmapPtr() const noexcept;
 
-		explicit operator bool();
+		explicit operator bool() const noexcept;
 	};
 
 	std::expected<BitmapWrapper, std::string> LoadPNGFromResource(
