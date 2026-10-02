@@ -44,7 +44,10 @@ void CameraSim::SetAspect()
 {
 	float aspect = static_cast<float>(windowWidth) / static_cast<float>(windowHeight);
 
-	projection = glm::perspective(glm::radians(fov), aspect, 0.1f, 100.f);
+	if (!std::isnan(aspect))
+	{
+		projection = glm::perspective(glm::radians(fov), aspect, 0.1f, 100.f);
+	}
 }
 
 void CameraSim::SetAspect(const int windowWidth, const int windowHeight)
