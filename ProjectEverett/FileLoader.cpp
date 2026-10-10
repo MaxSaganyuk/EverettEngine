@@ -30,6 +30,7 @@
 
 #include "EverettStructs.h"
 #include "StringCast.h"
+#include "OutputUtils.h"
 
 void ConvertFromAssimpToGLM(const aiMatrix4x4& assimpMatrix, glm::mat4& glmMatrix)
 {
@@ -728,30 +729,9 @@ void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE 
 
 	std::cout << "Loaded " << GetFileFromPath(dllPath) << '\n';
 
-	using ParamlessFuncType = void(*)();
-
-	if (dllInfo.ReadMainFuncFromDLL())
-	{
-		std::cout << "Loaded main script func\n";
-	}
-
-	if (dllInfo.ReadCleanupFuncFromDLL())
-	{
-		std::cout << "Loaded cleanup script func\n";
-	}
-	else
-	{
-		std::cerr << "Cleanup script does not exist\n";
-	}
-
-	if (dllInfo.ReadInitFuncFromDLL())
-	{
-		std::cout << "Loaded script init func\n";
-	}
-	else
-	{
-		std::cerr << "Script init does not exist\n";
-	}
+	OutputUtils::LogOrError(dllInfo.ReadMainFuncFromDLL(), "Main script func load");
+	OutputUtils::LogOrError(dllInfo.ReadCleanupFuncFromDLL(), "Cleanup script func load");
+	OutputUtils::LogOrError(dllInfo.ReadInitFuncFromDLL(), "Init script func load");
 }
 
 bool FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
