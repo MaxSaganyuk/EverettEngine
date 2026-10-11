@@ -200,6 +200,13 @@ FileLoader::ModelOwner::~ModelOwner()
 	}
 }
 
+struct FileLoader::ModelLoader::NewModelInfo
+{
+	const aiScene* handle;
+	std::string name;
+	std::string filename;
+};
+
 std::generator<std::string> FileLoader::ModelLoader::GetTextureFilenames(const std::string& path)
 {
 	auto GetTexturePath = [](const std::string& path)
@@ -211,9 +218,7 @@ std::generator<std::string> FileLoader::ModelLoader::GetTextureFilenames(const s
 }
 
 LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
-	const aiMesh* meshHandle, 
-	BoneMap& boneMap,
-	TempTexMap& tempTexMap
+	NewModelInfo& newModel, const aiMesh* meshHandle, BoneMap& boneMap, TempTexMap& tempTexMap
 )
 {
 	auto GetVertexParam = [&meshHandle](LGLStructs::Vertex::BasicVertexData whichData)
@@ -265,7 +270,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 		}
 	};
 
-	auto ProcessBones = [this, &meshHandle](LGLStructs::Mesh& mesh, BoneMap& boneMap)
+	auto ProcessBones = [&meshHandle](LGLStructs::Mesh& mesh, BoneMap& boneMap)
 	{
 		for (size_t i = 0; i < meshHandle->mNumBones; ++i)
 		{
@@ -311,7 +316,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 		}
 	};
 
-	auto ProcessTextures = [this, &meshHandle](LGLStructs::Mesh& mesh, TempTexMap& tempTexMap)
+	auto ProcessTextures = [this, &meshHandle, &newModel](LGLStructs::Mesh& mesh, TempTexMap& tempTexMap)
 	{
 		using TextureType = LGLStructs::Texture::TextureType;
 
@@ -330,11 +335,8 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 			{TextureType::Height,   aiTextureType_HEIGHT,   'h'}
 		};
 
-		auto LoadTextureByMaterial = [this](
-			LGLStructs::Mesh& mesh, 
-			aiMaterial* material, 
-			size_t texTypeIndex, 
-			TempTexMap& tempTexMap
+		auto LoadTextureByMaterial = [this, &newModel](
+			LGLStructs::Mesh& mesh, aiMaterial* material, size_t texTypeIndex, TempTexMap& tempTexMap
 		)
 		{
 			/*
@@ -374,16 +376,15 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 
 				LGLStructs::Texture newTexture;
 
-				newTexture.name = nameToSet + '_' + strWithoutPrefix.data();
+				newTexture.name = newModel.name + '_' + strWithoutPrefix.data();
 				newTexture.type = textureTypeInfo[texTypeIndex].lglTexType;
 
-				const aiTexture* embeddedTexture = modelHandle->GetEmbeddedTexture(strWithoutPrefix.data());
+				const aiTexture* embeddedTexture = newModel.handle->GetEmbeddedTexture(strWithoutPrefix.data());
 
-				if (!ownerContainer[fileProcessed].textureMap.contains(newTexture.name))
+				if (!ownerContainer[newModel.filename].textureMap.contains(newTexture.name))
 				{
 					LoadTexture(
-						fileProcessed,
-						newTexture,
+						newModel.filename, newTexture,
 						embeddedTexture ? 
 						std::span{ reinterpret_cast<unsigned char*>(embeddedTexture->pcData), embeddedTexture->mWidth } : 
 						std::span<unsigned char>{}
@@ -402,7 +403,7 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 			}
 		};
 
-		aiMaterial* material = modelHandle->mMaterials[meshHandle->mMaterialIndex];
+		aiMaterial* material = newModel.handle->mMaterials[meshHandle->mMaterialIndex];
 
 		for (size_t i = 0; i < LGLStructs::Texture::GetTextureTypeAmount(); ++i)
 		{
@@ -429,30 +430,25 @@ LGLStructs::Mesh FileLoader::ModelLoader::ProcessMesh(
 }
 
 void FileLoader::ModelLoader::ProcessNodeForModelInfo(
-	const aiNode* nodeHandle,
-	std::weak_ptr<LGLStructs::ModelInfo> model,
-	BoneMap& boneMap,
+	NewModelInfo& newModel, aiNode* nodeHandle, std::weak_ptr<LGLStructs::ModelInfo> model, BoneMap& boneMap, 
 	TempTexMap& tempTexMap
 )
 {
 	for (size_t i = 0; i < nodeHandle->mNumMeshes; ++i)
 	{
-		aiMesh* meshHandle = modelHandle->mMeshes[nodeHandle->mMeshes[i]];
-		model.lock()->AddMesh(ProcessMesh(meshHandle, boneMap, tempTexMap), meshHandle->mName.C_Str());
+		aiMesh* meshHandle = newModel.handle->mMeshes[nodeHandle->mMeshes[i]];
+		model.lock()->AddMesh(ProcessMesh(newModel, meshHandle, boneMap, tempTexMap), meshHandle->mName.C_Str());
 	}
 
 	for (size_t i = 0; i < nodeHandle->mNumChildren; ++i)
 	{
-		ProcessNodeForModelInfo(nodeHandle->mChildren[i], model, boneMap, tempTexMap);
+		ProcessNodeForModelInfo(newModel, nodeHandle->mChildren[i], model, boneMap, tempTexMap);
 	}
 }
 
 void FileLoader::ModelLoader::ProcessNodeForBoneTree(
-	const std::string& rootNodeName,
-	const aiNode* nodeHandle,
-	BoneMap& boneMap,
-	AnimSystem::BoneTree::TreeManagerNode* parentTreeNode,
-	glm::mat4& globalTransform
+	const std::string& rootNodeName, aiNode* nodeHandle, BoneMap& boneMap,
+	AnimSystem::BoneTree::TreeManagerNode* parentTreeNode, glm::mat4& globalTransform
 )
 {
 	std::string nodeName = nodeHandle->mName.C_Str();
@@ -504,8 +500,7 @@ void FileLoader::ModelLoader::ParseAnimInfo(AssimpType* keys, size_t keyAmount, 
 }
 
 void FileLoader::ModelLoader::SetGlobalInverseTransform(
-	const std::string& rootNodeName, 
-	std::weak_ptr<AnimSystem::ModelAnim> modelAnim
+	const std::string& rootNodeName, std::weak_ptr<AnimSystem::ModelAnim> modelAnim
 )
 {
 	auto modelAnimPtr = modelAnim.lock();
@@ -524,15 +519,14 @@ void FileLoader::ModelLoader::SetGlobalInverseTransform(
 }
 
 void FileLoader::ModelLoader::LoadAnimations(
-	AnimSystem::AnimKeyMap& animKeyMap,
-	AnimSystem::AnimInfoVect& animInfoVect
+	NewModelInfo& newModel, AnimSystem::AnimKeyMap& animKeyMap, AnimSystem::AnimInfoVect& animInfoVect
 )
 {
-	size_t animAmount = modelHandle->mNumAnimations;
+	size_t animAmount = newModel.handle->mNumAnimations;
 
 	for (size_t animIndex = 0; animIndex < animAmount; ++animIndex)
 	{
-		const aiAnimation* animHandle = modelHandle->mAnimations[animIndex];
+		const aiAnimation* animHandle = newModel.handle->mAnimations[animIndex];
 
 		if (animHandle)
 		{
@@ -561,27 +555,26 @@ void FileLoader::ModelLoader::LoadAnimations(
 }
 
 bool FileLoader::ModelLoader::LoadModel(
-	const std::string& file,
-	const std::string& name,
-	std::weak_ptr<LGLStructs::ModelInfo>& model,
-	std::weak_ptr<AnimSystem::ModelAnim>& modelAnim
+	const std::string& file, const std::string& name,
+	std::weak_ptr<LGLStructs::ModelInfo>& model, std::weak_ptr<AnimSystem::ModelAnim>& modelAnim
 )
 {
 	if (!ownerContainer.contains(file))
 	{
 		Assimp::Importer importer;
-		modelHandle = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_LimitBoneWeights);
 
-		if (!modelHandle || modelHandle->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !modelHandle->mRootNode)
+		NewModelInfo newModel = { 
+			importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_LimitBoneWeights), name, file
+		};
+
+		if (!newModel.handle || newModel.handle->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !newModel.handle->mRootNode)
 		{
 			std::cerr << "AssimpHelper error moduleHandle is invalid\n";
 			return false;
 		}
 
-		ownerContainer.emplace(file, std::move(ModelOwner{}));
+		ownerContainer.try_emplace(file);
 
-		nameToSet = name;
-		fileProcessed = file;
 		if (file.substr(file.find('.')) == ".obj")
 		{
 			GetTextureFilenames(file);
@@ -596,24 +589,24 @@ bool FileLoader::ModelLoader::LoadModel(
 		auto& modelPtr = ownerContainer[file].model;
 		auto& modelAnimPtr = ownerContainer[file].modelAnim;
 
-		ProcessNodeForModelInfo(modelHandle->mRootNode, model, boneMap, tempTexMap);
+		auto rootNode = newModel.handle->mRootNode;
+
+		ProcessNodeForModelInfo(newModel, rootNode, model, boneMap, tempTexMap);
+
 		modelPtr->RecheckIfTextureless();
 		modelPtr->NormalizeAllEmptyWeights();
 
 		modelAnimPtr->boneAmount = boneMap.size();
 
 		glm::mat4 globalTransform = glm::mat4(1.0f);
-		std::string rootNodeName = modelHandle->mRootNode->mName.C_Str();
+		std::string rootNodeName = newModel.handle->mRootNode->mName.C_Str();
 		modelAnimPtr->boneTree.AddRootNode(rootNodeName, {});
+
 		ProcessNodeForBoneTree(
-			rootNodeName,
-			modelHandle->mRootNode,
-			boneMap,
-			modelAnimPtr->boneTree.FindNodeBy(rootNodeName),
-			globalTransform
+			rootNodeName, rootNode, boneMap, modelAnimPtr->boneTree.FindNodeBy(rootNodeName), globalTransform
 		);
 		SetGlobalInverseTransform(rootNodeName, modelAnim);
-		LoadAnimations(modelAnimPtr->animKeyMap, modelAnimPtr->animInfoVect);
+		LoadAnimations(newModel, modelAnimPtr->animKeyMap, modelAnimPtr->animInfoVect);
 	}
 	else
 	{

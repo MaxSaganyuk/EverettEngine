@@ -16,7 +16,6 @@
 #include "AnimSystem.h"
 
 // Assimp forward declarations
-struct aiScene;
 struct aiMesh;
 struct aiNode;
 
@@ -63,51 +62,40 @@ class FileLoader
 
 	class ModelLoader : public AssetManager<ModelOwner>
 	{
-		const aiScene* modelHandle;
-		std::string fileProcessed;
-		std::string nameToSet;
+		struct NewModelInfo;
 
 		using BoneMap = std::unordered_map<std::string, AnimSystem::BoneInfo>;
 		using TempTexMap = std::unordered_map<std::string, LGLStructs::Texture>;
 
 		void ProcessNodeForModelInfo(
-			const aiNode* nodeHandle,
-			std::weak_ptr<LGLStructs::ModelInfo> model,
-			BoneMap& boneMap,
+			NewModelInfo& newModel, aiNode* nodeHandle, std::weak_ptr<LGLStructs::ModelInfo> model, BoneMap& boneMap, 
 			TempTexMap& tempTexMap
 		);
 		void ProcessNodeForBoneTree(
-			const std::string& rootNodeName,
-			const aiNode* nodeHandle,
-			BoneMap& boneMap,
-			AnimSystem::BoneTree::TreeManagerNode* parentTreeNode,
-			glm::mat4& globalTransform
+			const std::string& rootNodeName, aiNode* nodeHandle, BoneMap& boneMap, 
+			AnimSystem::BoneTree::TreeManagerNode* parentTreeNode, glm::mat4& globalTransform
 		);
 		void SetGlobalInverseTransform(
-			const std::string& rootNodeName,
-			std::weak_ptr<AnimSystem::ModelAnim> modelAnim
+			const std::string& rootNodeName, std::weak_ptr<AnimSystem::ModelAnim> modelAnim
 		);
 		void LoadAnimations(
-			AnimSystem::AnimKeyMap& animKeyMap,
-			AnimSystem::AnimInfoVect& animInfo
+			NewModelInfo& newModel, AnimSystem::AnimKeyMap& animKeyMap, AnimSystem::AnimInfoVect& animInfo
 		);
 
 		template<typename AssimpType, typename GLMCont>
 		void ParseAnimInfo(AssimpType* keys, size_t keyAmount, GLMCont& glmCont);
 
 		std::generator<std::string> GetTextureFilenames(const std::string& path);
-		LGLStructs::Mesh ProcessMesh(const aiMesh* meshHandle, BoneMap& boneMap, TempTexMap& tempTexMap);
+		LGLStructs::Mesh ProcessMesh(
+			NewModelInfo& newModel, const aiMesh* meshHandle, BoneMap& boneMap, TempTexMap& tempTexMap
+		);
 		bool LoadTexture(
-			const std::string& file,
-			LGLStructs::Texture& texture,
-			std::span<unsigned char> data
+			const std::string& file, LGLStructs::Texture& texture, std::span<unsigned char> data
 		);
 	public:
 		bool LoadModel(
-			const std::string& file,
-			const std::string& name,
-			std::weak_ptr<LGLStructs::ModelInfo>& model,
-			std::weak_ptr<AnimSystem::ModelAnim>& modelAnim
+			const std::string& file, const std::string& name, 
+			std::weak_ptr<LGLStructs::ModelInfo>& model, std::weak_ptr<AnimSystem::ModelAnim>& modelAnim
 		);
 	};
 
