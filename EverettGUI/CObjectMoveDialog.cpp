@@ -11,7 +11,7 @@
 
 // CObjectMoveDialog dialog
 
-IMPLEMENT_DYNAMIC(CObjectMoveDialog, CDialogEx)
+IMPLEMENT_DYNAMIC(CObjectMoveDialog, CTrackedDlg)
 
 CObjectMoveDialog::CObjectMoveDialog(
 	EverettEngine& engineRef, 
@@ -25,7 +25,7 @@ CObjectMoveDialog::CObjectMoveDialog(
 	object(object),
 	isSolid(isSolid),
 	transType(transType),
-	CDialogEx(IDD_DIALOG8, pParent)
+	CTrackedDlg(IDD_DIALOG8, pParent)
 {
 
 }
@@ -36,13 +36,13 @@ CObjectMoveDialog::~CObjectMoveDialog()
 
 void CObjectMoveDialog::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CTrackedDlg::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT1, rateOfChangeEdit);
 }
 
 BOOL CObjectMoveDialog::OnInitDialog()
 {
-	CDialogEx::OnInitDialog();
+	CTrackedDlg::OnInitDialog();
 
 	CString value;
 	value.Format(_T("%.4f"), 0.1f);
@@ -83,7 +83,7 @@ BOOL CObjectMoveDialog::OnEraseBkgnd(CDC* pDC)
 }
 
 
-BEGIN_MESSAGE_MAP(CObjectMoveDialog, CDialogEx)
+BEGIN_MESSAGE_MAP(CObjectMoveDialog, CTrackedDlg)
 ON_WM_PAINT()
 ON_BN_CLICKED(IDC_BUTTON2, &CObjectMoveDialog::OnXPlusButtonClick)
 ON_BN_CLICKED(IDC_BUTTON3, &CObjectMoveDialog::OnXMinusButtonClick)

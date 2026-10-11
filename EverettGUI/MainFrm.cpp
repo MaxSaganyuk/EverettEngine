@@ -8,6 +8,8 @@
 
 #include "MFCTreeManager.h"
 
+#include "CTrackedDlg.h"
+
 #include "CSaveLoadDlg.h"
 #include "CBrowseAndLoadDialog.h"
 #include "CPlaceObjectDialog.h"
@@ -65,7 +67,8 @@ CMainFrame::CMainFrame() noexcept
 		engine.SetModelPath("..\\ProjectEverett\\models");
 #endif
 		engine.AddWorldLoadCallback([this]() {
-			ClearTree() && LoadObjectNamesToTree() && mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
+			CTrackedDlg::CloseModals(CTrackedDlg::CloseModalCode::Abort) && ClearTree() && LoadObjectNamesToTree() && 
+			mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
 		});
 		engine.CreateAndSetupMainWindow(800, 600, "Everett");
 		engine.SetMainThreadInfo(windowName, ExecuteOnMainThreadID);

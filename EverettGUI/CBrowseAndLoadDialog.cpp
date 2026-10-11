@@ -13,7 +13,7 @@
 
 // CLoadModelDialog dialog
 
-IMPLEMENT_DYNAMIC(CBrowseAndLoadDialog, CDialogEx)
+IMPLEMENT_DYNAMIC(CBrowseAndLoadDialog, CTrackedDlg)
 
 CBrowseAndLoadDialog::CBrowseAndLoadDialog(
 	const AdString& objectName,
@@ -21,7 +21,7 @@ CBrowseAndLoadDialog::CBrowseAndLoadDialog(
 	CWnd* pParent
 )
 	: 
-	CDialogEx(IDD_DIALOG1, pParent), 
+	CTrackedDlg(IDD_DIALOG1, pParent),
 	objectName(objectName),
 	modelLoader(std::move(modelLoader)),
 	path(""), 
@@ -77,7 +77,7 @@ void CBrowseAndLoadDialog::DoDataExchange(CDataExchange* pDX)
 }
 
 
-BEGIN_MESSAGE_MAP(CBrowseAndLoadDialog, CDialogEx)
+BEGIN_MESSAGE_MAP(CBrowseAndLoadDialog, CTrackedDlg)
 	ON_BN_CLICKED(IDC_BUTTON1, &CBrowseAndLoadDialog::OnBnClickedButton1)
 	ON_BN_CLICKED(IDOK, &CBrowseAndLoadDialog::OnBnClickedOk)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &CBrowseAndLoadDialog::OnObjectSelection)

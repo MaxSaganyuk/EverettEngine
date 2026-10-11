@@ -7,9 +7,9 @@
 
 #include "EverettException.h"
 
-IMPLEMENT_DYNAMIC(CDLLLoaderDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CDLLLoaderDlg, CTrackedDlg)
 
-BEGIN_MESSAGE_MAP(CDLLLoaderDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CDLLLoaderDlg, CTrackedDlg)
 	ON_BN_CLICKED(IDC_BUTTON2, &CDLLLoaderDlg::OnBrowseScriptButton)
 	ON_BN_CLICKED(IDC_BUTTON3, &CDLLLoaderDlg::OnLoadScriptButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON4, &CDLLLoaderDlg::OnUnloadDllButtonClick)
@@ -21,7 +21,7 @@ CDLLLoaderDlg::CDLLLoaderDlg(
 	EverettEngine& engineRef,
 	CWnd* pParent
 ) :
-	CDialogEx(IDD_DIALOG5, pParent),
+	CTrackedDlg(IDD_DIALOG5, pParent),
 	selectedScriptDllInfo(selectedScriptDllInfo), 
 	engineRef(engineRef) {}
 

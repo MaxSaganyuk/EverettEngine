@@ -3,6 +3,8 @@
 #include "EverettEngine.h"
 #include "MFCUtilities.h"
 
+#include "CTrackedDlg.h"
+
 #include <array>
 #include <map>
 
@@ -13,7 +15,7 @@ namespace Gdiplus
 
 // CObjectMoveDialog dialog
 
-class CObjectMoveDialog : public CDialogEx
+class CObjectMoveDialog : public CTrackedDlg
 {
 	DECLARE_DYNAMIC(CObjectMoveDialog)
 

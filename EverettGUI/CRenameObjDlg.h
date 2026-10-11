@@ -4,7 +4,9 @@
 #include "NameEditChecker.h"
 #include "AdString.h"
 
-class CRenameObjDlg : public CDialogEx
+#include "CTrackedDlg.h"
+
+class CRenameObjDlg : public CTrackedDlg
 {
 	DECLARE_DYNAMIC(CRenameObjDlg)
 

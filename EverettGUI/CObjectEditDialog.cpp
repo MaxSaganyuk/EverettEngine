@@ -10,7 +10,7 @@
 
 // CObjectEditDialog dialog
 
-IMPLEMENT_DYNAMIC(CObjectEditDialog, CDialogEx)
+IMPLEMENT_DYNAMIC(CObjectEditDialog, CTrackedDlg)
 
 CObjectEditDialog::CObjectEditDialog(
 	EverettEngine& engine, 
@@ -20,7 +20,7 @@ CObjectEditDialog::CObjectEditDialog(
 	CWnd* pParent 
 )
 	: 
-	CDialogEx(IDD_DIALOG4, pParent),
+	CTrackedDlg(IDD_DIALOG4, pParent),
 	engineRef(engine), 
 	objectType(objectTypeP),
 	objectName(selectedNodes.size() > 0 ? selectedNodes[0].second : AdString{}),
@@ -281,7 +281,7 @@ void CObjectEditDialog::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBa
 	CDialog::OnHScroll(nSBCode, nPos, pScrollBar);
 }
 
-BEGIN_MESSAGE_MAP(CObjectEditDialog, CDialogEx)
+BEGIN_MESSAGE_MAP(CObjectEditDialog, CTrackedDlg)
 	ON_BN_CLICKED(IDC_BUTTON1, &CObjectEditDialog::OnUpdateParamsButtonClick)
 	ON_BN_CLICKED(IDC_CHECK3, &CObjectEditDialog::OnBnClickedCheck3)
 	ON_CBN_SELCHANGE(IDC_COMBO2, &CObjectEditDialog::OnMeshCBSelChange)

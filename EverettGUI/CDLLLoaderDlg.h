@@ -7,8 +7,9 @@
 #include <vector>
 
 #include "AdString.h"
+#include "CTrackedDlg.h"
 
-class CDLLLoaderDlg : public CDialogEx
+class CDLLLoaderDlg : public CTrackedDlg
 {
 	DECLARE_DYNAMIC(CDLLLoaderDlg)
 public:

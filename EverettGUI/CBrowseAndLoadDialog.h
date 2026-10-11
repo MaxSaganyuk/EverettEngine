@@ -8,9 +8,11 @@
 
 #include "AdString.h"
 
+#include "CTrackedDlg.h"
+
 // CLoadModelDialog dialog
 
-class CBrowseAndLoadDialog : public CDialogEx
+class CBrowseAndLoadDialog : public CTrackedDlg
 {
 	DECLARE_DYNAMIC(CBrowseAndLoadDialog)
 	using LoaderFunc = std::move_only_function<std::generator<std::string>(std::string&)>;

@@ -10,10 +10,10 @@
 
 // CRenameObjDlg dialog
 
-IMPLEMENT_DYNAMIC(CRenameObjDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CRenameObjDlg, CTrackedDlg)
 
 CRenameObjDlg::CRenameObjDlg(const AdString& oldName, CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_DIALOG9, pParent), oldName(oldName)
+	: CTrackedDlg(IDD_DIALOG9, pParent), oldName(oldName)
 {
 
 }
@@ -48,7 +48,7 @@ BOOL CRenameObjDlg::OnInitDialog()
 }
 
 
-BEGIN_MESSAGE_MAP(CRenameObjDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CRenameObjDlg, CTrackedDlg)
 	ON_EN_CHANGE(IDC_EDIT2, &CRenameObjDlg::OnNewNameBoxChange)
 	ON_BN_CLICKED(IDOK, &CRenameObjDlg::OnBnClickedOk)
 END_MESSAGE_MAP()

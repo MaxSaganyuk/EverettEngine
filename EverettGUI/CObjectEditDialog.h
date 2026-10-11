@@ -8,10 +8,11 @@
 
 #include "AdString.h"
 #include "CObjectMoveDialog.h"
+#include "CTrackedDlg.h"
 
 // CObjectEditDialog dialog
 
-class CObjectEditDialog : public CDialogEx
+class CObjectEditDialog : public CTrackedDlg
 {
 	DECLARE_DYNAMIC(CObjectEditDialog)
 

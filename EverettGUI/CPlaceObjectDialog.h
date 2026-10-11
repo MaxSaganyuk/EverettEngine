@@ -8,9 +8,11 @@
 #include "AdString.h"
 #include "NameEditChecker.h"
 
+#include "CTrackedDlg.h"
+
 // CPlaceObjectDialog dialog
 
-class CPlaceObjectDialog : public CDialogEx
+class CPlaceObjectDialog : public CTrackedDlg
 {
 	DECLARE_DYNAMIC(CPlaceObjectDialog)
 

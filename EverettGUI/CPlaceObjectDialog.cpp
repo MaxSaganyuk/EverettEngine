@@ -9,7 +9,7 @@
 
 // CPlaceObjectDialog dialog
 
-IMPLEMENT_DYNAMIC(CPlaceObjectDialog, CDialogEx)
+IMPLEMENT_DYNAMIC(CPlaceObjectDialog, CTrackedDlg)
 
 CPlaceObjectDialog::CPlaceObjectDialog(
 	const AdString& objectTypeName, 
@@ -18,7 +18,7 @@ CPlaceObjectDialog::CPlaceObjectDialog(
 	CWnd* pParent
 )
 	: 
-	CDialogEx(IDD_DIALOG2, pParent), 
+	CTrackedDlg(IDD_DIALOG2, pParent),
 	objectTypeName(objectTypeName), 
 	sourceObjectTypeName(sourceObjectTypeName), 
 	objectNameList(std::move(objectNameList)),
@@ -61,7 +61,7 @@ void CPlaceObjectDialog::DoDataExchange(CDataExchange* pDX)
 }
 
 
-BEGIN_MESSAGE_MAP(CPlaceObjectDialog, CDialogEx)
+BEGIN_MESSAGE_MAP(CPlaceObjectDialog, CTrackedDlg)
 	ON_BN_CLICKED(IDOK, &CPlaceObjectDialog::OnBnClickedOk)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &CPlaceObjectDialog::OnModelChoiceChange)
 	ON_EN_CHANGE(IDC_EDIT1, &CPlaceObjectDialog::OnNameEditChanged)
