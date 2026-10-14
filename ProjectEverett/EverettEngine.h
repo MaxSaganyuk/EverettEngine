@@ -92,6 +92,9 @@ public:
 	EVERETT_API bool CreateSound(const std::string& path, const std::string& soundName);
 	EVERETT_API bool CreateCollider(const std::string& colliderName);
 
+	EVERETT_API std::expected<void, std::string> CopyObject(
+		const std::string& name, size_t amount = 1, std::optional<ObjectTypes> hintType = std::nullopt
+	);
 	EVERETT_API std::expected<void, std::string> RenameObject(
 		const std::string& oldName, const std::string& newName, std::optional<ObjectTypes> hintType = std::nullopt
 	);
@@ -147,6 +150,7 @@ public:
 	EVERETT_API void SetMainThreadInfo(const std::string& windowName, size_t id);
 
 	EVERETT_API std::string GetAvailableObjectName(const std::string& name);
+	EVERETT_API size_t GetObjectNameCount(const std::string& name);
 
 	EVERETT_API std::string GetSaveFileType();
 
@@ -216,6 +220,9 @@ private:
 	static bool CheckHintAndType(
 		const std::optional<ObjectTypes>& hintType, const std::optional<ObjectTypes>& objectType
 	);
+
+	template<typename Sim>
+	void CopyObjectBasedOn(const std::string& name, Sim& sim, size_t amount);
 
 	SolidCollection::iterator DeleteSolidImpl(SolidCollection::iterator solidIter);
 
@@ -290,6 +297,7 @@ private:
 
 	void InitializeSpecialWordWorldLoadMap();
 	void CheckAndLoadRequestedWorld();
+	void LoadObjectFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadCameraFromLine(std::string_view& line);
 	void LoadSolidFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
 	void LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);

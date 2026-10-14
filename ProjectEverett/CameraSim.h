@@ -21,8 +21,6 @@ private:
 	Mode mode;
 	glm::vec3 cameraAxisLimit; // Depends on the mode, no need to save
 
-	std::string GetSimInfoToSaveImpl();
-
 	void UpdateViewMatrix();
 public:
 	CameraSim(
@@ -37,6 +35,7 @@ public:
 	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
+	std::string GetSimInfoToSaveImpl();
 	std::string GetSimInfoToSave(const std::string&);
 	bool SetSimInfoToLoad(std::string_view& line);
 

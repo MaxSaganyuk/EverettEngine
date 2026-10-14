@@ -19,13 +19,12 @@ private:
 public:
 	bool Contains(const std::string& name) const
 	{
-		return nameInfo.contains(name);
+		return nameInfo.contains(CommonStrEdits::RemoveDigitsFromStringEnd(name));
 	}
 
 	void Add(const std::string& name)
 	{
-		int number{};
-		std::string namePure = CommonStrEdits::RemoveDigitsFromStringEnd(name, number);
+		std::string namePure = CommonStrEdits::RemoveDigitsFromStringEnd(name);
 
 		if (auto iter = nameInfo.find(namePure); iter != nameInfo.end())
 		{
@@ -35,20 +34,34 @@ public:
 		}
 		else
 		{
-			nameInfo.emplace(namePure, NameInfo{});
+			nameInfo.try_emplace(namePure);
 		}
 	}
 
 	std::string GetAvailibleName(const std::string& name) const
 	{
-		if (auto iter = nameInfo.find(name); iter != nameInfo.end())
+		std::string namePure = CommonStrEdits::RemoveDigitsFromStringEnd(name);
+
+		if (auto iter = nameInfo.find(namePure); iter != nameInfo.end())
 		{
 			auto& [taken, number] = iter->second;
 			
-			if (taken) return (name + std::to_string(number));
+			if (taken) return (namePure + std::to_string(number));
 		}
 
-		return name;
+		return namePure;
+	}
+
+	size_t GetCountForName(const std::string& name) const
+	{
+		if (auto iter = nameInfo.find(CommonStrEdits::RemoveDigitsFromStringEnd(name)); iter != nameInfo.end())
+		{
+			auto& [_, counter] = iter->second;
+
+			return counter;
+		}
+
+		return 0;
 	}
 
 	void TryRemove(const std::string& name)

@@ -24,6 +24,7 @@ public:
 	);
 	~LightSim();
 
+	std::string GetSimInfoToSaveImpl();
 	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
@@ -59,7 +60,6 @@ private:
 
 	void CheckForSpotLightType();
 	void AdjustCutoffRange(float& radians);
-	std::string GetSimInfoToSaveImpl();
 
 	static std::map<int, Attenuation> attenuationVals;
 	static inline std::array<size_t, ILightSim::LightTypes::_SIZE> amountOfLightsByType{ 0, 0, 0 };

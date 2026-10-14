@@ -16,6 +16,7 @@ public:
 	);
 	~ColliderSim();
 
+	std::string GetSimInfoToSaveImpl();
 	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
@@ -65,8 +66,6 @@ private:
 	);
 
 	static void CleanBindedCollisionCallbacksFrom(ColliderSim* colliderToRemove);
-
-	std::string GetSimInfoToSaveImpl();
  
 	bool isActive;
 

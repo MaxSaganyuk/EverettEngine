@@ -20,7 +20,6 @@ private:
 protected:
 	static inline float renderDeltaTime = 1.0f;
 
-	std::string GetSimInfoToSaveImpl();
 	bool SetSimInfoToLoad(std::string_view& line);
 	void CheckRotationLimits();
 	
@@ -46,6 +45,8 @@ public:
 		const float speed = 1.0f
 	);
 	~ObjectSim();
+
+	std::string GetSimInfoToSaveImpl();
 
 	std::string GetThisObjectTypeNameStr() override;
 

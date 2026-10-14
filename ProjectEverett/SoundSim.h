@@ -45,17 +45,19 @@ private:
 
 	void SetupSound(WavData&& wavData);
 	bool CreateBufferAndSource();
-	std::string GetSimInfoForSaveImpl();
 public:
 	void UpdateCurrentPlaybackTime();
 
 	std::string GetThisObjectTypeNameStr() override;
 
+	std::string GetSimInfoForSaveImpl();
 	std::string GetSimInfoToSave(const std::string& soundName);
 	bool SetSimInfoToLoad(std::string_view& line);
 
 	bool UpdateTransform() override;
 	void UpdateSourcePosForAL();
+
+	std::string GetFilepath();
 
 	static void InitOpenAL();
 	static void TerminateOpenAL();

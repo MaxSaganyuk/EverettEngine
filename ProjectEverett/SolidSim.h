@@ -27,8 +27,6 @@ private:
 	void ResetModelMatrix();
 	std::string CollectInfoToSaveFromSTMM();
 	bool CollectInfoToLoadToSTMM(std::string_view& line);
-protected:
-	std::string GetSimInfoToSaveImpl();
 public:
 	SolidSim(
 		const glm::vec3& pos = glm::vec3(0.0f, 0.0f, 0.0f),
@@ -43,6 +41,7 @@ public:
 
 	bool UpdateTransform() override;
 
+	std::string GetSimInfoToSaveImpl();
 	std::string GetSimInfoToSave(const std::string& modelSolidName);
 	bool SetSimInfoToLoad(std::string_view& line);
 

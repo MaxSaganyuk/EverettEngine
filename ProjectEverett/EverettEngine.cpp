@@ -891,6 +891,40 @@ ColliderSim* EverettEngine::CreateColliderImpl(const std::string& colliderName)
 	return nullptr;
 }
 
+std::expected<void, std::string> EverettEngine::CopyObject(
+	const std::string& name, size_t amount, std::optional<ObjectTypes> hintType
+)
+{
+	if (name == "Camera" || (hintType.has_value() && hintType == ObjectTypes::Camera))
+		return std::unexpected("Cannot rename camera object");
+
+	auto CopyObj = [&]<typename Type>(std::unordered_map<std::string, Type>& cont)
+	{
+		constexpr static std::optional<ObjectTypes> objectType = GetTypeEnumByType<Type>();
+
+		typename std::unordered_map<std::string, Type>::iterator iter;
+
+		if (CheckHintAndType(hintType, objectType) && (iter = cont.find(name)) != cont.end())
+		{
+			CopyObjectBasedOn(name, iter->second, amount);
+
+			return FoundCorrectOne;
+		}
+
+		return CheckNextOne;
+	};
+
+	mainLGL->PauseRendering();
+
+	auto result = CopyObj(solids) && CopyObj(lights) && CopyObj(sounds) && CopyObj(colliders);
+
+	mainLGL->PauseRendering(false);
+
+	if (result != FoundCorrectOne) return std::unexpected("Name does not exist");
+
+	return {};
+}
+
 std::expected<void, std::string> EverettEngine::RenameObject(
 	const std::string& oldName, const std::string& newName, std::optional<ObjectTypes> hintType
 )
@@ -1070,6 +1104,51 @@ bool EverettEngine::CheckHintAndType(
 	}
 
 	return check;
+}
+
+template<typename Sim>
+void EverettEngine::CopyObjectBasedOn(const std::string& originalName, Sim& originalObj, size_t amount)
+{
+	static_assert(std::is_base_of_v<ObjectSim, Sim>);
+	static_assert(!std::is_same_v<CameraSim, Sim>);
+	static_assert(!std::is_same_v<ObjectSim, Sim>);
+
+	SimSerializer::ObjectInfoArray objectInfo;
+
+	objectInfo[SimSerializer::ObjectInfoNames::ObjectType] = Sim::GetObjectTypeNameStr();
+
+	if constexpr (std::is_same_v<SolidSim, Sim>)
+	{
+		std::string modelName = originalObj.GetModelName();
+
+		objectInfo[SimSerializer::ObjectInfoNames::SubtypeName] = modelName;
+		objectInfo[SimSerializer::ObjectInfoNames::Path] = models[modelName].GetModelPath();
+	}
+	else if constexpr (std::is_same_v<LightSim, Sim>)
+	{
+		objectInfo[SimSerializer::ObjectInfoNames::SubtypeName] = originalObj.GetLightTypeStr();
+	}
+	else if constexpr (std::is_same_v<SoundSim, Sim>)
+	{
+		objectInfo[SimSerializer::ObjectInfoNames::Path] = originalObj.GetFilepath();
+	}
+
+	std::string serializedOriginal = originalObj.GetSimInfoToSaveImpl();
+	std::string_view line;
+
+	for (size_t i = 0; i < amount; ++i)
+	{
+		line = serializedOriginal;
+
+		objectInfo[SimSerializer::ObjectInfoNames::ObjectName] = allNameTracker->GetAvailibleName(originalName);
+
+		LoadObjectFromLine(line, objectInfo);
+	}
+
+	if constexpr (std::is_same_v<SolidSim, Sim> || std::is_same_v<LightSim, Sim>)
+	{
+		GenerateShader();
+	}
 }
 
 EverettEngine::SolidCollection::iterator EverettEngine::DeleteSolidImpl(SolidCollection::iterator solidIter)
@@ -1647,6 +1726,30 @@ bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 	return true;
 }
 
+void EverettEngine::LoadObjectFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
+{
+	switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]).value_or(ObjectTypes::_SIZE))
+	{
+	case EverettEngine::ObjectTypes::Camera:
+		LoadCameraFromLine(line);
+		break;
+	case EverettEngine::ObjectTypes::Solid:
+		LoadSolidFromLine(line, objectInfo);
+		break;
+	case EverettEngine::ObjectTypes::Light:
+		LoadLightFromLine(line, objectInfo);
+		break;
+	case EverettEngine::ObjectTypes::Sound:
+		LoadSoundFromLine(line, objectInfo);
+		break;
+	case EverettEngine::ObjectTypes::Collider:
+		LoadColliderFromLine(line, objectInfo);
+		break;
+	default:
+		ThrowExceptionWMessage("Unexpected object type name to load");
+	}
+}
+
 void EverettEngine::LoadCameraFromLine(std::string_view& line)
 {
 	CheckAndThrowExceptionWMessage((camera->SetSimInfoToLoad(line)), "Camera setup from file failed");
@@ -1772,7 +1875,7 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 	std::fstream file(pathToUse, std::ios::in);
 	std::string lineLoader;
 	std::string_view line;
-	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
+	SimSerializer::ObjectInfoArray objectInfo;
 
 	AssetPaths loadedFiles = GetPathsFromWorldFile(pathToUse);
 	if (gizmoEnabled)
@@ -1789,6 +1892,7 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 	while (!file.eof())
 	{
 		std::getline(file, lineLoader);
+
 		line = lineLoader;
 		std::string lineTitle = std::string(line.substr(0, line.find('*')));
 
@@ -1800,26 +1904,7 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 		{
 			SimSerializer::GetObjectInfo(line, objectInfo);
 
-			switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]).value_or(ObjectTypes::_SIZE))
-			{
-			case EverettEngine::ObjectTypes::Camera:
-				LoadCameraFromLine(line);
-				break;
-			case EverettEngine::ObjectTypes::Solid:
-				LoadSolidFromLine(line, objectInfo);
-				break;
-			case EverettEngine::ObjectTypes::Light:
-				LoadLightFromLine(line, objectInfo);
-				break;
-			case EverettEngine::ObjectTypes::Sound:
-				LoadSoundFromLine(line, objectInfo);
-				break;
-			case EverettEngine::ObjectTypes::Collider:
-				LoadColliderFromLine(line, objectInfo);
-				break;
-			default:
-				ThrowExceptionWMessage("Unexpected object type name in file");
-			}
+			LoadObjectFromLine(line, objectInfo);
 		}
 	}
 	GenerateShader();
@@ -2152,4 +2237,9 @@ void EverettEngine::PanicOnFailedInterfaceGet(bool value)
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)
 {
 	return allNameTracker->GetAvailibleName(name);
+}
+
+size_t EverettEngine::GetObjectNameCount(const std::string& name)
+{
+	return allNameTracker->GetCountForName(name);
 }

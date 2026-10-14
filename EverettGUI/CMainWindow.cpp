@@ -5,10 +5,12 @@
 #include "EverettGUI.h"
 #include "CMainWindow.h"
 #include "CObjectEditDialog.h"
+#include "CCopyObjDlg.h"
 #include "CRenameObjDlg.h"
 #include "MFCUtilities.h"
 
 #include "EverettException.h"
+#include "CommonStrEdits.h"
 
 #include <iostream>
 
@@ -69,6 +71,7 @@ void CMainWindow::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
+	ON_COMMAND(CopyNode, &CMainWindow::OnCopyNode)
 	ON_COMMAND(RenameNode, &CMainWindow::OnRenameNode)
 	ON_COMMAND(DeleteNode, &CMainWindow::OnDeleteNode)
 	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE1, &CMainWindow::OnTreeSelectionChanged)
@@ -166,6 +169,8 @@ void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 { 
+	currentNodeInfo.Clean();
+
 	if (engineP->CheckIfScriptsRunning()) return;
 
 	currentNodeInfo.rawNode = ForceNodeSelection();
@@ -200,10 +205,61 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 	{
 		menu.CreatePopupMenu();
 
+		if (currentNodeInfo.selectedType)
+		{
+			menu.AppendMenuW(MF_STRING, CopyNode, _T("Copy object"));
+		}
+
 		menu.AppendMenuW(MF_STRING, RenameNode, _T("Rename object"));
 		menu.AppendMenuW(MF_STRING, DeleteNode, _T("Delete object"));
 
 		menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+	}
+}
+
+void CMainWindow::OnCopyNode()
+{
+	auto& [_, name] = currentNodeInfo.selectedSubnodes.front();
+
+	CCopyObjDlg copyObjDlg;
+
+	if (copyObjDlg.DoModal() == IDOK)
+	{
+		size_t pickedAmount = copyObjDlg.GetPickedAmount();
+
+		if (!pickedAmount) return;
+
+		size_t firstCount = engineP->GetObjectNameCount(name);
+
+		if (engineP->CopyObject(name, pickedAmount, currentNodeInfo.selectedType))
+		{
+			AdString newNameBase = CommonStrEdits::RemoveDigitsFromStringEnd(name);
+
+			for (size_t i = firstCount; i < firstCount + pickedAmount; ++i)
+			{
+				AdString newName = newNameBase + std::to_wstring(i).c_str();
+				
+				switch (*currentNodeInfo.selectedType)
+				{
+				case EverettEngine::ObjectTypes::Solid:
+					objectTree.AddSolidToTree(currentNodeInfo.selectedSubnodes[1].second, newName);
+					break;
+				case EverettEngine::ObjectTypes::Light:
+					objectTree.AddLightToTree(currentNodeInfo.selectedSubnodes[1].second, newName);
+					break;
+				case EverettEngine::ObjectTypes::Sound:
+					objectTree.AddSoundToTree(newName);
+					break;
+				case EverettEngine::ObjectTypes::Collider:
+					objectTree.AddColliderToTree(newName);
+					break;
+				}
+			}
+		}
+		else
+		{
+			Panic("[CRITICAL ERROR] Copy step failed. Terminating\n");
+		}
 	}
 }
 
@@ -224,8 +280,6 @@ void CMainWindow::OnRenameNode()
 			Panic("[CRITICAL ERROR] Rename step failed. Terminating\n");
 		}
 	}
-
-	currentNodeInfo.Clean();
 }
 
 void CMainWindow::OnDeleteNode()
@@ -246,8 +300,6 @@ void CMainWindow::OnDeleteNode()
 			Panic("[CRITICAL ERROR] Delete step failed. Terminating\n");
 		}
 	}
-
-	currentNodeInfo.Clean();
 }
 
 std::vector<std::pair<AdString, AdString>>& CMainWindow::GetSelectedScriptDllInfo()

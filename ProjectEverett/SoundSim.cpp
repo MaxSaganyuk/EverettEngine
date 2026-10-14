@@ -230,6 +230,11 @@ void SoundSim::UpdateSourcePosForAL()
 	alSource3f(sound.source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 }
 
+std::string SoundSim::GetFilepath()
+{
+	return sound.fileName;
+}
+
 void SoundSim::SetPlaybackCallback(std::function<void(bool, bool, bool)> callback)
 {
 	sound.playStates.SetStateChangeCallback(std::move(callback));

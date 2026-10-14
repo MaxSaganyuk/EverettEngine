@@ -211,6 +211,7 @@
   <ItemGroup>
     <ClInclude Include="AdString.h" />
     <ClInclude Include="CBrowseDialog.h" />
+    <ClInclude Include="CCopyObjDlg.h" />
     <ClInclude Include="CGameProducerDlg.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="CLoadingDialog.h" />
@@ -236,6 +237,7 @@
   <ItemGroup>
     <ClCompile Include="AdString.cpp" />
     <ClCompile Include="CBrowseDialog.cpp" />
+    <ClCompile Include="CCopyObjDlg.cpp" />
     <ClCompile Include="CGameProducerDlg.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="CLoadingDialog.cpp" />

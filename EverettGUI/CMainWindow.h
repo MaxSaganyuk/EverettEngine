@@ -85,12 +85,14 @@ private:
 	CButton showDebugTextCheck;
 	CButton defaultControlsCheck;
 
+	constexpr static int CopyNode   = WM_USER + 8;
 	constexpr static int RenameNode = WM_USER + 4;
 	constexpr static int DeleteNode = WM_USER + 5;
 public:
 	afx_msg void OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnCopyNode();
 	afx_msg void OnRenameNode();
 	afx_msg void OnDeleteNode();
 	afx_msg void OnEditAmbientLightButton();

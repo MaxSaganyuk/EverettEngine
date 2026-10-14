@@ -134,6 +134,8 @@ public:
 		_SIZE
 	};
 
+	using ObjectInfoArray = std::array<std::string, ObjectInfoNames::_SIZE>;
+
 	static int GetUsedVersion();
 
 	static bool GetVersionFromLine(std::string_view& line);
