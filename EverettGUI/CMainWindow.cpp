@@ -170,9 +170,6 @@ void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 { 
 	currentNodeInfo.Clean();
-
-	if (engineP->CheckIfScriptsRunning()) return;
-
 	currentNodeInfo.rawNode = ForceNodeSelection();
 	
 	if (!currentNodeInfo.rawNode)
@@ -212,6 +209,14 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 		menu.AppendMenuW(MF_STRING, RenameNode, _T("Rename object"));
 		menu.AppendMenuW(MF_STRING, DeleteNode, _T("Delete object"));
+
+		if (engineP->CheckIfScriptsRunning(false))
+		{
+			constexpr UINT disableBitVal = MF_BYCOMMAND | MF_DISABLED | MF_GRAYED;
+
+			menu.EnableMenuItem(RenameNode, disableBitVal);
+			menu.EnableMenuItem(DeleteNode, disableBitVal);
+		}
 
 		menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
 	}
