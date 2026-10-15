@@ -1113,6 +1113,8 @@ void EverettEngine::CopyObjectBasedOn(const std::string& originalName, Sim& orig
 	static_assert(!std::is_same_v<CameraSim, Sim>);
 	static_assert(!std::is_same_v<ObjectSim, Sim>);
 
+	SimSerializer::SetUsedVersion(SimSerializer::GetLastVersion());
+
 	SimSerializer::ObjectInfoArray objectInfo;
 
 	objectInfo[SimSerializer::ObjectInfoNames::ObjectType] = Sim::GetObjectTypeNameStr();

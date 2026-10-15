@@ -67,6 +67,11 @@ int SimSerializer::GetUsedVersion()
 	return usedVersion;
 }
 
+int SimSerializer::GetLastVersion()
+{
+	return latestSerializerVersion;
+}
+
 bool SimSerializer::SetUsedVersion(int usedVersionToSet)
 {
 	bool isValidVersion = usedVersionToSet <= latestSerializerVersion;

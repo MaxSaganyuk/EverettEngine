@@ -114,7 +114,6 @@ private:
 	constexpr static inline int latestSerializerVersion = 17;
 	static inline int usedVersion = -1;
 	static VersionValidationState ValidateVersion(int requiredVersion);
-	static bool SetUsedVersion(int usedVersionToSet);
 
 	template<OnlyFundamental Type>
 	static void FromValue(Type value, std::string& res);
@@ -137,6 +136,8 @@ public:
 	using ObjectInfoArray = std::array<std::string, ObjectInfoNames::_SIZE>;
 
 	static int GetUsedVersion();
+	static int GetLastVersion();
+	static bool SetUsedVersion(int usedVersionToSet);
 
 	static bool GetVersionFromLine(std::string_view& line);
 	static std::string GetLatestVersionStr();
