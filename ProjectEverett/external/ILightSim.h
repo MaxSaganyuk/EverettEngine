@@ -22,6 +22,8 @@ public:
 	virtual LightTypes GetLightType() = 0;
 	virtual std::string GetLightTypeStr() = 0;
 
+	virtual bool& GetVisibilityAddr() = 0;
+
 	// Range is 0 to Pi / 2 radians
 	virtual float GetInnerCutoff() = 0;
 	virtual void SetInnerCutoff(float radians) = 0;

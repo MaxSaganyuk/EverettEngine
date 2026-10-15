@@ -84,6 +84,7 @@ std::string LightSim::GetSimInfoToSaveImpl()
 	res += SimSerializer::GetValueToSaveFrom(color);
 	res += SimSerializer::GetValueToSaveFrom(innerCutoffRad);
 	res += SimSerializer::GetValueToSaveFrom(outerCutoffRad);
+	res += SimSerializer::GetValueToSaveFrom(visible);
 
 	return res;
 }
@@ -96,6 +97,7 @@ bool LightSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, color, 3);
 	res = res && SimSerializer::SetValueToLoadFrom(line, innerCutoffRad, 16);
 	res = res && SimSerializer::SetValueToLoadFrom(line, outerCutoffRad, 16);
+	res = res && SimSerializer::SetValueToLoadFrom(line, visible, 18);
 
 	return res;
 }
@@ -195,6 +197,11 @@ std::string LightSim::GetTypeToName(LightSim::LightTypes lightType)
 	}
 
 	ThrowExceptionWMessage("Nonexistent type");
+}
+
+bool& LightSim::GetVisibilityAddr()
+{
+	return visible;
 }
 
 std::string LightSim::GetLightTypeStr()
