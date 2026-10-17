@@ -1287,13 +1287,13 @@ void EverettEngine::LightUpdater()
 	mainLGL->SetShaderUniformValue("view", camera->GetViewMatrixAddr());
 
 	mainLGL->SetShaderUniformValue(
-		"dirLightAmount", static_cast<int>(LightSim::GetAmountOfLightsByType(LightSim::LightTypes::Direction))
+		"dirLightAmount", static_cast<int>(LightSim::GetAmountOfLightsByType(LightSim::LightTypes::Direction, true))
 	);
 	mainLGL->SetShaderUniformValue(
-		"pointLightAmount", static_cast<int>(LightSim::GetAmountOfLightsByType(LightSim::LightTypes::Point))
+		"pointLightAmount", static_cast<int>(LightSim::GetAmountOfLightsByType(LightSim::LightTypes::Point, true))
 	);
 	mainLGL->SetShaderUniformValue(
-		"spotLightAmount", static_cast<int>(LightSim::GetAmountOfLightsByType(LightSim::LightTypes::Spot))
+		"spotLightAmount", static_cast<int>(LightSim::GetAmountOfLightsByType(LightSim::LightTypes::Spot, true))
 	);
 	mainLGL->SetShaderUniformValue("ambient", LightSim::SGetAmbientLightColorVectorAddr());
 	

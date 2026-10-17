@@ -30,11 +30,17 @@ LightSim::LightSim(
 	ObjectSim(pos, scale, speed)
 {
 	++amountOfLightsByType[lightType];
+	++amountOfActiveLightsByType[lightType];
 }
 
 LightSim::~LightSim()
 {
 	--amountOfLightsByType[lightType];
+
+	if (enabled)
+	{
+		--amountOfActiveLightsByType[lightType];
+	}
 }
 
 std::string LightSim::GetThisObjectTypeNameStr()
@@ -45,6 +51,16 @@ std::string LightSim::GetThisObjectTypeNameStr()
 std::string LightSim::GetObjectTypeNameStr()
 {
 	return TypeName;
+}
+
+void LightSim::SetEnable(bool value, bool executeLinkedObjects)
+{
+	if (value != enabled)
+	{
+		amountOfActiveLightsByType[lightType] += (value ? 1 : -1);
+	}
+
+	ObjectSim::SetEnable(value, executeLinkedObjects);
 }
 
 std::string LightSim::GetSimInfoToSave(const std::string& lightName)
@@ -106,9 +122,9 @@ LightSim::LightTypes LightSim::GetLightType()
 	return lightType;
 }
 
-size_t LightSim::GetAmountOfLightsByType(LightTypes lightType)
+size_t LightSim::GetAmountOfLightsByType(LightTypes lightType, bool activeOnly)
 {
-	return amountOfLightsByType[lightType];
+	return activeOnly ? amountOfActiveLightsByType[lightType] : amountOfLightsByType[lightType];
 }
 
 float LightSim::GetInnerCutoff()

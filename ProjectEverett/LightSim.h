@@ -28,11 +28,13 @@ public:
 	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
+	void SetEnable(bool value = true, bool executeLinkedObjects = true) override;
+
 	std::string GetSimInfoToSave(const std::string& lightName);
 	bool SetSimInfoToLoad(std::string_view& line);
 
 	LightTypes GetLightType() override;
-	static size_t GetAmountOfLightsByType(LightTypes lightType);
+	static size_t GetAmountOfLightsByType(LightTypes lightType, bool activeOnly = false);
 
 	static std::generator<std::string_view> GetLightTypeNames();
 	std::string GetLightTypeStr() override;
@@ -63,6 +65,7 @@ private:
 
 	static std::map<int, Attenuation> attenuationVals;
 	static inline std::array<size_t, ILightSim::LightTypes::_SIZE> amountOfLightsByType{ 0, 0, 0 };
+	static inline std::array<size_t, ILightSim::LightTypes::_SIZE> amountOfActiveLightsByType{ 0, 0, 0 };
 
 	static inline std::vector<std::pair<LightTypes, std::string>> lightTypeToName
 	{
