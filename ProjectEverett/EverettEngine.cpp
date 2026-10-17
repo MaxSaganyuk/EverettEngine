@@ -1301,7 +1301,7 @@ void EverettEngine::LightUpdater()
 
 	for (auto& [_, light] : lights)
 	{
-		if (!light.GetVisibilityAddr()) continue;
+		if (!light.IsEnabled()) continue;
 
 		LightSim::LightTypes lightType = light.GetLightType();
 		LightSim::Attenuation atten = light.GetAttenuation();

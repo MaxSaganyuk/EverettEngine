@@ -41,6 +41,12 @@ std::string SolidSim::GetObjectTypeNameStr()
 	return TypeName;
 }
 
+void SolidSim::SetEnable(bool value, bool executeLinkedObjects)
+{
+	STMM.SetModelVisibility(value);
+	ObjectSim::SetEnable(value, executeLinkedObjects);
+}
+
 std::string SolidSim::CollectInfoToSaveFromSTMM()
 {
 	std::string res = "";

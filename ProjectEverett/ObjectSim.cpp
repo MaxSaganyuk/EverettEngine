@@ -69,6 +69,20 @@ std::string ObjectSim::GetThisObjectTypeNameStr()
 	ThrowExceptionWMessage("Impossible call, ObjectSim cannot be full type");
 }
 
+void ObjectSim::SetEnable(bool value, bool executeLinkedObjects)
+{
+	enabled = value;
+
+	ExecuteLinkedObjects<LinkableFuncNames::SetEnable>(
+		&ObjectSim::SetEnable, executeLinkedObjects, value, true
+	);
+}
+
+bool ObjectSim::IsEnabled()
+{
+	return enabled;
+}
+
 void ObjectSim::SetRenderDeltaTime(float deltaTime)
 {
 	renderDeltaTime = deltaTime;
@@ -85,6 +99,7 @@ std::string ObjectSim::GetSimInfoToSaveImpl()
 	res += SimSerializer::GetValueToSaveFrom(rotationLimits);
 	res += SimSerializer::GetValueToSaveFrom(objectLinkingEnabled);
 	res += SimSerializer::GetValueToSaveFrom(orient.GetValue());
+	res += SimSerializer::GetValueToSaveFrom(enabled);
 
 	return res;
 }
@@ -108,6 +123,7 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 	SimSerializer::SkipDeprecatedValue(line, 2, 11);
 	res = res && SimSerializer::SetValueToLoadFrom(line, objectLinkingEnabled, 5);
 	res = res && SimSerializer::SetValueToLoadFrom(line, orient.GetValue(), 6);
+	res = res && SimSerializer::SetValueToLoadFrom(line, enabled, 18);
 
 	return res;
 }

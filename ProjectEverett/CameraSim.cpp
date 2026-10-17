@@ -98,7 +98,9 @@ bool CameraSim::SetSimInfoToLoad(std::string_view& line)
 
 const glm::mat4& CameraSim::GetViewMatrixAddr()
 {
-	return view;
+	constexpr static glm::mat4 zeroedMat(0.0f);
+
+	return enabled ? view : zeroedMat;
 }
 
 const glm::mat4& CameraSim::GetProjectionMatrixAddr()

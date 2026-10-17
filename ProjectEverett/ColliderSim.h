@@ -29,7 +29,6 @@ public:
 	void AddPersistentCollisionCallback(CollisionCallbackOptions&& collisionOpts);
 	
 	void AddCollisionCallback(CollisionCallbackOptions collisionOpts) override;
-	void SetColliderActive(bool value = true) override;
 	void ClearCollisionCallbacks() override;
 
 	std::string GetSimInfoToSave(const std::string& colliderName);
@@ -67,8 +66,6 @@ private:
 
 	static void CleanBindedCollisionCallbacksFrom(ColliderSim* colliderToRemove);
  
-	bool isActive;
-
 	bool isCollided;
 	std::vector<CollisionCallback> anyCollisionCallbacks;
 	std::unordered_map<IColliderSim*, std::vector<CollisionCallback>> bindedCollisionCallbacks;

@@ -25,6 +25,8 @@ protected:
 	
 	constexpr static size_t realDirectionAmount = 6;
 
+	bool enabled = true;
+
 	ValueObserver<glm::vec3> pos;
 	ValueObserver<glm::vec3> scale;
 	ValueObserver<glm::quat> orient;
@@ -49,6 +51,9 @@ public:
 	std::string GetSimInfoToSaveImpl();
 
 	std::string GetThisObjectTypeNameStr() override;
+
+	void SetEnable(bool value = true, bool executeLinkedObjects = true) override;
+	bool IsEnabled() override;
 
 	static void InitializeObjectGraph();
 	static void ResetObjectLinking();

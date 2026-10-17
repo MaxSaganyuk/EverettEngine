@@ -40,8 +40,6 @@ public:
 	static LightTypes GetTypeToName(const std::string& name);
 	static std::string GetTypeToName(LightTypes lightType);
 
-	bool& GetVisibilityAddr() override;
-
 	float GetInnerCutoff() override;
 	void SetInnerCutoff(float radians) override;
 	float GetOuterCutoff() override;
@@ -76,7 +74,6 @@ private:
 	constinit static inline glm::vec3 ambientLightColor = ColorManager::RGBVal{ 102, 102, 102 };
 	constexpr static inline glm::vec3 defaultLightColor = ColorManager::RGBVal{ 128, 128, 128 };
 
-	bool visible = true;
 	int lightRange{};
 	float innerCutoffRad = defaultInnerCutoffRad;
 	float outerCutoffRad = defaultOuterCutoffRad;

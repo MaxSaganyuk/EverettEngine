@@ -29,6 +29,7 @@ public:
 
 	enum class LinkableFuncNames
 	{
+		SetEnable,
 		InvertMovement,
 		SetMovementSpeed,
 		SetPositionVector,
@@ -88,6 +89,9 @@ public:
 	constexpr static inline const glm::vec3 worldFront{ 0, 0, 1 };
 
 	virtual std::string GetThisObjectTypeNameStr() = 0;
+
+	Linkable virtual void SetEnable(bool value = true, bool executeLinkedObjects = true) = 0;
+	virtual bool IsEnabled() = 0;
 
 	Linkable virtual void InvertMovement(bool value = true, bool executeLinkedObjects = true) = 0;
 	virtual bool IsMovementInverted() = 0;

@@ -39,6 +39,8 @@ public:
 	std::string GetThisObjectTypeNameStr() override;
 	static std::string GetObjectTypeNameStr();
 
+	void SetEnable(bool value = true, bool executeLinkedObjects = true) override;
+
 	bool UpdateTransform() override;
 
 	std::string GetSimInfoToSaveImpl();

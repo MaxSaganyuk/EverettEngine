@@ -272,3 +272,9 @@ std::string SoundSim::GetThisObjectTypeNameStr()
 {
 	return TypeName;
 }
+
+void SoundSim::SetEnable(bool value, bool enableObjectLinking)
+{
+	SetPlaybackVolume(static_cast<float>(value));
+	ObjectSim::SetEnable(value, enableObjectLinking);
+}

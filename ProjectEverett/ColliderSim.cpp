@@ -8,7 +8,7 @@ ColliderSim::ColliderSim(
 	const glm::vec3& scale,
 	float speed
 )
-	: ObjectSim(pos, scale, speed), isCollided(false), isActive(true)
+	: ObjectSim(pos, scale, speed), isCollided(false)
 {
 	AppendToSortedVectorOfColliders();
 }
@@ -32,8 +32,6 @@ std::string ColliderSim::GetSimInfoToSaveImpl()
 {
 	std::string res = ObjectSim::GetSimInfoToSaveImpl();
 
-	res += SimSerializer::GetValueToSaveFrom(isActive);
-
 	return res;
 }
 
@@ -50,7 +48,7 @@ bool ColliderSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 
-	res = res && SimSerializer::SetValueToLoadFrom(line, isActive, 9);
+	SimSerializer::SkipDeprecatedValue(line, 9, 19);
 
 	return res;
 }
@@ -93,7 +91,8 @@ void ColliderSim::ExecuteBroadCollisionCheck()
 					std::swap(collidersByAxis[i], collidersByAxis[j]);
 				}
 
-				if (collidersByAxis[i]->isActive && ExecuteNarrowCollisionCheck(*collidersByAxis[i], *collidersByAxis[j]))
+				if (collidersByAxis[i]->IsEnabled() && collidersByAxis[j]->IsEnabled() && 
+					ExecuteNarrowCollisionCheck(*collidersByAxis[i], *collidersByAxis[j]))
 				{
 					currentGeneralCollisonState[i] = true;
 					currentGeneralCollisonState[j] = true;
@@ -147,11 +146,6 @@ void ColliderSim::AddPersistentCollisionCallback(CollisionCallbackOptions&& coll
 void ColliderSim::AddCollisionCallback(CollisionCallbackOptions collisionOpts)
 {
 	AddCollisionCallbackImpl({ std::move(collisionOpts) });
-}
-
-void ColliderSim::SetColliderActive(bool value)
-{
-	isActive = value;
 }
 
 void ColliderSim::ClearCollisionCallbacks()

@@ -111,7 +111,7 @@ private:
 		UnsetCritical
 	};
 
-	constexpr static inline int latestSerializerVersion = 18;
+	constexpr static inline int latestSerializerVersion = 19;
 	static inline int usedVersion = -1;
 	static VersionValidationState ValidateVersion(int requiredVersion);
 

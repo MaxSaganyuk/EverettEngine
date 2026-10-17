@@ -52,6 +52,8 @@ public:
 
 	std::string GetThisObjectTypeNameStr() override;
 
+	void SetEnable(bool value = true, bool enableObjectLinking = true) override;
+
 	std::string GetSimInfoForSaveImpl();
 	std::string GetSimInfoToSave(const std::string& soundName);
 	bool SetSimInfoToLoad(std::string_view& line);
