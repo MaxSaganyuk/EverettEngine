@@ -59,12 +59,14 @@ private:
 	struct NodeInfo
 	{
 		HTREEITEM rawNode;
+		std::optional<IObjectSim*> simObj;
 		std::optional<EverettEngine::ObjectTypes> selectedType;
 		std::vector<std::pair<AdString, AdString>> selectedSubnodes;
 
 		void Clean()
 		{
 			rawNode = nullptr;
+			simObj.reset();
 			selectedType.reset();
 			selectedSubnodes.clear();
 		}
@@ -85,6 +87,7 @@ private:
 	CButton showDebugTextCheck;
 	CButton defaultControlsCheck;
 
+	constexpr static int EnableNode = WM_USER + 9;
 	constexpr static int CopyNode   = WM_USER + 8;
 	constexpr static int RenameNode = WM_USER + 4;
 	constexpr static int DeleteNode = WM_USER + 5;
@@ -92,6 +95,7 @@ public:
 	afx_msg void OnTreeSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnEnableNode();
 	afx_msg void OnCopyNode();
 	afx_msg void OnRenameNode();
 	afx_msg void OnDeleteNode();

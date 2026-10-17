@@ -71,6 +71,7 @@ void CMainWindow::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CMainWindow, CFormView)
+	ON_COMMAND(EnableNode, &CMainWindow::OnEnableNode)
 	ON_COMMAND(CopyNode, &CMainWindow::OnCopyNode)
 	ON_COMMAND(RenameNode, &CMainWindow::OnRenameNode)
 	ON_COMMAND(DeleteNode, &CMainWindow::OnDeleteNode)
@@ -186,10 +187,21 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 	{
 		currentNodeInfo.selectedType = EverettEngine::GetObjectTypeToName(objectType);
 
-		if (!currentNodeInfo.selectedType.has_value())
+		if (!currentNodeInfo.selectedType)
 		{
 			currentNodeInfo.Clean();
 			return;
+		}
+		else
+		{
+			currentNodeInfo.simObj = engineP->GetObjectInterface(
+				currentNodeInfo.selectedSubnodes.front().second, currentNodeInfo.selectedType
+			);
+
+			if (!(*currentNodeInfo.simObj))
+			{
+				Panic("[CRITICAL ERROR] Object get on valid name failed. Terminating\n");
+			}
 		}
 
 	}
@@ -204,6 +216,11 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 		if (currentNodeInfo.selectedType)
 		{
+			UINT checkItem = (*currentNodeInfo.simObj)->IsEnabled() ? MF_CHECKED | MF_BYCOMMAND : MF_UNCHECKED | MF_BYCOMMAND;
+
+			menu.AppendMenuW(MF_STRING, EnableNode, _T("Enable object"));
+			menu.CheckMenuItem(EnableNode, checkItem);
+
 			menu.AppendMenuW(MF_STRING, CopyNode, _T("Copy object"));
 		}
 
@@ -220,6 +237,13 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 		menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
 	}
+}
+
+void CMainWindow::OnEnableNode()
+{
+	IObjectSim* obj = *currentNodeInfo.simObj; // Valid if called
+
+	obj->SetEnable(!obj->IsEnabled());
 }
 
 void CMainWindow::OnCopyNode()
