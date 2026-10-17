@@ -201,6 +201,19 @@ float SoundSim::GetPlaybackSpeed()
 	return sound.playbackSpeed;
 }
 
+void SoundSim::SetPlaybackVolume(float volume)
+{
+	ContextLock
+
+	sound.playbackVolume = volume;
+	alSourcef(sound.source, AL_GAIN, sound.playbackVolume);
+}
+
+float SoundSim::GetPlaybackVolume()
+{
+	return sound.playbackVolume;
+}
+
 void SoundSim::UpdateCurrentPlaybackTime()
 {
 	if (!sound.playStates.IsLooped() && sound.duration * (1.0f / sound.playbackSpeed) < sound.playStates.GetCurrentTime())

@@ -28,7 +28,8 @@ private:
 		PlaybackManager playStates;
 
 		float playbackSpeed{};
-
+		float playbackVolume{};
+		
 		unsigned int buffer{};
 		unsigned int source{};
 
@@ -37,6 +38,7 @@ private:
 			: WavData(wavData)
 		{
 			playbackSpeed = 1.0f;
+			playbackVolume = 1.0f;
 		}
 	};
 
@@ -80,6 +82,8 @@ public:
 	void Stop() override;
 	void SetPlaybackSpeed(float speed) override;
 	float GetPlaybackSpeed() override;
+	void SetPlaybackVolume(float volume) override;
+	float GetPlaybackVolume() override;
 
 	void SetPlaybackCallback(std::function<void(bool, bool, bool)> callback) override;
 };

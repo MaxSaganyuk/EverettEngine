@@ -18,6 +18,8 @@ public:
 	virtual void Stop() = 0;
 	virtual void SetPlaybackSpeed(float speed) = 0;
 	virtual float GetPlaybackSpeed() = 0;
+	virtual void SetPlaybackVolume(float volume) = 0;
+	virtual float GetPlaybackVolume() = 0;
 
 	virtual void SetPlaybackCallback(std::function<void(bool, bool, bool)> callback) = 0;
 };
