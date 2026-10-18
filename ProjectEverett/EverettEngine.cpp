@@ -384,6 +384,7 @@ bool EverettEngine::CreateGizmoSolid(
 		SolidSim& gizmoSolid = *solid;
 
 		gizmoSolid.SetTransform(relatedObject);
+		gizmoSolid.SetEnable(relatedObject.IsEnabled());
 		gizmoSolid.SetModelDefaultColor(gizmoColor);
 
 		if constexpr (std::is_same_v<Sim, ColliderSim>)

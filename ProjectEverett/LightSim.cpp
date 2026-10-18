@@ -114,6 +114,11 @@ bool LightSim::SetSimInfoToLoad(std::string_view& line)
 	res = res && SimSerializer::SetValueToLoadFrom(line, outerCutoffRad, 16);
 	SimSerializer::SkipDeprecatedValue(line, 18, 19);
 
+	if (!enabled)
+	{
+		--amountOfActiveLightsByType[lightType];
+	}
+
 	return res;
 }
 
