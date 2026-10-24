@@ -2080,11 +2080,13 @@ std::generator<std::string_view> EverettEngine::GetSolidList(bool getModelNames)
 {
 	for (auto& [solidName, solid] : solids)
 	{
-		std::string modelName = solid.GetModelName();
+		const std::string& modelName = solid.GetModelName();
 
 		if (modelName != gizmoModelName)
 		{
-			co_yield ((getModelNames ? modelName + '.' : "") + solidName);
+			std::string nameToYield = ((getModelNames ? modelName + '.' : "") + solidName);
+
+			co_yield nameToYield;
 		}
 	}
 }
@@ -2095,7 +2097,9 @@ std::generator<std::string_view> EverettEngine::GetLightList(bool getLightTypes)
 	{
 		for (auto& [lightName, light] : lights)
 		{
-			co_yield (light.GetLightTypeStr() + '.' + lightName);
+			std::string nameToYield = (light.GetLightTypeStr() + '.' + lightName);
+
+			co_yield nameToYield;
 		}
 	};
 
