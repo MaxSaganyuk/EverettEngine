@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cassert>
 
-std::string EverettException::CreateTheMessage(
+void EverettException::CreateTheMessage(
 	const std::source_location& currentSourceLocation, 
 	const std::string& additionalMessage
 )
@@ -32,8 +32,6 @@ std::string EverettException::CreateTheMessage(
 	}
 
 	assert(false && "Critical error, see error message");
-
-	return message;
 }
 
 void EverettException::SetLogReportCreator(std::function<void()> logReportCreatorFuncToSet)
@@ -41,5 +39,10 @@ void EverettException::SetLogReportCreator(std::function<void()> logReportCreato
 	logReportCreatorFunc = std::move(logReportCreatorFuncToSet);
 }
 
-EverettException::EverettException(const std::source_location& currentSourceLocation, const std::string& additionalMessage)
-	: std::runtime_error(CreateTheMessage(currentSourceLocation, additionalMessage).c_str()) {}
+EverettException::EverettException(const std::source_location& currentSourceLocation, std::string_view additionalMessage)
+{
+	if !consteval
+	{
+		CreateTheMessage(currentSourceLocation, additionalMessage.data());
+	}
+}

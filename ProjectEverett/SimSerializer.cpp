@@ -93,7 +93,7 @@ bool SimSerializer::GetVersionFromLine(std::string_view& line)
 
 std::string SimSerializer::GetLatestVersionStr()
 {
-	return "Version*" + StringCast::ToString(latestSerializerVersion) + '\n';
+	return "Version*" + StringCast::ToString(latestSerializerVersion).Unfix() + '\n';
 }
 
 void SimSerializer::GetObjectInfo(std::string_view& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo)

@@ -33,7 +33,7 @@ private:
 		{
 			if (counter > 1)
 			{
-				res += '[' + StringCast::ToString(counter) + "] ";
+				res += '[' + StringCast::ToString(counter).Unfix() + "] ";
 			}
 
 			counter = 0;
@@ -46,7 +46,7 @@ private:
 			{
 				TryFormRepeatValue(res);
 
-				res += StringCast::ToString<Type>(value) + ' ';
+				res += StringCast::ToString<Type>(value).Unfix() + ' ';
 				valueBuffer = value;
 			}
 

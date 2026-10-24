@@ -1,18 +1,17 @@
 #pragma once
 
-#include <stdexcept>
 #include <source_location>
 #include <string>
 #include <functional>
 
 // Outside the engine dll, for catching only
-class EverettException : public std::runtime_error
+class EverettException
 {
-	std::string CreateTheMessage(const std::source_location& currentSourceLocation, const std::string& additionalMessage);
+	void CreateTheMessage(const std::source_location& currentSourceLocation, const std::string& additionalMessage);
 
 	static inline std::function<void()> logReportCreatorFunc;
 public:
-	EverettException(const std::source_location& currentSourceLocation, const std::string& additionalMessage = "");
+	EverettException(const std::source_location& currentSourceLocation, std::string_view additionalMessage = "");
 
 	static void SetLogReportCreator(std::function<void()> logReportCreatorFuncToSet);
 };
