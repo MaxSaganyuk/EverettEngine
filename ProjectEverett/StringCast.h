@@ -46,11 +46,6 @@ namespace _StringCast
 			ThrowExc(errorCode);
 		}
 
-		CheckAndThrowExceptionWMessage(
-			(errorCode == std::errc()),
-			"Failed to get from string during deserialization, error: "
-		);
-
 		return value;
 	}
 
