@@ -1,6 +1,14 @@
 #include "SimSerializer.h"
 
+namespace
+{
+	constexpr int latestSerializerVersion = 19;
+	int usedVersion = -1;
+}
+
 using namespace std::chrono;
+using namespace _SimSerializer;
+using namespace SimSerializer;
 
 #define ValidateVersionCheck(version)                                  \
 auto versionValidation = ValidateVersion(version);                     \
@@ -9,12 +17,12 @@ if (versionValidation > VersionValidationState::NewerValid)            \
 	return versionValidation != VersionValidationState::UnsetCritical; \
 } 
 
-std::string SimSerializer::PackValue(const std::string& value)
+std::string _SimSerializer::PackValue(const std::string& value)
 {
 	return '{' + value + '}';
 }
 
-void SimSerializer::UnpackValue(std::string_view& line, std::string& value, bool severalVals)
+void _SimSerializer::UnpackValue(std::string_view& line, std::string& value, bool severalVals)
 {
 	size_t leftSidePos = line.find('{') + 1;
 	value = line.substr(leftSidePos, line.find('}') - leftSidePos);
@@ -27,18 +35,18 @@ void SimSerializer::UnpackValue(std::string_view& line, std::string& value, bool
 	UnpackValue(line);
 }
 
-void SimSerializer::UnpackValue(std::string_view& line)
+void _SimSerializer::UnpackValue(std::string_view& line)
 {
 	line.remove_prefix(line.find('}') + 1);
 }
 
-bool SimSerializer::AssertAndReturn(bool evaluation)
+bool _SimSerializer::AssertAndReturn(bool evaluation)
 {
 	CheckAndThrowExceptionWMessage(evaluation, "SimSerializer failed to parse values");
 	return evaluation;
 }
 
-SimSerializer::VersionValidationState SimSerializer::ValidateVersion(int requiredVersion)
+_SimSerializer::VersionValidationState _SimSerializer::ValidateVersion(int requiredVersion)
 {
 	if (usedVersion != -1)
 	{
@@ -96,7 +104,7 @@ std::string SimSerializer::GetLatestVersionStr()
 	return "Version*" + StringCast::ToString(latestSerializerVersion).Unfix() + '\n';
 }
 
-void SimSerializer::GetObjectInfo(std::string_view& line, std::array<std::string, ObjectInfoNames::_SIZE>& objectInfo)
+void SimSerializer::GetObjectInfo(std::string_view& line, ObjectInfoArray& objectInfo)
 {
 	size_t objectInfoAmount = std::count(line.begin(), line.end(), '*');
 	CheckAndThrowExceptionWMessage(

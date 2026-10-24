@@ -49,6 +49,11 @@ namespace LGLStructs
 	struct ModelInfo;
 }
 
+namespace SimSerializer
+{
+	class ObjectInfoArray;
+}
+
 enum class LightTypes;
 
 // Concrete engine class is for internal use.
@@ -297,12 +302,12 @@ private:
 
 	void InitializeSpecialWordWorldLoadMap();
 	void CheckAndLoadRequestedWorld();
-	void LoadObjectFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
+	void LoadObjectFromLine(std::string_view& line, SimSerializer::ObjectInfoArray& objectInfo);
 	void LoadCameraFromLine(std::string_view& line);
-	void LoadSolidFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
-	void LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
-	void LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
-	void LoadColliderFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo);
+	void LoadSolidFromLine(std::string_view& line, const SimSerializer::ObjectInfoArray& objectInfo);
+	void LoadLightFromLine(std::string_view& line, const SimSerializer::ObjectInfoArray& objectInfo);
+	void LoadSoundFromLine(std::string_view& line, const SimSerializer::ObjectInfoArray& objectInfo);
+	void LoadColliderFromLine(std::string_view& line, const SimSerializer::ObjectInfoArray& objectInfo);
 	void LoadScriptDLLsFromLine(std::string_view& line);
 
 	void SetLogCallback(bool value = true);

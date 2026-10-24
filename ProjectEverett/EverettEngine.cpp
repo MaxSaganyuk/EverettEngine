@@ -1731,7 +1731,7 @@ bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 	return true;
 }
 
-void EverettEngine::LoadObjectFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
+void EverettEngine::LoadObjectFromLine(std::string_view& line, SimSerializer::ObjectInfoArray& objectInfo)
 {
 	switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]).value_or(ObjectTypes::_SIZE))
 	{
@@ -1760,7 +1760,7 @@ void EverettEngine::LoadCameraFromLine(std::string_view& line)
 	CheckAndThrowExceptionWMessage((camera->SetSimInfoToLoad(line)), "Camera setup from file failed");
 }
 
-void EverettEngine::LoadSolidFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
+void EverettEngine::LoadSolidFromLine(std::string_view& line, const SimSerializer::ObjectInfoArray& objectInfo)
 {
 	bool res = false;
 
@@ -1777,7 +1777,7 @@ void EverettEngine::LoadSolidFromLine(std::string_view& line, const std::array<s
 	CheckAndThrowExceptionWMessage(res, "Solid creation from file failed");
 }
 
-void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
+void EverettEngine::LoadLightFromLine(std::string_view& line, const SimSerializer::ObjectInfoArray& objectInfo)
 {
 	bool res = false;
 	std::string lightName = objectInfo[ObjectInfoNames::ObjectName];
@@ -1796,7 +1796,7 @@ void EverettEngine::LoadLightFromLine(std::string_view& line, const std::array<s
 	CheckAndThrowExceptionWMessage(res, "Light creation from file failed");
 }
 
-void EverettEngine::LoadSoundFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
+void EverettEngine::LoadSoundFromLine(std::string_view& line, const SimSerializer::ObjectInfoArray& objectInfo)
 {
 	bool res = false;
 	std::string soundName = objectInfo[ObjectInfoNames::ObjectName];
@@ -1814,7 +1814,7 @@ void EverettEngine::LoadSoundFromLine(std::string_view& line, const std::array<s
 	CheckAndThrowExceptionWMessage(res, "Sound creation from file failed");
 }
 
-void EverettEngine::LoadColliderFromLine(std::string_view& line, const std::array<std::string, 4>& objectInfo)
+void EverettEngine::LoadColliderFromLine(std::string_view& line, const SimSerializer::ObjectInfoArray& objectInfo)
 {
 	bool res = false;
 	std::string colliderName = objectInfo[ObjectInfoNames::ObjectName];
@@ -1930,7 +1930,7 @@ AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 	std::fstream file(filePath, std::ios::in);
 	std::string lineLoader;
 	std::string_view line;
-	std::array<std::string, ObjectInfoNames::_SIZE> objectInfo{};
+	SimSerializer::ObjectInfoArray objectInfo{};
 
 	std::getline(file, lineLoader);
 	line = lineLoader;
