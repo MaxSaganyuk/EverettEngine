@@ -1679,13 +1679,13 @@ void EverettEngine::InitializeSpecialWordWorldLoadMap()
 		{
 			"AmbientLight",
 			[](std::string_view& line) {
-				SimSerializer::SetValueToLoadFrom(line, LightSim::SGetAmbientLightColorVectorAddr(), 4);
+				SimSerializer::SetValueToLoadFrom(line, LightSim::SGetAmbientLightColorVectorAddr(), "Aug 16 2025"_ver);
 			}
 		},
 		{
 			"BackgroundColor",
 			[this](std::string_view& line) {
-				SimSerializer::SetValueToLoadFrom(line, mainLGL->GetBackgroundColorVectorAddr(), 14);
+				SimSerializer::SetValueToLoadFrom(line, mainLGL->GetBackgroundColorVectorAddr(), "Jun 19 2026"_ver);
 			}
 		},
 		{
@@ -1848,9 +1848,9 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 	std::vector<std::pair<std::string, std::string>> legacyDllInfo;
 	std::vector<EverettStructs::BasicFileInfo> dllInfo;
 
-	if (SimSerializer::GetUsedVersion() >= 12)
+	if (SimSerializer::GetUsedVersion() >= "Apr 11 2026"_ver)
 	{
-		SimSerializer::SetValueToLoadFrom(line, dllInfo, 12);
+		SimSerializer::SetValueToLoadFrom(line, dllInfo, "Apr 11 2026"_ver);
 
 		for (auto& [dllPath, dllName, dllHash] : dllInfo)
 		{
@@ -1864,7 +1864,7 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 	}
 	else
 	{
-		SimSerializer::SetValueToLoadFrom(line, legacyDllInfo, 2);
+		SimSerializer::SetValueToLoadFrom(line, legacyDllInfo, "May 27 2025"_ver);
 
 		for (auto& [dllName, dllPath] : legacyDllInfo)
 		{

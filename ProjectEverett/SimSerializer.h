@@ -12,6 +12,15 @@
 #include "external/IObjectSim.h"
 #include "StringCast.h"
 #include "EverettStructs.h"
+#include "DateUtilities.h"
+
+template<stdEx::FixedString str>
+consteval size_t operator""_ver()
+{
+	static_assert(str.GetBufferSize() == 12, "Invalid date format");
+
+	return DateUtilities::GetDaysPassedFromDateString(str.View());
+}
 
 namespace _SimSerializer
 {
@@ -110,7 +119,7 @@ namespace _SimSerializer
 		UnsetCritical
 	};
 
-	VersionValidationState ValidateVersion(int requiredVersion);
+	VersionValidationState ValidateVersion(size_t requiredVersion);
 
 	template<OnlyFundamental Type>
 	void FromValue(Type value, std::string& res);
@@ -137,49 +146,49 @@ namespace SimSerializer
 
 	class ObjectInfoArray : public std::array<std::string, ObjectInfoNames::_SIZE>{};
 
-	int GetUsedVersion();
-	int GetLastVersion();
-	bool SetUsedVersion(int usedVersionToSet);
+	size_t GetUsedVersion();
+	size_t GetLastVersion();
+	bool SetUsedVersion(size_t usedVersionToSet);
 
 	bool GetVersionFromLine(std::string_view& line);
 	std::string GetLatestVersionStr();
 
 	void GetObjectInfo(std::string_view& line, ObjectInfoArray& objectInfo);
 
-	void SkipValuesInLines(std::string_view& line, size_t amountToSkip, int versionToSkip);
+	void SkipValuesInLines(std::string_view& line, size_t amountToSkip, size_t versionToSkip);
 
 	template<OnlyFundamental FundamentalType>
 	std::string GetValueToSaveFrom(FundamentalType f);
 
-	void SkipDeprecatedValue(std::string_view& line, int requiredVersion, int deprecatedAt);
+	void SkipDeprecatedValue(std::string_view& line, size_t requiredVersion, size_t deprecatedAt);
 
 	template<OnlyFundamental FundamentalType>
-	bool SetValueToLoadFrom(std::string_view& line, FundamentalType& f, int requiredVersion);
+	bool SetValueToLoadFrom(std::string_view& line, FundamentalType& f, size_t requiredVersion);
 
 	template<OnlyEnums EnumType>
 	std::string GetValueToSaveFrom(EnumType e);
 
 	template<OnlyEnums EnumType>
-	bool SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion);
+	bool SetValueToLoadFrom(std::string_view& line, EnumType& e, size_t requiredVersion);
 
 	template<OnlyFundamental FundamentalType>
 	std::string GetValueToSaveFrom(const std::vector<FundamentalType>& vector);
 
 	template<OnlyFundamental FundamentalType>
 	bool SetValueToLoadFrom(
-		std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion
+		std::string_view& line, std::vector<FundamentalType>& vector, size_t requiredVersion
 	);
 
 	// String
 	std::string GetValueToSaveFrom(const std::string& str);
-	bool SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion);
+	bool SetValueToLoadFrom(std::string_view& line, std::string& str, size_t requiredVersion);
 
 	// GLM
 	template<OnlyGLMs GLMType>
 	std::string GetValueToSaveFrom(const GLMType& cont);
 
 	template<OnlyGLMs GLMType>
-	bool SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion);
+	bool SetValueToLoadFrom(std::string_view& line, GLMType& cont, size_t requiredVersion);
 
 	// Special cases
 	std::string GetValueToSaveFrom(const std::unordered_map<IObjectSim::Direction, bool>& disabledDirs);
@@ -190,25 +199,25 @@ namespace SimSerializer
 	std::string GetValueToSaveFrom(std::generator<EverettStructs::BasicFileInfo>&& vectOfFileInfo);
 	bool SetValueToLoadFrom(
 		std::string_view& line, std::unordered_map<IObjectSim::Direction, bool>& disabledDirs, 
-		int requiredVersion
+		size_t requiredVersion
 	);
 	bool SetValueToLoadFrom(
 		std::string_view& line, std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits, 
-		int requiredVersion
+		size_t requiredVersion
 	);
 	bool SetValueToLoadFrom(
-		std::string_view& line, std::vector<std::string>& vectorStr, int requiredVersion
+		std::string_view& line, std::vector<std::string>& vectorStr, size_t requiredVersion
 	);
 	bool SetValueToLoadFrom(
 		std::string_view& line, std::vector<std::pair<std::string, std::string>>& vectorPairStr, 
-		int requiredVersion
+		size_t requiredVersion
 	);
 	bool SetValueToLoadFrom(
-		std::string_view& line, std::chrono::system_clock::time_point& timePoint, int requiredVersion
+		std::string_view& line, std::chrono::system_clock::time_point& timePoint, size_t requiredVersion
 	);
 	bool SetValueToLoadFrom(
 		std::string_view& line, std::vector<EverettStructs::BasicFileInfo>& vectOfFileInfo, 
-		int requiredVersion
+		size_t requiredVersion
 	);
 };
 
@@ -220,7 +229,7 @@ std::string SimSerializer::GetValueToSaveFrom(FundamentalType f)
 
 template<OnlyFundamental FundamentalType>
 bool SimSerializer::SetValueToLoadFrom(
-	std::string_view& line, FundamentalType& f, int requiredVersion
+	std::string_view& line, FundamentalType& f, size_t requiredVersion
 )
 {
 	ValidateVersionCheck(requiredVersion)
@@ -241,7 +250,7 @@ std::string SimSerializer::GetValueToSaveFrom(EnumType e)
 }
 
 template<OnlyEnums EnumType>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, int requiredVersion)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, EnumType& e, size_t requiredVersion)
 {
 	ValidateVersionCheck(requiredVersion)
 
@@ -273,7 +282,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<FundamentalType>
 
 template<OnlyFundamental FundamentalType>
 bool SimSerializer::SetValueToLoadFrom(
-	std::string_view& line, std::vector<FundamentalType>& vector, int requiredVersion
+	std::string_view& line, std::vector<FundamentalType>& vector, size_t requiredVersion
 )
 {
 	ValidateVersionCheck(requiredVersion)
@@ -321,7 +330,7 @@ std::string SimSerializer::GetValueToSaveFrom(const GLMType& cont)
 }
 
 template<OnlyGLMs GLMType>
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, GLMType& cont, int requiredVersion)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, GLMType& cont, size_t requiredVersion)
 {
 	using ValueType = typename GLMType::value_type;
 

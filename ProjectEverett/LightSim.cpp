@@ -108,11 +108,11 @@ bool LightSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 	
-	res = res && SimSerializer::SetValueToLoadFrom(line, lightRange, 1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, color, 3);
-	res = res && SimSerializer::SetValueToLoadFrom(line, innerCutoffRad, 16);
-	res = res && SimSerializer::SetValueToLoadFrom(line, outerCutoffRad, 16);
-	SimSerializer::SkipDeprecatedValue(line, 18, 19);
+	res = res && SimSerializer::SetValueToLoadFrom(line, lightRange, "May 26 2025"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, color, "Aug 15 2025"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, innerCutoffRad, "Sep 20 2026"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, outerCutoffRad, "Sep 20 2026"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "Oct 15 2026"_ver, "Oct 17 2026"_ver);
 
 	if (!enabled)
 	{

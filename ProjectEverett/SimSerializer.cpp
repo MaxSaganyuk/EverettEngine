@@ -2,8 +2,19 @@
 
 namespace
 {
-	constexpr int latestSerializerVersion = 19;
-	int usedVersion = -1;
+	constexpr static std::array<size_t, 19> legacyVersionFlatMap{
+		"May 26 2025"_ver, "May 27 2025"_ver, "Aug 15 2025"_ver, "Aug 16 2025"_ver, "Feb 03 2026"_ver, "Mar 14 2026"_ver,
+		"Mar 15 2026"_ver, "Mar 16 2026"_ver, "Mar 25 2026"_ver, "Mar 29 2026"_ver, "Apr 06 2026"_ver, "Apr 11 2026"_ver, 
+		"Jun 17 2026"_ver, "Jun 19 2026"_ver, "Jun 27 2026"_ver, "Sep 20 2026"_ver, "Sep 26 2026"_ver, "Oct 15 2026"_ver, 
+		"Oct 17 2026"_ver
+	};
+
+	// __DATE__
+	constexpr stdEx::FixedString latestSerializerVersionDate = "Oct 25 2026";
+	constexpr size_t latestSerializerVersion = 
+		DateUtilities::GetDaysPassedFromDateString(latestSerializerVersionDate.View());
+
+	std::optional<size_t> usedVersion;
 }
 
 using namespace std::chrono;
@@ -46,9 +57,9 @@ bool _SimSerializer::AssertAndReturn(bool evaluation)
 	return evaluation;
 }
 
-_SimSerializer::VersionValidationState _SimSerializer::ValidateVersion(int requiredVersion)
+_SimSerializer::VersionValidationState _SimSerializer::ValidateVersion(size_t requiredVersion)
 {
-	if (usedVersion != -1)
+	if (usedVersion)
 	{
 		if (usedVersion == requiredVersion)
 		{
@@ -70,17 +81,17 @@ _SimSerializer::VersionValidationState _SimSerializer::ValidateVersion(int requi
 	}
 }
 
-int SimSerializer::GetUsedVersion()
+size_t SimSerializer::GetUsedVersion()
 {
-	return usedVersion;
+	return *usedVersion;
 }
 
-int SimSerializer::GetLastVersion()
+size_t SimSerializer::GetLastVersion()
 {
 	return latestSerializerVersion;
 }
 
-bool SimSerializer::SetUsedVersion(int usedVersionToSet)
+bool SimSerializer::SetUsedVersion(size_t usedVersionToSet)
 {
 	bool isValidVersion = usedVersionToSet <= latestSerializerVersion;
 
@@ -96,12 +107,28 @@ bool SimSerializer::SetUsedVersion(int usedVersionToSet)
 bool SimSerializer::GetVersionFromLine(std::string_view& line)
 {
 	std::string numberStr = std::string(line.substr(line.find("*") + 1));
-	return SetUsedVersion(StringCast::FromString<int>(numberStr));
+
+	size_t version{};
+
+	if (numberStr.size() == latestSerializerVersionDate.size)
+	{
+		version = DateUtilities::GetDaysPassedFromDateString(numberStr);
+	}
+	else
+	{
+		version = StringCast::FromString<size_t>(numberStr);
+
+		CheckAndThrowExceptionWMessage((version > 0 && version < 20), "Invalid legacy version");
+
+		version = legacyVersionFlatMap[version - 1];
+	}
+
+	return SetUsedVersion(version);
 }
 
 std::string SimSerializer::GetLatestVersionStr()
 {
-	return "Version*" + StringCast::ToString(latestSerializerVersion).Unfix() + '\n';
+	return "Version*" + latestSerializerVersionDate.Unfix() + '\n';
 }
 
 void SimSerializer::GetObjectInfo(std::string_view& line, ObjectInfoArray& objectInfo)
@@ -119,7 +146,7 @@ void SimSerializer::GetObjectInfo(std::string_view& line, ObjectInfoArray& objec
 	}
 }
 
-void SimSerializer::SkipDeprecatedValue(std::string_view& line, int requiredVersion, int deprecatedAt)
+void SimSerializer::SkipDeprecatedValue(std::string_view& line, size_t requiredVersion, size_t deprecatedAt)
 {
 	if (usedVersion >= requiredVersion && usedVersion < deprecatedAt)
 	{
@@ -132,7 +159,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::string& str)
 	return PackValue(str);
 }
 
-bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::string& str, int requiredVersion)
+bool SimSerializer::SetValueToLoadFrom(std::string_view& line, std::string& str, size_t requiredVersion)
 {
 	ValidateVersionCheck(requiredVersion)
 
@@ -159,7 +186,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::unordered_map<IObjectSi
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
 	std::unordered_map<IObjectSim::Direction, bool>& disabledDirs,
-	int requiredVersion
+	size_t requiredVersion
 )
 {
 	ValidateVersionCheck(requiredVersion)
@@ -211,7 +238,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::pair<IObjectSim::Rotati
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
 	std::pair<IObjectSim::Rotation, IObjectSim::Rotation>& rotationLimits,
-	int requiredVersion
+	size_t requiredVersion
 )
 {
 	ValidateVersionCheck(requiredVersion)
@@ -264,7 +291,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::string>& ve
 }
 
 bool SimSerializer::SetValueToLoadFrom(
-	std::string_view& line, std::vector<std::string>& vectorStr, int requiredVersion
+	std::string_view& line, std::vector<std::string>& vectorStr, size_t requiredVersion
 )
 {
 	ValidateVersionCheck(requiredVersion)
@@ -318,7 +345,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::vector<std::pair<std::s
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
 	std::vector<std::pair<std::string, std::string>>& vectorPairStr, 
-	int requiredVersion
+	size_t requiredVersion
 )
 {
 	ValidateVersionCheck(requiredVersion)
@@ -364,7 +391,7 @@ std::string SimSerializer::GetValueToSaveFrom(const std::chrono::system_clock::t
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, 
 	std::chrono::system_clock::time_point& timePoint, 
-	int requiredVersion
+	size_t requiredVersion
 )
 {
 	ValidateVersionCheck(requiredVersion)
@@ -397,7 +424,7 @@ std::string SimSerializer::GetValueToSaveFrom(std::generator<EverettStructs::Bas
 
 bool SimSerializer::SetValueToLoadFrom(
 	std::string_view& line, std::vector<EverettStructs::BasicFileInfo>& vectOfFileInfo,
-	int requiredVersion
+	size_t requiredVersion
 )
 {
 	ValidateVersionCheck(requiredVersion)

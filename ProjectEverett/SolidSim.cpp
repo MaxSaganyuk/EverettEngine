@@ -73,15 +73,15 @@ bool SolidSim::CollectInfoToLoadToSTMM(std::string_view& line)
 
 	if (STMM.IsInitialized())
 	{
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animationSpeed,                 1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationIndex,          1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.startPlaybackTime,   1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.currentPlaybackTime, 1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.playing,             1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused,              1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped,              1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility,                 1);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.modelDefaultColor,              8);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animationSpeed, "May 26 2025"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.currentAnimationIndex, "May 26 2025"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.startPlaybackTime, "May 26 2025"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.currentPlaybackTime, "May 26 2025"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.playing, "May 26 2025"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused, "May 26 2025"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped, "May 26 2025"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility, "May 26 2025"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.modelDefaultColor, "Mar 16 2026"_ver);
 
 		STMM.CheckIfModelVisible();
 	}
@@ -115,8 +115,8 @@ bool SolidSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 
-	res = res && SimSerializer::SetValueToLoadFrom(line, model,      1);
-	SimSerializer::SkipDeprecatedValue(line, 1, 15);
+	res = res && SimSerializer::SetValueToLoadFrom(line, model, "May 26 2025"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Jun 27 2026"_ver);
 
 	res = res && CollectInfoToLoadToSTMM(line);
 

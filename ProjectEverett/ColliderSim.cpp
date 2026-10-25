@@ -48,7 +48,7 @@ bool ColliderSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 
-	SimSerializer::SkipDeprecatedValue(line, 9, 19);
+	SimSerializer::SkipDeprecatedValue(line, "Mar 25 2026"_ver, "Oct 17 2026"_ver);
 
 	return res;
 }

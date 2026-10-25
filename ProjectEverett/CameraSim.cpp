@@ -82,13 +82,13 @@ bool CameraSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = ObjectSim::SetSimInfoToLoad(line);
 
-	SimSerializer::SkipDeprecatedValue(line, 1, 13);
-	SimSerializer::SkipDeprecatedValue(line, 1, 13);
-	SimSerializer::SkipDeprecatedValue(line, 1, 13);
-	SimSerializer::SkipDeprecatedValue(line, 1, 13);
-	res = res && SimSerializer::SetValueToLoadFrom(line, fov,         1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, sensitivity, 1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, mode,        1);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Jun 17 2026"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Jun 17 2026"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Jun 17 2026"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Jun 17 2026"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, fov, "May 26 2025"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, sensitivity, "May 26 2025"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, mode, "May 26 2025"_ver);
 
 	SetAspect();
 	UpdateViewMatrix();

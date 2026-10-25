@@ -108,22 +108,22 @@ bool ObjectSim::SetSimInfoToLoad(std::string_view& line)
 {
 	bool res = true;
 
-	res = res && SimSerializer::SetValueToLoadFrom(line, scale.GetValue(), 1);
-	SimSerializer::SkipDeprecatedValue(line, 1, 7);
-	SimSerializer::SkipDeprecatedValue(line, 1, 7);
-	res = res && SimSerializer::SetValueToLoadFrom(line, pos.GetValue(), 1);
-	SimSerializer::SkipDeprecatedValue(line, 1, 15);
-	SimSerializer::SkipDeprecatedValue(line, 1, 7);
-	SimSerializer::SkipDeprecatedValue(line, 1, 10);
-	res = res && SimSerializer::SetValueToLoadFrom(line, speed, 1);
-	SimSerializer::SkipDeprecatedValue(line, 1, 8);
-	SimSerializer::SkipDeprecatedValue(line, 1, 10);
-	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs, 1);
-	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits, 1);
-	SimSerializer::SkipDeprecatedValue(line, 2, 11);
-	res = res && SimSerializer::SetValueToLoadFrom(line, objectLinkingEnabled, 5);
-	res = res && SimSerializer::SetValueToLoadFrom(line, orient.GetValue(), 6);
-	res = res && SimSerializer::SetValueToLoadFrom(line, enabled, 18);
+	res = res && SimSerializer::SetValueToLoadFrom(line, scale.GetValue(), "May 26 2025"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Mar 15 2026"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Mar 15 2026"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, pos.GetValue(), "May 26 2025"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Jun 27 2026"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Mar 15 2026"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Mar 29 2026"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, speed, "May 26 2025"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Mar 16 2026"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 26 2025"_ver, "Mar 29 2026"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, disabledDirs, "May 26 2025"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, rotationLimits, "May 26 2025"_ver);
+	SimSerializer::SkipDeprecatedValue(line, "May 27 2025"_ver, "Apr 06 2026"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, objectLinkingEnabled, "Feb 03 2026"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, orient.GetValue(), "Mar 14 2026"_ver);
+	res = res && SimSerializer::SetValueToLoadFrom(line, enabled, "Oct 15 2026"_ver);
 
 	return res;
 }
