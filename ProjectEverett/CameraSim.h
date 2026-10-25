@@ -20,8 +20,6 @@ private:
 
 	Mode mode;
 	glm::vec3 cameraAxisLimit; // Depends on the mode, no need to save
-
-	void UpdateViewMatrix();
 public:
 	CameraSim(
 		const int windowWidth,
@@ -48,12 +46,8 @@ public:
 	void RotateByMousePos(float xpos, float ypos);
 	void ForceLastPos(float xpos, float ypos);
 
-	void MoveInDirection(
-		Direction dir, const glm::vec3& axisToLimit = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
-	) override;
-	void MoveByAxis(
-		const glm::vec3& axis, const glm::vec3& axisToLimit = { 1.0f, 1.0f, 1.0f }, bool executeLinkedObjects = true
-	) override;
+	void UpdateViewMatrix();
+
 	void SetMode(Mode mode) override;
 	void Zoom(float valueDelta) override;
 	float GetFOV() override;

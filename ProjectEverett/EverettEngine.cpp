@@ -488,6 +488,8 @@ void EverettEngine::RunRenderWindow()
 		ColliderSim::ExecuteBroadCollisionCheck();
 
 		ExecuteFuncForAllSimObjects(&ObjectSim::UpdateTransform);
+		camera->UpdateViewMatrix();
+
 		ExecuteFuncForAllSimObjects(&SoundSim::UpdateCurrentPlaybackTime);
 
 		std::vector<glm::mat4>& finalTransforms = animSystem->GetFinalTransforms();

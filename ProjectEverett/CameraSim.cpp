@@ -115,18 +115,6 @@ void CameraSim::UpdateViewMatrix()
 	view = glm::lookAt(pos, pos + GetFrontVector(), GetUpVector());
 }
 
-void CameraSim::MoveInDirection(Direction dir, const glm::vec3& axisToLimit, bool executeLinkedObjects)
-{
-	ObjectSim::MoveInDirection(dir, cameraAxisLimit, executeLinkedObjects);
-	UpdateViewMatrix();
-}
-
-void CameraSim::MoveByAxis(const glm::vec3& axis, const glm::vec3& axisToLimit, bool executeLinkedObjects)
-{
-	ObjectSim::MoveByAxis(axis, cameraAxisLimit, executeLinkedObjects);
-	UpdateViewMatrix();
-}
-
 void CameraSim::RotateByMousePos(float xpos, float ypos)
 {
 	float xoffset = xpos - lastX;
@@ -153,7 +141,6 @@ void CameraSim::RotateByMousePos(float xpos, float ypos)
 
 	orient = glm::normalize(orientRef);
 	ObjectSim::Rotate({});
-	UpdateViewMatrix();
 }
 
 void CameraSim::ForceLastPos(float xpos, float ypos)
