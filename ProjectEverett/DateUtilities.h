@@ -131,7 +131,7 @@ namespace DateUtilities
 		auto daysPassed = GetDaysPassedInMonthsArr(year);
 
 		size_t fullYearsPassed = year - 1;
-		size_t leapDaysPassed = (year / 4) - (year / 100) + (year / 400);
+		size_t leapDaysPassed = (fullYearsPassed / 4) - (fullYearsPassed / 100) + (fullYearsPassed / 400);
 
 		return 365 * fullYearsPassed + leapDaysPassed + daysPassed[month - 1] + day;
 	}
