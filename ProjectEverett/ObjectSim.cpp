@@ -69,6 +69,20 @@ std::string ObjectSim::GetThisObjectTypeNameStr()
 	ThrowExceptionWMessage("Impossible call, ObjectSim cannot be full type");
 }
 
+void ObjectSim::SetName(const char* name)
+{
+	CheckAndThrowExceptionWMessage(!this->name, "Object name can be only set once");
+
+	this->name = name;
+}
+
+const char* ObjectSim::GetName()
+{
+	CheckAndThrowExceptionWMessage(name, "Object name was not set");
+
+	return name;
+}
+
 void ObjectSim::SetEnable(bool value, bool executeLinkedObjects)
 {
 	enabled = value;

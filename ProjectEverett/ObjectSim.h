@@ -36,6 +36,10 @@ protected:
 	std::unordered_map<Direction, bool> disabledDirs;
 	std::pair<Rotation, Rotation> rotationLimits;
 
+	// Far to many benefits against downsides in design.
+	// The value should not be written into the world file since name already is added via map name get
+	const char* name{};
+
 	static inline stdEx::RelationGraph<ObjectSim*> objectGraph;
 	bool visited; // Utility bool to prevent infinite loops of linked object traversal
 	bool objectLinkingEnabled;
@@ -51,6 +55,9 @@ public:
 	std::string GetSimInfoToSaveImpl();
 
 	std::string GetThisObjectTypeNameStr() override;
+
+	void SetName(const char* name);
+	const char* GetName() override;
 
 	void SetEnable(bool value = true, bool executeLinkedObjects = true) override;
 	bool IsEnabled() override;

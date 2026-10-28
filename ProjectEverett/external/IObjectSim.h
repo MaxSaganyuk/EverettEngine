@@ -90,6 +90,8 @@ public:
 
 	virtual std::string GetThisObjectTypeNameStr() = 0;
 
+	virtual const char* GetName() = 0;
+
 	Linkable virtual void SetEnable(bool value = true, bool executeLinkedObjects = true) = 0;
 	virtual bool IsEnabled() = 0;
 

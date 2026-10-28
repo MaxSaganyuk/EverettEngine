@@ -690,6 +690,7 @@ SolidSim* EverettEngine::CreateSolidImpl(
 		// We pass start bone index reference for automated reassignment of start bone index in all created
 		// solids without looping through the map on deletion of one specific solid removing entire O(n) walkthrough
 		newSolid.SetModelStartBoneIndexRef(animSystem->GetLastStartBoneIndexRef());
+		newSolid.SetName(solidNameRef.c_str());
 
 		if (forceVisible)
 		{
@@ -811,8 +812,10 @@ LightSim* EverettEngine::CreateLightImpl(const std::string& lightName, LightType
 	{
 		auto& [lightNameRef, newLight] = *iter;
 
+		newLight.SetName(lightNameRef.c_str());
 		newLight.SetScaleVector(glm::vec3{ 0.25 });
 		newLight.SetOrientation(camera->GetOrientationAddr());
+
 		allNameTracker->Add(lightNameRef);
 
 		return &newLight;
@@ -852,8 +855,10 @@ SoundSim* EverettEngine::CreateSoundImpl(const std::string& path, const std::str
 		{
 			auto& [soundNameRef, newSound] = *iter;
 
+			newSound.SetName(soundNameRef.c_str());
 			newSound.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVector());
 			newSound.SetScaleVector(glm::vec3{ 0.25 });
+
 			allNameTracker->Add(soundNameRef);
 
 			return &newSound;
@@ -885,6 +890,8 @@ ColliderSim* EverettEngine::CreateColliderImpl(const std::string& colliderName)
 	if (success)
 	{
 		auto& [colliderNameRef, newCollider] = *iter;
+
+		newCollider.SetName(colliderNameRef.c_str());
 
 		allNameTracker->Add(colliderNameRef);
 

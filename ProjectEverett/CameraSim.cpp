@@ -13,6 +13,7 @@ CameraSim::CameraSim(
 	  windowWidth(windowWidth), 
 	  fov(fov)
 {
+	SetName(TypeName);
 
 	view = glm::mat4(1.0f);
 	SetAspect(windowWidth, windowHeight);
