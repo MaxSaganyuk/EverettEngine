@@ -171,6 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AnimSystem.h" />
+    <ClInclude Include="AutoReindexer.h" />
     <ClInclude Include="ColliderSim.h" />
     <ClInclude Include="CommonStructs.h" />
     <ClInclude Include="ConceptUtils.h" />
@@ -199,6 +200,7 @@
     <ClInclude Include="RenderLogger.h" />
     <ClInclude Include="ShaderGenerator.h" />
     <ClInclude Include="SimSerializer.h" />
+    <ClInclude Include="SimUtils.h" />
     <ClInclude Include="SolidToModelManager.h" />
     <ClInclude Include="ObjectSim.h" />
     <ClInclude Include="SolidSim.h" />
@@ -212,6 +214,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AnimSystem.cpp" />
+    <ClCompile Include="AutoReindexer.cpp" />
     <ClCompile Include="ColliderSim.cpp" />
     <ClCompile Include="EverettEngine.cpp" />
     <ClCompile Include="EverettException.cpp" />

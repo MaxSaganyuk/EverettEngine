@@ -144,6 +144,12 @@
     <ClInclude Include="DateUtilities.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="AutoReindexer.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="SimUtils.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SolidSim.cpp">
@@ -198,6 +204,9 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="MaterialSim.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="AutoReindexer.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

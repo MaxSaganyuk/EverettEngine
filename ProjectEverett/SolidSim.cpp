@@ -298,7 +298,7 @@ double SolidSim::GetModelCurrentAnimationTime()
 	return STMM.GetCurrentAnimationTime();
 }
 
-void SolidSim::SetModelStartBoneIndexRef(const size_t& startingBoneIndexRef)
+void SolidSim::SetModelStartBoneIndexRef(AutoIndex startingBoneIndexRef)
 {
 	STMM.SetStartBoneIndexRef(startingBoneIndexRef);
 }

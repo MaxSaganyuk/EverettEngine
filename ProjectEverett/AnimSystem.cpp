@@ -179,32 +179,21 @@ void AnimSystem::CutAndGlueFinalTransforms(size_t startPoint, size_t amount)
 
 void AnimSystem::CutAndRecalcStartBoneIndexes(size_t startBoneIndex, size_t boneAmount)
 {
-	bool indexFound = false;
-
-	for (auto iter = startBoneIndexes.begin(); iter != startBoneIndexes.end();)
-	{
-		if (indexFound)
-		{
-			(*iter) -= boneAmount;
-		}
-
-		if (!indexFound && *iter == startBoneIndex)
-		{
-			iter = startBoneIndexes.erase(iter);
-			indexFound = true;
-		}
-		else
-		{
-			++iter;
-		}
-	}
+	startBoneIndexes.RemoveIndex(startBoneIndex, boneAmount);
 }
 
-void AnimSystem::IncrementTotalBoneAmount(ModelAnim& modelAnim)
+bool AnimSystem::IncrementTotalBoneAmount(ModelAnim& modelAnim)
 {
-	startBoneIndexes.push_back(finalTransforms.size());
+	if (!modelAnim.animInfoVect.empty())
+	{
+		startBoneIndexes.PushValueBack(finalTransforms.size());
 
-	AppendToFinalTransforms(modelAnim.boneAmount);
+		AppendToFinalTransforms(modelAnim.boneAmount);
+
+		return true;
+	}
+
+	return false;
 }
 
 void AnimSystem::DecrementTotalBoneAmount(SolidSim& solid)
@@ -212,8 +201,11 @@ void AnimSystem::DecrementTotalBoneAmount(SolidSim& solid)
 	size_t currentSolidStartBoneIndex = solid.GetModelCurrentStartingBoneIndex();
 	size_t modelBoneAmount = solid.GetModelBoneAmount();
 
-	CutAndGlueFinalTransforms(currentSolidStartBoneIndex, modelBoneAmount);
-	CutAndRecalcStartBoneIndexes(currentSolidStartBoneIndex, modelBoneAmount);
+	if (currentSolidStartBoneIndex && modelBoneAmount)
+	{
+		CutAndGlueFinalTransforms(currentSolidStartBoneIndex, modelBoneAmount);
+		CutAndRecalcStartBoneIndexes(currentSolidStartBoneIndex, modelBoneAmount);
+	}
 }
 
 size_t AnimSystem::GetTotalBoneAmount()
@@ -221,7 +213,7 @@ size_t AnimSystem::GetTotalBoneAmount()
 	return finalTransforms.size();
 }
 
-const size_t& AnimSystem::GetLastStartBoneIndexRef()
+AutoIndex AnimSystem::GetLastStartBoneAutoIndex()
 {
-	return startBoneIndexes.back();
+	return startBoneIndexes.GetBackIndex();
 }

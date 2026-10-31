@@ -8,6 +8,7 @@
 
 #include "SimSerializer.h"
 #include "ValueObserver.h"
+#include "AutoReindexer.h"
 
 class ObjectSim : virtual public IObjectSim
 {
@@ -39,6 +40,7 @@ protected:
 	// Far to many benefits against downsides in design.
 	// The value should not be written into the world file since name already is added via map name get
 	const char* name{};
+	AutoIndex index{};
 
 	static inline stdEx::RelationGraph<ObjectSim*> objectGraph;
 	bool visited; // Utility bool to prevent infinite loops of linked object traversal
@@ -58,6 +60,9 @@ public:
 
 	void SetName(const char* name);
 	const char* GetName() override;
+
+	void SetIndex(AutoIndex index);
+	size_t GetIndex() override;
 
 	void SetEnable(bool value = true, bool executeLinkedObjects = true) override;
 	bool IsEnabled() override;
@@ -131,3 +136,6 @@ public:
 	void EnableObjectLinking(bool val = true) override;
 	void EnableLinkedExecutionForFunc(LinkableFuncNames linkFuncName, bool value = true) override;
 };
+
+template<typename Type>
+concept SimObj = std::derived_from<Type, ObjectSim>;

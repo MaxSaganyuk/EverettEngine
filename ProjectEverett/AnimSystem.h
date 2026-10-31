@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "TreeManager.h"
+#include "AutoReindexer.h"
 
 class SolidSim;
 
@@ -64,10 +65,10 @@ public:
 
 	void ProcessAnimations(ModelAnim& modelAnim, SolidSim& solid);
 	std::vector<glm::mat4>& GetFinalTransforms();
-	void IncrementTotalBoneAmount(ModelAnim& modelAnim);
+	bool IncrementTotalBoneAmount(ModelAnim& modelAnim);
 	void DecrementTotalBoneAmount(SolidSim& solid);
 	size_t GetTotalBoneAmount();
-	const size_t& GetLastStartBoneIndexRef();
+	AutoIndex GetLastStartBoneAutoIndex();
 private:
 	template<typename GLMType>
 	void InterpolateKey(std::vector<std::pair<double, GLMType>>& keys, GLMType& res, double animTime);
@@ -95,5 +96,5 @@ private:
 	void CutAndRecalcStartBoneIndexes(size_t startBoneIndex, size_t boneAmount);
 
 	std::vector<glm::mat4> finalTransforms;
-	std::list<size_t> startBoneIndexes;
+	AutoReindexer startBoneIndexes;
 };

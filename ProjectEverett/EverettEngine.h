@@ -40,6 +40,7 @@ class NameTracker;
 class TimerManager;
 class ShaderCodeHolder;
 class ShaderGenerator;
+class SimIndexer;
 
 struct HWND__;
 using HWND = HWND__*;
@@ -204,9 +205,6 @@ private:
 	constexpr static inline char deleteObjErrorMes[] = "Cannot delete whilst scripts are running\n";
 	std::function<void(glm::vec4&&)> generalRenderTextBehaviour;
 
-	size_t currentStartSolidIndex;
-	size_t nextStartSolidIndex;
-
 	using LightShaderValueNames = std::vector<std::pair<std::string, std::vector<std::string>>>;
 
 	using ModelCollection    = std::unordered_map<std::string, ModelInfo>; 
@@ -267,6 +265,11 @@ private:
 	LightSim* CreateLightImpl(const std::string& lightName, LightTypes lightType);
 	SoundSim* CreateSoundImpl(const std::string& path, const std::string& soundName);
 	ColliderSim* CreateColliderImpl(const std::string& colliderName);
+
+	template<typename Sim>
+	void FinalizeObjectCreation(std::pair<const std::string, Sim>& simPair);
+	template<typename Sim>
+	void FinalizeObjectDeletion(std::pair<const std::string, Sim>& simPair);
 
 	// Returns true if custom shader is compiled
 	bool GenerateShader();
@@ -333,6 +336,7 @@ private:
 	std::unique_ptr<RenderLogger> logger;
 	std::unique_ptr<TimerManager> timerManager;
 	std::unique_ptr<ShaderCodeHolder> shaderCodeHolder;
+	std::unique_ptr<SimIndexer> simIndexer;
 
 	ModelCollection models;
 	SolidCollection solids;

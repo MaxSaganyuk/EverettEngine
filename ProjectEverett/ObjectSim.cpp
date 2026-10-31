@@ -83,6 +83,20 @@ const char* ObjectSim::GetName()
 	return name;
 }
 
+void ObjectSim::SetIndex(AutoIndex index)
+{
+	CheckAndThrowExceptionWMessage(!this->index, "Object index can be only set once");
+
+	this->index = index;
+}
+
+size_t ObjectSim::GetIndex()
+{
+	CheckAndThrowExceptionWMessage(index, "Object index was not set");
+
+	return index;
+}
+
 void ObjectSim::SetEnable(bool value, bool executeLinkedObjects)
 {
 	enabled = value;

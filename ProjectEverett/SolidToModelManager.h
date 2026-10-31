@@ -7,6 +7,7 @@
 #include "PlaybackManager.h"
 
 #include "external/ColorManager.h"
+#include "AutoReindexer.h"
 
 class SolidToModelManager
 {
@@ -51,7 +52,7 @@ public:
 	void SetAnimationPlaybackCallback(std::function<void(bool, bool, bool)>&& callback);
 
 	double GetCurrentAnimationTime();
-	void SetStartBoneIndexRef(const size_t& startingBoneIndex);
+	void SetStartBoneIndexRef(AutoIndex startingBoneIndex);
 	size_t GetCurrentStartingBoneIndex();
 	size_t GetModelBoneAmount();
 	bool IsAnimationResetRequired();
@@ -80,7 +81,7 @@ private:
 	std::vector<bool> meshVisibility;
 	glm::vec4 modelDefaultColor = ColorManager::GetColorVec4(ColorManager::Colors::WHITE);
 
-	const size_t* startBoneIndexPtr;
+	AutoIndex startBoneIndexPtr;
 	
 	ModelInfo* modelInfoPtr;
 	ModelInfo::FullModelInfo* fullModelInfoP;

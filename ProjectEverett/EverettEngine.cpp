@@ -40,6 +40,7 @@
 
 #include "NameTracker.h"
 #include "TimerManager.h"
+#include "SimUtils.h"
 
 using namespace EverettStructs;
 
@@ -62,25 +63,6 @@ using namespace EverettStructs;
 
 
 using ObjectInfoNames = SimSerializer::ObjectInfoNames;
-
-template<typename Type>
-constexpr static std::optional<EverettEngine::ObjectTypes> GetTypeEnumByType()
-{
-	return {};
-}
-
-#define DefineTypeEnumByType(Type)                                                        \
-template<>                                                                                \
-constexpr static std::optional<EverettEngine::ObjectTypes> GetTypeEnumByType<Type##Sim>() \
-{                                                                                         \
-	return EverettEngine::ObjectTypes::Type;                                              \
-}
-
-DefineTypeEnumByType(Camera)
-DefineTypeEnumByType(Solid)
-DefineTypeEnumByType(Light)
-DefineTypeEnumByType(Sound)
-DefineTypeEnumByType(Collider)
 
 struct EverettEngine::ObjectTypeInfo
 {
@@ -147,6 +129,7 @@ EverettEngine::EverettEngine()
 	timerManager = std::make_unique<TimerManager>();
 
 	allNameTracker = std::make_unique<NameTracker>();
+	simIndexer = std::make_unique<SimIndexer>();
 		
 	ObjectSim::InitializeObjectGraph();
 
@@ -155,6 +138,8 @@ EverettEngine::EverettEngine()
 
 EverettEngine::~EverettEngine()
 {
+	simIndexer->CleanAll();
+
 	SetLogCallback(false);
 	SoundSim::TerminateOpenAL();
 	SetRenderLoggerCallbacks(false);
@@ -478,9 +463,6 @@ void EverettEngine::ClearExternallyControlledContainers()
 void EverettEngine::RunRenderWindow()
 {
 	auto additionalFuncs = [this]() {
-		currentStartSolidIndex = 0;
-		nextStartSolidIndex = 0;
-
 		CheckAndLoadRequestedWorld();
 
 		timerManager->ProcessTimedCallbacks();
@@ -595,10 +577,10 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 
 		if (!model.GetRelatedSolids().empty())
 		{
-			size_t index = currentStartSolidIndex = nextStartSolidIndex;
 			for (auto& solidPtr : model.GetRelatedSolids())
 			{
 				SolidSim& solid = *solidPtr;
+				size_t index = solid.GetIndex();
 
 				if (solid.GetModelVisibility())
 				{
@@ -617,20 +599,17 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 						LGLUtils::SetShaderUniformArrayAt(*mainLGL, "defaultColors", index, solid.GetModelDefaultColor());
 					}
 				}
-
-				++index;
 			}
-			nextStartSolidIndex = index;
 		}
 	});
 
 	modelSolidInfo.SetGeneralMeshBehaviour([this](const ModelInfo& model, int meshIndex)
 	{
 		// Existence of the lambda implies existence of the model
-		size_t index = currentStartSolidIndex;
 		for (auto& solidPtr : model.GetRelatedSolids())
 		{
 			SolidSim& solid = *solidPtr;
+			size_t index = solid.GetIndex();
 
 			if (solid.GetModelVisibility())
 			{
@@ -683,21 +662,21 @@ SolidSim* EverettEngine::CreateSolidImpl(
 	if (success)
 	{ 
 		auto& [solidNameRef, newSolid] = *iter;
+		FinalizeObjectCreation(*iter);
 
 		model.InsertRelatedSolid(newSolid);
 
-		animSystem->IncrementTotalBoneAmount(*modelAnimPtr);
-		// We pass start bone index reference for automated reassignment of start bone index in all created
-		// solids without looping through the map on deletion of one specific solid removing entire O(n) walkthrough
-		newSolid.SetModelStartBoneIndexRef(animSystem->GetLastStartBoneIndexRef());
-		newSolid.SetName(solidNameRef.c_str());
+		if (animSystem->IncrementTotalBoneAmount(*modelAnimPtr))
+		{
+			// We pass start bone index reference for automated reassignment of start bone index in all created
+			// solids without looping through the map on deletion of one specific solid removing entire O(n) walkthrough
+			newSolid.SetModelStartBoneIndexRef(animSystem->GetLastStartBoneAutoIndex());
+		}
 
 		if (forceVisible)
 		{
 			modelPtr->render = true;
 		}
-
-		allNameTracker->Add(solidNameRef);
 
 		if (regenerateShader)
 		{
@@ -811,12 +790,10 @@ LightSim* EverettEngine::CreateLightImpl(const std::string& lightName, LightType
 	if (success)
 	{
 		auto& [lightNameRef, newLight] = *iter;
+		FinalizeObjectCreation(*iter);
 
-		newLight.SetName(lightNameRef.c_str());
 		newLight.SetScaleVector(glm::vec3{ 0.25 });
 		newLight.SetOrientation(camera->GetOrientationAddr());
-
-		allNameTracker->Add(lightNameRef);
 
 		return &newLight;
 	}
@@ -854,12 +831,11 @@ SoundSim* EverettEngine::CreateSoundImpl(const std::string& path, const std::str
 		if (success)
 		{
 			auto& [soundNameRef, newSound] = *iter;
+			FinalizeObjectCreation(*iter);
 
-			newSound.SetName(soundNameRef.c_str());
 			newSound.SetPositionVector(camera->GetPositionVectorAddr() + camera->GetFrontVector());
 			newSound.SetScaleVector(glm::vec3{ 0.25 });
 
-			allNameTracker->Add(soundNameRef);
 
 			return &newSound;
 		}
@@ -890,15 +866,36 @@ ColliderSim* EverettEngine::CreateColliderImpl(const std::string& colliderName)
 	if (success)
 	{
 		auto& [colliderNameRef, newCollider] = *iter;
-
-		newCollider.SetName(colliderNameRef.c_str());
-
-		allNameTracker->Add(colliderNameRef);
+		FinalizeObjectCreation(*iter);
 
 		return &newCollider;
 	}
 
 	return nullptr;
+}
+
+template<typename Sim>
+void EverettEngine::FinalizeObjectCreation(std::pair<const std::string, Sim>& simPair)
+{
+	static_assert(std::is_base_of_v<ObjectSim, Sim>, "FinalizeObjectCreation can only apply to sim objects");
+
+	auto& [nameRef, obj] = simPair;
+
+	obj.SetName(nameRef.c_str());
+	simIndexer->Add(obj);
+
+	allNameTracker->Add(nameRef);
+}
+
+template<typename Sim>
+void EverettEngine::FinalizeObjectDeletion(std::pair<const std::string, Sim>& simPair)
+{
+	static_assert(std::is_base_of_v<ObjectSim, Sim>, "FinalizeObjectDeletion can only apply to sim objects");
+
+	auto& [nameRef, obj] = simPair;
+
+	simIndexer->Remove(obj);
+	allNameTracker->TryRemove(nameRef);
 }
 
 std::expected<void, std::string> EverettEngine::CopyObject(
@@ -1165,8 +1162,9 @@ void EverettEngine::CopyObjectBasedOn(const std::string& originalName, Sim& orig
 
 EverettEngine::SolidCollection::iterator EverettEngine::DeleteSolidImpl(SolidCollection::iterator solidIter)
 {
-	allNameTracker->TryRemove(solidIter->first);
 	animSystem->DecrementTotalBoneAmount(solidIter->second);
+	
+	FinalizeObjectDeletion(*solidIter);
 	return solids.erase(solidIter);
 }
 
@@ -1176,7 +1174,8 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteLight(const std::str
 
 	if (iter != lights.end())
 	{
-		allNameTracker->TryRemove(lightName);
+		FinalizeObjectDeletion(*iter);
+
 		lights.erase(lightName);
 
 		if (gizmoEnabled)
@@ -1196,7 +1195,8 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteSound(const std::str
 
 	if (iter != sounds.end())
 	{
-		allNameTracker->TryRemove(soundName);
+		FinalizeObjectDeletion(*iter);
+
 		sounds.erase(soundName);
 
 		if (gizmoEnabled)
@@ -1216,7 +1216,8 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteCollider(const std::
 
 	if (iter != colliders.end())
 	{
-		allNameTracker->TryRemove(colliderName);
+		FinalizeObjectDeletion(*iter);
+
 		colliders.erase(colliderName);
 
 		if (gizmoEnabled)
@@ -1618,6 +1619,8 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 
 		SetRenderLoggerCallbacks();
 	}
+
+	simIndexer->CleanAll();
 
 	solids.clear();
 	models.clear();

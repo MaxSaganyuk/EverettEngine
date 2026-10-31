@@ -313,18 +313,18 @@ double SolidToModelManager::GetCurrentAnimationTime()
 	return GetAnimationTimeTicks(animStates.GetCurrentTime());
 }
 
-void SolidToModelManager::SetStartBoneIndexRef(const size_t& startingBoneIndex)
+void SolidToModelManager::SetStartBoneIndexRef(AutoIndex startingBoneIndex)
 {
 	CheckIfInitialized();
 
-	startBoneIndexPtr = &startingBoneIndex;
+	startBoneIndexPtr = startingBoneIndex;
 }
 
 size_t SolidToModelManager::GetCurrentStartingBoneIndex()
 {
 	CheckIfInitialized();
 
-	return *startBoneIndexPtr;
+	return startBoneIndexPtr;
 }
 
 size_t SolidToModelManager::GetModelBoneAmount()
