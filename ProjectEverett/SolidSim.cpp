@@ -60,8 +60,9 @@ std::string SolidSim::CollectInfoToSaveFromSTMM()
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.playing);
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.paused);
 		res += SimSerializer::GetValueToSaveFrom(STMM.animStates.looped);
-		res += SimSerializer::GetValueToSaveFrom(STMM.meshVisibility);
+		res += SimSerializer::GetValueToSaveFrom(STMM.visibility.GetMeshVect());
 		res += SimSerializer::GetValueToSaveFrom(STMM.modelDefaultColor);
+		res += SimSerializer::GetValueToSaveFrom(STMM.texRender.GetMeshVect());
 	}
 
 	return res;
@@ -80,10 +81,12 @@ bool SolidSim::CollectInfoToLoadToSTMM(std::string_view& line)
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.playing, "May 26 2025"_ver);
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.paused, "May 26 2025"_ver);
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.animStates.looped, "May 26 2025"_ver);
-		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.meshVisibility, "May 26 2025"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.visibility.GetMeshVect(), "May 26 2025"_ver);
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.modelDefaultColor, "Mar 16 2026"_ver);
+		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.texRender.GetMeshVect(), "Nov 01 2026"_ver);
 
-		STMM.CheckIfModelVisible();
+		STMM.visibility.RecalcModelFromMeshes();
+		STMM.texRender.RecalcModelFromMeshes();
 	}
 
 	return res;
@@ -193,6 +196,26 @@ bool SolidSim::GetModelMeshVisibility(size_t index)
 	return STMM.GetMeshVisibility(index);
 }
 
+void SolidSim::EnableMeshTextureRender(size_t index, bool value)
+{
+	STMM.EnableMeshTextureRender(index, value);
+}
+
+bool SolidSim::IsMeshTextureRenderOn(size_t index)
+{
+	return STMM.IsMeshTextureRenderOn(index);
+}
+
+void SolidSim::EnableMeshTextureRender(const std::string& name, bool value)
+{
+	STMM.EnableMeshTextureRender(name, value);
+}
+
+bool SolidSim::IsMeshTextureRenderOn(const std::string& name)
+{
+	return STMM.IsMeshTextureRenderOn(name);
+}
+
 float SolidSim::GetModelMeshShininess(const std::string& name)
 {
 	return STMM.GetMeshShininess(name);
@@ -208,6 +231,16 @@ void SolidSim::InvokeAutoScale()
 	SetScaleVector(STMM.GetAutoScaleVector(), false);
 }
 
+void SolidSim::EnableModelTextureRender(bool value)
+{
+	STMM.EnableModelTextureRender(value);
+}
+
+bool SolidSim::IsModelTextureRenderOn()
+{
+	return STMM.IsModelTextureRenderOn();
+}
+
 std::vector<std::string> SolidSim::GetModelAnimationNames()
 {
 	return STMM.GetAnimationNames();
@@ -218,7 +251,7 @@ const std::string& SolidSim::GetModelName()
 	return STMM.GetModelName();
 }
 
-glm::vec4 SolidSim::GetModelDefaultColor()
+const glm::vec4& SolidSim::GetModelDefaultColor()
 {
 	return STMM.GetModelDefaultColor();
 }

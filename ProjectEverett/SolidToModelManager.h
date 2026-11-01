@@ -22,19 +22,25 @@ public:
 
 	std::vector<std::string> GetMeshNames();
 	size_t GetMeshAmount();
-	void SetMeshVisibility(size_t intex, bool value);
+	void SetMeshVisibility(size_t index, bool value);
 	void SetMeshVisibility(const std::string& name, bool value);
-	bool GetMeshVisibility(size_t intex);
+	bool GetMeshVisibility(size_t index);
 	bool GetMeshVisibility(const std::string& name);
 	float GetMeshShininess(size_t index);
 	float GetMeshShininess(const std::string& name);
+	void EnableMeshTextureRender(size_t index, bool value);
+	bool IsMeshTextureRenderOn(size_t index);
+	void EnableMeshTextureRender(const std::string& name, bool value);
+	bool IsMeshTextureRenderOn(const std::string& name);
 
 	glm::vec3 GetAutoScaleVector();
 
 	void SetModelVisibility(bool value);
 	bool GetModelVisibility();
 	void SetModelDefaultColor(const glm::vec4& color);
-	glm::vec4 GetModelDefaultColor();
+	const glm::vec4& GetModelDefaultColor();
+	void EnableModelTextureRender(bool value = true);
+	bool IsModelTextureRenderOn();
 
 	std::vector<std::string> GetAnimationNames();
 	size_t GetAnimationAmount();
@@ -60,7 +66,6 @@ private:
 	friend class SolidSim;
 
 	void CheckIfInitialized();
-	void CheckIfModelVisible();
 
 	double GetAnimationTimeTicks(double currentTime);
 	void ResetAnimationTime();
@@ -77,8 +82,31 @@ private:
 	size_t currentAnimationIndex;
 	PlaybackManager animStates;
 
-	bool modelVisibility;
-	std::vector<bool> meshVisibility;
+	class ModelAndMesh
+	{
+		bool model{};
+		std::vector<bool> meshes;
+		std::function<void()> triggerOnBoolChange;
+	public:
+		ModelAndMesh() = default;
+		ModelAndMesh(bool value, size_t meshAmount, std::function<void()> triggerOnBoolChange = nullptr);
+
+		ModelAndMesh(const ModelAndMesh&) = default;
+		ModelAndMesh& operator=(const ModelAndMesh&) = default;
+		ModelAndMesh(ModelAndMesh&&) = default;
+		ModelAndMesh& operator=(ModelAndMesh&&) = default;
+
+		void SetModel(bool value);
+		bool GetModel() const;
+		void SetMesh(size_t index, bool value);
+		bool GetMesh(size_t index) const;
+
+		void RecalcModelFromMeshes();
+		std::vector<bool>& GetMeshVect() noexcept;
+	};
+
+	ModelAndMesh visibility;
+	ModelAndMesh texRender;
 	glm::vec4 modelDefaultColor = ColorManager::GetColorVec4(ColorManager::Colors::WHITE);
 
 	AutoIndex startBoneIndexPtr;

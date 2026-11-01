@@ -10,7 +10,7 @@ namespace
 	};
 
 	// __DATE__
-	constexpr stdEx::FixedString latestSerializerVersionDate = "Oct 25 2026";
+	constexpr stdEx::FixedString latestSerializerVersionDate = "Nov 01 2026";
 	constexpr size_t latestSerializerVersion = 
 		DateUtilities::GetDaysPassedFromDateString(latestSerializerVersionDate.View());
 

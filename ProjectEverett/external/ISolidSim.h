@@ -18,8 +18,16 @@ public:
 	virtual void SetModelMeshVisibility(size_t index, bool value) = 0;
 	virtual bool GetModelMeshVisibility(const std::string name) = 0;
 	virtual bool GetModelMeshVisibility(size_t index) = 0;
+	virtual void EnableMeshTextureRender(size_t index, bool value) = 0;
+	virtual bool IsMeshTextureRenderOn(size_t index) = 0;
+	virtual void EnableMeshTextureRender(const std::string& name, bool value) = 0;
+	virtual bool IsMeshTextureRenderOn(const std::string& name) = 0;
 
 	virtual void InvokeAutoScale() = 0;
+	virtual void EnableModelTextureRender(bool value = true) = 0;
+	virtual bool IsModelTextureRenderOn() = 0;
+	virtual const glm::vec4& GetModelDefaultColor() = 0;
+	virtual void SetModelDefaultColor(const glm::vec4& color) = 0;
 
 	virtual std::vector<std::string> GetModelAnimationNames() = 0;
 	virtual size_t GetModelAnimationAmount() = 0;

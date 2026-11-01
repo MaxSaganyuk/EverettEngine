@@ -11,9 +11,12 @@ void SolidToModelManager::InitializeSTMM(ModelInfo& modelInfo, const std::string
 	modelInfoPtr = &modelInfo;
 	fullModelInfoP = &modelInfoPtr->GetFullModelInfo();
 	this->modelName = modelName;
-	modelVisibility = true;
-	meshVisibility.resize(fullModelInfoP->first.lock()->meshes.size());
-	std::fill(meshVisibility.begin(), meshVisibility.end(), true);
+
+	size_t meshAmount = fullModelInfoP->first.lock()->meshes.size();
+
+	visibility = { true, meshAmount, [this]() { modelInfoPtr->RecheckIfAllRelatedSolidsAreVisible(); } };
+	texRender  = { !fullModelInfoP->first.lock()->isTextureless, meshAmount };
+
 	currentAnimationIndex = 0;
 	lastAnimationTime = 0.0;
 	animationSpeed = 1.0;
@@ -64,21 +67,14 @@ void SolidToModelManager::SetModelVisibility(bool value)
 {
 	CheckIfInitialized();
 
-	std::fill(meshVisibility.begin(), meshVisibility.end(), value);
-	bool previousModelVisibility = modelVisibility;
-	modelVisibility = value;
-
-	if (previousModelVisibility != modelVisibility)
-	{
-		modelInfoPtr->RecheckIfAllRelatedSolidsAreVisible();
-	}
+	visibility.SetModel(value);
 }
 
 bool SolidToModelManager::GetModelVisibility()
 {
 	CheckIfInitialized();
 
-	return modelVisibility;
+	return visibility.GetModel();
 }
 
 template<typename Type>
@@ -100,37 +96,29 @@ void SolidToModelManager::SetMeshVisibility(size_t index, bool value)
 {
 	CheckIfInitialized();
 
-	meshVisibility[index] = value;
-
-	CheckIfModelVisible();
+	visibility.SetMesh(index, value);
 }
 
 void SolidToModelManager::SetMeshVisibility(const std::string& name, bool value)
 {
 	CheckIfInitialized();
 
-	if (fullModelInfoP)
-	{
-		meshVisibility[GetIndexByName(name, GetMeshNames())] = value;
-	}
-
-	CheckIfModelVisible();
+	visibility.SetMesh(GetIndexByName(name, GetMeshNames()), value);
 }
 
 bool SolidToModelManager::GetMeshVisibility(size_t index)
 {
 	CheckIfInitialized();
 
-	return meshVisibility[index];
+	return visibility.GetMesh(index);
 }
 
 bool SolidToModelManager::GetMeshVisibility(const std::string& name)
 {
 	CheckIfInitialized();
 
-	return meshVisibility[GetIndexByName(name, GetMeshNames())];
+	return visibility.GetMesh(GetIndexByName(name, GetMeshNames()));
 }
-
 
 glm::vec3 SolidToModelManager::GetAutoScaleVector()
 {
@@ -146,7 +134,7 @@ void SolidToModelManager::SetModelDefaultColor(const glm::vec4& color)
 	modelDefaultColor = color;
 }
 
-glm::vec4 SolidToModelManager::GetModelDefaultColor()
+const glm::vec4& SolidToModelManager::GetModelDefaultColor()
 {
 	CheckIfInitialized();
 
@@ -165,6 +153,34 @@ float SolidToModelManager::GetMeshShininess(const std::string& name)
 	CheckIfInitialized();
 
 	return GetMeshShininess(GetIndexByName(name, GetMeshNames()));
+}
+
+void SolidToModelManager::EnableMeshTextureRender(size_t index, bool value)
+{
+	CheckIfInitialized();
+	
+	texRender.SetMesh(index, value);
+}
+
+bool SolidToModelManager::IsMeshTextureRenderOn(size_t index)
+{
+	CheckIfInitialized();
+
+	return texRender.GetMesh(index);
+}
+
+void SolidToModelManager::EnableMeshTextureRender(const std::string& name, bool value)
+{
+	CheckIfInitialized();
+
+	texRender.SetMesh(GetIndexByName(name, GetMeshNames()), value);
+}
+
+bool SolidToModelManager::IsMeshTextureRenderOn(const std::string& name)
+{
+	CheckIfInitialized();
+
+	return texRender.GetMesh(GetIndexByName(name, GetMeshNames()));
 }
 
 std::vector<std::string> SolidToModelManager::GetAnimationNames()
@@ -347,19 +363,78 @@ bool SolidToModelManager::IsAnimationResetRequired()
 	return false;
 }
 
+void SolidToModelManager::EnableModelTextureRender(bool value)
+{
+	CheckIfInitialized();
+
+	texRender.SetModel(value);
+}
+
+bool SolidToModelManager::IsModelTextureRenderOn()
+{
+	CheckIfInitialized();
+
+	return texRender.GetModel();
+}
+
 void SolidToModelManager::CheckIfInitialized()
 {
 	CheckAndThrowExceptionWMessage(initialized, "SolidToModelManager is uninitialized");
 }
 
-void SolidToModelManager::CheckIfModelVisible()
+SolidToModelManager::ModelAndMesh::ModelAndMesh(
+	bool value, size_t meshAmount, std::function<void()> triggerOnBoolChange
+)
 {
-	bool previousModelVisibility = modelVisibility;
-	modelVisibility = std::any_of(meshVisibility.begin(), meshVisibility.end(), [](bool vis) { return vis; });
+	model = value;
+	meshes.resize(meshAmount, model);
 
-	if (modelVisibility != previousModelVisibility)
+	this->triggerOnBoolChange = std::move(triggerOnBoolChange);
+}
+
+void SolidToModelManager::ModelAndMesh::SetModel(bool value)
+{
+	bool previous = model;
+	model = value;
+	std::fill(meshes.begin(), meshes.end(), model);
+
+	if (triggerOnBoolChange && previous != model)
 	{
-		modelInfoPtr->RecheckIfAllRelatedSolidsAreVisible();
+		triggerOnBoolChange();
 	}
 }
 
+bool SolidToModelManager::ModelAndMesh::GetModel() const
+{
+	return model;
+}
+
+void SolidToModelManager::ModelAndMesh::SetMesh(size_t index, bool value)
+{
+	CheckAndThrowExceptionWMessage((index < meshes.size()), "Mesh index is invalid for this solid");
+
+	bool previous = model;
+	RecalcModelFromMeshes();
+
+	if (triggerOnBoolChange && previous != model)
+	{
+		triggerOnBoolChange();
+	}
+}
+
+bool SolidToModelManager::ModelAndMesh::GetMesh(size_t index) const
+{
+	CheckAndThrowExceptionWMessage((index < meshes.size()), "Mesh index is invalid for this solid");
+
+	return meshes[index];
+}
+
+void SolidToModelManager::ModelAndMesh::RecalcModelFromMeshes()
+{
+	model = std::any_of(meshes.begin(), meshes.end(), [](bool val) { return val; });
+}
+
+std::vector<bool>& SolidToModelManager::ModelAndMesh::GetMeshVect() noexcept
+{
+	return meshes;
+}

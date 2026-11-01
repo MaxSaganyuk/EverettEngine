@@ -564,7 +564,6 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 		auto modelAnimPtr = model.GetFullModelInfo().second.lock();
 
 		bool animationless = modelAnimPtr->animInfoVect.empty();
-		mainLGL->SetShaderUniformValue("textureless", static_cast<int>(modelPtr->isTextureless));
 		mainLGL->SetShaderUniformValue("animationless", static_cast<int>(animationless));
 
 		if (!animationless)
@@ -594,10 +593,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 						);
 					}
 
-					if (modelPtr->isTextureless)
-					{
-						LGLUtils::SetShaderUniformArrayAt(*mainLGL, "defaultColors", index, solid.GetModelDefaultColor());
-					}
+					LGLUtils::SetShaderUniformArrayAt(*mainLGL, "defaultColors", index, solid.GetModelDefaultColor());
 				}
 			}
 		}
@@ -614,6 +610,7 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 			if (solid.GetModelVisibility())
 			{
 				mainLGL->SetShaderUniformValue("solidIndex", static_cast<int>(index));
+				mainLGL->SetShaderUniformValue("textureless", static_cast<int>(!solid.IsMeshTextureRenderOn(meshIndex)));
 				mainLGL->SetShaderUniformValue("meshVisibility", static_cast<int>(solid.GetModelMeshVisibility(meshIndex)));
 				mainLGL->SetShaderUniformValue(
 					lightShaderValueNames[0].first + '.' + lightShaderValueNames[0].second[2],

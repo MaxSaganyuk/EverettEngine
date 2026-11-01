@@ -59,6 +59,10 @@ public:
 	void SetModelMeshVisibility(size_t index, bool value) override;
 	bool GetModelMeshVisibility(const std::string name) override;
 	bool GetModelMeshVisibility(size_t index) override;
+	void EnableMeshTextureRender(size_t index, bool value) override;
+	bool IsMeshTextureRenderOn(size_t index) override;
+	void EnableMeshTextureRender(const std::string& name, bool value) override;
+	bool IsMeshTextureRenderOn(const std::string& name) override;
 
 	// Mesh access; engine only
 	float GetModelMeshShininess(const std::string& name);
@@ -68,11 +72,13 @@ public:
 	void SetModelVisibility(bool value) override;
 	bool GetModelVisibility() override;
 	void InvokeAutoScale() override;
+	void EnableModelTextureRender(bool value = true) override;
+	bool IsModelTextureRenderOn() override;
+	const glm::vec4& GetModelDefaultColor() override;
+	void SetModelDefaultColor(const glm::vec4& color) override;
 
 	// Model access; engine only
 	const std::string& GetModelName();
-	glm::vec4 GetModelDefaultColor();
-	void SetModelDefaultColor(const glm::vec4& color);
 
 	// Animation access; available through interface
 	std::vector<std::string> GetModelAnimationNames() override;
