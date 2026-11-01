@@ -558,7 +558,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 		ContextLock
 
-		std::chrono::system_clock::time_point renderStartTime = std::chrono::system_clock::now();
+		std::chrono::steady_clock::time_point renderStartTime = std::chrono::steady_clock::now();
 		glfwSwapInterval(useVSync);
 
 		ProcessKeyPress();
@@ -663,7 +663,7 @@ void LGL::RunRenderingCycle(std::function<void()> additionalSteps)
 
 		glfwSwapBuffers(window);
 
-		renderDeltaTime = std::chrono::duration<float>(std::chrono::system_clock::now() - renderStartTime).count();
+		renderDeltaTime = std::chrono::duration<float>(std::chrono::steady_clock::now() - renderStartTime).count();
 		if (renderTimeCallbackFunc)
 		{
 			renderTimeCallbackFunc(renderDeltaTime);
