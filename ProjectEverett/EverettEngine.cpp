@@ -617,8 +617,6 @@ bool EverettEngine::CreateModelImpl(const std::string& path, const std::string& 
 					solid.GetModelMeshShininess(meshIndex)
 				);
 			}
-
-			++index;
 		}
 	});
 
