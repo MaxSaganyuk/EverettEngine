@@ -414,6 +414,7 @@ void SolidToModelManager::ModelAndMesh::SetMesh(size_t index, bool value)
 	CheckAndThrowExceptionWMessage((index < meshes.size()), "Mesh index is invalid for this solid");
 
 	bool previous = model;
+	meshes[index] = value;
 	RecalcModelFromMeshes();
 
 	if (triggerOnBoolChange && previous != model)
