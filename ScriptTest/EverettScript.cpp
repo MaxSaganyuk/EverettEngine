@@ -162,8 +162,6 @@ TestCharHolder testChar;
 
 ScriptInit()
 {
-	engine.PanicOnFailedInterfaceGet(true);
-
 	cameraSim = engine.GetCameraInterface();
 
 	hardLinkTest = engine.GetColliderInterface("HardLinkTest");

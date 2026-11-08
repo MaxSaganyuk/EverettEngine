@@ -179,7 +179,6 @@ public:
 	EVERETT_API void ResetShadersToDefault() override;
 
 	EVERETT_API void CreateLogReport() override;
-	EVERETT_API void PanicOnFailedInterfaceGet(bool value = false) override;
 private:
 	enum ObjectModificationState : bool
 	{
@@ -194,7 +193,6 @@ private:
 	bool gizmoEnabled = false;
 
 	std::optional<bool> defaultControlsEnabled;
-	bool panicOnFailedInterfaceGet = false;
 
 	struct ObjectTypeInfo;
 

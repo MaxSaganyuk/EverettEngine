@@ -1238,7 +1238,7 @@ IObjectSim* EverettEngine::GetObjectInterface(const char* objectName, std::optio
 		objectPtr = GetObjectFromMap(hintType.value(), objectName);
 	}
 
-	CheckAndThrowExceptionWMessage(!(panicOnFailedInterfaceGet && !objectPtr), "Failed to retrieve object from maps");
+	CheckAndThrowExceptionWMessage(objectPtr, "Failed to retrieve object from maps");
 
 	return objectPtr;
 }
@@ -1496,9 +1496,7 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 		std::unreachable();
 	}
 
-	CheckAndThrowExceptionWMessage(
-		!(panicOnFailedInterfaceGet && logFail && !object), "Failed to retrieve object from maps"
-	);
+	CheckAndThrowExceptionWMessage(!(logFail && !object), "Failed to retrieve object from maps");
 
 #ifdef _DEBUG
 	if (object)
@@ -2224,11 +2222,6 @@ void EverettEngine::CreateLogReport()
 	}
 
 	file.close();
-}
-
-void EverettEngine::PanicOnFailedInterfaceGet(bool value)
-{
-	panicOnFailedInterfaceGet = value;
 }
 
 std::string EverettEngine::GetAvailableObjectName(const std::string& name)

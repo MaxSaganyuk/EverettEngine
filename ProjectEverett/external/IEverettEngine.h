@@ -65,9 +65,4 @@ public:
 	virtual void ResetShadersToDefault() = 0;
 
 	virtual void CreateLogReport() = 0;
-
-	// False by default. If true, will throw on failed interface get. 
-	// If s. object get throws at ScriptInit - engine will continue execution
-	// On false, responsibility of handling nullptrs is on developer writing the script. 
-	virtual void PanicOnFailedInterfaceGet(bool value = false) = 0;
 };
