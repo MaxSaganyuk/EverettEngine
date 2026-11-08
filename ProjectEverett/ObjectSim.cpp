@@ -507,14 +507,21 @@ void ObjectSim::SetRotationChangeCallback(std::function<void()> callback)
 	orient.SetValueUpdateCallback(std::move(callback));
 }
 
-void ObjectSim::HardLinkObject(IObjectSim& otherObject)
+IObjectSim& ObjectSim::LinkObjectImpl(IObjectSim& otherObject, bool hardLink)
 {
-	objectGraph.SetupRelations(this, dynamic_cast<ObjectSim*>(&otherObject), stdEx::RelationType::LeftToRight, true);
+	objectGraph.SetupRelations(this, dynamic_cast<ObjectSim*>(&otherObject), stdEx::RelationType::LeftToRight, hardLink);
+
+	return otherObject;
 }
 
-void ObjectSim::LinkObject(IObjectSim& otherObject)
+IObjectSim& ObjectSim::HardLinkObject(IObjectSim& otherObject)
 {
-	objectGraph.SetupRelations(this, dynamic_cast<ObjectSim*>(&otherObject), stdEx::RelationType::LeftToRight);
+	return LinkObjectImpl(otherObject, true);
+}
+
+IObjectSim& ObjectSim::LinkObject(IObjectSim& otherObject)
+{
+	return LinkObjectImpl(otherObject, false);
 }
 
 void ObjectSim::UnlinkObject(IObjectSim& objectToUnlink)

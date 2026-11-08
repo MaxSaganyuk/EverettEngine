@@ -149,7 +149,7 @@ public:
 	Linkable virtual void LookAt(IObjectSim& obj, bool executeLinkedObjects = true) = 0;
 	Linkable virtual void LookAt(const glm::vec3& pointToLookAt, bool executeLinkedObjects = true) = 0;
 
-	virtual void LinkObject(IObjectSim& objectToLink) = 0;
+	virtual IObjectSim& LinkObject(IObjectSim& objectToLink) = 0;
 	virtual void UnlinkObject(IObjectSim& objectToUnlink) = 0;
 	virtual void EnableObjectLinking(bool val = true) = 0; // By default enabled.
 	// All enabled by default

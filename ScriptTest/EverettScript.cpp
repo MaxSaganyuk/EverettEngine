@@ -73,8 +73,7 @@ public:
 		satelliteBoxLight->SetPositionVector(*satelliteBox);
 		satelliteBoxLight->GetColorVectorAddr() = ColorManager::GetColorVec3(ColorManager::Colors::MAGENTA);
 
-		testCharSolid->LinkObject(*satelliteBox);
-		satelliteBox->LinkObject(*satelliteBoxLight);
+		testCharSolid->LinkObject(*satelliteBox).LinkObject(*satelliteBoxLight);
 	}
 
 	void RevolveAroundChar()
@@ -116,7 +115,7 @@ public:
 
 	void LinkCharToCamera(ICameraSim& camera)
 	{
-		linkedToCamera ? testCharSolid->UnlinkObject(camera) : testCharSolid->LinkObject(camera);
+		linkedToCamera ? testCharSolid->UnlinkObject(camera) : static_cast<void>(testCharSolid->LinkObject(camera));
 
 		linkedToCamera = !linkedToCamera;
 		std::cout << "Camera link to char" << linkedToCamera ? " on\n" : " off\n";

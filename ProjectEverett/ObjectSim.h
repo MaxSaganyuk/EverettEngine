@@ -18,6 +18,7 @@ private:
 
 	void RotateImpl(const Rotation& toRotate);
 	glm::quat CalcOrientationFromRotation(const Rotation& toRotate);
+	IObjectSim& LinkObjectImpl(IObjectSim& otherObject, bool hardLink);
 protected:
 	static inline float renderDeltaTime = 1.0f;
 
@@ -130,8 +131,8 @@ public:
 	void SetScaleChangeCallback(std::function<void()> callback);
 	void SetRotationChangeCallback(std::function<void()> callback);
 
-	void HardLinkObject(IObjectSim& otherObject);
-	void LinkObject(IObjectSim& otherObject) override;
+	IObjectSim& HardLinkObject(IObjectSim& otherObject);
+	IObjectSim& LinkObject(IObjectSim& otherObject) override;
 	void UnlinkObject(IObjectSim& objectToUnlink) override;
 	void EnableObjectLinking(bool val = true) override;
 	void EnableLinkedExecutionForFunc(LinkableFuncNames linkFuncName, bool value = true) override;
