@@ -1589,6 +1589,11 @@ void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 	else
 	{
 		SetRenderLoggerCallbacks(false);
+
+		if (logger)
+		{
+			logger->CleanCollections();
+		}
 		mainLGL->ResetLGL();
 
 		SetRenderLoggerCallbacks();

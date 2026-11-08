@@ -99,3 +99,9 @@ void RenderLogger::UpdateTextPos(float windowWidth, float windowHeight)
 		textInfoCollection[i].position.y = startTextPos.y - i * 15.0f;
 	}
 }
+
+void RenderLogger::CleanCollections()
+{
+	textInfoCollection = std::move(decltype(textInfoCollection){});
+	renderMessageContentCollection = std::move(decltype(renderMessageContentCollection){});
+}

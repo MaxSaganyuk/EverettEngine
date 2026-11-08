@@ -25,6 +25,8 @@ public:
 
 	void EnableRender(bool value = true);
 	void UpdateTextPos(float windowWidth, float windowHeight);
+
+	void CleanCollections();
 private:
 	void CreateMessage(const std::string& str, const std::function<void()>& behaviourToUse);
 
