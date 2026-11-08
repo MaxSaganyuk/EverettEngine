@@ -48,9 +48,9 @@ class TestCharHolder
 	IColliderSim* testCharCollider{};
 	ISolidSim* satelliteBox{};
 	ILightSim* satelliteBoxLight{};
-	bool moving{};
 	bool linkedToCamera{};
-	bool linkedMovementState = true;
+	bool toRotate{};
+	size_t directionAmount{}; // Interactables run on single thread
 
 	void SwitchLinkedMovementFor(IObjectSim& obj, bool value)
 	{
@@ -96,28 +96,21 @@ public:
 
 	void SetupBlockCollision(IColliderSim* blockCollider)
 	{
-		testCharCollider->AddCollisionCallback({
-			[this]() {
+		testCharCollider->AddCollisionCallback({{
+			.startFunc   = [this]() { TriggerSwitchLinkedMovement(false); },
+			.processFunc = [this]() { testCharSolid->SetLastPosition(); },
+			.stopFunc    = [this]() {
+				TriggerSwitchLinkedMovement(true);
 				testCharSolid->SetLastPosition();
-
-				if (linkedMovementState)
-				{
-					TriggerSwitchLinkedMovement(linkedMovementState = false);
-				}
-			}, 
-			[this]() { 
-				TriggerSwitchLinkedMovement(linkedMovementState = true); 
-				testCharSolid->SetLastPosition();
-			}, 
-			blockCollider, 
-			true
+			},
+		}, blockCollider
 		});
 	}
 
 	void SetupWorldSwitchCollision(IColliderSim* worldSwitchCollider)
 	{
 		testCharCollider->AddCollisionCallback(
-			{ []() { engineInter->RequestWorldLoad("E:\\WorldSwitchTest.esav"); }, nullptr, worldSwitchCollider, false }
+			{ { []() { engineInter->RequestWorldLoad("E:\\WorldSwitchTest.esav"); } }, worldSwitchCollider }
 		);
 	}
 
@@ -129,31 +122,32 @@ public:
 		std::cout << "Camera link to char" << linkedToCamera ? " on\n" : " off\n";
 	}
 
+	void AddDirection()
+	{
+		++directionAmount;
+		toRotate = true;
+
+		testCharSolid->PlayModelAnimation(true);
+	}
+
 	void Go(float rotation)
 	{
-		if (testCharSolid)
+		if (toRotate)
 		{
-			if (!moving)
-			{
-				testCharSolid->SetOrientation(glm::angleAxis(rotation, IObjectSim::worldUp), false);
-				testCharSolid->PlayModelAnimation(true);
-			}
-
-			moving = true;
-			testCharSolid->MoveByAxis({ glm::sin(rotation), 0.0f, glm::cos(rotation) });
+			toRotate = false;
+			testCharSolid->SetOrientation(glm::angleAxis(rotation, IObjectSim::worldUp), false);
 		}
+
+		testCharSolid->MoveByAxis({ glm::sin(rotation), 0.0f, glm::cos(rotation) });
 	}
 
 	void Stop()
 	{
-		if (testCharSolid)
-		{
-			if (moving)
-			{
-				testCharSolid->StopModelAnimation();
-			}
+		toRotate = true;
 
-			moving = false;
+		if (!(--directionAmount))
+		{
+			testCharSolid->StopModelAnimation();
 		}
 	}
 
@@ -184,35 +178,31 @@ ScriptInit()
 
 	light = engine.GetLightInterface("Spot");
 
+	auto testCharAddDir   = []() { testChar.AddDirection(); };
 	auto testCharStopFunc = []() { testChar.Stop(); };
 
 	engine.AddInteractable(
-		engine.ConvertKeyTo('I'), true, 
-		[]() { testChar.Go(0.0f); }, testCharStopFunc
+		engine.ConvertKeyTo('I'), { testCharAddDir, []() { testChar.Go(0.0f); }, testCharStopFunc }
 	);
 	engine.AddInteractable(
-		engine.ConvertKeyTo('J'), true,
-		[]() { testChar.Go(glm::pi<float>() / 2.0f); }, testCharStopFunc
+		engine.ConvertKeyTo('J'), { testCharAddDir, []() { testChar.Go(glm::pi<float>() / 2.0f); }, testCharStopFunc }
 	);
 	engine.AddInteractable(
-		engine.ConvertKeyTo('K'), true,
-		[]() { testChar.Go(glm::pi<float>()); }, testCharStopFunc
+		engine.ConvertKeyTo('K'), { testCharAddDir, []() { testChar.Go(glm::pi<float>()); }, testCharStopFunc }
 	);
 	engine.AddInteractable(
-		engine.ConvertKeyTo('L'), true,
-		[]() { testChar.Go(-glm::pi<float>() / 2.0f); }, testCharStopFunc
+		engine.ConvertKeyTo('L'), { testCharAddDir, []() { testChar.Go(-glm::pi<float>() / 2.0f); }, testCharStopFunc }
 	);
 	engine.AddInteractable(
-		engine.ConvertKeyTo('C'), false,
-		[]() { testChar.LinkCharToCamera(*cameraSim); }, nullptr
+		engine.ConvertKeyTo('C'), { []() { testChar.LinkCharToCamera(*cameraSim); } }
 	);
 
 	engine.AddInteractable(
-		engine.ConvertKeyTo('R'), true, 
-		[]() { hardLinkTest->Rotate(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, false); }
+		engine.ConvertKeyTo('R'), 
+		{ .processFunc = []() { hardLinkTest->Rotate(IObjectSim::RotationDegrees{ 0.0f, 1.0f, 0.0f }, false); } }
 	);
 
-	engine.AddInteractable(engine.ConvertKeyTo("Space"), false, ShaderSwitch);
+	engine.AddInteractable(engine.ConvertKeyTo("Space"), { ShaderSwitch });
 
 	engine.AddMouseScrollCallback([](double value) { cameraSim->Zoom(static_cast<float>(value)); });
 
@@ -223,12 +213,13 @@ ScriptInit()
 	
 	// End triggered timed callback test
 	engine.AddInteractable(
-		engine.ConvertKeyTo('M'), false, 
-		[]() { 
-			if (!stopSwitchColors)
-			{
-				stopSwitchColors = true;
-				std::cout << "Stopped color switch. Switches happened " << amountOfTimesColorChanged << " times\n";
+		engine.ConvertKeyTo('M'), {
+			[]() {
+				if (!stopSwitchColors)
+				{
+					stopSwitchColors = true;
+					std::cout << "Stopped color switch. Switches happened " << amountOfTimesColorChanged << " times\n";
+				}
 			}
 		}
 	);

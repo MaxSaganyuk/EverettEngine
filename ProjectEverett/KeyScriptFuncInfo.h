@@ -3,45 +3,44 @@
 #include <vector>
 #include <functional>
 
+#include "external/InteractableSetup.h"
+
 class KeyScriptFuncInfo
 {
-	struct PressedFuncInfo
+	struct InteractableInfo
 	{
-		std::function<void()> func;
-		bool holdable{};
+		InteractableSetup callbacks;
 		bool persistent{};
 	};
 
 	bool pressed{};
-	std::vector<PressedFuncInfo> pressedFuncs;
-	std::vector<std::function<void()>> releasedFuncs;
+	std::vector<InteractableInfo> interInfo;
 
 public:
-	void AddPressedFunc(PressedFuncInfo&& pressedFuncInfo)
+	void AddCallbacks(InteractableInfo&& pressedFuncInfo)
 	{
-		pressedFuncs.push_back(std::move(pressedFuncInfo));
-	}
-
-	void AddReleasedFunc(std::function<void()>&& func)
-	{
-		releasedFuncs.push_back(std::move(func));
+		interInfo.push_back(std::move(pressedFuncInfo));
 	}
 
 	bool Clear()
 	{
-		std::erase_if(pressedFuncs, [](PressedFuncInfo& info) { return !info.persistent; });
-		releasedFuncs.clear();
+		std::erase_if(interInfo, [](InteractableInfo& info) { return !info.persistent; });
 
-		return pressedFuncs.empty();
+		return interInfo.empty();
 	}
 
 	void ButtonPressed()
 	{
-		for (auto& [func, holdable, _] : pressedFuncs)
+		for (auto& [callbacks, _] : interInfo)
 		{
-			if (func && (!pressed || holdable))
+			if (!pressed && callbacks.startFunc)
 			{
-				func();
+				callbacks.startFunc();
+			}
+
+			if (callbacks.processFunc)
+			{
+				callbacks.processFunc();
 			}
 		}
 
@@ -52,11 +51,11 @@ public:
 	{
 		pressed = false;
 
-		for (auto& func : releasedFuncs)
+		for (auto& [callbacks, _] : interInfo)
 		{
-			if (func)
+			if (callbacks.stopFunc)
 			{
-				func();
+				callbacks.stopFunc();
 			}
 		}
 	}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "InteractableSetup.h"
+
 #include "IObjectSim.h"
 
 class IColliderSim : virtual public IObjectSim 
@@ -7,14 +9,10 @@ class IColliderSim : virtual public IObjectSim
 public:
 	struct CollisionCallbackOptions
 	{
-		std::function<void()> collisionStart = nullptr;
-		std::function<void()> collisionStop = nullptr;
+		InteractableSetup interSetup;
 		// If null, collision with any collider will trigger callbacks. 
 		// If not null, only collision with provided collider will.
 		IColliderSim* colliderToBindTo = nullptr;
-		// If true, collisionStart callback will be called each frame
-		// If false, only once collision detected. collisionStop is called only once regardless.
-		bool holdable = false;
 	};
 
 	virtual void AddCollisionCallback(CollisionCallbackOptions callbackOpts) = 0;

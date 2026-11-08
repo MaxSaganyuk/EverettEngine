@@ -1,5 +1,7 @@
 #pragma once
 
+#include "InteractableSetup.h"
+
 #include "IObjectSim.h"
 #include "ISolidSim.h"
 #include "ILightSim.h"
@@ -38,12 +40,7 @@ public:
 
 	virtual void SetDebugLogVisible(bool value = true) = 0;
 
-	virtual void AddInteractable(
-		int key,
-		bool holdable,
-		std::function<void()> pressFunc,
-		std::function<void()> releaseFunc = nullptr
-	) = 0;
+	virtual void AddInteractable(int key, InteractableSetup interSetup) = 0;
 	virtual void AddTimedCallback(TimedCallbackSetup timedCallbackSetup) = 0;
 	virtual void AddMouseScrollCallback(std::function<void(double)> callback) = 0;
 	virtual void AddMouseMoveCallback(std::function<void(double, double)> callback) = 0;

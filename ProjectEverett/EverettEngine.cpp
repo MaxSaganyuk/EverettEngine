@@ -297,21 +297,20 @@ void EverettEngine::SetDefaultControls(bool value)
 
 		for (size_t i = 0; i < walkingDirections.size(); ++i)
 		{
-			AddInteractableImpl(
-				ConvertKeyTo(walkingDirections[i]), true,
-				[this, i]() { 
-					if (*defaultControlsEnabled) 
-					{ 
-						camera->MoveInDirection(static_cast<ObjectSim::Direction>(i)); 
-					} 
-				}, 
-				nullptr, true
-			);
+			InteractableSetup walkSetup{
+				.processFunc = [this, i]() {
+					if (*defaultControlsEnabled)
+					{
+						camera->MoveInDirection(static_cast<ObjectSim::Direction>(i));
+					}
+				}
+			};
+
+			AddInteractableImpl(ConvertKeyTo(walkingDirections[i]), std::move(walkSetup), true);
 		}
 
-		AddInteractableImpl(
-			ConvertKeyTo("MouseRight"), false,
-			[this]() {
+		InteractableSetup captureMouseInter{
+			.startFunc = [this]() {
 				static std::function<void()> captureMouseSwitch = [this]() { mainLGL->CaptureMouse(!mainLGL->IsMouseCaptured()); };
 
 				if (*defaultControlsEnabled)
@@ -325,9 +324,10 @@ void EverettEngine::SetDefaultControls(bool value)
 						captureMouseSwitch();
 					}
 				}
-			},
-			nullptr, true
-		);
+			}
+		};
+
+		AddInteractableImpl(ConvertKeyTo("MouseRight"), std::move(captureMouseInter), true);
 	}
 	else if (defaultControlsEnabled)
 	{
@@ -374,10 +374,10 @@ bool EverettEngine::CreateGizmoSolid(
 
 		if constexpr (std::is_same_v<Sim, ColliderSim>)
 		{
-			relatedObject.AddPersistentCollisionCallback({
-				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColorCollided); },
-				[&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColor); }
-			});
+			relatedObject.AddPersistentCollisionCallback({{
+				.startFunc = [&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColorCollided); },
+				.stopFunc  = [&gizmoSolid]() { gizmoSolid.SetModelDefaultColor(colliderGizmoColor); }
+			}});
 		}
 
 		relatedObject.HardLinkObject(gizmoSolid);
@@ -388,37 +388,18 @@ bool EverettEngine::CreateGizmoSolid(
 	return false;
 }
 
-void EverettEngine::AddInteractable(
-	int key,
-	bool holdable,
-	std::function<void()> pressFunc,
-	std::function<void()> releaseFunc
-)
+void EverettEngine::AddInteractable(int key, InteractableSetup interSetup)
 {
-	AddInteractableImpl(key, holdable, std::move(pressFunc), std::move(releaseFunc), false);
+	if (!interSetup.AnySet()) return;
+
+	AddInteractableImpl(key, std::move(interSetup), false);
 }
 
-void EverettEngine::AddInteractableImpl(
-	int key, bool holdable, std::function<void()> pressFunc, std::function<void()> releaseFunc, bool persistent
-)
+void EverettEngine::AddInteractableImpl(int key, InteractableSetup interSetup, bool persistent)
 {
-	bool addNew = false;
+	bool addNew = keyScriptFuncMap.try_emplace(key).second;
 
-	if (!keyScriptFuncMap.contains(key))
-	{
-		keyScriptFuncMap.try_emplace(key, KeyScriptFuncInfo{});
-		addNew = true;
-	}
-
-	if (pressFunc)
-	{
-		keyScriptFuncMap[key].AddPressedFunc({ std::move(pressFunc), holdable, persistent });
-	}
-
-	if (releaseFunc)
-	{
-		keyScriptFuncMap[key].AddReleasedFunc(std::move(releaseFunc));
-	}
+	keyScriptFuncMap[key].AddCallbacks({ std::move(interSetup), persistent });
 
 	if (addNew)
 	{

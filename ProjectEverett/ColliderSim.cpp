@@ -161,7 +161,7 @@ void ColliderSim::ClearCollisionCallbacks()
 
 void ColliderSim::AddCollisionCallbackImpl(CollisionCallback&& colCallback)
 {
-	if (!colCallback.collisionStart && !colCallback.collisionStop) return;
+	if (!colCallback.interSetup.AnySet()) return;
 
 	if (!colCallback.colliderToBindTo)
 	{
@@ -293,11 +293,15 @@ void ColliderSim::ExecuteStartCallbacksFor(ColliderSim& colliderToExe, ColliderS
 	{
 		for (auto& anyCollisionCallback : colliderToExe.anyCollisionCallbacks)
 		{
-			if (anyCollisionCallback.collisionStart &&
-				(anyCollisionCallback.holdable || !anyCollisionCallback.started))
+			if (!anyCollisionCallback.started && anyCollisionCallback.interSetup.startFunc)
 			{
 				anyCollisionCallback.started = true;
-				anyCollisionCallback.collisionStart();
+				anyCollisionCallback.interSetup.startFunc();
+			}
+
+			if (anyCollisionCallback.interSetup.processFunc)
+			{
+				anyCollisionCallback.interSetup.processFunc();
 			}
 		}
 	}
@@ -308,11 +312,15 @@ void ColliderSim::ExecuteStartCallbacksFor(ColliderSim& colliderToExe, ColliderS
 	{
 		for (auto& bindedCollisionCallback : iter->second)
 		{
-			if (bindedCollisionCallback.collisionStart && 
-			    (bindedCollisionCallback.holdable || !bindedCollisionCallback.started))
+			if (!bindedCollisionCallback.started && bindedCollisionCallback.interSetup.startFunc)
 			{
 				bindedCollisionCallback.started = true;
-				bindedCollisionCallback.collisionStart();
+				bindedCollisionCallback.interSetup.startFunc();
+			}
+
+			if (bindedCollisionCallback.interSetup.processFunc)
+			{
+				bindedCollisionCallback.interSetup.processFunc();
 			}
 		}
 	}
@@ -326,9 +334,9 @@ void ColliderSim::ExecuteEndAnyCallbacksFor(ColliderSim& colliderToExe)
 	{
 		anyCollisionCallback.started = false;
 
-		if (anyCollisionCallback.collisionStop)
+		if (anyCollisionCallback.interSetup.stopFunc)
 		{
-			anyCollisionCallback.collisionStop();
+			anyCollisionCallback.interSetup.stopFunc();
 		}
 	}
 }
@@ -341,9 +349,9 @@ void ColliderSim::ExecuteEndBindedCallbacksFor(ColliderSim& firstCollider, Colli
 		{
 			bindedCollisionCallback.started = false;
 
-			if (bindedCollisionCallback.collisionStop)
+			if (bindedCollisionCallback.interSetup.stopFunc)
 			{
-				bindedCollisionCallback.collisionStop();
+				bindedCollisionCallback.interSetup.stopFunc();
 			}
 		}
 	}
