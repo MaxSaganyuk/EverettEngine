@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "CTrackedDlg.h"
 
-IMPLEMENT_DYNAMIC(CTrackedDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CTrackedDlg, CDarkDialog)
 
-BEGIN_MESSAGE_MAP(CTrackedDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CTrackedDlg, CDarkDialog)
 	ON_MESSAGE(CTrackedDlg::AbortModal, &CTrackedDlg::OnAbortModal)
 END_MESSAGE_MAP()
 
 CTrackedDlg::CTrackedDlg(unsigned int dlgID, CWnd* parentWnd)
-	: CDialogEx(dlgID, parentWnd)
+	: CDarkDialog(dlgID, parentWnd)
 {
 }
 

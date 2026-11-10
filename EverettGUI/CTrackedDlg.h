@@ -5,7 +5,9 @@
 #include <stack>
 #include <limits>
 
-class CTrackedDlg : public CDialogEx
+#include "CDarkDialog.h"
+
+class CTrackedDlg : public CDarkDialog
 {
 	DECLARE_DYNAMIC(CTrackedDlg)
 

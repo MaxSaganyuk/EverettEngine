@@ -213,6 +213,7 @@
     <ClInclude Include="BasicPanic.h" />
     <ClInclude Include="CBrowseDialog.h" />
     <ClInclude Include="CCopyObjDlg.h" />
+    <ClInclude Include="CDarkDialog.h" />
     <ClInclude Include="CGameProducerDlg.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="CLoadingDialog.h" />
@@ -239,6 +240,7 @@
     <ClCompile Include="AdString.cpp" />
     <ClCompile Include="CBrowseDialog.cpp" />
     <ClCompile Include="CCopyObjDlg.cpp" />
+    <ClCompile Include="CDarkDialog.cpp" />
     <ClCompile Include="CGameProducerDlg.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="CLoadingDialog.cpp" />
