@@ -19,10 +19,12 @@ END_MESSAGE_MAP()
 CDLLLoaderDlg::CDLLLoaderDlg(
 	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
 	EverettEngine& engineRef,
+	std::function<void()> scriptChangeCallback,
 	CWnd* pParent
 ) :
 	CTrackedDlg(IDD_DIALOG5, pParent),
 	selectedScriptDllInfo(selectedScriptDllInfo), 
+	scriptChangeCallback(std::move(scriptChangeCallback)),
 	engineRef(engineRef) {}
 
 CDLLLoaderDlg::~CDLLLoaderDlg() {}
@@ -45,6 +47,11 @@ void CDLLLoaderDlg::UpdateScriptButtons()
 		loadScriptButton.SetWindowTextW(CString(isDllLoadedSet ? UnloadDLL : LoadDLL));
 
 		unloadScriptButton.EnableWindow(isDllLoadedSet);
+
+		if (scriptChangeCallback)
+		{
+			scriptChangeCallback();
+		}
 	}
 }
 

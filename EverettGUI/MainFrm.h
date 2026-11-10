@@ -60,6 +60,15 @@ private:
 
 	constexpr static int ExecuteOnMainThreadID = WM_USER + 6;
 
+	constexpr static int ScriptIconBlickTimerID = 1;
+
+	void OnClose();
+	void OnTimer(UINT_PTR idEvent);
+	bool SwitchScriptIconBlinkTimer(bool abort = false);
+	void TickScriptIconBlink();
+	void PaintCurrentToolbarButton(LPNMTBCUSTOMDRAW pCustomDraw, CBrush& colorBrush);
+	void OnCustomToolbarDraw(NMHDR* pNMHDR, LRESULT* pResult);
+
 	void OnLoadSave(bool load, std::function<bool(const std::string&)> loadSaveFunc);
 	void OnLoad();
 	void OnSave();
@@ -77,6 +86,15 @@ private:
 	EverettEngine engine;
 	CMainWindow* mainWindow; // not owner
 	std::thread engineRenderThread;
+
+	struct ScriptIconBlinkInfo
+	{
+		UINT_PTR timerID{};
+		bool active{};
+		bool tick{};
+	};
+
+	ScriptIconBlinkInfo scriptIconBlinkInfo;
 };
 
 

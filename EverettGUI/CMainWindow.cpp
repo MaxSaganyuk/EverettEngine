@@ -10,6 +10,7 @@
 #include "MFCUtilities.h"
 
 #include "EverettException.h"
+#include "BasicPanic.h"
 #include "CommonStrEdits.h"
 
 #include <iostream>
@@ -131,14 +132,6 @@ HTREEITEM CMainWindow::ForceNodeSelection()
 	return hItem;
 }
 
-// C string is used instead of std::string to reduce amount of issues possible on panic state
-void CMainWindow::Panic(const char* errorMessage)
-{
-	engineP->CreateLogReport();
-	std::cerr << errorMessage << '\n';
-	throw std::runtime_error{ errorMessage };
-}
-
 void CMainWindow::OnNodeDoubleClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	auto selectedNodes = objectTree.GetAllOfRootsSelectedNode();
@@ -200,7 +193,7 @@ void CMainWindow::OnNodeRightClick(NMHDR* pNMHDR, LRESULT* pResult)
 
 			if (!(*currentNodeInfo.simObj))
 			{
-				Panic("[CRITICAL ERROR] Object get on valid name failed. Terminating\n");
+				Panic("[CRITICAL ERROR] Object get on valid name failed. Terminating\n", *engineP);
 			}
 		}
 
@@ -287,7 +280,7 @@ void CMainWindow::OnCopyNode()
 		}
 		else
 		{
-			Panic("[CRITICAL ERROR] Copy step failed. Terminating\n");
+			Panic("[CRITICAL ERROR] Copy step failed. Terminating\n", *engineP);
 		}
 	}
 }
@@ -306,7 +299,7 @@ void CMainWindow::OnRenameNode()
 			  objectTree.RenameNodeByItem(currentNodeInfo.rawNode, newName))
 		)
 		{
-			Panic("[CRITICAL ERROR] Rename step failed. Terminating\n");
+			Panic("[CRITICAL ERROR] Rename step failed. Terminating\n", *engineP);
 		}
 	}
 }
@@ -326,7 +319,7 @@ void CMainWindow::OnDeleteNode()
 			objectTree.DeleteNodeByItem(currentNodeInfo.rawNode, true))
 		)
 		{
-			Panic("[CRITICAL ERROR] Delete step failed. Terminating\n");
+			Panic("[CRITICAL ERROR] Delete step failed. Terminating\n", *engineP);
 		}
 	}
 }

@@ -51,7 +51,6 @@ private:
 
 	void OnInitialUpdate() override;
 	HTREEITEM ForceNodeSelection();
-	void Panic(const char* errorMessage);
 
 	EverettEngine* engineP;
 	MFCTreeManager objectTree;

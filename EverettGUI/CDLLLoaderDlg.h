@@ -16,6 +16,7 @@ public:
 	CDLLLoaderDlg(
 		std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo,
 		EverettEngine& engineRef,
+		std::function<void()> scriptChangeCallback,
 		CWnd* pParent = nullptr
 	);
 	virtual ~CDLLLoaderDlg();
@@ -36,6 +37,7 @@ protected:
 	CComboBox dllComboBox;
 private:
 	EverettEngine& engineRef;
+	std::function<void()> scriptChangeCallback;
 
 	constexpr static char LoadDLL[] = "Load DLL";
 	constexpr static char UnloadDLL[] = "Unload DLL";

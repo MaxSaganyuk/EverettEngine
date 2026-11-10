@@ -22,6 +22,7 @@
 #include "AdString.h"
 
 #include "EverettException.h"
+#include "BasicPanic.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -29,11 +30,15 @@
 
 // CMainFrame
 
+constexpr size_t ScriptIconID = ID_BUTTON32775;
+
 IMPLEMENT_DYNAMIC(CMainFrame, CFrameWnd)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_WM_CREATE()
 	ON_WM_SETFOCUS()
+	ON_WM_TIMER()
+	ON_WM_CLOSE()
 	ON_COMMAND(ID_LOAD_FILE,   &CMainFrame::OnLoad)
 	ON_COMMAND(ID_SAVE_FILE,   &CMainFrame::OnSave)
 	ON_COMMAND(ID_APP_ABOUT,   &CMainFrame::OnLoadModel)
@@ -42,9 +47,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_BUTTON32773, &CMainFrame::OnPlaceSound)
 	ON_COMMAND(ID_BUTTON32779, &CMainFrame::OnPlaceCollider)
 	ON_COMMAND(ID_BUTTON32774, &CMainFrame::OnCameraOptions)
-	ON_COMMAND(ID_BUTTON32775, &CMainFrame::OnScriptOptions)
+	ON_COMMAND(ScriptIconID, &CMainFrame::OnScriptOptions)
 	ON_COMMAND(ID_BUTTON32778, &CMainFrame::OnGameProduce)
 	ON_MESSAGE(ExecuteOnMainThreadID, &CMainFrame::ExecuteOnMainThread)
+	ON_NOTIFY(NM_CUSTOMDRAW, AFX_IDW_TOOLBAR, &CMainFrame::OnCustomToolbarDraw)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -249,6 +255,104 @@ bool CMainFrame::LoadObjectNamesToTree()
 	return true;
 }
 
+void CMainFrame::OnClose()
+{
+	SwitchScriptIconBlinkTimer(true);
+
+	CWnd::OnClose();
+}
+
+void CMainFrame::OnTimer(UINT_PTR idEvent)
+{
+	if (idEvent == scriptIconBlinkInfo.timerID)
+	{
+		TickScriptIconBlink();
+	}
+
+	CWnd::OnTimer(idEvent);
+}
+
+bool CMainFrame::SwitchScriptIconBlinkTimer(bool abort)
+{
+	bool success = true;
+	auto& timerID = scriptIconBlinkInfo.timerID;
+
+	if (!abort && engine.CheckIfScriptsRunning(false))
+	{
+		if (!timerID)
+		{
+			success = timerID = SetTimer(ScriptIconBlickTimerID, std::milli::den / 2, nullptr);
+		}
+	}
+	else if (timerID)
+	{
+		success = KillTimer(timerID);
+		timerID = {};
+
+		scriptIconBlinkInfo.active = true; // will flip on tick
+		TickScriptIconBlink();
+	}
+
+	if (!success)
+	{
+		Panic("[CRITICAL ERROR] Unable to switch script icon timer", engine);
+	}
+
+	return success;
+}
+
+void CMainFrame::TickScriptIconBlink()
+{
+	scriptIconBlinkInfo.tick = true;
+
+	int scriptIconButtonIndex = m_wndToolBar.CommandToIndex(ScriptIconID);
+	CRect scriptIconButtonRect;
+
+	m_wndToolBar.GetItemRect(scriptIconButtonIndex, &scriptIconButtonRect);
+
+	m_wndToolBar.InvalidateRect(scriptIconButtonRect);
+	m_wndToolBar.UpdateWindow();
+}
+
+void CMainFrame::PaintCurrentToolbarButton(LPNMTBCUSTOMDRAW pCustomDraw, CBrush& colorBrush)
+{
+	CDC dc;
+	dc.Attach(pCustomDraw->nmcd.hdc);
+
+	CRect rect = pCustomDraw->nmcd.rc;
+	dc.FillRect(rect, &colorBrush);
+
+	dc.Detach();
+}
+
+void CMainFrame::OnCustomToolbarDraw(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMTBCUSTOMDRAW pCustomDraw = reinterpret_cast<LPNMTBCUSTOMDRAW>(pNMHDR);
+	*pResult = CDRF_DODEFAULT;
+
+	switch (pCustomDraw->nmcd.dwDrawStage)
+	{
+	case CDDS_PREPAINT:
+		*pResult = CDRF_NOTIFYITEMDRAW;
+		break;
+	case CDDS_ITEMPREPAINT:
+		if (pCustomDraw->nmcd.dwItemSpec == ScriptIconID && scriptIconBlinkInfo.tick)
+		{
+			scriptIconBlinkInfo.tick = false;
+			scriptIconBlinkInfo.active = !scriptIconBlinkInfo.active;
+
+			if (scriptIconBlinkInfo.active)
+			{
+				CBrush brush(RGB(255, 255, 0));
+				PaintCurrentToolbarButton(pCustomDraw, brush);
+
+				*pResult = TBCDRF_NOBACKGROUND;
+			}
+		}
+		break;
+	}
+}
+
 void CMainFrame::OnLoadSave(bool load, std::function<bool(const std::string&)> loadSaveFunc)
 {
 	AdString saveFileType = engine.GetSaveFileType();
@@ -274,7 +378,7 @@ void CMainFrame::OnLoad()
 	OnLoadSave(true, [this](const std::string& path){
 		try
 		{
-			return engine.LoadWorldFromFile(path);
+			return SwitchScriptIconBlinkTimer(true) && engine.LoadWorldFromFile(path) && SwitchScriptIconBlinkTimer();
 		}
 		catch (const EverettException&)
 		{
@@ -405,7 +509,9 @@ void CMainFrame::OnCameraOptions()
 
 void CMainFrame::OnScriptOptions()
 {
-	CDLLLoaderDlg dllLoaderDlg(mainWindow->GetSelectedScriptDllInfo(), engine);
+	CDLLLoaderDlg dllLoaderDlg(
+		mainWindow->GetSelectedScriptDllInfo(), engine, [this]() { SwitchScriptIconBlinkTimer(); }
+	);
 
 	dllLoaderDlg.DoModal();
 }
