@@ -694,6 +694,23 @@ void FileLoader::DLLLoader::ScriptDLLInfo::Unload()
 	}
 }
 
+bool FileLoader::DLLLoader::PreloadDLL(const std::string& dllPath)
+{
+	HMODULE dllHandle = LoadLibraryExA(
+		dllPath.c_str(), nullptr, LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_IMAGE_RESOURCE
+	);
+
+	if (dllHandle)
+	{
+		dllHandleMap.try_emplace(dllPath);
+		FreeLibrary(dllHandle);
+
+		return true;
+	}
+
+	return false;
+}
+
 bool FileLoader::DLLLoader::LoadDLL(const std::string& dllPath)
 {
 	HMODULE dllHandle = GetModuleHandleA(dllPath.c_str());
@@ -727,14 +744,14 @@ void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE 
 	OutputUtils::LogOrError(dllInfo.ReadInitFuncFromDLL(), "Init script func load");
 }
 
-bool FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
+EverettStructs::DLLLoadState FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
 {
 	if (auto iter = dllHandleMap.find(dllPath); iter != dllHandleMap.end())
 	{
-		return iter->second.GetDllHandle();
+		return iter->second.GetDllHandle() ? EverettStructs::DLLLoadState::Loaded : EverettStructs::DLLLoadState::Preloaded;
 	}
 
-	return false;
+	return EverettStructs::DLLLoadState::Unloaded;
 }
 
 bool FileLoader::DLLLoader::AnyDLLLoaded()
@@ -744,15 +761,13 @@ bool FileLoader::DLLLoader::AnyDLLLoaded()
 	);
 }
 
-void FileLoader::DLLLoader::UnloadScriptDLL(const std::string& dllPath)
+void FileLoader::DLLLoader::UnloadScriptDLLs()
 {
-	UnloadScriptDLL(dllHandleMap.at(dllPath));
-	std::cout << "Unloaded " << GetFileFromPath(dllPath) << '\n';
-}
-
-void FileLoader::DLLLoader::UnloadScriptDLL(ScriptDLLInfo& dllInfo)
-{
-	dllInfo.Unload();
+	for (auto& dllHandle : dllHandleMap)
+	{
+		dllHandle.second.Unload();
+		std::cout << "Unloaded " << dllHandle.first << '\n';
+	}
 }
 
 std::generator<EverettStructs::BasicFileInfo> FileLoader::DLLLoader::GetLoadedScriptDlls()
@@ -765,10 +780,7 @@ std::generator<EverettStructs::BasicFileInfo> FileLoader::DLLLoader::GetLoadedSc
 
 void FileLoader::DLLLoader::FreeDllData()
 {
-	for (auto& [dllName, dllInfo] : dllHandleMap)
-	{
-		UnloadScriptDLL(dllInfo);
-	}
+	UnloadScriptDLLs();
 
 	dllHandleMap.clear();
 }

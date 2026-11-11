@@ -140,6 +140,7 @@ robocopy "$(TargetDir)..\..\ProjectEverett\shaders" "$(TargetDir)\shaders" /E
 robocopy "$(TargetDir)..\..\ProjectEverett\models" "$(TargetDir)\models" /E
 robocopy "$(TargetDir)..\..\ProjectEverett\external" "$(TargetDir)\external" /E
 robocopy  "$(TargetDir)..\..\ThirdParty\includes\glm" "$(TargetDir)\external\glm" /E 
+mkdir "$(TargetDir)\worlds"
 copy $(TargetDir)..\..\ThirdParty\dlls\Release\*.dll $(TargetDir)
 del /q "$(TargetDir)*.exp"
 del /q "$(TargetDir)*.lib"

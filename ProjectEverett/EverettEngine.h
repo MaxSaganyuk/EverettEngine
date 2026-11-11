@@ -121,9 +121,9 @@ public:
 	EVERETT_API ICameraSim* GetCameraInterface() override;
 
 	EVERETT_API bool CheckIfScriptsRunning(bool displayErrorIfYes = true);
-	EVERETT_API void SetupScriptDLL(const std::string& dllPath);
-	EVERETT_API bool IsDLLLoaded(const std::string& dllPath);
-	EVERETT_API void UnsetScript(const std::string& dllPath);
+	EVERETT_API void SetupScriptDLL(const std::string& dllPath, bool preload = false);
+	EVERETT_API EverettStructs::DLLLoadState IsDLLLoaded(const std::string& dllPath);
+	EVERETT_API void UnsetScripts(bool restoreState = false);
 	EVERETT_API std::generator<EverettStructs::BasicFileInfo> GetLoadedScriptDLLs();
 
 	// Requesting for l-value ref prevents creating copy on call and prevents calling co-routine with "in place" temporary
@@ -162,7 +162,8 @@ public:
 
 	EVERETT_API void AddWorldLoadCallback(std::function<void()> callback);
 	EVERETT_API bool SaveWorldToFile(const std::string& filePath);
-	EVERETT_API bool LoadWorldFromFile(const std::string& path);
+
+	EVERETT_API bool LoadWorldFromFile(const std::string& path, bool runScriptsOnLoad = true);
 	EVERETT_API void RequestWorldLoad(const char* filePath) override;
 	EVERETT_API EverettStructs::AssetPaths GetPathsFromWorldFile(const std::string& filePath);
 	EVERETT_API void HidePathsInWorldFile(
@@ -281,6 +282,7 @@ private:
 	ObjectSim* GetObjectFromTheMap(std::unordered_map<std::string, Sim>& simMap, const std::string& objectName);
 
 	std::string CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder);
+	std::string EnsurePathHasSaveFileType(const std::string& path);
 
 	template<typename Sim>
 	std::generator<std::string_view> GetNameList(const std::unordered_map<std::string, Sim>& sims);
@@ -299,6 +301,7 @@ private:
 
 	void InitializeSpecialWordWorldLoadMap();
 	void CheckAndLoadRequestedWorld();
+	bool LoadWorldFromFileImpl(const std::string& path, bool runScriptsOnLoad, bool resetEngineBeforeLoad);
 	void LoadObjectFromLine(std::string_view& line, SimSerializer::ObjectInfoArray& objectInfo);
 	void LoadCameraFromLine(std::string_view& line);
 	void LoadSolidFromLine(std::string_view& line, const SimSerializer::ObjectInfoArray& objectInfo);
@@ -354,6 +357,7 @@ private:
 	std::unique_ptr<CustomOutput> errorOutput;
 	std::list<std::string> logStrings;
 
+	bool runScriptsOnLoad = true;
 	std::function<void()> worldLoadCallback;
 	std::string worldToLoad;
 	std::unordered_map<std::string, std::function<void(std::string_view&)>> specialWordWorldLoadMap;

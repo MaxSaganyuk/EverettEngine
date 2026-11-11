@@ -14,6 +14,7 @@ BEGIN_MESSAGE_MAP(CDLLLoaderDlg, CTrackedDlg)
 	ON_BN_CLICKED(IDC_BUTTON3, &CDLLLoaderDlg::OnLoadScriptButtonClick)
 	ON_BN_CLICKED(IDC_BUTTON4, &CDLLLoaderDlg::OnUnloadDllButtonClick)
 	ON_CBN_SELENDOK(IDC_COMBO1, &CDLLLoaderDlg::OnScriptSelectionChangeOk)
+	ON_BN_CLICKED(IDC_BUTTON1, &CDLLLoaderDlg::OnPreloadDLLButtonClick)
 END_MESSAGE_MAP()
 
 CDLLLoaderDlg::CDLLLoaderDlg(
@@ -41,12 +42,11 @@ void CDLLLoaderDlg::UpdateScriptButtons()
 {
 	if (!selectedScriptDllInfo.empty())
 	{
-		bool isDllLoadedSet = engineRef.IsDLLLoaded(selectedScriptDllInfo[dllComboBox.GetCurSel()].first);
+		auto dllLoadState = engineRef.IsDLLLoaded(selectedScriptDllInfo[dllComboBox.GetCurSel()].first);
 
-		loadScriptButton.EnableWindow(!isDllLoadedSet);
-		loadScriptButton.SetWindowTextW(CString(isDllLoadedSet ? UnloadDLL : LoadDLL));
-
-		unloadScriptButton.EnableWindow(isDllLoadedSet);
+		preloadScriptButton.EnableWindow(dllLoadState == EverettStructs::DLLLoadState::Unloaded);
+		loadScriptButton.EnableWindow(dllLoadState != EverettStructs::DLLLoadState::Loaded);
+		unloadScriptButton.EnableWindow(engineRef.CheckIfScriptsRunning(false));
 
 		if (scriptChangeCallback)
 		{
@@ -66,6 +66,9 @@ BOOL CDLLLoaderDlg::OnInitDialog()
 		UpdateScriptButtons();
 	}
 
+	resetStateCheck.SetCheck(true);
+	applyToAllCheck.SetCheck(true);
+
 	return true;
 }
 
@@ -73,9 +76,12 @@ void CDLLLoaderDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_BUTTON2, scriptBrowseButton);
+	DDX_Control(pDX, IDC_BUTTON1, preloadScriptButton);
 	DDX_Control(pDX, IDC_BUTTON3, loadScriptButton);
 	DDX_Control(pDX, IDC_BUTTON4, unloadScriptButton);
 	DDX_Control(pDX, IDC_COMBO1, dllComboBox);
+	DDX_Control(pDX, IDC_CHECK2, resetStateCheck);
+	DDX_Control(pDX, IDC_CHECK1, applyToAllCheck);
 }
 
 void CDLLLoaderDlg::OnBrowseScriptButton()
@@ -92,30 +98,55 @@ void CDLLLoaderDlg::OnBrowseScriptButton()
 	}
 }
 
-void CDLLLoaderDlg::OnLoadScriptButtonClick()
+void CDLLLoaderDlg::OnPreloadDLLButtonClick()
 {
 	int curSel = dllComboBox.GetCurSel();
 
-	// One of the few good use cases for exceptions in C++ (specifically C++, since throwing is so expensive)
-	// Here if we panic on "s. object get" during ScriptInit call, we can protect
-	// execution from calling on a null ptr to s. object instantly. 
-	// Essentially, creating safe transition from soon to be crash causing code to regular engine execution smoothly 
-	try
+	engineRef.SetupScriptDLL(selectedScriptDllInfo[curSel].first, true);
+
+	UpdateScriptButtons();
+}
+
+void CDLLLoaderDlg::ExecuteScriptsAccordingToRule(std::function<bool(int)> func)
+{
+	if (!applyToAllCheck.GetCheck())
 	{
-		engineRef.SetupScriptDLL(selectedScriptDllInfo[curSel].first);
+		func(dllComboBox.GetCurSel());
 	}
-	catch (const EverettException&)
+	else
 	{
-		engineRef.UnsetScript(selectedScriptDllInfo[curSel].first);
+		for (int i = 0; i < selectedScriptDllInfo.size(); ++i)
+		{
+			if(!func(i)) break;
+		}
 	}
 
 	UpdateScriptButtons();
 }
 
+void CDLLLoaderDlg::OnLoadScriptButtonClick()
+{
+	ExecuteScriptsAccordingToRule([this](int index) {
+		// One of the few good use cases for exceptions in C++ (specifically C++, since throwing is so expensive)
+		// Here if we panic on "s. object get" during ScriptInit call, we can protect
+		// execution from calling on a null ptr to s. object instantly. 
+		// Essentially, creating safe transition from soon to be crash causing code to regular engine execution smoothly 
+		try
+		{
+			engineRef.SetupScriptDLL(selectedScriptDllInfo[index].first);
+			return true;
+		}
+		catch (const EverettException&)
+		{
+			engineRef.UnsetScripts(resetStateCheck.GetCheck());
+			return false;
+		}
+	});
+}
+
 void CDLLLoaderDlg::OnUnloadDllButtonClick()
 {
-	engineRef.UnsetScript(selectedScriptDllInfo[dllComboBox.GetCurSel()].first);
-
+	engineRef.UnsetScripts(resetStateCheck.GetCheck());
 	UpdateScriptButtons();
 }
 

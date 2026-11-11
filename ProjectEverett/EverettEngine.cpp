@@ -1337,35 +1337,44 @@ void EverettEngine::LightUpdater()
 	mainLGL->SetShaderUniformValue(specularTextureIDValue, 1);
 }
 
-void EverettEngine::SetupScriptDLL(const std::string& dllPath)
+void EverettEngine::SetupScriptDLL(const std::string& dllPath, bool preload)
 {
-	if (fileLoader->dllLoader.IsDLLLoaded(dllPath)) return;
-
-	if (fileLoader->dllLoader.LoadDLL(dllPath))
+	if (!fileLoader->dllLoader.AnyDLLLoaded() && !preload)
 	{
-		fileLoader->dllLoader.ExecuteScriptInitFor(dllPath, dynamic_cast<IEverettEngine&>(*this));
+		SaveWorldToFile("tempWorld");
+	}
+
+	bool success{};
+
+	if (!preload)
+	{
+		if (fileLoader->dllLoader.IsDLLLoaded(dllPath) != DLLLoadState::Loaded && fileLoader->dllLoader.LoadDLL(dllPath))
+		{
+			fileLoader->dllLoader.ExecuteScriptInitFor(dllPath, dynamic_cast<IEverettEngine&>(*this));
+		}
+	}
+	else
+	{
+		success = fileLoader->dllLoader.PreloadDLL(dllPath);
 	}
 }
 
-bool EverettEngine::IsDLLLoaded(const std::string& dllPath)
+EverettStructs::DLLLoadState EverettEngine::IsDLLLoaded(const std::string& dllPath)
 {
-	if (fileLoader)
-	{
-		return fileLoader->dllLoader.IsDLLLoaded(dllPath);
-	}
-
-	return false;
+	return fileLoader->dllLoader.IsDLLLoaded(dllPath);
 }
 
-void EverettEngine::UnsetScript(const std::string& dllPath)
+void EverettEngine::UnsetScripts(bool restoreState)
 {
-	if (fileLoader)
-	{ 
-		mainLGL->PauseRendering();
-		ClearExternallyControlledContainers();
-		mainLGL->PauseRendering(false);
+	mainLGL->PauseRendering();
+	ClearExternallyControlledContainers();
+	mainLGL->PauseRendering(false);
 
-		fileLoader->dllLoader.UnloadScriptDLL(dllPath);
+	fileLoader->dllLoader.UnloadScriptDLLs();
+
+	if (restoreState && !LoadWorldFromFileImpl("tempWorld", false, false))
+	{
+		std::cerr << "Unable to recover state before script dlls load\n";
 	}
 }
 
@@ -1425,6 +1434,11 @@ void EverettEngine::ExecuteFuncForAllSimObjectsFor(
 std::string EverettEngine::CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder)
 {
 	return path.find(':') != std::string::npos ? path : expectedFolder + "//" + path;
+}
+
+std::string EverettEngine::EnsurePathHasSaveFileType(const std::string& path)
+{
+	return path.find('.') != std::string::npos ? path : path + '.' + saveFileType;
 }
 
 std::generator<EverettStructs::BasicFileInfo> EverettEngine::GetLoadedScriptDLLs()
@@ -1699,7 +1713,8 @@ void EverettEngine::CheckAndLoadRequestedWorld()
 
 bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 {
-	std::string realFilePath = filePath + saveFileType;
+	std::string pathToUse = CheckIfRelativePathToUse(filePath, "worlds");
+	std::string realFilePath = EnsurePathHasSaveFileType(pathToUse);
 	std::fstream file(realFilePath, std::ios::out);
 
 	file << SimSerializer::GetLatestVersionStr();
@@ -1850,7 +1865,7 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 				std::cerr << dllName << " was changed, can't guarantee correct execution\n";
 			}
 
-			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"));
+			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"), runScriptsOnLoad);
 		}
 	}
 	else
@@ -1859,16 +1874,29 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 
 		for (auto& [dllName, dllPath] : legacyDllInfo)
 		{
-			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"));
+			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"), runScriptsOnLoad);
 		}
 	}
 }
 
-bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
+bool EverettEngine::LoadWorldFromFile(const std::string& filePath, bool runScriptsOnLoad)
+{
+	return LoadWorldFromFileImpl(filePath, runScriptsOnLoad, true);
+}
+
+bool EverettEngine::LoadWorldFromFileImpl(
+	const std::string& filePath, bool runScriptsOnLoad, bool resetEngineBeforeLoad
+)
 {
 	std::string pathToUse = CheckIfRelativePathToUse(filePath, "worlds");
+	pathToUse = EnsurePathHasSaveFileType(pathToUse);
+
+	this->runScriptsOnLoad = runScriptsOnLoad;
 
 	std::fstream file(pathToUse, std::ios::in);
+
+	if (!file.is_open()) return false;
+
 	std::string lineLoader;
 	std::string_view line;
 	SimSerializer::ObjectInfoArray objectInfo;
@@ -1883,7 +1911,11 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 	line = lineLoader;
 	SimSerializer::GetVersionFromLine(line);
 
-	ResetEngine(loadedFiles);
+	if (resetEngineBeforeLoad)
+	{
+		ResetEngine(loadedFiles);
+	}
+
 	mainLGL->PauseRendering();
 	while (!file.eof())
 	{
@@ -1903,12 +1935,14 @@ bool EverettEngine::LoadWorldFromFile(const std::string& filePath)
 			LoadObjectFromLine(line, objectInfo);
 		}
 	}
+	
 	GenerateShader();
 
-	if (worldLoadCallback)
+	if (resetEngineBeforeLoad && worldLoadCallback)
 	{
 		worldLoadCallback();
 	}
+	
 	mainLGL->PauseRendering(false);
 
 	return true;

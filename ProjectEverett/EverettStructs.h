@@ -71,4 +71,11 @@ namespace EverettStructs
 		std::string name;
 		std::string hash;
 	};
+
+	enum class DLLLoadState : std::uint8_t
+	{
+		Unloaded,
+		Preloaded,
+		Loaded
+	};
 }

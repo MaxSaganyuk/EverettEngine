@@ -148,16 +148,16 @@ class FileLoader
 		using ScriptMap = std::map<ScriptDLLPath, ScriptDLLInfo>;
 
 		void SetNewDLLHandle(const std::string& dllPath, HMODULE dllHandle, ScriptDLLInfo& dllInfo);
-		void UnloadScriptDLL(ScriptDLLInfo& dllInfo);
 
 		ScriptMap dllHandleMap;
 	public:
 		void FreeDllData();
-		bool IsDLLLoaded(const std::string& dllPath);
+		EverettStructs::DLLLoadState IsDLLLoaded(const std::string& dllPath);
 		bool AnyDLLLoaded();
+		bool PreloadDLL(const std::string& dllPath);
 		bool LoadDLL(const std::string& dllPath);
 		void ExecuteScriptInitFor(const std::string& dllPath, IEverettEngine& engine);
-		void UnloadScriptDLL(const std::string& dllPath);
+		void UnloadScriptDLLs();
 		std::generator<EverettStructs::BasicFileInfo> GetLoadedScriptDlls();
 		void ExecuteAllMainScriptFuncs();
 	};

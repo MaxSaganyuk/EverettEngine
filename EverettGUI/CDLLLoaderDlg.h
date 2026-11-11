@@ -32,9 +32,12 @@ protected:
 	std::vector<std::pair<AdString, AdString>>& selectedScriptDllInfo;
 
 	CButton scriptBrowseButton;
+	CButton preloadScriptButton;
 	CButton loadScriptButton;
 	CButton unloadScriptButton;
 	CComboBox dllComboBox;
+	CButton resetStateCheck;
+	CButton applyToAllCheck;
 private:
 	EverettEngine& engineRef;
 	std::function<void()> scriptChangeCallback;
@@ -43,8 +46,10 @@ private:
 	constexpr static char UnloadDLL[] = "Unload DLL";
 
 	void FillComboBoxWithScriptInfo();
+	void ExecuteScriptsAccordingToRule(std::function<bool(int)> func);
 
 	afx_msg void OnBrowseScriptButton();
+	afx_msg void OnPreloadDLLButtonClick();
 	afx_msg void OnLoadScriptButtonClick();
 	afx_msg void OnUnloadDllButtonClick();
 	afx_msg void OnScriptSelectionChangeOk();
