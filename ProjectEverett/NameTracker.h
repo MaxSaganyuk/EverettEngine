@@ -17,9 +17,14 @@ private:
 	std::unordered_map<std::string, NameInfo> nameInfo;
 
 public:
-	bool Contains(const std::string& name) const
+	bool Taken(const std::string& name) const
 	{
-		return nameInfo.contains(CommonStrEdits::RemoveDigitsFromStringEnd(name));
+		if (auto iter = nameInfo.find(name); iter != nameInfo.end())
+		{
+			return iter->second.taken;
+		}
+
+		return false;
 	}
 
 	void Add(const std::string& name)

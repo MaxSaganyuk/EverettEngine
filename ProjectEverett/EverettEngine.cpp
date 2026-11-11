@@ -868,7 +868,7 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 		return std::unexpected("Old and new names can't be the same");
 	if (oldName == "Camera" || (hintType.has_value() && hintType == ObjectTypes::Camera))
 		return std::unexpected("Cannot rename camera object");
-	if (allNameTracker->Contains(newName))
+	if (allNameTracker->Taken(newName))
 		return std::unexpected("New name already exists");
 
 	auto TryRenameKey = [&]<typename Type>(
