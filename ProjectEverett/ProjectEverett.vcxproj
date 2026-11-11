@@ -177,6 +177,7 @@
     <ClInclude Include="ConceptUtils.h" />
     <ClInclude Include="CustomOutput.h" />
     <ClInclude Include="DateUtilities.h" />
+    <ClInclude Include="EverettGeneral.h" />
     <ClInclude Include="external\InteractableSetup.h" />
     <ClInclude Include="ShaderCodeHolder.h" />
     <ClInclude Include="EverettEngine.h" />

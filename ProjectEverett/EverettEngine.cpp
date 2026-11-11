@@ -8,13 +8,7 @@
 #include "LGLUtils.h"
 
 #include "MaterialSim.h"
-#include "LightSim.h"
-#include "SolidSim.h"
-#include "CameraSim.h"
-#include "SoundSim.h"
-#include "ColliderSim.h"
-
-#include "FileLoader.h"
+#include "EverettGeneral.h"
 
 #include "CommandHandler.h"
 
@@ -27,8 +21,6 @@
 #include "CustomOutput.h"
 #include "RenderLogger.h"
 
-#define EVERETT_EXPORT
-#include "EverettEngine.h"
 #include "EverettExceptionInternal.h"
 
 #include "ModelInfo.h"
@@ -61,49 +53,7 @@ using namespace EverettStructs;
 #define ENABLE_VSYNC true
 #endif // OPTIMIZATION_TEST
 
-
 using ObjectInfoNames = SimSerializer::ObjectInfoNames;
-
-struct EverettEngine::ObjectTypeInfo
-{
-	ObjectTypes nameEnum;
-	std::string nameStr;
-	std::string interfaceNameStr;
-};
-
-EverettEngine::LightShaderValueNames EverettEngine::lightShaderValueNames =
-{
-	{"material", { "diffuse", "specular", "shininess" }},
-
-	{"pointLights",
-		{
-			"position", "diffuse",
-			"specular", "constant", "linear",
-			"quadratic"
-		}
-	},
-	{"spotLights",
-		{
-			"position", "direction",
-			"diffuse", "specular", "constant",
-			"linear", "quadratic", "cutOff",
-			"outerCutOff"
-		}
-	}
-};
-
-#define ToStr(str) #str
-
-std::vector<EverettEngine::ObjectTypeInfo> EverettEngine::objectTypes
-{
-	{EverettEngine::ObjectTypes::Camera,   CameraSim::GetObjectTypeNameStr(), ToStr(ICameraSim)},
-	{EverettEngine::ObjectTypes::Solid,    SolidSim::GetObjectTypeNameStr(), ToStr(ISolidSim)},
-	{EverettEngine::ObjectTypes::Light,    LightSim::GetObjectTypeNameStr(), ToStr(ILightSim)},
-	{EverettEngine::ObjectTypes::Sound,    SoundSim::GetObjectTypeNameStr(), ToStr(ISolidSim)},
-	{EverettEngine::ObjectTypes::Collider, ColliderSim::GetObjectTypeNameStr(), ToStr(IColliderSim)}
-};
-
-#undef ToStr
 
 EverettEngine::EverettEngine()
 {
@@ -1073,22 +1023,6 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteSolid(const std::str
 	return CheckNextOne;
 }
 
-bool EverettEngine::CheckHintAndType(
-	const std::optional<ObjectTypes>& hintType, const std::optional<ObjectTypes>& objectType
-)
-{
-	// If hint provided, but container does not have sim object type - ignore, because it is definitly invalid.
-	bool check = !(hintType && !objectType);
-
-	// If both hint and sim type provided - check only if equivalent.
-	if (check && hintType && objectType)
-	{
-		check = hintType == objectType;
-	}
-
-	return check;
-}
-
 template<typename Sim>
 void EverettEngine::CopyObjectBasedOn(const std::string& originalName, Sim& originalObj, size_t amount)
 {
@@ -1378,15 +1312,6 @@ void EverettEngine::UnsetScripts(bool restoreState)
 	}
 }
 
-template<typename... Type>
-void EverettEngine::ExecuteVectorOfFuncs(const std::vector<std::function<void(Type...)>>& vectOfFuncs, Type... value)
-{
-	for (auto& func : vectOfFuncs)
-	{
-		func(std::forward<Type>(value)...);
-	}
-}
-
 template<typename FunctionType, typename... Params>
 void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values)
 {
@@ -1431,37 +1356,9 @@ void EverettEngine::ExecuteFuncForAllSimObjectsFor(
 	}
 }
 
-std::string EverettEngine::CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder)
-{
-	return path.find(':') != std::string::npos ? path : expectedFolder + "//" + path;
-}
-
-std::string EverettEngine::EnsurePathHasSaveFileType(const std::string& path)
-{
-	return path.find('.') != std::string::npos ? path : path + '.' + saveFileType;
-}
-
 std::generator<EverettStructs::BasicFileInfo> EverettEngine::GetLoadedScriptDLLs()
 {
 	return fileLoader->dllLoader.GetLoadedScriptDlls();
-}
-
-std::generator<std::string> EverettEngine::GetObjectsInDirList(
-	const std::string& path, 
-	const std::vector<std::string>& fileTypes
-)
-{
-	for (auto&& file : fileLoader->GetFilesInDir(path))
-	{
-		for (auto& fileType : fileTypes)
-		{
-			if (file.find(fileType) != file.npos)
-			{
-				co_yield file;
-				break;
-			}
-		}
-	}
 }
 
 std::generator<std::string> EverettEngine::GetModelInDirList(std::string& path)
@@ -1524,21 +1421,6 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 #endif
 
 	return object;
-}
-
-template<typename Sim>
-ObjectSim* EverettEngine::GetObjectFromTheMap(
-	std::unordered_map<std::string, Sim>& simMap, const std::string& objectName
-)
-{
-	auto iter = simMap.find(objectName);
-
-	if (iter != simMap.end())
-	{
-		return dynamic_cast<ObjectSim*>(&iter->second);
-	}
-
-	return nullptr;
 }
 
 template<typename Sim>
@@ -2030,15 +1912,6 @@ void EverettEngine::HidePathsInWorldFile(
 	hidenFile.close();
 }
 
-template<typename Sim>
-std::generator<std::string_view> EverettEngine::GetNameList(const std::unordered_map<std::string, Sim>& sims)
-{
-	for (auto& [name, _] : sims)
-	{
-		co_yield name;
-	}
-}
-
 std::generator<std::string_view> EverettEngine::GetCreatedModels(bool getFullPaths)
 {
 	for (const auto& [modelName, model] : models)
@@ -2185,27 +2058,6 @@ void EverettEngine::CloseWindow(const std::string& name)
 	{
 		hwndHolder->CloseWindow(name);
 	}
-}
-
-std::string EverettEngine::GetDateTimeStr()
-{
-	auto now = std::chrono::zoned_time{
-		std::chrono::current_zone(), std::chrono::system_clock::now() 
-	}.get_local_time();
-
-	auto today = std::chrono::floor<std::chrono::days>(now);
-	std::chrono::year_month_day ymd = std::chrono::year_month_day{ today };
-	std::chrono::hh_mm_ss hms = std::chrono::hh_mm_ss{ now - today };
-
-	return std::format(
-		"{:02}-{:02}-{:04}-{:02}-{:02}-{:02}",
-		static_cast<unsigned>(ymd.day()),
-		static_cast<unsigned>(ymd.month()),
-		static_cast<int>     (ymd.year()),
-		static_cast<unsigned>(hms.hours().count()),
-		static_cast<unsigned>(hms.minutes().count()),
-		static_cast<unsigned>(hms.seconds().count())
-	);
 }
 
 void EverettEngine::SetLogCallback(bool value)

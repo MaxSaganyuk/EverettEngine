@@ -153,6 +153,9 @@
     <ClInclude Include="external\InteractableSetup.h">
       <Filter>Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="EverettGeneral.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SolidSim.cpp">

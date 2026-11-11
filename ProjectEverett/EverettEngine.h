@@ -128,8 +128,8 @@ public:
 
 	// Requesting for l-value ref prevents creating copy on call and prevents calling co-routine with "in place" temporary
 	// ensuring correct execution despite the fact that "path" value will not be modified
-	EVERETT_API std::generator<std::string> GetModelInDirList(std::string& path);
-	EVERETT_API std::generator<std::string> GetSoundInDirList(std::string& path);
+	EVERETT_API static std::generator<std::string> GetModelInDirList(std::string& path);
+	EVERETT_API static std::generator<std::string> GetSoundInDirList(std::string& path);
 
 	EVERETT_API std::generator<std::string_view> GetCreatedModels(bool getFullPaths = false);
 	// If getAdditionalInfo is set to true - list of solids will include model names, lights will include light type
@@ -195,33 +195,15 @@ private:
 
 	std::optional<bool> defaultControlsEnabled;
 
-	struct ObjectTypeInfo;
-
-	static inline const std::string saveFileType = ".esav";
 	std::string defaultShaderProgram;
 	std::string defaultRenderTextShaderProgram;
-	constexpr static inline char loggerFont[] = "consolab.ttf";
-	constexpr static inline char deleteObjErrorMes[] = "Cannot delete whilst scripts are running\n";
 	std::function<void(glm::vec4&&)> generalRenderTextBehaviour;
-
-	using LightShaderValueNames = std::vector<std::pair<std::string, std::vector<std::string>>>;
 
 	using ModelCollection    = std::unordered_map<std::string, ModelInfo>; 
 	using SolidCollection    = std::unordered_map<std::string, SolidSim>;
 	using LightCollection    = std::unordered_map<std::string, LightSim>;
 	using SoundCollection    = std::unordered_map<std::string, SoundSim>;
 	using ColliderCollection = std::unordered_map<std::string, ColliderSim>;
-
-	constexpr static char gizmoModelFile[] = "box.glb";
-	constexpr static char gizmoModelName[] = "Gizmo";
-	constexpr static glm::vec4 lightGizmoColor            = ColorManager::GetColorVec4(ColorManager::Colors::YELLOW);
-	constexpr static glm::vec4 soundGizmoColor            = ColorManager::GetColorVec4(ColorManager::Colors::BLUE);
-	constexpr static glm::vec4 colliderGizmoColor         = ColorManager::GetColorVec4(ColorManager::Colors::GREEN);
-	constexpr static glm::vec4 colliderGizmoColorCollided = ColorManager::GetColorVec4(ColorManager::Colors::RED);
-
-	static bool CheckHintAndType(
-		const std::optional<ObjectTypes>& hintType, const std::optional<ObjectTypes>& objectType
-	);
 
 	template<typename Sim>
 	void CopyObjectBasedOn(const std::string& name, Sim& sim, size_t amount);
@@ -278,19 +260,6 @@ private:
 		bool logFail = true
 	);
 
-	template<typename Sim>
-	ObjectSim* GetObjectFromTheMap(std::unordered_map<std::string, Sim>& simMap, const std::string& objectName);
-
-	std::string CheckIfRelativePathToUse(const std::string& path, const std::string& expectedFolder);
-	std::string EnsurePathHasSaveFileType(const std::string& path);
-
-	template<typename Sim>
-	std::generator<std::string_view> GetNameList(const std::unordered_map<std::string, Sim>& sims);
-
-	std::generator<std::string> GetObjectsInDirList(const std::string& path, const std::vector<std::string>& fileTypes);
-
-	struct ObjectTypeInfo;
-
 	std::generator<std::string_view> GetSolidList(bool getModelNames);
 	std::generator<std::string_view> GetLightList(bool getLightTypes);
 	std::generator<std::string_view> GetSoundList();
@@ -312,10 +281,6 @@ private:
 
 	void SetLogCallback(bool value = true);
 	void SetRenderLoggerCallbacks(bool value = true);
-	std::string GetDateTimeStr();
-
-	template<typename... Type>
-	void ExecuteVectorOfFuncs(const std::vector<std::function<void(Type...)>>& vectOfFuncs, Type... value);
 
 	template<typename FunctionType, typename... Params>
 	void ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values);
@@ -340,9 +305,6 @@ private:
 	LightCollection lights;
 	SoundCollection sounds;
 	ColliderCollection colliders;
-
-	static LightShaderValueNames lightShaderValueNames;
-	static std::vector<ObjectTypeInfo> objectTypes;
 
 	std::map<int, KeyScriptFuncInfo> keyScriptFuncMap;
 	std::vector<std::function<void(double)>> mouseScrollScriptFuncs;
