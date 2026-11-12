@@ -198,13 +198,17 @@ bool AnimSystem::IncrementTotalBoneAmount(ModelAnim& modelAnim)
 
 void AnimSystem::DecrementTotalBoneAmount(SolidSim& solid)
 {
-	size_t currentSolidStartBoneIndex = solid.GetModelCurrentStartingBoneIndex();
 	size_t modelBoneAmount = solid.GetModelBoneAmount();
 
-	if (currentSolidStartBoneIndex && modelBoneAmount)
+	if (modelBoneAmount)
 	{
-		CutAndGlueFinalTransforms(currentSolidStartBoneIndex, modelBoneAmount);
-		CutAndRecalcStartBoneIndexes(currentSolidStartBoneIndex, modelBoneAmount);
+		size_t currentSolidStartBoneIndex = solid.GetModelCurrentStartingBoneIndex();
+
+		if (currentSolidStartBoneIndex && modelBoneAmount)
+		{
+			CutAndGlueFinalTransforms(currentSolidStartBoneIndex, modelBoneAmount);
+			CutAndRecalcStartBoneIndexes(currentSolidStartBoneIndex, modelBoneAmount);
+		}
 	}
 }
 
