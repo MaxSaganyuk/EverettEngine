@@ -679,10 +679,17 @@ void LGL::StopRenderingCycle()
 	stopRendering = true;
 }
 
-void LGL::PauseRendering(bool value)
+void LGL::PauseRendering(bool value, bool waitUntilNextFrame)
 {
+	bool previousState = externalRenderPauseActive;
+
 	externalRenderPauseActive = value;
 	PauseRenderingImpl(value);
+
+	if (!previousState && value && waitUntilNextFrame)
+	{
+		ContextLock
+	}
 }
 
 void LGL::PauseRenderingInternal(bool value)

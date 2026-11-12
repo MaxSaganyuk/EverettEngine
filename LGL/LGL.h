@@ -191,7 +191,7 @@ public:
 	// It is expected to get a lambda with a script for camera behaviour
 	LGL_API void RunRenderingCycle(std::function<void()> additionalSteps = nullptr);
 	LGL_API void StopRenderingCycle();
-	LGL_API void PauseRendering(bool value = true);
+	LGL_API void PauseRendering(bool value = true, bool waitUntilNextFrame = true);
 	LGL_API glm::vec3& GetBackgroundColorVectorAddr();
 	LGL_API void EnableVSync(bool value = true);
 
