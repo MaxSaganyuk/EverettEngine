@@ -152,13 +152,13 @@ class FileLoader
 		ScriptMap dllHandleMap;
 	public:
 		void FreeDllData();
-		EverettStructs::DLLLoadState IsDLLLoaded(const std::string& dllPath);
-		bool AnyDLLLoaded();
+		EverettStructs::DLLLoadState CheckDLLState(const std::string& dllPath);
+		bool AnyDLLOnState(EverettStructs::DLLLoadState state);
 		bool PreloadDLL(const std::string& dllPath);
 		bool LoadDLL(const std::string& dllPath);
 		void ExecuteScriptInitFor(const std::string& dllPath, IEverettEngine& engine);
 		void UnloadScriptDLLs();
-		std::generator<EverettStructs::BasicFileInfo> GetLoadedScriptDlls();
+		std::generator<EverettStructs::BasicFileInfo> GetScriptDllsOnState(EverettStructs::DLLLoadState state);
 		void ExecuteAllMainScriptFuncs();
 	};
 

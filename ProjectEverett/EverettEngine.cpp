@@ -947,7 +947,7 @@ std::expected<void, std::string> EverettEngine::DeleteObject(
 
 bool EverettEngine::CheckIfScriptsRunning(bool displayErrorIfYes)
 {
-	if (fileLoader->dllLoader.AnyDLLLoaded())
+	if (fileLoader->dllLoader.AnyDLLOnState(DLLLoadState::Loaded))
 	{
 		if (displayErrorIfYes)
 		{
@@ -1273,29 +1273,28 @@ void EverettEngine::LightUpdater()
 
 void EverettEngine::SetupScriptDLL(const std::string& dllPath, bool preload)
 {
-	if (!fileLoader->dllLoader.AnyDLLLoaded() && !preload)
+	if (fileLoader->dllLoader.CheckDLLState(dllPath) == EverettStructs::DLLLoadState::Unloaded)
 	{
-		SaveWorldToFile("tempWorld");
+		fileLoader->dllLoader.PreloadDLL(dllPath);
 	}
-
-	bool success{};
 
 	if (!preload)
 	{
-		if (fileLoader->dllLoader.IsDLLLoaded(dllPath) != DLLLoadState::Loaded && fileLoader->dllLoader.LoadDLL(dllPath))
+		if (!fileLoader->dllLoader.AnyDLLOnState(EverettStructs::DLLLoadState::Loaded))
+		{
+			SaveWorldToFile("tempWorld");
+		}
+
+		if (fileLoader->dllLoader.CheckDLLState(dllPath) != DLLLoadState::Loaded && fileLoader->dllLoader.LoadDLL(dllPath))
 		{
 			fileLoader->dllLoader.ExecuteScriptInitFor(dllPath, dynamic_cast<IEverettEngine&>(*this));
 		}
 	}
-	else
-	{
-		success = fileLoader->dllLoader.PreloadDLL(dllPath);
-	}
 }
 
-EverettStructs::DLLLoadState EverettEngine::IsDLLLoaded(const std::string& dllPath)
+EverettStructs::DLLLoadState EverettEngine::CheckDLLState(const std::string& dllPath)
 {
-	return fileLoader->dllLoader.IsDLLLoaded(dllPath);
+	return fileLoader->dllLoader.CheckDLLState(dllPath);
 }
 
 void EverettEngine::UnsetScripts(bool restoreState)
@@ -1356,9 +1355,9 @@ void EverettEngine::ExecuteFuncForAllSimObjectsFor(
 	}
 }
 
-std::generator<EverettStructs::BasicFileInfo> EverettEngine::GetLoadedScriptDLLs()
+std::generator<BasicFileInfo> EverettEngine::GetScriptDllsOnState(DLLLoadState state)
 {
-	return fileLoader->dllLoader.GetLoadedScriptDlls();
+	return fileLoader->dllLoader.GetScriptDllsOnState(state);
 }
 
 std::generator<std::string> EverettEngine::GetModelInDirList(std::string& path)
@@ -1609,9 +1608,11 @@ bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 	SaveObjectsToFile<SoundSim>(file);
 	SaveObjectsToFile<ColliderSim>(file);
 
-	if (fileLoader->dllLoader.AnyDLLLoaded())
+	if (fileLoader->dllLoader.AnyDLLOnState(DLLLoadState::Preloaded))
 	{
-		file << ("ScriptDLLs*" + SimSerializer::GetValueToSaveFrom(fileLoader->dllLoader.GetLoadedScriptDlls()) + '\n');
+		file << ("ScriptDLLs*" + SimSerializer::GetValueToSaveFrom(
+			fileLoader->dllLoader.GetScriptDllsOnState(DLLLoadState::Preloaded)
+		) + '\n');
 	}
 
 	file.close();
@@ -1747,7 +1748,7 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 				std::cerr << dllName << " was changed, can't guarantee correct execution\n";
 			}
 
-			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"), runScriptsOnLoad);
+			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"), !runScriptsOnLoad);
 		}
 	}
 	else
@@ -1756,7 +1757,7 @@ void EverettEngine::LoadScriptDLLsFromLine(std::string_view& line)
 
 		for (auto& [dllName, dllPath] : legacyDllInfo)
 		{
-			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"), runScriptsOnLoad);
+			SetupScriptDLL(CheckIfRelativePathToUse(dllPath, "scripts"), !runScriptsOnLoad);
 		}
 	}
 }

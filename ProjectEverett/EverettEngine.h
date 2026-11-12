@@ -122,9 +122,9 @@ public:
 
 	EVERETT_API bool CheckIfScriptsRunning(bool displayErrorIfYes = true);
 	EVERETT_API void SetupScriptDLL(const std::string& dllPath, bool preload = false);
-	EVERETT_API EverettStructs::DLLLoadState IsDLLLoaded(const std::string& dllPath);
+	EVERETT_API EverettStructs::DLLLoadState CheckDLLState(const std::string& dllPath);
 	EVERETT_API void UnsetScripts(bool restoreState = false);
-	EVERETT_API std::generator<EverettStructs::BasicFileInfo> GetLoadedScriptDLLs();
+	EVERETT_API std::generator<EverettStructs::BasicFileInfo> GetScriptDllsOnState(EverettStructs::DLLLoadState state);
 
 	// Requesting for l-value ref prevents creating copy on call and prevents calling co-routine with "in place" temporary
 	// ensuring correct execution despite the fact that "path" value will not be modified

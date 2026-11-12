@@ -42,7 +42,7 @@ void CDLLLoaderDlg::UpdateScriptButtons()
 {
 	if (!selectedScriptDllInfo.empty())
 	{
-		auto dllLoadState = engineRef.IsDLLLoaded(selectedScriptDllInfo[dllComboBox.GetCurSel()].first);
+		auto dllLoadState = engineRef.CheckDLLState(selectedScriptDllInfo[dllComboBox.GetCurSel()].first);
 
 		preloadScriptButton.EnableWindow(dllLoadState == EverettStructs::DLLLoadState::Unloaded);
 		loadScriptButton.EnableWindow(dllLoadState != EverettStructs::DLLLoadState::Loaded);

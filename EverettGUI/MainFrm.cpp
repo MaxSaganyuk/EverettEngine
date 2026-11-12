@@ -74,7 +74,7 @@ CMainFrame::CMainFrame() noexcept
 #endif
 		engine.AddWorldLoadCallback([this]() {
 			CTrackedDlg::CloseModals(CTrackedDlg::CloseModalCode::Abort) && ClearTree() && LoadObjectNamesToTree() && 
-			mainWindow->SetSelectedScriptDLLInfo(engine.GetLoadedScriptDLLs());
+			mainWindow->SetSelectedScriptDLLInfo(engine.GetScriptDllsOnState(EverettStructs::DLLLoadState::Preloaded));
 		});
 		engine.CreateAndSetupMainWindow(800, 600, "Everett");
 		engine.SetMainThreadInfo(windowName, ExecuteOnMainThreadID);
@@ -378,7 +378,7 @@ void CMainFrame::OnLoad()
 	OnLoadSave(true, [this](const std::string& path){
 		try
 		{
-			return SwitchScriptIconBlinkTimer(true) && engine.LoadWorldFromFile(path) && SwitchScriptIconBlinkTimer();
+			return SwitchScriptIconBlinkTimer(true) && engine.LoadWorldFromFile(path, false) && SwitchScriptIconBlinkTimer();
 		}
 		catch (const EverettException&)
 		{

@@ -744,7 +744,7 @@ void FileLoader::DLLLoader::SetNewDLLHandle(const std::string& dllPath, HMODULE 
 	OutputUtils::LogOrError(dllInfo.ReadInitFuncFromDLL(), "Init script func load");
 }
 
-EverettStructs::DLLLoadState FileLoader::DLLLoader::IsDLLLoaded(const std::string& dllPath)
+EverettStructs::DLLLoadState FileLoader::DLLLoader::CheckDLLState(const std::string& dllPath)
 {
 	if (auto iter = dllHandleMap.find(dllPath); iter != dllHandleMap.end())
 	{
@@ -754,11 +754,21 @@ EverettStructs::DLLLoadState FileLoader::DLLLoader::IsDLLLoaded(const std::strin
 	return EverettStructs::DLLLoadState::Unloaded;
 }
 
-bool FileLoader::DLLLoader::AnyDLLLoaded()
+bool FileLoader::DLLLoader::AnyDLLOnState(EverettStructs::DLLLoadState state)
 {
-	return std::any_of(
-		dllHandleMap.begin(), dllHandleMap.end(), [](const auto& info) { return info.second.GetDllHandle(); }
-	);
+	switch (state)
+	{
+	case EverettStructs::DLLLoadState::Unloaded:
+		ThrowExceptionWMessage("Incorrect state to check for dll");
+	case EverettStructs::DLLLoadState::Preloaded:
+		return !dllHandleMap.empty();
+	case EverettStructs::DLLLoadState::Loaded:
+		return std::any_of(
+			dllHandleMap.begin(), dllHandleMap.end(), [](const auto& info) { return info.second.GetDllHandle(); }
+		);
+	default:
+		std::unreachable();
+	}
 }
 
 void FileLoader::DLLLoader::UnloadScriptDLLs()
@@ -770,11 +780,18 @@ void FileLoader::DLLLoader::UnloadScriptDLLs()
 	}
 }
 
-std::generator<EverettStructs::BasicFileInfo> FileLoader::DLLLoader::GetLoadedScriptDlls()
+std::generator<EverettStructs::BasicFileInfo> FileLoader::DLLLoader::GetScriptDllsOnState(
+	EverettStructs::DLLLoadState state
+)
 {
-	for (auto& [dllPath, _] : dllHandleMap)
+	CheckAndThrowExceptionWMessage((state != EverettStructs::DLLLoadState::Unloaded), "Incorrect state to check for dll");
+
+	for (auto& [dllPath, handleInfo] : dllHandleMap)
 	{
-		co_yield { dllPath, GetFileFromPath(dllPath), GetFileHash(dllPath) };
+		if (state == EverettStructs::DLLLoadState::Preloaded || handleInfo.GetDllHandle())
+		{
+			co_yield { dllPath, GetFileFromPath(dllPath), GetFileHash(dllPath) };
+		}
 	}
 }
 
