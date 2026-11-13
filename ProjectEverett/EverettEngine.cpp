@@ -828,6 +828,8 @@ std::expected<void, std::string> EverettEngine::CopyObject(
 	const std::string& name, size_t amount, std::optional<ObjectTypes> hintType
 )
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	if (name == "Camera" || (hintType.has_value() && hintType == ObjectTypes::Camera))
 		return std::unexpected("Cannot rename camera object");
 
@@ -862,6 +864,8 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 	const std::string& oldName, const std::string& newName, std::optional<ObjectTypes> hintType
 )
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	if (CheckIfScriptsRunning())
 		return std::unexpected("Cannot rename whilst scripts are running\n");
 	if (oldName == newName)
@@ -925,6 +929,8 @@ std::expected<void, std::string> EverettEngine::DeleteObject(
 	const std::string& name, std::optional<ObjectTypes> hintType
 )
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	if (CheckIfScriptsRunning())
 		return std::unexpected("Cannot rename whilst scripts are running\n");
 	if (name == "Camera" || (hintType.has_value() && hintType == ObjectTypes::Camera))
@@ -1040,6 +1046,8 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteSolid(const std::str
 template<typename Sim>
 void EverettEngine::CopyObjectBasedOn(const std::string& originalName, Sim& originalObj, size_t amount)
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	static_assert(std::is_base_of_v<ObjectSim, Sim>);
 	static_assert(!std::is_same_v<CameraSim, Sim>);
 	static_assert(!std::is_same_v<ObjectSim, Sim>);
@@ -1328,6 +1336,8 @@ void EverettEngine::UnsetScripts(bool restoreState)
 template<typename FunctionType, typename... Params>
 void EverettEngine::ExecuteFuncForAllSimObjects(FunctionType func, Params&&... values)
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	static_assert(
 		std::is_base_of_v<ObjectSim, typename stdEx::MemberFuncInfo<FunctionType>::ClassType>, 
 		"Must accept ObjectSim or derived member func"
@@ -1397,6 +1407,8 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 	bool logFail
 )
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	ObjectSim* object = nullptr;
 
 	switch (objectType)
@@ -1439,6 +1451,8 @@ ObjectSim* EverettEngine::GetObjectFromMap(
 template<typename Sim>
 void EverettEngine::SaveObjectsToFile(std::fstream& file)
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	// Shame there's no constexpr switch
 	static_assert(std::is_base_of_v<ObjectSim, Sim>);
 
@@ -1483,6 +1497,8 @@ void EverettEngine::SaveObjectsToFile(std::fstream& file)
 
 void EverettEngine::ResetEngine(const std::optional<AssetPaths>& assetPaths)
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	mainLGL->PauseRendering();
 
 	if (assetPaths)
@@ -1608,6 +1624,8 @@ void EverettEngine::CheckAndLoadRequestedWorld()
 
 bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 {
+	EnsureSimObjTypeAmount<5>();
+
 	std::string pathToUse = CheckIfRelativePathToUse(filePath, "worlds");
 	std::string realFilePath = EnsurePathHasSaveFileType(pathToUse);
 	std::fstream file(realFilePath, std::ios::out);
@@ -1636,6 +1654,8 @@ bool EverettEngine::SaveWorldToFile(const std::string& filePath)
 
 void EverettEngine::LoadObjectFromLine(std::string_view& line, SimSerializer::ObjectInfoArray& objectInfo)
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	switch (GetObjectTypeToName(objectInfo[ObjectInfoNames::ObjectType]).value_or(ObjectTypes::_SIZE))
 	{
 	case EverettEngine::ObjectTypes::Camera:
@@ -1847,6 +1867,8 @@ bool EverettEngine::LoadWorldFromFileImpl(
 
 AssetPaths EverettEngine::GetPathsFromWorldFile(const std::string& filePath)
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	AssetPaths assetPaths;
 
 	std::fstream file(filePath, std::ios::in);
@@ -1961,6 +1983,8 @@ std::string EverettEngine::GetObjectTypeToName(ObjectTypes objectType)
 
 std::optional<EverettEngine::ObjectTypes> EverettEngine::GetObjectTypeToName(const std::string& objectName)
 {
+	EnsureSimObjTypeAmount<5> a{};
+
 	for (auto& objectNamePair : objectTypes)
 	{
 		if (objectNamePair.nameStr == objectName || objectNamePair.interfaceNameStr == objectName)
@@ -1974,6 +1998,8 @@ std::optional<EverettEngine::ObjectTypes> EverettEngine::GetObjectTypeToName(con
 
 std::generator<std::string_view> EverettEngine::GetNamesByObject(ObjectTypes objType, bool getAdditionalInfo)
 {
+	EnsureSimObjTypeAmount<5>{};
+
 	switch (objType)
 	{
 	case ObjectTypes::Solid:

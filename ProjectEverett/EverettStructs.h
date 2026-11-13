@@ -5,6 +5,8 @@
 #include <unordered_set>
 #include <string>
 
+#include "external/IEverettEngine.h"
+
 namespace EverettStructs
 {
 	struct LightParams
@@ -77,5 +79,19 @@ namespace EverettStructs
 		Unloaded,
 		Preloaded,
 		Loaded
+	};
+
+	/*
+	* Intended to be placed at functions or classes where behaviour is generalized for all s. obj. types
+	* In such places - manually set amount "at the moment" is expected to correspond to the size of ObjectTypes enum
+	* If ObjectTypes enum is changed - all paths working with multiple s. obj types will fail the assertion
+	* This will signal to the developer the requirement to review and change said path AND exact place of that path.
+	*/
+	template<size_t amount>
+	struct EnsureSimObjTypeAmount
+	{
+		static_assert(
+			amount == std::to_underlying(IEverettEngine::ObjectTypes::_SIZE), "Code path parsing s. obj. types was not updated"
+		);
 	};
 }

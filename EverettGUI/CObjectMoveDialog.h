@@ -17,6 +17,8 @@ namespace Gdiplus
 
 class CObjectMoveDialog : public CTrackedDlg
 {
+	constexpr static EverettStructs::EnsureSimObjTypeAmount<5> check{};
+
 	DECLARE_DYNAMIC(CObjectMoveDialog)
 
 public:

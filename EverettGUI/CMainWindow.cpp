@@ -241,6 +241,8 @@ void CMainWindow::OnEnableNode()
 
 void CMainWindow::OnCopyNode()
 {
+	EverettStructs::EnsureSimObjTypeAmount<5>{};
+
 	auto& [_, name] = currentNodeInfo.selectedSubnodes.front();
 
 	CCopyObjDlg copyObjDlg;

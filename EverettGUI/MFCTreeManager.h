@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "AdString.h"
+#include "EverettStructs.h"
 
 /*
 	This version of a TreeManager specific to handling MFC tree object
@@ -14,6 +15,8 @@
 */
 class MFCTreeManager
 {
+	constexpr static EverettStructs::EnsureSimObjTypeAmount<5> check{};
+
 	class MFCTreeManagerNode
 	{
 		friend MFCTreeManager;

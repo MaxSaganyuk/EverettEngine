@@ -7,6 +7,7 @@
 #include "ColliderSim.h"
 
 #include "external/IEverettEngine.h"
+#include "EverettStructs.h"
 
 template<typename Type>
 constexpr static std::optional<IEverettEngine::ObjectTypes> GetTypeEnumByType()
@@ -29,6 +30,8 @@ DefineTypeEnumByType(Collider)
 
 class SimIndexer
 {
+	constexpr static EverettStructs::EnsureSimObjTypeAmount<5> check{};
+
 	std::array<AutoReindexer, std::to_underlying(IEverettEngine::ObjectTypes::_SIZE)> indexerCollection;
 public:
 	template<SimObj Type>

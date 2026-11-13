@@ -215,6 +215,8 @@ bool CMainFrame::ClearTree()
 
 bool CMainFrame::LoadObjectNamesToTree()
 {
+	EverettStructs::EnsureSimObjTypeAmount<5>{};
+
 	using ObjectTypes = EverettEngine::ObjectTypes;
 
 	MFCTreeManager& mfcTree = mainWindow->GetObjectTree();

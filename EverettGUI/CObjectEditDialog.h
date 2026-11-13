@@ -14,6 +14,8 @@
 
 class CObjectEditDialog : public CTrackedDlg
 {
+	constexpr static EverettStructs::EnsureSimObjTypeAmount<5> check{};
+
 	DECLARE_DYNAMIC(CObjectEditDialog)
 
 public:
