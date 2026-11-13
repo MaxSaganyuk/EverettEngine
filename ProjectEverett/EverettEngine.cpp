@@ -312,7 +312,7 @@ bool EverettEngine::CreateGizmoSolid(
 	const std::string& relatedObjModelName, Sim& relatedObject, const glm::vec4& gizmoColor, bool regenerateShader
 )
 {
-	std::string gizmoSolidName = relatedObjModelName + gizmoModelName;
+	std::string gizmoSolidName = GetGizmoNameOf(relatedObjModelName);
 	
 	if (SolidSim* solid = CreateSolidImpl(gizmoModelName, gizmoSolidName, regenerateShader, gizmoVisible))
 	{
@@ -872,8 +872,10 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 		return std::unexpected("New name already exists");
 
 	auto TryRenameKey = [&]<typename Type>(
-		std::unordered_map<std::string, Type>& cont
-	){ 
+		this auto&& self, std::unordered_map<std::string, Type>& cont, const std::string& oldName, 
+		const std::string& newName, std::optional<ObjectTypes> hintType
+	) -> ObjectModificationState
+	{
 		constexpr static std::optional<ObjectTypes> objectType = GetTypeEnumByType<Type>();
 
 		if (CheckHintAndType(hintType, objectType) && cont.contains(oldName))
@@ -888,6 +890,14 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 
 			allNameTracker->Add(newName);
 
+			if constexpr (objectType && *objectType != ObjectTypes::Solid)
+			{
+				CheckAndThrowExceptionWMessage(
+					(self(solids, GetGizmoNameOf(oldName), GetGizmoNameOf(newName), ObjectTypes::Solid) == FoundCorrectOne),
+					"Failed to rename related gizmo solid"
+				);
+			}
+
 			return FoundCorrectOne;
 		}
 
@@ -897,8 +907,12 @@ std::expected<void, std::string> EverettEngine::RenameObject(
 	mainLGL->PauseRendering();
 
 	// Monadic-like check
-	auto result = TryRenameKey(models) && TryRenameKey(solids) && TryRenameKey(lights) && TryRenameKey(sounds) && 
-		TryRenameKey(colliders);
+	auto result = 
+		TryRenameKey(models,    oldName, newName, hintType) && 
+		TryRenameKey(solids,    oldName, newName, hintType) &&
+		TryRenameKey(lights,    oldName, newName, hintType) &&
+		TryRenameKey(sounds,    oldName, newName, hintType) &&
+		TryRenameKey(colliders, oldName, newName, hintType);
 
 	mainLGL->PauseRendering(false);
 
@@ -917,7 +931,7 @@ std::expected<void, std::string> EverettEngine::DeleteObject(
 		return std::unexpected("Cannot rename camera object");
 
 	auto DeleteWrapperFunc = [&](
-		ObjectModificationState(EverettEngine::*deleter)(const std::string&), const std::string& name,
+		ObjectModificationState(EverettEngine::*deleter)(const std::string&),
 		std::optional<ObjectTypes> objectType = std::nullopt)
 	{
 		if (CheckHintAndType(hintType, objectType))
@@ -932,11 +946,11 @@ std::expected<void, std::string> EverettEngine::DeleteObject(
 
 	// Monadic-like check
 	auto result = 
-		DeleteWrapperFunc(&EverettEngine::DeleteModel, name) &&
-		DeleteWrapperFunc(&EverettEngine::DeleteSolid, name, ObjectTypes::Solid) &&
-		DeleteWrapperFunc(&EverettEngine::DeleteLight, name, ObjectTypes::Light) &&
-		DeleteWrapperFunc(&EverettEngine::DeleteSound, name, ObjectTypes::Sound) &&
-		DeleteWrapperFunc(&EverettEngine::DeleteCollider, name, ObjectTypes::Collider);
+		DeleteWrapperFunc(&EverettEngine::DeleteModel) &&
+		DeleteWrapperFunc(&EverettEngine::DeleteSolid, ObjectTypes::Solid) &&
+		DeleteWrapperFunc(&EverettEngine::DeleteLight, ObjectTypes::Light) &&
+		DeleteWrapperFunc(&EverettEngine::DeleteSound, ObjectTypes::Sound) &&
+		DeleteWrapperFunc(&EverettEngine::DeleteCollider, ObjectTypes::Collider);
 
 	mainLGL->PauseRendering(false);
 
@@ -1090,7 +1104,7 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteLight(const std::str
 
 		if (gizmoEnabled)
 		{
-			DeleteSolid(lightName + gizmoModelName);
+			DeleteSolid(GetGizmoNameOf(lightName));
 		}
 
 		return FoundCorrectOne;
@@ -1111,7 +1125,7 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteSound(const std::str
 
 		if (gizmoEnabled)
 		{
-			DeleteSolid(soundName + gizmoModelName);
+			DeleteSolid(GetGizmoNameOf(soundName));
 		}
 
 		return FoundCorrectOne;
@@ -1132,7 +1146,7 @@ EverettEngine::ObjectModificationState EverettEngine::DeleteCollider(const std::
 
 		if (gizmoEnabled)
 		{
-			DeleteSolid(colliderName + gizmoModelName);
+			DeleteSolid(GetGizmoNameOf(colliderName));
 		}
 
 		return FoundCorrectOne;

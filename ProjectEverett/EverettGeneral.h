@@ -24,6 +24,11 @@ constexpr static glm::vec4 soundGizmoColor = ColorManager::GetColorVec4(ColorMan
 constexpr static glm::vec4 colliderGizmoColor = ColorManager::GetColorVec4(ColorManager::Colors::GREEN);
 constexpr static glm::vec4 colliderGizmoColorCollided = ColorManager::GetColorVec4(ColorManager::Colors::RED);
 
+inline std::string GetGizmoNameOf(const std::string& name)
+{
+	return name + gizmoModelName;
+}
+
 inline bool CheckHintAndType(
 	const std::optional<EverettEngine::ObjectTypes>& hintType, const std::optional<EverettEngine::ObjectTypes>& objectType
 )
