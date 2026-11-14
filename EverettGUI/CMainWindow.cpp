@@ -333,6 +333,8 @@ std::vector<std::pair<AdString, AdString>>& CMainWindow::GetSelectedScriptDllInf
 
 bool CMainWindow::SetSelectedScriptDLLInfo(std::generator<EverettStructs::BasicFileInfo>&& scriptDLLInfo)
 {
+	selectedScriptDllInfo.clear();
+
 	for (auto scriptDLLPair : scriptDLLInfo)
 	{
 		selectedScriptDllInfo.push_back({ scriptDLLPair.path, scriptDLLPair.name });
