@@ -17,6 +17,7 @@ private:
 		std::map<std::string, std::pair<EndlineCallbackFunc, bool>> endlineCallbacks;
 		std::list<std::string> delayedOutputList;
 		bool manualOutputEnabled = false;
+		std::mutex mux;
 
 		int overflow(int c) override
 		{
@@ -26,6 +27,7 @@ private:
 
 				if (manualOutputEnabled)
 				{
+					std::lock_guard lock(mux);
 					delayedOutputList.push_back(lineToSend);
 				}
 
@@ -53,36 +55,35 @@ private:
 			endlineCallbacks.emplace(key, std::pair<EndlineCallbackFunc, bool>{ endlineCallback, manualExecution });
 		}
 
-		void RemoveEndlineCallback(const std::string& key)
+		void RemoveEndlineCallback(const std::string& key) noexcept
 		{
 			endlineCallbacks.erase(key);
 		}
 
 		void ExecuteCallbacks(bool manual)
 		{
-			if (manual && delayedOutputList.empty())
-			{
-				return;
-			}
+			if (manual && delayedOutputList.empty()) return;
 
 			for (auto& [_, callbackPair] : endlineCallbacks)
 			{
-				if (manual && callbackPair.second)
+				if (manualOutputEnabled && manual)
 				{
-					for (auto& str : delayedOutputList)
+					if (callbackPair.second)
 					{
-						callbackPair.first(str);
+						std::lock_guard lock(mux);
+
+						for (auto& str : delayedOutputList)
+						{
+							callbackPair.first(str);
+						}
+
+						delayedOutputList.clear();
 					}
 				}
 				else if (!callbackPair.second)
 				{
 					callbackPair.first(lineToSend);
 				}
-			}
-
-			if (manual)
-			{
-				delayedOutputList.clear();
 			}
 		}
 	};
@@ -93,7 +94,7 @@ public:
 		ostream = std::make_unique<std::ostream>(&sSub);
 	}
 
-	std::streambuf* GetStreamBuffer()
+	std::streambuf* GetStreamBuffer() const noexcept
 	{
 		return ostream->rdbuf();
 	}
@@ -105,7 +106,7 @@ public:
 		sSub.SetEndlineCallback(key, endlineCallback, manualExecution);
 	}
 
-	void RemoveEndlineCallback(const std::string& key)
+	void RemoveEndlineCallback(const std::string& key) noexcept
 	{
 		sSub.RemoveEndlineCallback(key);
 	}
