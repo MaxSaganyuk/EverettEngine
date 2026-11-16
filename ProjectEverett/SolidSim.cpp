@@ -85,6 +85,7 @@ bool SolidSim::CollectInfoToLoadToSTMM(std::string_view& line)
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.modelDefaultColor, "Mar 16 2026"_ver);
 		res = res && SimSerializer::SetValueToLoadFrom(line, STMM.texRender.GetMeshVect(), "Nov 01 2026"_ver);
 
+		STMM.resetAnim = STMM.animStates.IsStopped();
 		STMM.visibility.RecalcModelFromMeshes();
 		STMM.texRender.RecalcModelFromMeshes();
 	}

@@ -103,6 +103,11 @@ public:
 		return paused;
 	}
 
+	bool IsStopped() const
+	{
+		return !playing && paused;
+	}
+
 	bool IsLooped() const
 	{
 		return looped;
