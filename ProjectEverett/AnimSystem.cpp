@@ -204,11 +204,8 @@ void AnimSystem::DecrementTotalBoneAmount(SolidSim& solid)
 	{
 		size_t currentSolidStartBoneIndex = solid.GetModelCurrentStartingBoneIndex();
 
-		if (currentSolidStartBoneIndex && modelBoneAmount)
-		{
-			CutAndGlueFinalTransforms(currentSolidStartBoneIndex, modelBoneAmount);
-			CutAndRecalcStartBoneIndexes(currentSolidStartBoneIndex, modelBoneAmount);
-		}
+		CutAndGlueFinalTransforms(currentSolidStartBoneIndex, modelBoneAmount);
+		CutAndRecalcStartBoneIndexes(currentSolidStartBoneIndex, modelBoneAmount);
 	}
 }
 
