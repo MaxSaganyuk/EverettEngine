@@ -10,6 +10,7 @@
 
 #define LGL_EXPORT
 #include "LGL.h"
+#include "LGLUniformLocator.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -273,6 +274,8 @@ bool LGL::InitGLAD()
 		std::cout << "Failed to init GLAD\n";
 		return false;
 	}
+
+	UniformLocatorUtils::InitializeUniformLocators();
 
 	SetDepthTest(DepthTestMode::Less);
 
@@ -1551,88 +1554,6 @@ void LGL::SetAssetOnOpenGLFailure(bool value)
 	std::cout << "AssertOnFailure has been set to " << value << '\n';
 }
 
-#define UniformAdapterSection
-
-#define ShaderCallTypeAndVector(type, glFunc)                                                                         \
-{ typeid(type), [](int uniformValueLocation, const void* value)                                                       \
-{                                                                                                                     \
-	GLSafeExecute(glFunc, uniformValueLocation, *reinterpret_cast<const type*>(value));                               \
-}                                                                                                                     \
-},                                                                                                                    \
-{ typeid(std::vector<type>), [](int uniformValueLocation, const void* value)								          \
-{																									                  \
-	const std::vector<type>& vals = *reinterpret_cast<const std::vector<type>*>(value);							      \
-	GLSafeExecute(##glFunc##v, uniformValueLocation, vals.size(), &vals[0]);						                  \
-}																									                  \
-}                                                                                                    
-
-#define ShaderCallVectVector(type, glFunc)                                                                            \
-{ typeid(std::vector<type>), [](int uniformValueLocation, const void* value)                                          \
-{                                                                                                                     \
-	const std::vector<type>& vals = *reinterpret_cast<const std::vector<type>*>(value);                               \
-	GLSafeExecute(##glFunc##v, uniformValueLocation, vals.size(), glm::value_ptr(vals[0]));                           \
-}                                                                                                                     \
-}
-
-#define ShaderCallVect2AndVector(type, glFunc)                                                                        \
-{ typeid(type), [](int uniformValueLocation, const void* value)                                                       \
-{                                                                                                                     \
-	const type& coords = *reinterpret_cast<const type*>(value);                                                       \
-	GLSafeExecute(glFunc, uniformValueLocation, coords.x, coords.y);                                                  \
-}                                                                                                                     \
-},                                                                                                                    \
-ShaderCallVectVector(type, glFunc)                                                                                    \
-
-#define ShaderCallVect3AndVector(type, glFunc)                                                                        \
-{ typeid(type), [](int uniformValueLocation, const void* value)                                                       \
-{                                                                                                                     \
-	const type& coords = *reinterpret_cast<const type*>(value);                                                       \
-	GLSafeExecute(glFunc, uniformValueLocation, coords.x, coords.y, coords.z);                                        \
-}                                                                                                                     \
-},                                                                                                                    \
-ShaderCallVectVector(type, glFunc)
-
-#define ShaderCallVect4AndVector(type, glFunc)                                                                        \
-{ typeid(type), [](int uniformValueLocation, const void* value)                                                       \
-{                                                                                                                     \
-	const type& coords = *reinterpret_cast<const type*>(value);                                                       \
-	GLSafeExecute(glFunc, uniformValueLocation, coords.x, coords.y, coords.z, coords.w);                              \
-}                                                                                                                     \
-},                                                                                                                    \
-ShaderCallVectVector(type, glFunc)
-
-#define ShaderCallMatrixAndVector(type, glFunc)                                                                       \
-{ typeid(type), [](int uniformValueLocation, const void* value)                                                       \
-{                                                                                                                     \
-	GLSafeExecute(glFunc, uniformValueLocation, 1, GL_FALSE, glm::value_ptr(*reinterpret_cast<const type*>(value)));  \
-}                                                                                                                     \
-},                                                                                                                    \
-{ typeid(std::vector<type>), [](int uniformValueLocation, const void* value)                                          \
-{                                                                                                                     \
-	const std::vector<type>& vals = *reinterpret_cast<const std::vector<type>*>(value);                               \
-	GLSafeExecute(##glFunc, uniformValueLocation, vals.size(), GL_FALSE, glm::value_ptr(vals[0]));                    \
-}                                                                                                                     \
-}
-
-const std::unordered_map<std::type_index, std::function<void(int, const void*)>> uniformValueLocators
-{
-	ShaderCallTypeAndVector  (int,          glUniform1i),
-	ShaderCallTypeAndVector  (unsigned int, glUniform1ui),
-	ShaderCallTypeAndVector  (float,        glUniform1f),
-	ShaderCallVect2AndVector (glm::ivec2,   glUniform2i),
-	ShaderCallVect3AndVector (glm::ivec3,   glUniform3i),
-	ShaderCallVect4AndVector (glm::ivec4,   glUniform4i),
-	ShaderCallVect2AndVector (glm::uvec2,   glUniform2ui),
-	ShaderCallVect3AndVector (glm::uvec3,   glUniform3ui),
-	ShaderCallVect4AndVector (glm::uvec4,   glUniform4ui),
-	ShaderCallVect2AndVector (glm::vec2,    glUniform2f),
-	ShaderCallVect3AndVector (glm::vec3,    glUniform3f),
-	ShaderCallVect4AndVector (glm::vec4,    glUniform4f),
-	ShaderCallMatrixAndVector(glm::mat2,    glUniformMatrix2fv),
-	ShaderCallMatrixAndVector(glm::mat3,    glUniformMatrix3fv),
-	ShaderCallMatrixAndVector(glm::mat4,    glUniformMatrix4fv),
-};
-
 void LGL::EnableUniformValueBatchSending(bool value)
 {
 	batchUniformVals = value;
@@ -1683,6 +1604,11 @@ int LGL::CheckUniformValueLocation(
 template<typename Type>
 bool LGL::SetShaderUniformValue(const std::string& valueName, const Type& value, const std::string& shaderProgramName)
 {
+	if constexpr (UnwrapVector<Type>::Value)
+	{
+		if (value.empty()) return false;
+	}
+
 	ContextLock
 
 	ShaderProgramID shaderProgramIDToUse = 0;
@@ -1702,7 +1628,9 @@ bool LGL::SetShaderUniformValue(const std::string& valueName, const Type& value,
 		(uniformHasher && uniformHasher->CheckIfDiffersAndHashValue(shaderProgramIDToUse, uniformValueLocation, value)))
 	{
 		uniformLocationTracker.insert(uniformValueLocation);
-		uniformValueLocators.at(typeid(Type))(uniformValueLocation, &value);
+		UniformLocatorUtils::uniformLocatorFunc<typename UnwrapVector<Type>::Type>(
+			uniformValueLocation, UniformLocatorUtils::GetSpanForValue(value)
+		);
 	}
 
 	return true;

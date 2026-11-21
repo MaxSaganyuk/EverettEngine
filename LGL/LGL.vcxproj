@@ -24,6 +24,7 @@
     <ClInclude Include="LGLUniformHasher.h" />
     <ClInclude Include="LGLKeyToStringMap.h" />
     <ClInclude Include="LGLStructs.h" />
+    <ClInclude Include="LGLUniformLocator.h" />
     <ClInclude Include="LGLUtils.h" />
   </ItemGroup>
   <ItemGroup>
